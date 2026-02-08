@@ -1,6 +1,6 @@
-function arraysEqual(a, b) {
+export function arraysEqual<T>(a: T[], b: T[]): boolean {
   if (a.length !== b.length) return false
-  const counter = new Map()
+  const counter = new Map<T, number>()
   for (const value of a) {
     counter.set(value, (counter.get(value) || 0) + 1)
   }
@@ -14,8 +14,8 @@ function arraysEqual(a, b) {
   return true
 }
 
-function diff(obj1, obj2) {
-  function findDifferences(o1, o2) {
+export function diff<T extends object>(obj1: T, obj2: T): Partial<T> | undefined {
+  function findDifferences(o1: any, o2: any): any {
     if (Array.isArray(o1) && Array.isArray(o2)) {
       if (!arraysEqual(o1, o2)) {
         return o2
@@ -29,7 +29,7 @@ function diff(obj1, obj2) {
       o1 !== null &&
       o2 !== null
     ) {
-      const diffResult = {}
+      const diffResult: any = {}
 
       const keys = new Set([...Object.keys(o1), ...Object.keys(o2)])
       keys.forEach((key) => {
@@ -47,5 +47,3 @@ function diff(obj1, obj2) {
 
   return findDifferences(obj1, obj2)
 }
-
-export { arraysEqual, diff }

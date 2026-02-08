@@ -1,8 +1,6 @@
 import { isFunction, isObject, isString, isPlainObject, hasOwn } from '@vue/shared'
 
-function noop() {
-
-}
+export function noop(): void {}
 
 /**
  * 检查传入的值是否为undefined。
@@ -10,7 +8,7 @@ function noop() {
  * @param {unknown} value 要检查的值。
  * @returns {boolean} 如果值是undefined，返回true，否则返回false。
  */
-function isUndefined(value) {
+export function isUndefined(value: unknown): value is undefined {
   return value === undefined
 }
 
@@ -19,7 +17,7 @@ function isUndefined(value) {
  * @param value
  * @returns {boolean} 如果值是布尔值，返回true，否则返回false。
  */
-function isBoolean(value) {
+export function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean'
 }
 
@@ -34,10 +32,10 @@ function isBoolean(value) {
  * - 值为一个没有元素的Map或Set。
  * - 值为一个没有属性的对象。
  *
- * @param {T} value 要检查的值。
+ * @param {unknown} value 要检查的值。
  * @returns {boolean} 如果值为空，返回true，否则返回false。
  */
-function isEmpty(value) {
+export function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) {
     return true
   }
@@ -51,7 +49,7 @@ function isEmpty(value) {
   }
 
   if (isObject(value)) {
-    return Object.keys(value).length === 0
+    return Object.keys(value as object).length === 0
   }
 
   return false
@@ -63,7 +61,7 @@ function isEmpty(value) {
  * @param {string} url 要检查的字符串。
  * @return {boolean} 如果字符串是有效的HTTP或HTTPS URL，返回true，否则返回false。
  */
-function isHttpUrl(url) {
+export function isHttpUrl(url: string): boolean {
   if (!url) {
     return false
   }
@@ -78,7 +76,7 @@ function isHttpUrl(url) {
  * @param {any} value 要检查的值。
  * @returns {boolean} 如果值是window对象，返回true，否则返回false。
  */
-function isWindow(value) {
+export function isWindow(value: any): boolean {
   return (
     typeof window !== 'undefined' && value !== null && value === value.window
   )
@@ -92,7 +90,7 @@ function isWindow(value) {
  *
  * @returns {boolean} 如果当前环境是Mac OS，返回true，否则返回false。
  */
-function isMacOs() {
+export function isMacOs(): boolean {
   const macRegex = /macintosh|mac os x/i
   return macRegex.test(navigator.userAgent)
 }
@@ -105,7 +103,7 @@ function isMacOs() {
  *
  * @returns {boolean} 如果当前环境是Windows OS，返回true，否则返回false。
  */
-function isWindowsOs() {
+export function isWindowsOs(): boolean {
   const windowsRegex = /windows|win32/i
   return windowsRegex.test(navigator.userAgent)
 }
@@ -115,11 +113,11 @@ function isWindowsOs() {
  * @param value
  * @returns {boolean} 如果值是数字，返回true，否则返回false。
  */
-function isNumber(value) {
+export function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value)
 }
 
-function isStringNumber(value) {
+export function isStringNumber(value: unknown): boolean {
   if (!isString(value)) {
     return false
   }
@@ -149,7 +147,7 @@ function isStringNumber(value) {
  * // Returns undefined because all values are either null or undefined.
  * getFirstNonNullOrUndefined(undefined, null); // undefined
  */
-function getFirstNonNullOrUndefined(...values) {
+export function getFirstNonNullOrUndefined<T>(...values: (T | null | undefined)[]): T | undefined {
   for (const value of values) {
     if (value !== undefined && value !== null) {
       return value
@@ -159,20 +157,9 @@ function getFirstNonNullOrUndefined(...values) {
 }
 
 export {
-  noop,
-  getFirstNonNullOrUndefined,
-  isBoolean,
-  isEmpty,
   isFunction,
-  isHttpUrl,
-  isMacOs,
-  isNumber,
-  isStringNumber,
   isObject,
   isString,
-  isUndefined,
-  isWindow,
-  isWindowsOs,
   isPlainObject,
   hasOwn
 }

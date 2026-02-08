@@ -4,12 +4,10 @@
  * @param {string} key 去重依据的字段名
  * @returns {Array} 去重后的对象数组
  */
-function uniqueByField(arr, key) {
+export function uniqueByField<T = any>(arr: T[], key: string): T[] {
   const seen = new Map()
   return arr.filter((item) => {
-    const value = item[key]
+    const value = (item as any)[key]
     return seen.has(value) ? false : (seen.set(value, item), true)
   })
 }
-
-export { uniqueByField }

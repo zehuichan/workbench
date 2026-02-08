@@ -33,11 +33,11 @@
         <slot name="empty" />
       </template>
     </el-table>
-    {{ cellMeta }}
+    <pre>{{ dirtyCells }}</pre>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import {
   computed,
   ref,
@@ -65,55 +65,35 @@ import {
   ORIGINAL_CELL_META,
   PLUS_TABLE_FORM_INJECTION_KEY,
   PLUS_TABLE_INJECTION_KEY,
+  type CellMeta,
+  type PlusTableColumnOption,
+  type PlusTableProps,
 } from './tokens';
 
 import PlusTableColumn from './plus-table-column.vue';
 
-const props = defineProps({
-  tableKey: {
-    type: [String, Number],
-    default: '0',
-  },
-  rowKey: {
-    type: [Function, String],
-  },
-  columns: {
-    type: Array,
-    default: () => [],
-  },
-  data: {
-    type: Array,
-    default: () => [],
-  },
-  loading: {
-    type: Boolean,
-    default: false,
-  },
-  editable: {
-    type: [Boolean, String, Object],
-    default: false,
-  },
-  rules: {
-    type: Object,
-  },
+const props = withDefaults(defineProps<PlusTableProps>(), {
+  tableKey: '0',
+  columns: () => [],
+  data: () => [],
+  loading: false,
+  editable: false,
 });
 
-const vm = getCurrentInstance();
+const vm = getCurrentInstance()!;
 
 const route = useRoute();
 
 const tableKey = `table/${props.tableKey}${route.path.split('/').join('\/')}`;
 const columnsKey = `columns/${props.tableKey}${route.path.split('/').join('\/')}`;
 
-const tableWrapperInstance = ref();
-const tableInstance = ref();
-const paginationInstance = ref();
-// 当前表格是否激活
+const tableWrapperInstance = ref<HTMLElement | null>(null);
+const tableInstance = ref<Record<string, any> | null>(null);
+const paginationInstance = ref<unknown>(null);
 const activated = ref(false);
-// 单元格元数据
-const cellMeta = ref({ ...ORIGINAL_CELL_META });
+const cellMeta = ref<CellMeta>({ ...ORIGINAL_CELL_META });
 
-const hasHidden = (column) => {
+const hasHidden = (column: PlusTableColumnOption) => {
   const hidden = column.hidden;
   if (isBoolean(hidden)) {
     return !hidden;
@@ -124,11 +104,10 @@ const hasHidden = (column) => {
   return true;
 };
 
-const cachedData = shallowRef([]);
+const cachedData = shallowRef<any[]>([]);
 
-const formRefs = shallowRef({});
-// 存储有校验错误的单元格，格式：Map<`${rowIndex}-${columnIndex}`, errorMessage>
-const validationErrors = ref(new Map());
+const formRefs = shallowRef<Record<number, Record<number, { validate?: () => Promise<unknown> }>>>({});
+const validationErrors = ref(new Map<string, string>());
 
 const cachedColumns = computed(() => {
   if (props.columns.length > 0) {
@@ -149,9 +128,9 @@ const rowMeta = computed(() => props.data[cellMeta.value.row]);
 const columnMeta = computed(() => refColumns.value[cellMeta.value.col]);
 
 const dirtyCells = computed(() => {
-  const dirty = new Set();
+  const dirty = new Set<string>();
   const columns = refColumns.value;
-  const data = props.data;
+  const data = props.data ?? [];
   const cache = cachedData.value;
 
   if (!cache || !data || cache.length === 0 || data.length === 0) {
@@ -169,7 +148,7 @@ const dirtyCells = computed(() => {
       const prop = column.prop;
 
       if (prop && !isEqual(row[prop], oldRow[prop])) {
-        dirty.add(`${i}-${j}`);
+        dirty.add(`${i}:${j}`);
       }
     }
   }
@@ -177,11 +156,9 @@ const dirtyCells = computed(() => {
   return dirty;
 });
 
-// 行类
-const rowClassName = ({ rowIndex }) => `re-table-row-${rowIndex}`;
+const rowClassName = ({ rowIndex }: { rowIndex: number }) => `re-table-row-${rowIndex}`;
 
-// 单元格类
-const cellClassName = ({ rowIndex, columnIndex }) => {
+const cellClassName = ({ rowIndex, columnIndex }: { rowIndex: number; columnIndex: number }) => {
   const classNames = [`re-table-cell-${rowIndex}-${columnIndex}`];
   const { row, col } = cellMeta.value;
 
@@ -189,46 +166,112 @@ const cellClassName = ({ rowIndex, columnIndex }) => {
     classNames.push('current-cell');
   }
 
-  if (dirtyCells.value.has(`${rowIndex}-${columnIndex}`)) {
+  if (dirtyCells.value.has(`${rowIndex}:${columnIndex}`)) {
     classNames.push('dirty-cell');
   }
 
   return classNames.join(' ');
 };
 
-const updateCell = (data) => {
+const updateCell = (data: Partial<CellMeta>) => {
   cellMeta.value = { ...cellMeta.value, ...data };
+};
+
+const getRowIdentity = (row: any) => {
+  if (!props.rowKey) return row;
+  if (typeof props.rowKey === 'function') return (props.rowKey as (row: any) => any)(row);
+  return row?.[props.rowKey as string];
+};
+
+const findRowIndex = (row: any) => {
+  if (!props.data || props.data.length === 0) return -1;
+
+  if (props.rowKey) {
+    const targetKey = getRowIdentity(row);
+    return findIndex(props.data, (item) =>
+      isEqual(getRowIdentity(item), targetKey),
+    );
+  }
+
+  return findIndex(props.data, (item) => item === row);
 };
 
 /**
  * 对表格中的表单进行校验
- * @param {Boolean|Array} rows - 指定校验的行数据，true表示校验所有数据，false或未传表示校验变动数据
- * @returns {Promise} 返回一个 Promise，包含校验结果
+ * @param rows - true: 校验所有行; false: 仅校验变动(dirty)行; number/number[]: 校验指定行索引
+ * @returns Promise，包含校验结果（无表单时返回 null）
  */
-const validate = async (rows = true) => {
+const validate = async (rows: boolean | number | number[] = true): Promise<Record<number, Record<number, unknown>> | null> => {
   if (Object.keys(formRefs.value).length === 0) {
     return Promise.resolve(null);
   }
 
-  if (rows === true) {
-    rows = props.data;
-  } else {
-    rows = Array.isArray(rows) ? rows : [rows];
-  }
+  const getDirtyRowIndices = (): number[] => {
+    const indices = new Set<number>();
+    for (const key of dirtyCells.value) {
+      const [rowIndex] = key.split(':');
+      const n = Number(rowIndex);
+      if (!Number.isNaN(n)) indices.add(n);
+    }
+    return Array.from(indices);
+  };
 
-  const validRest = {};
+  const normalizeRowIndices = (input: boolean | number | number[]): number[] => {
+    if (input === true) {
+      return (props.data ?? []).map((_, i) => i);
+    }
+    if (input === false) {
+      return getDirtyRowIndices();
+    }
+    if (typeof input === 'number') {
+      return [input];
+    }
+    if (Array.isArray(input) && input.every((x) => typeof x === 'number')) {
+      return input;
+    }
+    return [];
+  };
 
-  for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-    try {
-      const da = await Promise.all(
-        formRefs.value[rowIndex].map((item) => item?.validate()),
-      );
-      console.log(da, 'da');
-    } catch (errors) {
-      validRest[rowIndex] = errors;
+  const extractErrorMessage = (error: unknown): string => {
+    if (!error) return 'Invalid';
+    if (typeof error === 'string') return error;
+    if (Array.isArray(error) && error[0] && typeof (error[0] as { message?: string }).message === 'string')
+      return (error[0] as { message: string }).message;
+    if (typeof error === 'object' && error !== null) {
+      const firstKey = Object.keys(error as object)[0];
+      const firstVal = firstKey ? (error as Record<string, unknown>)[firstKey] : undefined;
+      if (Array.isArray(firstVal) && firstVal[0] && typeof (firstVal[0] as { message?: string }).message === 'string')
+        return (firstVal[0] as { message: string }).message;
+    }
+    return 'Invalid';
+  };
+
+  const rowIndices = normalizeRowIndices(rows);
+  const validRest: Record<number, Record<number, unknown>> = {};
+  const nextErrors = new Map(validationErrors.value);
+
+  for (const rowIndex of rowIndices) {
+    const rowForms = formRefs.value?.[rowIndex];
+    if (!rowForms) continue;
+
+    for (let columnIndex = 0; columnIndex < rowForms.length; columnIndex++) {
+      const form = rowForms[columnIndex];
+      if (!form?.validate) continue;
+
+      const cellKey = `${rowIndex}-${columnIndex}`;
+
+      try {
+        await form.validate();
+        nextErrors.delete(cellKey);
+      } catch (errors) {
+        validRest[rowIndex] = validRest[rowIndex] || {};
+        validRest[rowIndex][columnIndex] = errors;
+        nextErrors.set(cellKey, extractErrorMessage(errors));
+      }
     }
   }
 
+  validationErrors.value = nextErrors;
   return Promise.resolve(validRest);
 };
 
@@ -243,15 +286,12 @@ const validate = async (rows = true) => {
  * @description 需求4：按下ArrowUp键时的边界处理，导航到第一行时，下一次向上导航到最后一行
  * @description 需求5：按下ArrowDown键时的边界处理，导航到最后一行时，下一次向下导航到第一行
  */
-const transformStart = (rowDelta, colDelta) => {
-  const totalRows = props.data.length;
+const transformStart = (rowDelta: number, colDelta: number): { row: number; col: number } => {
+  const totalRows = (props.data ?? []).length;
   const totalColumns = refColumns.value.length;
 
   if (totalRows === 0 || totalColumns === 0) {
-    return {
-      row: -1,
-      col: -1,
-    };
+    return { row: -1, col: -1 };
   }
 
   let { row, col } = cellMeta.value;
@@ -261,7 +301,6 @@ const transformStart = (rowDelta, colDelta) => {
   const maxAttempts = totalRows * totalColumns;
 
   while (attempts < maxAttempts) {
-    // 边界处理
     if (newCol < 0) {
       newRow -= 1;
       newCol = totalColumns - 1;
@@ -275,49 +314,43 @@ const transformStart = (rowDelta, colDelta) => {
       newRow = 0;
     }
 
-    // 检查是否为忽略列
-    if (!IGNORE_COLUMN_FLAG.includes(refColumns.value[newCol].type)) {
-      return {
-        row: newRow,
-        col: newCol,
-      };
+    const colDef = refColumns.value[newCol];
+    if (!colDef || !IGNORE_COLUMN_FLAG.includes(colDef.type)) {
+      return { row: newRow, col: newCol };
     }
 
-    // 继续寻找下一个有效单元格
     newRow += rowDelta;
     newCol += colDelta;
     attempts++;
   }
+
+  return { row: -1, col: -1 };
 };
 
-const transformEnd = (scrollIntoView) => {
+const transformEnd = (scrollIntoView: boolean) => {
   const { row, activated, editable, col } = cellMeta.value;
 
   // 检查当前单元格是否有校验错误
   const cellKey = `${row}-${col}`;
   const hasValidationError = validationErrors.value.has(cellKey);
 
-  // 聚焦输入框（如有）
-  // 如果有校验错误，即使 props.editable 为 false，也应该聚焦输入框
   if (activated && (props.editable || editable || hasValidationError)) {
     nextTick(() => {
-      const currentCell =
-        tableInstance.value.$el.querySelector('.current-cell');
+      const el = tableInstance.value?.$el;
+      const currentCell = el?.querySelector('.current-cell');
       if (currentCell) {
         const input = currentCell.querySelector('input, textarea');
         if (input) {
-          input.focus({ preventScroll: true });
+          (input as HTMLInputElement).focus({ preventScroll: true });
         }
       }
     });
   }
 
-  // 滚动到当前行
   if (scrollIntoView && row >= 0) {
     nextTick(() => {
-      const rowElement = tableInstance.value.$el.querySelector(
-        `.re-table-row-${row}`,
-      );
+      const el = tableInstance.value?.$el;
+      const rowElement = el?.querySelector(`.re-table-row-${row}`);
       if (rowElement) {
         rowElement.scrollIntoView({ block: 'center', inline: 'nearest' });
       }
@@ -333,9 +366,8 @@ const transformEnd = (scrollIntoView) => {
  * @description 需求3：props.editable = 'row' 时，点击行编辑
  * @description 需求4：props.editable = 'cell' 时，点击单元格编辑
  */
-const handleCellClick = (row, column, cell, event) => {
-  // 需求1：忽略 selection、index 等特殊列
-  if (IGNORE_COLUMN_FLAG.includes(column.type)) {
+const handleCellClick = (row: any, column: { type?: string; getColumnIndex: () => number }, _cell: unknown, event: MouseEvent) => {
+  if (IGNORE_COLUMN_FLAG.includes(column.type ?? '')) {
     return;
   }
 
@@ -345,9 +377,7 @@ const handleCellClick = (row, column, cell, event) => {
     editable,
   } = cellMeta.value;
 
-  const rowIndex = props.rowKey
-    ? findIndex(props.data, (item) => item[props.rowKey] === row[props.rowKey])
-    : findIndex(props.data, row);
+  const rowIndex = findRowIndex(row);
   const columnIndex = column.getColumnIndex();
 
   const currentCell =
@@ -395,7 +425,7 @@ const handleCellClick = (row, column, cell, event) => {
 
 // 注册按键导航，涉及以下按键：
 // ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab', 'F2', 'Escape']
-const registerGlobalKeydownEvent = (event) => {
+const registerGlobalKeydownEvent = (event: KeyboardEvent) => {
   if (!activated.value) {
     return;
   }
@@ -471,16 +501,17 @@ const registerGlobalKeydownEvent = (event) => {
   }
 };
 
-const registerGlobalMousedownEvent = (event) => {
-  const { flag } = getEventTargetNode(event, tableInstance.value.$el);
+const registerGlobalMousedownEvent = (event: MouseEvent) => {
+  const el = tableInstance.value?.$el;
+  const { flag } = el ? getEventTargetNode(event, el as Element) : { flag: false };
   activated.value = flag;
 };
 
-const changeInstance = (instance) => {
+const changeInstance = (instance: Record<string, any> | null) => {
   if (instance) {
     instance.validate = validate;
   }
-  vm.exposed = vm.exposeProxy = tableInstance.value = instance || {};
+  (vm as any).exposed = (vm as any).exposeProxy = tableInstance.value = instance ?? {};
 };
 
 watch(activated, (value) => {

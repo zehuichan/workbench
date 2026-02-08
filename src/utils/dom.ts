@@ -4,9 +4,9 @@ import { upperFirst } from 'es-toolkit'
 
 import { isNumber, isString, isStringNumber } from '@/utils'
 
-export const stopPropagation = (event) => event.stopPropagation()
+export const stopPropagation = (event: Event) => event.stopPropagation()
 
-export function preventDefault(event, isStopPropagation) {
+export function preventDefault(event: Event, isStopPropagation?: boolean) {
   /* istanbul ignore else */
   if (typeof event.cancelable !== 'boolean' || event.cancelable) {
     event.preventDefault()
@@ -17,18 +17,18 @@ export function preventDefault(event, isStopPropagation) {
   }
 }
 
-export function getBoundingClientRect(element) {
+export function getBoundingClientRect(element: Element): DOMRect | number {
   if (!element || !element.getBoundingClientRect) {
     return 0
   }
   return element.getBoundingClientRect()
 }
 
-const trim = function(s) {
+const trim = function(s: string) {
   return (s || '').replace(/^[\s\uFEFF]+|[\s\uFEFF]+$/g, '')
 }
 
-export function hasClass(el, cls) {
+export function hasClass(el: Element, cls: string): boolean {
   if (!el || !cls) return false
 
   if (cls.indexOf(' ') !== -1)
@@ -40,7 +40,7 @@ export function hasClass(el, cls) {
   }
 }
 
-export function addClass(el, cls) {
+export function addClass(el: Element, cls: string) {
   if (!el) return
   let curClass = el.className
   const classes = (cls || '').split(' ')
@@ -60,7 +60,7 @@ export function addClass(el, cls) {
   }
 }
 
-export function removeClass(el, cls) {
+export function removeClass(el: Element, cls: string) {
   if (!el || !cls) return
   const classes = cls.split(' ')
   let curClass = ` ${el.className} `
@@ -80,10 +80,10 @@ export function removeClass(el, cls) {
   }
 }
 
-export function hackCss(attr, value) {
+export function hackCss(attr: string, value: string) {
   const prefix = ['webkit', 'Moz', 'ms', 'OT']
 
-  const styleObj = {}
+  const styleObj: Record<string, string> = {}
   prefix.forEach((item) => {
     styleObj[`${item}${upperFirst(attr)}`] = value
   })
@@ -102,7 +102,7 @@ export function hackCss(attr, value) {
  * rightIncludeBody: the distance between the leftmost element and the right side of the document
  * bottomIncludeBody: the distance from the bottom of the element to the bottom of the document
  */
-export function getViewportOffset(element) {
+export function getViewportOffset(element: Element) {
   const doc = document.documentElement
 
   const docScrollLeft = doc.scrollLeft
@@ -114,6 +114,18 @@ export function getViewportOffset(element) {
   const pageYOffset = window.pageYOffset
 
   const box = getBoundingClientRect(element)
+
+  if (typeof box === 'number') {
+    // Handling the case where getBoundingClientRect returns 0
+    return {
+       left: 0,
+       top: 0,
+       right: 0,
+       bottom: 0,
+       rightIncludeBody: 0,
+       bottomIncludeBody: 0
+    }
+  }
 
   const { left: retLeft, top: rectTop, width: rectWidth, height: rectHeight } = box
 
@@ -137,7 +149,7 @@ export function getViewportOffset(element) {
   }
 }
 
-export function getPadding(el) {
+export function getPadding(el: HTMLElement) {
   const style = window.getComputedStyle(el, null)
   const paddingLeft = Number.parseInt(style.paddingLeft, 10) || 0
   const paddingRight = Number.parseInt(style.paddingRight, 10) || 0
@@ -151,9 +163,9 @@ export function getPadding(el) {
   }
 }
 
-export function getEventTargetNode(event, container, queryCls) {
-  let targetElem
-  let target = event.target
+export function getEventTargetNode(event: Event, container: Element, queryCls?: string) {
+  let targetElem: Element | undefined
+  let target = event.target as Element | null
 
   while (target && target.nodeType && target !== document) {
     if (queryCls && hasClass(target, queryCls)) {
@@ -166,13 +178,13 @@ export function getEventTargetNode(event, container, queryCls) {
       }
     }
 
-    target = target.parentNode
+    target = target.parentNode as Element | null
   }
 
   return { flag: false }
 }
 
-export function addUnit(value, defaultUnit = 'px') {
+export function addUnit(value: string | number | undefined, defaultUnit = 'px') {
   if (!value) return ''
   if (isNumber(value) || isStringNumber(value)) {
     return `${value}${defaultUnit}`

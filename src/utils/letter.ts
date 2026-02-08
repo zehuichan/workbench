@@ -2,7 +2,8 @@
  * Capitalize the first letter of a string
  * @param string
  */
-function capitalizeFirstLetter(string) {
+export function capitalizeFirstLetter(string: string): string {
+  if (!string) return ''
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
@@ -12,7 +13,7 @@ function capitalizeFirstLetter(string) {
  * @param str The string to convert
  * @returns The string with the first letter in lowercase
  */
-function toLowerCaseFirstLetter(str) {
+export function toLowerCaseFirstLetter(str: string): string {
   if (!str) return str // Return if the string is empty
   return str.charAt(0).toLowerCase() + str.slice(1)
 }
@@ -22,14 +23,14 @@ function toLowerCaseFirstLetter(str) {
  * @param key
  * @param parentKey
  */
-function toCamelCase(key, parentKey) {
+export function toCamelCase(key: string, parentKey?: string): string {
   if (!parentKey) {
     return key
   }
   return parentKey + key.charAt(0).toUpperCase() + key.slice(1)
 }
 
-function kebabToCamelCase(str) {
+export function kebabToCamelCase(str: string): string {
   return str
     .split('-')
     .filter(Boolean)
@@ -37,11 +38,4 @@ function kebabToCamelCase(str) {
       index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1),
     )
     .join('')
-}
-
-export {
-  capitalizeFirstLetter,
-  kebabToCamelCase,
-  toCamelCase,
-  toLowerCaseFirstLetter,
 }
