@@ -1,0 +1,34 @@
+.re-table {
+  .re-table-cell-content {
+    display: contents;
+  }
+
+  /* 有校验错误时作为 tooltip 的 trigger，需要占满单元格以便 tooltip 正确定位 */
+  .re-table-cell-content--with-tooltip {
+    display: block;
+    width: 100%;
+    min-height: 1.5em;
+  }
+
+  .re-table-cell--error {
+    position: relative;
+    box-shadow: inset 0 0 0 1px var(--el-color-danger);
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: var(--el-color-danger) transparent transparent transparent;
+      transform: rotate(45deg);
+    }
+  }
+
+  .re-table-header--required::before {
+    content: '*';
+    color: var(--el-color-danger);
+    margin-right: 4px;
+  }
+}

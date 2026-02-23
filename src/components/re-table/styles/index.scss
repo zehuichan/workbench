@@ -1,0 +1,13 @@
+@use './cell';
+@use './dirty';
+@use './validation';
+
+.re-table-wrapper {
+  .re-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+}
