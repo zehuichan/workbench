@@ -4,7 +4,7 @@ import type { CellMeta, ReTableColumn, RowData } from '../types'
 import {
   DEFAULT_CELL_META,
   RE_TABLE_INJECTION_KEY,
-  type ColumnOpsContext,
+  type ColumnOptionsContext,
   type ReTableContext,
 } from '../constants'
 
@@ -45,7 +45,7 @@ export function useStore() {
     data: Ref<RowData[]>
     editable: Ref<boolean | 'row' | 'cell' | 'manual'>
     validationErrors: Ref<Map<string, string>>
-    columnOps: ColumnOpsContext | null
+    columnOptions: ColumnOptionsContext | null
     cachedData?: ShallowRef<RowData[]>
   }) => {
     provide<ReTableContext>(RE_TABLE_INJECTION_KEY, {

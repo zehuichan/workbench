@@ -4,7 +4,7 @@ import { isBoolean, isFunction } from '@/utils'
 
 import type { ReTableColumn } from '../types'
 
-export interface UseColumnOpsOptions {
+export interface UseColumnOptionsOptions {
   initialColumns: Ref<ReTableColumn[]>
   tableKey?: string
   storage?: 'local' | 'session' | false
@@ -30,7 +30,7 @@ function getStorage(
   }
 }
 
-export function useColumnOps(options: UseColumnOpsOptions) {
+export function useColumnOptions(options: UseColumnOptionsOptions) {
   const { initialColumns, tableKey, storage = false } = options
 
   const columnOrder = ref<string[]>([])

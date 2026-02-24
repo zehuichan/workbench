@@ -72,40 +72,40 @@ import { Rank, Setting } from '@element-plus/icons-vue'
 
 import type { ReTableColumn } from './types'
 import { RE_TABLE_INJECTION_KEY } from './constants'
-import type { ColumnOpsContext } from './constants'
+import type { ColumnOptionsContext } from './constants'
 
 const ctx = inject(RE_TABLE_INJECTION_KEY, null)
-const columnOps = computed(() => ctx?.columnOps ?? null)
+const columnOptions = computed(() => ctx?.columnOptions ?? null)
 
 const orderedColumns = computed(() => {
-  const ops = columnOps.value
+  const ops = columnOptions.value
   if (!ops) return []
   return ops.getOrderedColumnsWithProp()
 })
 
-const isHidden = (prop: string) => columnOps.value?.isColumnHidden(prop) ?? false
+const isHidden = (prop: string) => columnOptions.value?.isColumnHidden(prop) ?? false
 
 const toggle = (prop: string, visible: boolean) => {
-  columnOps.value?.toggleColumn(prop, visible)
+  columnOptions.value?.toggleColumn(prop, visible)
 }
 
 const handleSelectAll = () => {
   for (const col of orderedColumns.value) {
-    if (col.prop) columnOps.value?.toggleColumn(col.prop, true)
+    if (col.prop) columnOptions.value?.toggleColumn(col.prop, true)
   }
 }
 
 const handleInvert = () => {
   for (const col of orderedColumns.value) {
     if (col.prop) {
-      const hidden = columnOps.value?.isColumnHidden(col.prop)
-      columnOps.value?.toggleColumn(col.prop, !!hidden)
+      const hidden = columnOptions.value?.isColumnHidden(col.prop)
+      columnOptions.value?.toggleColumn(col.prop, !!hidden)
     }
   }
 }
 
 const handleReset = () => {
-  columnOps.value?.resetColumns()
+  columnOptions.value?.resetColumns()
 }
 
 const listEl = ref<HTMLElement | null>(null)
@@ -131,7 +131,7 @@ const handleDrop = (e: DragEvent) => {
   if (!target || dragFromIndex < 0) return
   const toIndex = Number(target.dataset.index)
   if (toIndex >= 0 && toIndex !== dragFromIndex) {
-    columnOps.value?.reorderColumns(dragFromIndex, toIndex)
+    columnOptions.value?.reorderColumns(dragFromIndex, toIndex)
   }
   dragFromIndex = -1
 }

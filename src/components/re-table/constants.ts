@@ -20,7 +20,7 @@ export const DEFAULT_CELL_META: CellMeta = {
   contextmenu: false,
 }
 
-export interface ColumnOpsContext {
+export interface ColumnOptionsContext {
   visibleColumns: Ref<ReTableColumn[]>
   hiddenColumns: Ref<Set<string>>
   toggleColumn: (prop: string, visible: boolean) => void
@@ -42,7 +42,7 @@ export interface ReTableContext {
   cachedData: ShallowRef<RowData[]>
   editable: Ref<boolean | 'row' | 'cell' | 'manual'>
   validationErrors: Ref<Map<string, string>>
-  columnOps?: ColumnOpsContext | null
+  columnOptions?: ColumnOptionsContext | null
 }
 
 export const RE_TABLE_INJECTION_KEY: InjectionKey<ReTableContext> =

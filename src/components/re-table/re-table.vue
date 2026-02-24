@@ -69,13 +69,13 @@ import { DEFAULT_CELL_META, SPECIAL_COLUMN_TYPES } from './constants'
 import {
   createBuiltinHotkeys,
   isPrintableKey,
-  useColumnOps,
+  useColumnOptions,
   useDirtyTracking,
   useEditable,
   useEditHistory,
   useHotkey,
   useNavigation,
-  useRowOps,
+  useRowOptions,
   useStore,
   useValidation,
 } from './composables'
@@ -166,8 +166,8 @@ if (useColumnSetting) {
   )
 }
 
-const columnOps = useColumnSetting
-  ? useColumnOps({
+const columnOptions = useColumnSetting
+  ? useColumnOptions({
       initialColumns: columnsRef,
       tableKey: props.tableKey!,
       storage: props.columnSettingStorage ?? 'local',
@@ -189,7 +189,7 @@ watch(() => props.columns, updateVisibleColumnsFromProps, {
 })
 
 const visibleColumns =
-  useColumnSetting && columnOps ? columnOps.visibleColumns : visibleColumnsFromProps
+  useColumnSetting && columnOptions ? columnOptions.visibleColumns : visibleColumnsFromProps
 
 // 5.5 分页：客户端分页时切片数据，total 优先用 pagination.total（服务端）否则用 data.length
 const paginationOffset = computed(() => {
@@ -357,7 +357,7 @@ const { startEdit, confirmEdit, cancelEdit } = useEditable({
 
 // ──── 行操作 ────
 
-const rowOps = useRowOps({
+const rowOptions = useRowOptions({
   data: computed(() => props.data),
   columns: visibleColumns,
   rowKey: props.rowKey as any,
@@ -579,15 +579,15 @@ provideStore({
   editable: computed(() => props.editable),
   validationErrors: validation.errors,
   cachedData,
-  columnOps: columnOps
+  columnOptions: columnOptions
     ? {
-        visibleColumns: columnOps.visibleColumns,
-        hiddenColumns: columnOps.hiddenColumns,
-        toggleColumn: columnOps.toggleColumn,
-        reorderColumns: columnOps.reorderColumns,
-        resetColumns: columnOps.resetColumns,
-        getOrderedColumnsWithProp: columnOps.getOrderedColumnsWithProp,
-        isColumnHidden: columnOps.isColumnHidden,
+        visibleColumns: columnOptions.visibleColumns,
+        hiddenColumns: columnOptions.hiddenColumns,
+        toggleColumn: columnOptions.toggleColumn,
+        reorderColumns: columnOptions.reorderColumns,
+        resetColumns: columnOptions.resetColumns,
+        getOrderedColumnsWithProp: columnOptions.getOrderedColumnsWithProp,
+        isColumnHidden: columnOptions.isColumnHidden,
       }
     : null,
 })
@@ -611,11 +611,11 @@ defineExpose({
   canRedo: computed(() => editHistory.canRedo()),
 
   // 行操作
-  insertRow: rowOps.insertRow,
-  deleteRow: rowOps.deleteRow,
-  moveRow: rowOps.moveRow,
-  duplicateRow: rowOps.duplicateRow,
-  getModifiedRows: rowOps.getModifiedRows,
+  insertRow: rowOptions.insertRow,
+  deleteRow: rowOptions.deleteRow,
+  moveRow: rowOptions.moveRow,
+  duplicateRow: rowOptions.duplicateRow,
+  getModifiedRows: rowOptions.getModifiedRows,
 
   // 校验
   validate: validation.validate,
@@ -629,10 +629,10 @@ defineExpose({
   resetDirtyTracking,
 
   // 列操作
-  addColumn: columnOps?.addColumn ?? (() => {}),
-  removeColumn: columnOps?.removeColumn ?? (() => {}),
-  updateColumn: columnOps?.updateColumn ?? (() => {}),
-  resetColumns: columnOps?.resetColumns ?? (() => {}),
+  addColumn: columnOptions?.addColumn ?? (() => {}),
+  removeColumn: columnOptions?.removeColumn ?? (() => {}),
+  updateColumn: columnOptions?.updateColumn ?? (() => {}),
+  resetColumns: columnOptions?.resetColumns ?? (() => {}),
 
   // el-table 原生方法透传
   clearSelection: () => getElTable()?.clearSelection(),

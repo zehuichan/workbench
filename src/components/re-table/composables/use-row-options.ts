@@ -4,13 +4,13 @@ import { cloneDeep } from 'es-toolkit'
 
 import type { ReTableColumn, RowData } from '../types'
 
-export interface UseRowOpsOptions {
+export interface UseRowOptionsOptions {
   data: Ref<RowData[]>
   columns: Ref<ReTableColumn[]>
   rowKey?: string | ((row: RowData) => string | number)
 }
 
-export function useRowOps(options: UseRowOpsOptions) {
+export function useRowOptions(options: UseRowOptionsOptions) {
   const { data, columns } = options
 
   function insertRow(index: number, row?: Partial<RowData>): void {
