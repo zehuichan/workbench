@@ -1,3 +1,16 @@
 .re-table-next-wrapper {
+
   width: 100%;
+
+  .el-table {
+    --el-table-border-color: var(--el-border-color-light);
+    --el-table-header-bg-color: var(--el-fill-color-light);
+    --el-table-text-color: var(--el-text-color-primary);
+    font-weight: 500;
+
+    th.el-table__cell {
+      color: var(--el-text-color-primary);
+      font-weight: 400;
+    }
+  }
 }

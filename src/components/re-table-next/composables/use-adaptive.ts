@@ -47,7 +47,7 @@ export function useAdaptive(options: UseAdaptiveOptions) {
    *   - wrapper 之后的所有兄弟元素（高度 + margin）
    *   - excludeSelectors 指定的元素
    */
-  const getBottomReserved = (el: HTMLElement): number => {
+  const getLayoutOffset = (el: HTMLElement): number => {
     let reserved = 0
 
     // 1. wrapper 自身 margin-bottom
@@ -103,10 +103,10 @@ export function useAdaptive(options: UseAdaptiveOptions) {
     const offsetBottom =
       config.value.offsetBottom ?? DEFAULT_ADAPTIVE_OFFSET_BOTTOM
 
-    const bottomReserved = getBottomReserved(el)
+    const layoutOffset = getLayoutOffset(el)
 
     const calculatedHeight =
-      viewportHeight - rect.top - offsetTop - offsetBottom - bottomReserved
+      viewportHeight - rect.top - offsetTop - offsetBottom - layoutOffset
     maxHeight.value = Math.max(calculatedHeight, 100) // 最小 100px
   }
 
