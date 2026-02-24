@@ -21,6 +21,11 @@ const routes = [
     path: '/ant-table',
     component: () => import('@/views/ant-table/index.vue'),
   },
+  {
+    name: 're-table-next',
+    path: '/re-table-next',
+    component: () => import('@/views/re-table-next/index.vue'),
+  },
 ] as RouteRecordRaw[];
 
 export { routes };
