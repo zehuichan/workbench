@@ -4,7 +4,8 @@
     "paths": {
       "@/*": ["./src/*"],
       "#/*": ["./src/*"]
-    }
+    },
+    "jsx": "preserve"
   },
   "references": [
     { "path": "./tsconfig.app.json" },

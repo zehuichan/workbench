@@ -21,6 +21,11 @@ const routes = [
     path: '/re-table-next',
     component: () => import('@/views/re-table-next/index.vue'),
   },
+  {
+    name: 're-table-next-stage1',
+    path: '/re-table-next/stage1',
+    component: () => import('@/views/re-table-next/stage1.vue'),
+  },
 ] as RouteRecordRaw[];
 
 export { routes };

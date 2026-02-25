@@ -21,7 +21,27 @@
     >
       <template #default>
         <slot>
-          <ReTableNextColumn :columns="visibleColumns" />
+          <template
+            v-for="(column, idx) in visibleColumns"
+            :key="column.key ?? column.prop ?? column.type ?? idx"
+          >
+            <component
+              v-if="[SELECTION_COLUMN, INDEX_COLUMN].includes(column.type)"
+              :is="h(ElTableColumn, column, slots)"
+            />
+
+            <component
+              v-else-if="[EXPAND_COLUMN].includes(column.type)"
+              :is="
+                h(ElTableColumn, column, {
+                  default: (scope: unknown) =>
+                    slots.expand && slots.expand(scope),
+                })
+              "
+            />
+
+            <ReTableNextColumn v-else :item="column" v-slot="slots" />
+          </template>
         </slot>
       </template>
 
@@ -46,25 +66,42 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, provide, ref, toRef, watch } from 'vue';
+import {
+  computed,
+  h,
+  nextTick,
+  provide,
+  ref,
+  toRef,
+  useSlots,
+  watch,
+} from 'vue';
 
-import { isBoolean, isFunction } from '@/utils';
+import { ElTableColumn } from 'element-plus';
+
+import { isBoolean } from '@/utils';
 
 import type {
   AdaptiveConfig,
   ReTableNextColumn as ColumnType,
   ReTableNextProps,
+  ReTableNextContext,
 } from './types';
 import {
+  EXPAND_COLUMN,
+  INDEX_COLUMN,
   RE_TABLE_NEXT_INJECTION_KEY,
-  type ReTableNextContext,
+  SELECTION_COLUMN,
 } from './constants';
 import { useAdaptive } from './composables';
 import ReTableNextColumn from './re-table-next-column.vue';
 
 import './styles/index.scss';
 
-defineOptions({ name: 'ReTableNext' });
+defineOptions({
+  name: 'ReTableNext',
+  inheritAttrs: false,
+});
 
 const props = withDefaults(defineProps<ReTableNextProps>(), {
   columns: () => [],
@@ -81,8 +118,9 @@ const emit = defineEmits<{
   scroll: [event: Event];
 }>();
 
-// ──── Refs ────
+// ──── Slots & Refs ────
 
+const slots = useSlots();
 const wrapperEl = ref<HTMLElement | null>(null);
 const tableRef = ref<Record<string, any> | null>(null);
 

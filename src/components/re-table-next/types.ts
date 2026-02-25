@@ -1,8 +1,17 @@
-import type { Component, VNode } from 'vue';
+import type { Component,  VNode, Ref } from 'vue';
 
 // ──── 基础类型 ────
 
 export type RowData = Record<string, any>;
+
+export interface ReTableNextContext {
+  tableEl: Ref<HTMLElement | null>;
+  tableInstance: Ref<Record<string, any> | null>;
+  columns: Ref<ReTableNextColumn[]>;
+  visibleColumns: Ref<ReTableNextColumn[]>;
+  data: Ref<RowData[]>;
+  editable: Ref<boolean | 'row' | 'cell' | 'manual'>;
+}
 
 // ──── 单元格上下文 ────
 
@@ -27,8 +36,6 @@ export interface ReTableNextColumn<T = RowData> {
   fixed?: 'left' | 'right' | boolean;
   align?: 'left' | 'center' | 'right';
   sortable?: boolean | 'custom';
-  resizable?: boolean;
-  ellipsis?: boolean;
 
   // 显隐
   hidden?: boolean;
