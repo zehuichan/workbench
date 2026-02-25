@@ -116,9 +116,6 @@ const columns: ReTableNextColumn<TableRow>[] = [
         :columns="columns"
         :data="tableData"
         :adaptive="adaptiveEnabled"
-        row-key="id"
-        stripe
-        border
       >
         <template #cell-status="{ row }">
           <el-tag

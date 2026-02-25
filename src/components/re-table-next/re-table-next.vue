@@ -1,5 +1,14 @@
 <template>
   <div ref="wrapperEl" class="re-table-next-wrapper">
+    <!--header（可选，参与自适应高度计算时会被扣除）-->
+    <div class="re-table-next-header flex items-center justify-between p-2">
+      <slot name="title">
+        <div>todo title</div>
+      </slot>
+      <slot name="actions">
+        <div>todo actions</div>
+      </slot>
+    </div>
     <el-table
       v-bind="$attrs"
       ref="tableRef"
@@ -24,6 +33,15 @@
         <slot name="empty" />
       </template>
     </el-table>
+    <!--footer（可选，参与自适应高度计算时会被扣除）-->
+    <div class="re-table-next-footer flex items-center justify-between p-2">
+      <slot name="summary">
+        <div>todo summary</div>
+      </slot>
+      <slot name="pagination">
+        <div>todo pagination</div>
+      </slot>
+    </div>
   </div>
 </template>
 

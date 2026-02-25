@@ -15,16 +15,27 @@ export interface UseAdaptiveOptions {
   wrapperEl: Ref<HTMLElement | null>
 }
 
+/** 取元素占位高度（含 margin），用于扣除 header/footer */
+function getElementFullHeight(el: HTMLElement): number {
+  const rect = el.getBoundingClientRect()
+  const style = getComputedStyle(el)
+  const marginTop = parseFloat(style.marginTop) || 0
+  const marginBottom = parseFloat(style.marginBottom) || 0
+  return rect.height + marginTop + marginBottom
+}
+
 /**
  * 表格自适应高度 composable
  *
- * 计算 maxHeight = 视口高度 - rect.top - offsetTop - offsetBottom - bottomReserved
+ * 计算 maxHeight = 视口高度 - rect.top - offsetTop - offsetBottom - bottomReserved - headerHeight - footerHeight
  *
  * 其中 bottomReserved 自动探测：
  *   - wrapper 自身 margin-bottom
  *   - 父元素 padding-bottom / border-bottom
  *   - wrapper 之后的兄弟元素高度 + margin
  *   - excludeSelectors 指定的元素
+ *
+ * header/footer 为 wrapper 内可选区域，若存在则自动测量并扣除，避免双滚动条。
  *
  * 确保表格恰好填满剩余视口，只保留表格内部滚动条，不产生页面级滚动条。
  */
@@ -105,8 +116,20 @@ export function useAdaptive(options: UseAdaptiveOptions) {
 
     const layoutOffset = getLayoutOffset(el)
 
+    // 扣除 wrapper 内 header/footer 高度（可选区域），避免双滚动条
+    let innerReserved = 0
+    const headerEl = el.querySelector('.re-table-next-header') as HTMLElement | null
+    const footerEl = el.querySelector('.re-table-next-footer') as HTMLElement | null
+    if (headerEl) innerReserved += getElementFullHeight(headerEl)
+    if (footerEl) innerReserved += getElementFullHeight(footerEl)
+
     const calculatedHeight =
-      viewportHeight - rect.top - offsetTop - offsetBottom - layoutOffset
+      viewportHeight -
+      rect.top -
+      offsetTop -
+      offsetBottom -
+      layoutOffset -
+      innerReserved
     maxHeight.value = Math.max(calculatedHeight, 100) // 最小 100px
   }
 
