@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { h, ref } from 'vue';
-import { ElTag, ElProgress } from 'element-plus';
+import { h, ref, VNode } from 'vue';
+import { ElTag, ElProgress, TableColumnCtx } from 'element-plus';
 
 import { ReTableNext } from '@/components';
 import type { ReTableNextColumn } from '@/components/re-table-next';
@@ -97,8 +97,11 @@ const columns: ReTableNextColumn<TaskRow>[] = [
     prop: 'status',
     label: '状态',
     sortable: true,
-    render: ({ value }) => {
-      const info = statusMap[value] ?? { label: value, type: 'info' as const };
+    render: (scope) => {
+      const info = statusMap[scope.row.status] ?? {
+        label: scope.row.status,
+        type: 'info' as const,
+      };
       return h(ElTag, { type: info.type, size: 'small' }, () => info.label);
     },
   },
@@ -107,10 +110,10 @@ const columns: ReTableNextColumn<TaskRow>[] = [
   {
     prop: 'progress',
     label: '进度',
-    render: ({ value }) =>
+    render: (scope) =>
       h(ElProgress, {
-        percentage: value,
-        status: value === 100 ? 'success' : undefined,
+        percentage: scope.row.progress,
+        status: scope.row.progress === 100 ? 'success' : undefined,
       }),
   },
 
@@ -119,8 +122,11 @@ const columns: ReTableNextColumn<TaskRow>[] = [
     prop: 'priority',
     label: '优先级',
     sortable: 'custom',
-    render: ({ value }) => {
-      const info = priorityMap[value] ?? { label: value, color: '#909399' };
+    render: (scope) => {
+      const info = priorityMap[scope.row.priority] ?? {
+        label: scope.row.priority,
+        color: '#909399',
+      };
       return h(
         'span',
         {
@@ -143,8 +149,13 @@ const columns: ReTableNextColumn<TaskRow>[] = [
     prop: 'amount',
     label: '金额',
     sortable: true,
-    formatter: (value) =>
-      `¥${Number(value).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`,
+    formatter: (
+      row: any,
+      column: any,
+      cellValue: any,
+      index: number,
+    ): VNode | string =>
+      `¥${Number(cellValue).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`,
   },
 
   // 1.5 — 通过插槽渲染（在模板中用 #cell-assignee）
@@ -174,11 +185,11 @@ const columns: ReTableNextColumn<TaskRow>[] = [
     prop: 'endDate',
     label: '截止日期',
     sortable: true,
-    renderHeader: (col) =>
+    renderHeader: ({ column }) =>
       h(
         'span',
         { style: 'color: var(--el-color-danger); font-weight: 600' },
-        `⏰ ${col.label}`,
+        `⏰ ${column.label}`,
       ),
   },
 
@@ -267,15 +278,14 @@ const columns: ReTableNextColumn<TaskRow>[] = [
         <!-- footer 插槽 -->
         <template #summary>
           <span class="text-xs text-gray-400">
-            排序：{{
-              sortInfo.prop ? `${sortInfo.prop} (${sortInfo.order})` : '无'
-            }}
+            排序：
+            {{ sortInfo.prop ? `${sortInfo.prop} (${sortInfo.order})` : '无' }}
           </span>
         </template>
         <template #pagination>
-          <span class="text-xs text-gray-400"
-            >共 {{ tableData.length }} 条数据</span
-          >
+          <span class="text-xs text-gray-400">
+            共 {{ tableData.length }} 条数据
+          </span>
         </template>
       </ReTableNext>
     </div>

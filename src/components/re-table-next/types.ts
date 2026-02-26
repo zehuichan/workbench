@@ -1,4 +1,5 @@
-import type { Component,  VNode, Ref } from 'vue';
+import type { Component, VNode, Ref } from 'vue';
+import type { TableColumnCtx } from 'element-plus';
 
 // ──── 基础类型 ────
 
@@ -23,42 +24,28 @@ export interface CellContext<T = RowData> {
   colIndex: number;
 }
 
-// ──── 列配置 ────
+// ──── 列配置（继承 Element Plus TableColumnCtx，仅声明扩展项）────
 
-export interface ReTableNextColumn<T = RowData> {
-  type?: 'selection' | 'index' | 'expand';
-  key?: string;
-  prop?: keyof T & string;
-  label?: string;
-  width?: number | string;
-  minWidth?: number | string;
-  maxWidth?: number | string;
-  fixed?: 'left' | 'right' | boolean;
-  align?: 'left' | 'center' | 'right';
-  sortable?: boolean | 'custom';
-
-  // 显隐
+/** 列配置：继承 el-table-column 的 TableColumnCtx，prop/label/width/formatter/renderHeader 等由基类提供 */
+export interface ReTableNextColumn<T = RowData> extends Partial<
+  Omit<TableColumnCtx, 'children'>
+> {
+  /** 列显隐（扩展，非 el-table 原生） */
   hidden?: boolean;
-
-  // 编辑
+  /** 单元格是否可编辑（扩展） */
   editable?: boolean | ((row: T) => boolean);
+  /** 编辑态使用的组件（扩展） */
   component?: string | Component;
+  /** 编辑组件 props（扩展） */
   componentProps?:
     | Record<string, any>
     | ((row: T, column: ReTableNextColumn<T>) => Record<string, any>);
-
-  // 校验
+  /** 校验规则（扩展） */
   rules?: Record<string, any> | Record<string, any>[];
-
-  // 渲染
-  formatter?: (value: any, row: T, rowIndex: number) => any;
+  /** 单元格自定义渲染（扩展，与 formatter 并存） */
   render?: (ctx: CellContext<T>) => VNode;
-  renderHeader?: (column: ReTableNextColumn<T>) => VNode;
-
-  // 多级表头
+  /** 多级表头子列（与 TableColumnCtx.children 兼容） */
   children?: ReTableNextColumn<T>[];
-
-  [key: string]: any;
 }
 
 // ──── 分页配置 ────

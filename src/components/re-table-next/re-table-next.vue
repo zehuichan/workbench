@@ -40,7 +40,10 @@
               "
             />
 
-            <ReTableNextColumn v-else :item="column" v-slot="slots" />
+            <component
+              v-else
+              :is="h(ReTableNextColumn, { item: column }, slots)"
+            />
           </template>
         </slot>
       </template>
