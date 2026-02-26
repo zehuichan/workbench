@@ -12,6 +12,12 @@ export interface ReTableNextContext {
   visibleColumns: Ref<ReTableNextColumn[]>;
   data: Ref<RowData[]>;
   editable: Ref<boolean | 'row' | 'cell' | 'manual'>;
+  /** 当前激活行索引（-1 表示无激活） */
+  activeRowIndex: Ref<number>;
+  /** 当前激活列索引（navigableColumns 中，-1 表示无激活） */
+  activeColIndex: Ref<number>;
+  /** 导航函数 */
+  navigate: (rowDelta: number, colDelta: number) => void;
 }
 
 // ──── 单元格上下文 ────
@@ -126,6 +132,8 @@ export interface ReTableNextProps<T = RowData> {
   // 热键
   hotkeys?: HotkeyBinding[];
   hotkeyEnabled?: boolean;
+  /** Tab/Shift+Tab 在表格内导航（默认 true） */
+  tabNavigation?: boolean;
 
   // 分页
   pagination?: false | PaginationConfig;

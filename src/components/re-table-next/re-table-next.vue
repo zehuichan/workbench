@@ -1,5 +1,9 @@
 <template>
-  <div ref="wrapperEl" class="re-table-next-wrapper">
+  <div
+    ref="wrapperEl"
+    class="re-table-next-wrapper"
+    tabindex="0"
+  >
     <!--header（可选，参与自适应高度计算时会被扣除）-->
     <div class="re-table-next-header flex items-center justify-between p-2">
       <slot name="title">
@@ -18,6 +22,9 @@
       :border="border"
       :show-overflow-tooltip="showOverflowTooltip"
       :max-height="maxHeight ?? adaptiveMaxHeight"
+      :cell-class-name="cellActive ? getCellClassName : undefined"
+      :row-class-name="rowActive ? getRowClassName : undefined"
+      @cell-click="onCellClick"
     >
       <template #default>
         <slot>
@@ -87,8 +94,9 @@ import { isBoolean } from '@/utils';
 import type {
   AdaptiveConfig,
   ReTableNextColumn as ColumnType,
-  ReTableNextProps,
   ReTableNextContext,
+  ReTableNextProps,
+  RowData,
 } from './types';
 import {
   EXPAND_COLUMN,
@@ -96,7 +104,7 @@ import {
   RE_TABLE_NEXT_INJECTION_KEY,
   SELECTION_COLUMN,
 } from './constants';
-import { useAdaptive } from './composables';
+import { useAdaptive, useHotkey, useNavigation } from './composables';
 import ReTableNextColumn from './re-table-next-column.vue';
 
 import './styles/index.scss';
@@ -113,7 +121,10 @@ const props = withDefaults(defineProps<ReTableNextProps>(), {
   border: true,
   showOverflowTooltip: true,
   editable: false,
+  cellActive: true,
+  rowActive: false,
   hotkeyEnabled: true,
+  tabNavigation: true,
   adaptive: false,
 });
 
@@ -148,10 +159,50 @@ const { maxHeight: adaptiveMaxHeight } = useAdaptive({
 });
 
 // 当自适应关闭时（maxHeight 变为 ''），强制 el-table 重新布局
-watch(adaptiveMaxHeight, (val, oldVal) => {
-  if (val === '' || val == null) {
+watch(adaptiveMaxHeight, () => {
+  if (adaptiveMaxHeight.value === '' || adaptiveMaxHeight.value == null) {
     nextTick(() => tableRef.value?.doLayout?.());
   }
+});
+
+// ──── 单元格导航 ────
+
+const {
+  activeRowIndex,
+  activeColIndex,
+  navigableColumns,
+  activeRow,
+  activeColumn,
+  navigate,
+  focusCell,
+  handleCellClick,
+  getCellClassName,
+  getRowClassName,
+} = useNavigation({
+  data: computed(() => props.data ?? []),
+  visibleColumns,
+  tableRef,
+});
+
+function onCellClick(row: RowData, column: any): void {
+  handleCellClick(row, column);
+  // 将焦点转移到 wrapper，使 keydown 事件可以被监听
+  wrapperEl.value?.focus({ preventScroll: true });
+}
+
+// ──── 热键引擎 ────
+
+useHotkey({
+  wrapperEl,
+  hotkeyEnabled: computed(() => props.hotkeyEnabled ?? true),
+  tabNavigation: computed(() => props.tabNavigation ?? true),
+  navigate,
+  focusCell,
+  activeRowIndex,
+  activeColIndex,
+  data: computed(() => props.data ?? []),
+  navigableColumns,
+  customHotkeys: computed(() => props.hotkeys),
 });
 
 // ──── Provide ────
@@ -163,6 +214,9 @@ provide<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, {
   visibleColumns,
   data: computed(() => props.data ?? []),
   editable: computed(() => props.editable ?? false),
+  activeRowIndex,
+  activeColIndex,
+  navigate,
 });
 
 // ──── Expose: el-table 原生方法透传 ────
@@ -172,6 +226,14 @@ const getElTable = () => tableRef.value;
 defineExpose({
   /** 获取 el-table 实例 */
   getElTable,
+
+  // 导航
+  navigate,
+  focusCell,
+  activeRowIndex,
+  activeColIndex,
+  activeRow,
+  activeColumn,
 
   // el-table 原生方法透传
   clearSelection: () => getElTable()?.clearSelection(),
