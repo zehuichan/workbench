@@ -203,93 +203,91 @@ const columns: ReTableNextColumn<TaskRow>[] = [
 </script>
 
 <template>
-  <el-config-provider size="small">
-    <div class="stage1-demo">
-      <div class="demo-header">
-        <h2 class="title">ReTableNext — 阶段 1：配置式列 + 渲染器</h2>
-        <p class="desc">
-          演示：render 函数、renderHeader、formatter、selection / index / expand
-          列类型、 #cell-* / #header-* 插槽、showOverflowTooltip 溢出省略、align
-          对齐、sortable 排序、 渲染优先级、多级表头。
-        </p>
-      </div>
-
-      <div class="feature-tags">
-        <el-tag size="small">1.1 render</el-tag>
-        <el-tag size="small" type="success">1.2 renderHeader</el-tag>
-        <el-tag size="small" type="warning">1.3 formatter</el-tag>
-        <el-tag size="small" type="danger">1.4 selection/index/expand</el-tag>
-        <el-tag size="small" type="info">1.5 #cell / #header 插槽</el-tag>
-        <el-tag size="small">1.6 showOverflowTooltip</el-tag>
-        <el-tag size="small" type="success">1.7 align</el-tag>
-        <el-tag size="small" type="warning">1.8 sortable</el-tag>
-        <el-tag size="small" type="danger">1.9 渲染优先级</el-tag>
-        <el-tag size="small" type="info">1.10 多级表头</el-tag>
-      </div>
-
-      <ReTableNext
-        :columns="columns"
-        :data="tableData"
-        :adaptive="true"
-        @sort-change="handleSortChange"
-      >
-        <!-- header 插槽 -->
-        <template #title>
-          <div class="flex items-center gap-2">
-            <span class="text-base font-semibold">任务管理</span>
-            <el-tag size="small" round>{{ tableData.length }} 条</el-tag>
-          </div>
-        </template>
-        <template #actions>
-          <el-space>
-            <el-button type="primary" size="small">新建任务</el-button>
-          </el-space>
-        </template>
-
-        <!-- 1.5 — #cell-assignee 插槽 -->
-        <template #cell-assignee="{ row }">
-          <div class="assignee-cell">
-            <el-avatar :size="22" class="avatar">
-              {{ (row as TaskRow)?.assignee?.charAt(0) ?? '' }}
-            </el-avatar>
-            <span>{{ (row as TaskRow)?.assignee ?? '' }}</span>
-          </div>
-        </template>
-
-        <!-- 1.5 — #header-assignee 插槽（自定义表头） -->
-        <template #header-assignee>
-          <span style="color: var(--el-color-primary); font-weight: 600">
-            👤 负责人
-          </span>
-        </template>
-
-        <!-- 1.4 — expand 展开行内容 -->
-        <template #expand="{ row }">
-          <div class="expand-content">
-            <p><strong>任务：</strong>{{ (row as TaskRow)?.name }}</p>
-            <p>
-              <strong>时间：</strong>{{ (row as TaskRow)?.startDate }} ~
-              {{ (row as TaskRow)?.endDate }}
-            </p>
-            <p><strong>备注：</strong>{{ (row as TaskRow)?.remark }}</p>
-          </div>
-        </template>
-
-        <!-- footer 插槽 -->
-        <template #summary>
-          <span class="text-xs text-gray-400">
-            排序：
-            {{ sortInfo.prop ? `${sortInfo.prop} (${sortInfo.order})` : '无' }}
-          </span>
-        </template>
-        <template #pagination>
-          <span class="text-xs text-gray-400">
-            共 {{ tableData.length }} 条数据
-          </span>
-        </template>
-      </ReTableNext>
+  <div class="stage1-demo">
+    <div class="demo-header">
+      <h2 class="title">ReTableNext — 阶段 1：配置式列 + 渲染器</h2>
+      <p class="desc">
+        演示：render 函数、renderHeader、formatter、selection / index / expand
+        列类型、 #cell-* / #header-* 插槽、showOverflowTooltip 溢出省略、align
+        对齐、sortable 排序、 渲染优先级、多级表头。
+      </p>
     </div>
-  </el-config-provider>
+
+    <div class="feature-tags">
+      <el-tag size="small">1.1 render</el-tag>
+      <el-tag size="small" type="success">1.2 renderHeader</el-tag>
+      <el-tag size="small" type="warning">1.3 formatter</el-tag>
+      <el-tag size="small" type="danger">1.4 selection/index/expand</el-tag>
+      <el-tag size="small" type="info">1.5 #cell / #header 插槽</el-tag>
+      <el-tag size="small">1.6 showOverflowTooltip</el-tag>
+      <el-tag size="small" type="success">1.7 align</el-tag>
+      <el-tag size="small" type="warning">1.8 sortable</el-tag>
+      <el-tag size="small" type="danger">1.9 渲染优先级</el-tag>
+      <el-tag size="small" type="info">1.10 多级表头</el-tag>
+    </div>
+
+    <ReTableNext
+      :columns="columns"
+      :data="tableData"
+      :adaptive="true"
+      @sort-change="handleSortChange"
+    >
+      <!-- header 插槽 -->
+      <template #title>
+        <div class="flex items-center gap-2">
+          <span class="text-base font-semibold">任务管理</span>
+          <el-tag size="small" round>{{ tableData.length }} 条</el-tag>
+        </div>
+      </template>
+      <template #actions>
+        <el-space>
+          <el-button type="primary" size="small">新建任务</el-button>
+        </el-space>
+      </template>
+
+      <!-- 1.5 — #cell-assignee 插槽 -->
+      <template #cell-assignee="{ row }">
+        <div class="assignee-cell">
+          <el-avatar :size="22" class="avatar">
+            {{ (row as TaskRow)?.assignee?.charAt(0) ?? '' }}
+          </el-avatar>
+          <span>{{ (row as TaskRow)?.assignee ?? '' }}</span>
+        </div>
+      </template>
+
+      <!-- 1.5 — #header-assignee 插槽（自定义表头） -->
+      <template #header-assignee>
+        <span style="color: var(--el-color-primary); font-weight: 600">
+          👤 负责人
+        </span>
+      </template>
+
+      <!-- 1.4 — expand 展开行内容 -->
+      <template #expand="{ row }">
+        <div class="expand-content">
+          <p><strong>任务：</strong>{{ (row as TaskRow)?.name }}</p>
+          <p>
+            <strong>时间：</strong>{{ (row as TaskRow)?.startDate }} ~
+            {{ (row as TaskRow)?.endDate }}
+          </p>
+          <p><strong>备注：</strong>{{ (row as TaskRow)?.remark }}</p>
+        </div>
+      </template>
+
+      <!-- footer 插槽 -->
+      <template #summary>
+        <span class="text-xs text-gray-400">
+          排序：
+          {{ sortInfo.prop ? `${sortInfo.prop} (${sortInfo.order})` : '无' }}
+        </span>
+      </template>
+      <template #pagination>
+        <span class="text-xs text-gray-400">
+          共 {{ tableData.length }} 条数据
+        </span>
+      </template>
+    </ReTableNext>
+  </div>
 </template>
 
 <style scoped lang="scss">

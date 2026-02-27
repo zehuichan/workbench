@@ -1,3 +1,5 @@
 export { useAdaptive } from './use-adaptive'
 export { useNavigation } from './use-navigation'
 export { useHotkey } from './use-hotkey'
+export { useEditable } from './use-editable'
+export { useEditHistory } from './use-edit-history'

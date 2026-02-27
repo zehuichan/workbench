@@ -25,20 +25,21 @@
       :cell-class-name="cellActive ? getCellClassName : undefined"
       :row-class-name="rowActive ? getRowClassName : undefined"
       @cell-click="onCellClick"
+      @cell-dblclick="onCellDblClick"
     >
       <template #default>
         <slot>
           <template
             v-for="(column, idx) in visibleColumns"
-            :key="column.key ?? column.prop ?? column.type ?? idx"
+            :key="(column as any).key ?? column.prop ?? column.type ?? idx"
           >
             <component
-              v-if="[SELECTION_COLUMN, INDEX_COLUMN].includes(column.type)"
+              v-if="[SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)"
               :is="h(ElTableColumn, column, slots)"
             />
 
             <component
-              v-else-if="[EXPAND_COLUMN].includes(column.type)"
+              v-else-if="[EXPAND_COLUMN].includes(column.type as any)"
               :is="
                 h(ElTableColumn, column, {
                   default: (scope: unknown) =>
@@ -98,13 +99,20 @@ import type {
   ReTableNextProps,
   RowData,
 } from './types';
+import type { EditCellPayload, EditValueChangePayload } from './composables/use-editable';
 import {
   EXPAND_COLUMN,
   INDEX_COLUMN,
   RE_TABLE_NEXT_INJECTION_KEY,
   SELECTION_COLUMN,
 } from './constants';
-import { useAdaptive, useHotkey, useNavigation } from './composables';
+import {
+  useAdaptive,
+  useEditable,
+  useEditHistory,
+  useHotkey,
+  useNavigation,
+} from './composables';
 import ReTableNextColumn from './re-table-next-column.vue';
 
 import './styles/index.scss';
@@ -130,6 +138,9 @@ const props = withDefaults(defineProps<ReTableNextProps>(), {
 
 const emit = defineEmits<{
   scroll: [event: Event];
+  'cell-edit-start': [payload: EditCellPayload];
+  'cell-edit-end': [payload: EditCellPayload];
+  'cell-value-change': [payload: EditValueChangePayload];
 }>();
 
 // ──── Slots & Refs ────
@@ -158,7 +169,6 @@ const { maxHeight: adaptiveMaxHeight } = useAdaptive({
   wrapperEl,
 });
 
-// 当自适应关闭时（maxHeight 变为 ''），强制 el-table 重新布局
 watch(adaptiveMaxHeight, () => {
   if (adaptiveMaxHeight.value === '' || adaptiveMaxHeight.value == null) {
     nextTick(() => tableRef.value?.doLayout?.());
@@ -184,10 +194,114 @@ const {
   tableRef,
 });
 
-function onCellClick(row: RowData, column: any): void {
+// ──── 编辑系统 ────
+
+const {
+  isEditing,
+  editingRowIndex,
+  editingColIndex,
+  editingValue,
+  editMode,
+  autoTriggerEnabled,
+  isCellEditable,
+  startEdit,
+  confirmEdit,
+  cancelEdit,
+  getEditingValue,
+  setEditingValue,
+  updateEditingValue,
+  isEditingCell,
+} = useEditable({
+  data: computed(() => props.data ?? []),
+  navigableColumns,
+  activeRowIndex,
+  activeColIndex,
+  editable: computed(() => props.editable ?? false),
+  onEditStart: (payload) => emit('cell-edit-start', payload),
+  onEditEnd: (payload) => emit('cell-edit-end', payload),
+  onValueChange: (payload) => emit('cell-value-change', payload),
+});
+
+// ──── 编辑历史 ────
+
+const {
+  canUndo,
+  canRedo,
+  pushChange,
+  undo,
+  redo,
+  clearHistory,
+} = useEditHistory({
+  data: computed(() => props.data ?? []),
+});
+
+const confirmEditWithHistory = () => {
+  const changes = confirmEdit();
+  if (changes) {
+    pushChange(changes);
+  }
+  return changes;
+};
+
+// ──── 事件处理 ────
+
+function onCellClick(row: RowData, column: any, _cell: any, event: MouseEvent): void {
+  const target = event.target as HTMLElement | null;
+  const clickedInsideEditor = !!target?.closest('.re-table-next-cell-editor');
+  const prevRow = activeRowIndex.value;
+  const prevCol = activeColIndex.value;
   handleCellClick(row, column);
-  // 将焦点转移到 wrapper，使 keydown 事件可以被监听
-  wrapperEl.value?.focus({ preventScroll: true });
+
+  if (isEditing.value && prevRow >= 0) {
+    if (editMode.value === 'row') {
+      // Row 模式：切换到不同行时确认
+      if (activeRowIndex.value !== prevRow) {
+        confirmEditWithHistory();
+      }
+    } else {
+      // Cell / manual 模式：切换到不同单元格时确认
+      if (activeRowIndex.value !== prevRow || activeColIndex.value !== prevCol) {
+        confirmEditWithHistory();
+      }
+    }
+  }
+
+  if (!clickedInsideEditor) {
+    wrapperEl.value?.focus({ preventScroll: true });
+  }
+}
+
+/** 主动将焦点移到当前激活单元格的编辑器（input/textarea）。进入编辑后由 startEditWithFocus 调用，避免用 watch 监听。 */
+function focusActiveEditor(): void {
+  nextTick(() => {
+    nextTick(() => {
+      const wrapper = wrapperEl.value;
+      if (!wrapper) return;
+      const activeCell = wrapper.querySelector('td.re-table-next-cell--active');
+      const editorEl = (activeCell?.querySelector(
+        'input, textarea, [contenteditable="true"]',
+      ) ?? wrapper.querySelector(
+        'input, textarea, [contenteditable="true"]',
+      )) as HTMLElement | null;
+      if (document.activeElement !== editorEl) {
+        editorEl?.focus();
+      }
+    });
+  });
+}
+
+/** 进入编辑并随后聚焦编辑器（对外/热键/双击统一走此入口） */
+function startEditWithFocus(rowIndex?: number, colIndex?: number): void {
+  startEdit(rowIndex, colIndex);
+  if (isEditing.value) focusActiveEditor();
+}
+
+function onCellDblClick(row: RowData, column: any): void {
+  if (!autoTriggerEnabled.value) return;
+  handleCellClick(row, column);
+  if (activeRowIndex.value >= 0 && activeColIndex.value >= 0) {
+    startEditWithFocus();
+  }
 }
 
 // ──── 热键引擎 ────
@@ -203,6 +317,19 @@ useHotkey({
   data: computed(() => props.data ?? []),
   navigableColumns,
   customHotkeys: computed(() => props.hotkeys),
+  editMode,
+  autoTriggerEnabled,
+  isEditing,
+  editingRowIndex,
+  startEdit: startEditWithFocus,
+  confirmEdit: confirmEditWithHistory,
+  cancelEdit,
+  updateCellValue: updateEditingValue,
+  isCellEditable,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
 });
 
 // ──── Provide ────
@@ -212,19 +339,32 @@ provide<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, {
   tableInstance: computed(() => tableRef.value) as any,
   columns: computed(() => props.columns ?? []),
   visibleColumns,
+  navigableColumns,
   data: computed(() => props.data ?? []),
   editable: computed(() => props.editable ?? false),
   activeRowIndex,
   activeColIndex,
   navigate,
+  editMode,
+  isEditing,
+  editingRowIndex,
+  editingColIndex,
+  editingValue,
+  isEditingCell,
+  isCellEditable,
+  startEdit: startEditWithFocus,
+  confirmEdit: confirmEditWithHistory,
+  cancelEdit,
+  updateEditingValue,
+  getEditingValue,
+  setEditingValue,
 });
 
-// ──── Expose: el-table 原生方法透传 ────
+// ──── Expose ────
 
 const getElTable = () => tableRef.value;
 
 defineExpose({
-  /** 获取 el-table 实例 */
   getElTable,
 
   // 导航
@@ -234,6 +374,20 @@ defineExpose({
   activeColIndex,
   activeRow,
   activeColumn,
+
+  // 编辑
+  editMode,
+  isEditing,
+  startEdit: startEditWithFocus,
+  confirmEdit: confirmEditWithHistory,
+  cancelEdit,
+
+  // 编辑历史
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  clearHistory,
 
   // el-table 原生方法透传
   clearSelection: () => getElTable()?.clearSelection(),

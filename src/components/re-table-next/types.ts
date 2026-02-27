@@ -10,6 +10,7 @@ export interface ReTableNextContext {
   tableInstance: Ref<Record<string, any> | null>;
   columns: Ref<ReTableNextColumn[]>;
   visibleColumns: Ref<ReTableNextColumn[]>;
+  navigableColumns: Ref<ReTableNextColumn[]>;
   data: Ref<RowData[]>;
   editable: Ref<boolean | 'row' | 'cell' | 'manual'>;
   /** 当前激活行索引（-1 表示无激活） */
@@ -18,6 +19,21 @@ export interface ReTableNextContext {
   activeColIndex: Ref<number>;
   /** 导航函数 */
   navigate: (rowDelta: number, colDelta: number) => void;
+
+  // ──── 编辑状态 ────
+  editMode: Ref<'none' | 'cell' | 'row' | 'manual' | 'all'>;
+  isEditing: Ref<boolean>;
+  editingRowIndex: Ref<number>;
+  editingColIndex: Ref<number>;
+  editingValue: Ref<any>;
+  isEditingCell: (rowIndex: number, colProp: string | undefined) => boolean;
+  isCellEditable: (rowIndex: number, colIndex: number) => boolean;
+  startEdit: (rowIndex?: number, colIndex?: number) => void;
+  confirmEdit: () => any;
+  cancelEdit: () => void;
+  updateEditingValue: (value: any) => void;
+  getEditingValue: (colProp: string) => any;
+  setEditingValue: (colProp: string, value: any) => void;
 }
 
 // ──── 单元格上下文 ────

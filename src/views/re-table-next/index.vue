@@ -94,46 +94,44 @@ const columns: ReTableNextColumn<TableRow>[] = [
 </script>
 
 <template>
-  <el-config-provider size="small">
-    <div class="re-table-next-demo">
-      <div class="demo-header">
-        <h2 class="title">ReTableNext 基础演示</h2>
-        <p class="desc">
-          基于 el-table 的增强表格组件。阶段 0：基础渲染（斑马纹、边框、对齐） +
-          自适应高度。
-        </p>
-      </div>
-
-      <div class="toolbar">
-        <el-space wrap>
-          <span class="label">自适应高度：</span>
-          <el-switch v-model="adaptiveEnabled" />
-          <span class="hint">（开启后表格高度自动填满剩余视口）</span>
-        </el-space>
-      </div>
-
-      <ReTableNext
-        :columns="columns"
-        :data="tableData"
-        :adaptive="adaptiveEnabled"
-      >
-        <template #cell-status="{ row }">
-          <el-tag
-            :type="
-              row.status === '已完成'
-                ? 'success'
-                : row.status === '进行中'
-                  ? 'warning'
-                  : 'info'
-            "
-            size="small"
-          >
-            {{ row.status }}
-          </el-tag>
-        </template>
-      </ReTableNext>
+  <div class="re-table-next-demo">
+    <div class="demo-header">
+      <h2 class="title">ReTableNext 基础演示</h2>
+      <p class="desc">
+        基于 el-table 的增强表格组件。阶段 0：基础渲染（斑马纹、边框、对齐） +
+        自适应高度。
+      </p>
     </div>
-  </el-config-provider>
+
+    <div class="toolbar">
+      <el-space wrap>
+        <span class="label">自适应高度：</span>
+        <el-switch v-model="adaptiveEnabled" />
+        <span class="hint">（开启后表格高度自动填满剩余视口）</span>
+      </el-space>
+    </div>
+
+    <ReTableNext
+      :columns="columns"
+      :data="tableData"
+      :adaptive="adaptiveEnabled"
+    >
+      <template #cell-status="{ row }">
+        <el-tag
+          :type="
+            row.status === '已完成'
+              ? 'success'
+              : row.status === '进行中'
+                ? 'warning'
+                : 'info'
+          "
+          size="small"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+    </ReTableNext>
+  </div>
 </template>
 
 <style scoped lang="scss">
