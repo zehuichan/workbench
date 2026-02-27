@@ -502,6 +502,7 @@ provide<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, {
         resetColumns: columnOptions.resetColumns,
         getOrderedColumnsWithProp: columnOptions.getOrderedColumnsWithProp,
         isColumnHidden: columnOptions.isColumnHidden,
+        columnWidths: columnOptions.columnWidths,
       }
     : undefined,
 });

@@ -39,10 +39,10 @@
                 {{ col.label ?? col.prop }}
               </el-checkbox>
               <el-input
-                v-model.number="col.width"
+                :model-value="getEffectiveWidth(col)"
+                @update:model-value="handleWidthInput(col.prop!, $event)"
                 placeholder="宽度"
                 class="column-width-input"
-                size="small"
               />
             </div>
           </div>
@@ -88,6 +88,21 @@ const isHidden = (prop: string) =>
 const toggle = (prop: string, visible: boolean) => {
   columnOptions.value?.toggleColumn(prop, visible);
 };
+
+/** 列设置面板显示的宽度：优先使用 columnWidths 中的覆盖值，否则用列定义的 width */
+function getEffectiveWidth(col: {
+  prop?: string;
+  width?: string | number;
+}): string | number | undefined {
+  const widths = columnOptions.value?.columnWidths?.value ?? {};
+  if (col.prop && col.prop in widths) return widths[col.prop];
+  return col.width;
+}
+
+function handleWidthInput(prop: string, value: string | number): void {
+  const n = typeof value === 'string' ? Number(value) : value;
+  if (!Number.isNaN(n) && n > 0) columnOptions.value?.setColumnWidth(prop, n);
+}
 
 function handleSelectAll(): void {
   for (const col of orderedColumns.value) {

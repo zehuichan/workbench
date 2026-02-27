@@ -47,6 +47,8 @@ export interface ReTableNextContext {
     resetColumns: () => void;
     getOrderedColumnsWithProp: () => ReTableNextColumn[];
     isColumnHidden: (prop: string) => boolean;
+    /** 列宽覆盖（prop -> width），供列设置面板显示与绑定 */
+    columnWidths: Ref<Record<string, number>>;
   };
 }
 
