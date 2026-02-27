@@ -49,14 +49,14 @@
   &::after {
     content: '';
     position: absolute;
-    top: 6px;
-    right: 8px;
-    width: 6px;
-    height: 6px;
-    background: var(--el-color-warning);
-    border-radius: 50%;
+    top: 1px;
+    left: 1px;
+    width: 0;
+    height: 0;
+    border-width: 4px;
+    border-style: solid;
+    border-color: var(--el-color-danger) transparent transparent var(--el-color-danger);
     pointer-events: none;
-    z-index: 1;
   }
 }
 
