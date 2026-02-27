@@ -1,69 +1,62 @@
 <template>
-  <el-popover
-    placement="bottom-end"
-    :width="260"
-    trigger="click"
+  <el-button
+    :icon="Setting"
+    circle
+    title="列设置"
+    class="column-setting-trigger"
+    @click="show = true"
+  />
+  <el-drawer
+    v-model="show"
+    title="列设置"
+    size="360"
+    direction="rtl"
+    class="re-table-next-column-setting-drawer"
   >
-    <template #reference>
-      <el-button
-        :icon="Setting"
-        circle
-        size="small"
-        title="列设置"
-      />
-    </template>
-    <div class="re-table-next-column-setting">
-      <div class="column-setting-actions">
-        <el-button
-          link
-          size="small"
-          type="primary"
-          @click="handleSelectAll"
-        >
-          全选
-        </el-button>
-        <el-button
-          link
-          size="small"
-          @click="handleInvert"
-        >
-          反选
-        </el-button>
-        <el-button
-          link
-          size="small"
-          @click="handleReset"
-        >
-          重置
-        </el-button>
-      </div>
-      <div
-        ref="listEl"
-        class="column-setting-list"
-      >
-        <div
-          v-for="(col, idx) in orderedColumns"
-          :key="col.prop"
-          class="column-setting-item"
-          draggable="true"
-          :data-index="idx"
-          @dragstart="handleDragStart"
-          @dragover.prevent="handleDragOver"
-          @drop="handleDrop"
-        >
-          <el-icon class="drag-handle">
-            <Rank />
-          </el-icon>
-          <el-checkbox
-            :model-value="!isHidden(col.prop!)"
-            @update:model-value="toggle(col.prop!, $event)"
-          >
-            {{ col.label ?? col.prop }}
-          </el-checkbox>
+    <template #default>
+      <el-scrollbar class="column-setting-scrollbar">
+        <div class="re-table-next-column-setting">
+          <p class="column-setting-hint">勾选显示列，拖拽调整顺序</p>
+          <div ref="listEl" class="column-setting-list">
+            <div
+              v-for="(col, idx) in orderedColumns"
+              :key="col.prop"
+              class="column-setting-item"
+              draggable="true"
+              :data-index="idx"
+              @dragstart="handleDragStart"
+              @dragover.prevent="handleDragOver"
+              @drop="handleDrop"
+            >
+              <el-icon class="drag-handle" title="拖拽排序">
+                <Rank />
+              </el-icon>
+              <el-checkbox
+                :model-value="!isHidden(col.prop!)"
+                @update:model-value="toggle(col.prop!, $event)"
+                class="column-setting-checkbox"
+              >
+                {{ col.label ?? col.prop }}
+              </el-checkbox>
+              <el-input
+                v-model.number="col.width"
+                placeholder="宽度"
+                class="column-width-input"
+                size="small"
+              />
+            </div>
+          </div>
         </div>
+      </el-scrollbar>
+    </template>
+    <template #footer>
+      <div class="column-setting-footer">
+        <el-button @click="handleInvert">反选</el-button>
+        <el-button @click="handleReset">重置</el-button>
+        <el-button type="primary" @click="handleSelectAll">全选</el-button>
       </div>
-    </div>
-  </el-popover>
+    </template>
+  </el-drawer>
 </template>
 
 <script setup lang="ts">
@@ -78,6 +71,9 @@ defineOptions({
 });
 
 const ctx = inject<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, null);
+
+const show = ref(false);
+
 const columnOptions = computed(() => ctx?.columnOptions ?? null);
 
 const orderedColumns = computed(() => {
@@ -144,39 +140,91 @@ function handleDrop(e: DragEvent): void {
 }
 </script>
 
-<style scoped lang="scss">
-.re-table-next-column-setting {
-  .column-setting-actions {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
+<style lang="scss">
+.column-setting-trigger {
+  cursor: pointer;
+}
+
+.re-table-next-column-setting-drawer {
+  .el-drawer__header {
+    padding: 12px 16px;
     border-bottom: 1px solid var(--el-border-color-lighter);
+    margin-bottom: 0;
+  }
+
+  .el-drawer__body {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .el-drawer__footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--el-border-color-lighter);
+  }
+}
+
+.column-setting-scrollbar {
+  flex: 1;
+  min-height: 0;
+}
+
+.re-table-next-column-setting {
+  padding: 12px;
+
+  .column-setting-hint {
+    padding: 12px;
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+    line-height: 1.5;
   }
 
   .column-setting-list {
-    max-height: 280px;
-    overflow-y: auto;
   }
 
   .column-setting-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 0;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    border-radius: 6px;
     cursor: grab;
+    transition: background-color 0.2s ease;
 
     &:active {
       cursor: grabbing;
     }
 
-    .drag-handle {
-      color: var(--el-text-color-placeholder);
-      font-size: 14px;
+    &:hover {
+      background-color: var(--el-fill-color-light);
     }
 
-    .el-checkbox {
+    .drag-handle {
+      flex-shrink: 0;
+      color: var(--el-text-color-placeholder);
+      font-size: 16px;
+      padding: 4px;
+      margin: -4px;
+      border-radius: 4px;
+
+      &:hover {
+        color: var(--el-text-color-regular);
+        background-color: var(--el-fill-color);
+      }
+    }
+
+    .column-setting-checkbox {
       flex: 1;
+      min-width: 0;
+      margin-right: 8px;
+    }
+
+    .column-width-input {
+      flex-shrink: 0;
+      width: 80px;
     }
   }
 }

@@ -149,5 +149,4 @@ function onEditorEsc(): void {
     ctx?.tableEl?.value?.focus({ preventScroll: true });
   });
 }
-
 </script>
