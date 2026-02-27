@@ -133,17 +133,12 @@ export interface ReTableNextProps<T = RowData> {
   // 交互
   cellActive?: boolean;
   rowActive?: boolean;
-  areaSelection?: boolean;
 
   // 编辑
   editable?: boolean | 'row' | 'cell' | 'manual';
 
   // 列
   columnSetting?: boolean;
-  colDrag?: boolean | { mode?: 'insert' | 'swap' };
-
-  // 行拖拽
-  rowDrag?: boolean | { handle?: string };
 
   // 热键
   hotkeys?: HotkeyBinding[];
