@@ -27,45 +27,47 @@ function isNavigableColumn(col: ReTableNextColumn): boolean {
  * - getCellClassName / getRowClassName：供主组件绑定 :cell-class-name / :row-class-name
  */
 export function useNavigation(options: UseNavigationOptions) {
-  const { data, visibleColumns, tableRef } = options
+  const { data, visibleColumns, tableRef } = options;
 
   /** 当前激活行（data 行索引） */
-  const activeRowIndex = ref(-1)
+  const activeRowIndex = ref(-1);
   /** 当前激活列（navigableColumns 中的索引） */
-  const activeColIndex = ref(-1)
+  const activeColIndex = ref(-1);
 
   /** 可导航列：过滤掉 selection/index/expand 及 hidden 列 */
   const navigableColumns = computed(() =>
     visibleColumns.value.filter(isNavigableColumn),
-  )
+  );
 
   /** 激活列的列配置（从 navigableColumns 中取） */
   const activeColumn = computed(() =>
     activeColIndex.value >= 0
       ? (navigableColumns.value[activeColIndex.value] ?? null)
       : null,
-  )
+  );
 
   /** 激活行的行数据 */
   const activeRow = computed(() =>
-    activeRowIndex.value >= 0 ? (data.value[activeRowIndex.value] ?? null) : null,
-  )
+    activeRowIndex.value >= 0
+      ? (data.value[activeRowIndex.value] ?? null)
+      : null,
+  );
 
   /** 是否存在激活单元格 */
   const hasActiveCell = computed(
     () => activeRowIndex.value >= 0 && activeColIndex.value >= 0,
-  )
+  );
 
   /** 滚动到激活单元格，确保在视口内 */
   function scrollToActiveCell(): void {
     nextTick(() => {
-      const tableEl = tableRef.value?.$el as HTMLElement | undefined
-      if (!tableEl) return
+      const tableEl = tableRef.value?.$el as HTMLElement | undefined;
+      if (!tableEl) return;
       const cell = tableEl.querySelector(
         'td.re-table-next-cell--active',
-      ) as HTMLElement | null
-      cell?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-    })
+      ) as HTMLElement | null;
+      cell?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
   }
 
   /**
@@ -74,13 +76,13 @@ export function useNavigation(options: UseNavigationOptions) {
    * @param colIndex navigableColumns 中的列索引
    */
   function focusCell(rowIndex: number, colIndex: number): void {
-    const rowCount = data.value.length
-    const colCount = navigableColumns.value.length
-    if (rowCount === 0 || colCount === 0) return
+    const rowCount = data.value.length;
+    const colCount = navigableColumns.value.length;
+    if (rowCount === 0 || colCount === 0) return;
 
-    activeRowIndex.value = Math.max(0, Math.min(rowIndex, rowCount - 1))
-    activeColIndex.value = Math.max(0, Math.min(colIndex, colCount - 1))
-    scrollToActiveCell()
+    activeRowIndex.value = Math.max(0, Math.min(rowIndex, rowCount - 1));
+    activeColIndex.value = Math.max(0, Math.min(colIndex, colCount - 1));
+    scrollToActiveCell();
   }
 
   /**
@@ -89,28 +91,28 @@ export function useNavigation(options: UseNavigationOptions) {
    * - 行边界 clamp（不超出数据范围）
    */
   function navigate(rowDelta: number, colDelta: number): void {
-    const rowCount = data.value.length
-    const colCount = navigableColumns.value.length
-    if (rowCount === 0 || colCount === 0) return
+    const rowCount = data.value.length;
+    const colCount = navigableColumns.value.length;
+    if (rowCount === 0 || colCount === 0) return;
 
-    let newRow = activeRowIndex.value < 0 ? 0 : activeRowIndex.value + rowDelta
-    let newCol = activeColIndex.value < 0 ? 0 : activeColIndex.value + colDelta
+    let newRow = activeRowIndex.value < 0 ? 0 : activeRowIndex.value + rowDelta;
+    let newCol = activeColIndex.value < 0 ? 0 : activeColIndex.value + colDelta;
 
     // 列换行
     if (newCol < 0) {
-      newRow -= 1
-      newCol = colCount - 1
+      newRow -= 1;
+      newCol = colCount - 1;
     } else if (newCol >= colCount) {
-      newRow += 1
-      newCol = 0
+      newRow += 1;
+      newCol = 0;
     }
 
     // 行边界 clamp
-    newRow = Math.max(0, Math.min(newRow, rowCount - 1))
+    newRow = Math.max(0, Math.min(newRow, rowCount - 1));
 
-    activeRowIndex.value = newRow
-    activeColIndex.value = newCol
-    scrollToActiveCell()
+    activeRowIndex.value = newRow;
+    activeColIndex.value = newCol;
+    scrollToActiveCell();
   }
 
   /**
@@ -118,25 +120,25 @@ export function useNavigation(options: UseNavigationOptions) {
    * 跳过不可导航列（selection / index / expand）
    */
   function handleCellClick(row: RowData, column: any): void {
-    if (!column) return
+    if (!column) return;
 
     // 跳过特殊列
     if (
       column.type &&
       (SPECIAL_COLUMN_TYPES as readonly string[]).includes(column.type)
     )
-      return
+      return;
 
-    const rowIndex = data.value.indexOf(row)
-    if (rowIndex < 0) return
+    const rowIndex = data.value.indexOf(row);
+    if (rowIndex < 0) return;
 
     const navIdx = navigableColumns.value.findIndex(
       (col) => col.prop === column.property,
-    )
-    if (navIdx < 0) return
+    );
+    if (navIdx < 0) return;
 
-    activeRowIndex.value = rowIndex
-    activeColIndex.value = navIdx
+    activeRowIndex.value = rowIndex;
+    activeColIndex.value = navIdx;
   }
 
   /**
@@ -147,19 +149,19 @@ export function useNavigation(options: UseNavigationOptions) {
     column,
     rowIndex,
   }: {
-    row: RowData
-    column: any
-    rowIndex: number
-    columnIndex: number
+    row: RowData;
+    column: any;
+    rowIndex: number;
+    columnIndex: number;
   }): string {
-    if (!hasActiveCell.value) return ''
+    if (!hasActiveCell.value) return '';
     if (
       rowIndex === activeRowIndex.value &&
       column.property === activeColumn.value?.prop
     ) {
-      return 're-table-next-cell--active'
+      return 're-table-next-cell--active';
     }
-    return ''
+    return '';
   }
 
   /**
@@ -169,10 +171,10 @@ export function useNavigation(options: UseNavigationOptions) {
   function getRowClassName({
     rowIndex,
   }: {
-    row: RowData
-    rowIndex: number
+    row: RowData;
+    rowIndex: number;
   }): string {
-    return rowIndex === activeRowIndex.value ? 're-table-next-row--active' : ''
+    return rowIndex === activeRowIndex.value ? 're-table-next-row--active' : '';
   }
 
   return {
@@ -188,5 +190,5 @@ export function useNavigation(options: UseNavigationOptions) {
     handleCellClick,
     getCellClassName,
     getRowClassName,
-  }
+  };
 }

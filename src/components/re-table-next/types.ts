@@ -1,5 +1,6 @@
 import type { Component, VNode, Ref } from 'vue';
 import type { TableColumnCtx } from 'element-plus';
+import type { RuleItem } from 'async-validator';
 
 // ──── 基础类型 ────
 
@@ -34,6 +35,19 @@ export interface ReTableNextContext {
   updateEditingValue: (value: any) => void;
   getEditingValue: (colProp: string) => any;
   setEditingValue: (colProp: string, value: any) => void;
+
+  /** 校验：获取单元格错误信息（供 Cell 红框 + tooltip） */
+  getErrorForCell?: (rowIndex: number, prop: string) => string | undefined;
+
+  /** 列设置（列显隐、排序、列宽、持久化），仅当 columnSetting 为 true 时存在 */
+  columnOptions?: {
+    toggleColumn: (prop: string, visible: boolean) => void;
+    reorderColumns: (fromIndex: number, toIndex: number) => void;
+    setColumnWidth: (prop: string, width: number) => void;
+    resetColumns: () => void;
+    getOrderedColumnsWithProp: () => ReTableNextColumn[];
+    isColumnHidden: (prop: string) => boolean;
+  };
 }
 
 // ──── 单元格上下文 ────
@@ -62,8 +76,8 @@ export interface ReTableNextColumn<T = RowData> extends Partial<
   componentProps?:
     | Record<string, any>
     | ((row: T, column: ReTableNextColumn<T>) => Record<string, any>);
-  /** 校验规则（扩展） */
-  rules?: Record<string, any> | Record<string, any>[];
+  /** 校验规则（扩展，async-validator RuleItem） */
+  rules?: RuleItem | RuleItem[];
   /** 单元格自定义渲染（扩展，与 formatter 并存） */
   render?: (ctx: CellContext<T>) => VNode;
   /** 多级表头子列（与 TableColumnCtx.children 兼容） */
@@ -136,6 +150,13 @@ export interface ReTableNextProps<T = RowData> {
 
   // 编辑
   editable?: boolean | 'row' | 'cell' | 'manual';
+
+  /** 表级校验规则（按 prop 聚合） */
+  tableRules?: Record<string, RuleItem | RuleItem[]>;
+  /** 校验触发时机：change | blur | manual */
+  validateTrigger?: 'change' | 'blur' | 'manual';
+  /** 单元格失焦时是否校验（blur 时或 confirm 时） */
+  validateOnCellExit?: boolean;
 
   // 列
   columnSetting?: boolean;

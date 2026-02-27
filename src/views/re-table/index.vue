@@ -64,7 +64,7 @@ const validateOnCellExit = ref(true)
 
 // 300 行、20 列（含 selection、index）用于 Performance 面板测试
 const tableData = ref<TableRow[]>(
-  Array.from({ length: 100 }, (_, i) => createRow(i + 1)),
+  Array.from({ length: 30 }, (_, i) => createRow(i + 1)),
 )
 
 const statusOptions = [

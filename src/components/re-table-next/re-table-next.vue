@@ -1,16 +1,12 @@
 <template>
-  <div
-    ref="wrapperEl"
-    class="re-table-next-wrapper"
-    tabindex="0"
-  >
+  <div ref="wrapperEl" class="re-table-next-wrapper" tabindex="0">
     <!--header（可选，参与自适应高度计算时会被扣除）-->
     <div class="re-table-next-header flex items-center justify-between p-2">
       <slot name="title">
         <div>todo title</div>
       </slot>
       <slot name="actions">
-        <div>todo actions</div>
+        <re-table-next-column-setting v-if="columnSetting" />
       </slot>
     </div>
     <el-table
@@ -22,10 +18,11 @@
       :border="border"
       :show-overflow-tooltip="showOverflowTooltip"
       :max-height="maxHeight ?? adaptiveMaxHeight"
-      :cell-class-name="cellActive ? getCellClassName : undefined"
-      :row-class-name="rowActive ? getRowClassName : undefined"
+      :cell-class-name="getCellClassNameBinding"
+      :row-class-name="getRowClassNameBinding"
       @cell-click="onCellClick"
       @cell-dblclick="onCellDblClick"
+      @header-dragend="onHeaderDragEnd"
     >
       <template #default>
         <slot>
@@ -34,7 +31,9 @@
             :key="(column as any).key ?? column.prop ?? column.type ?? idx"
           >
             <component
-              v-if="[SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)"
+              v-if="
+                [SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)
+              "
               :is="h(ElTableColumn, column, slots)"
             />
 
@@ -90,8 +89,6 @@ import {
 
 import { ElTableColumn } from 'element-plus';
 
-import { isBoolean } from '@/utils';
-
 import type {
   AdaptiveConfig,
   ReTableNextColumn as ColumnType,
@@ -99,7 +96,10 @@ import type {
   ReTableNextProps,
   RowData,
 } from './types';
-import type { EditCellPayload, EditValueChangePayload } from './composables/use-editable';
+import type {
+  EditCellPayload,
+  EditValueChangePayload,
+} from './composables/use-editable';
 import {
   EXPAND_COLUMN,
   INDEX_COLUMN,
@@ -108,12 +108,17 @@ import {
 } from './constants';
 import {
   useAdaptive,
+  useColumnOptions,
+  useDirtyTracking,
   useEditable,
   useEditHistory,
   useHotkey,
   useNavigation,
+  useRowOptions,
+  useValidation,
 } from './composables';
 import ReTableNextColumn from './re-table-next-column.vue';
+import ReTableNextColumnSetting from './re-table-next-column-setting.vue';
 
 import './styles/index.scss';
 
@@ -134,10 +139,13 @@ const props = withDefaults(defineProps<ReTableNextProps>(), {
   hotkeyEnabled: true,
   tabNavigation: true,
   adaptive: false,
+  validateTrigger: 'manual',
+  validateOnCellExit: false,
 });
 
 const emit = defineEmits<{
   scroll: [event: Event];
+  'update:data': [value: RowData[]];
   'cell-edit-start': [payload: EditCellPayload];
   'cell-edit-end': [payload: EditCellPayload];
   'cell-value-change': [payload: EditValueChangePayload];
@@ -149,14 +157,22 @@ const slots = useSlots();
 const wrapperEl = ref<HTMLElement | null>(null);
 const tableRef = ref<Record<string, any> | null>(null);
 
-// ──── 列可见性 ────
+// ──── 列可见性（含列设置：显隐、排序、持久化）────
 
-const visibleColumns = computed<ColumnType[]>(() =>
-  (props.columns ?? []).filter((col) => {
-    if (isBoolean(col.hidden)) return !col.hidden;
-    return true;
-  }),
-);
+const columnOptions = useColumnOptions({
+  initialColumns: computed(() => props.columns ?? []),
+  tableKey: props.columnSetting ? 're-table-next-default' : undefined,
+  storage: props.columnSetting ? 'local' : false,
+});
+
+const visibleColumns = columnOptions.visibleColumns;
+
+// ──── 行操作 ────
+
+const { insertRow, deleteRow, moveRow, duplicateRow } = useRowOptions({
+  data: computed(() => props.data ?? []),
+  onDataChange: (newData) => emit('update:data', newData),
+});
 
 // ──── 自适应高度 ────
 
@@ -222,30 +238,134 @@ const {
   onValueChange: (payload) => emit('cell-value-change', payload),
 });
 
-// ──── 编辑历史 ────
+// ──── 校验 ────
 
 const {
-  canUndo,
-  canRedo,
-  pushChange,
-  undo,
-  redo,
-  clearHistory,
-} = useEditHistory({
+  validate,
+  validateField,
+  validateFieldsAffectedByChange,
+  clearValidation,
+  scrollToFirstError,
+  getErrorForCell,
+} = useValidation({
   data: computed(() => props.data ?? []),
+  columns: navigableColumns,
+  tableRules: computed(() => props.tableRules),
+  tableEl: wrapperEl,
+  trigger: computed(() => props.validateTrigger ?? 'manual'),
+  validateOnCellExit: computed(() => props.validateOnCellExit ?? false),
+});
+
+/** 合并导航高亮 + 校验错误 + 脏单元格样式 */
+function getCellClassNameCombined(payload: {
+  row: RowData;
+  column: any;
+  rowIndex: number;
+  columnIndex: number;
+}): string {
+  const classes: string[] = [];
+  const navClass = getCellClassName(payload);
+  if (navClass) classes.push(navClass);
+  const prop = payload.column?.property;
+  if (prop && getErrorForCell(payload.rowIndex, prop)) {
+    classes.push('re-table-next-cell--error');
+  }
+  if (prop && isCellDirty(payload.rowIndex, prop)) {
+    classes.push('re-table-next-cell--dirty');
+  }
+  return classes.join(' ');
+}
+
+// ──── 编辑历史 ────
+
+const { canUndo, canRedo, pushChange, undo, redo, clearHistory } =
+  useEditHistory({
+    data: computed(() => props.data ?? []),
+  });
+
+const {
+  dirtyCells,
+  markDirty,
+  clearDirty,
+  getModifiedRows,
+  isRowDirty,
+  isCellDirty,
+  resetTracking,
+  getDirtyCells,
+} = useDirtyTracking({
+  data: computed(() => props.data ?? []),
+});
+
+/** 合并导航高亮行 + 脏数据行类（供 :row-class-name 使用） */
+function getRowClassNameCombined(payload: {
+  row: RowData;
+  rowIndex: number;
+}): string {
+  const classes: string[] = [];
+  const navClass = getRowClassName(payload);
+  if (navClass) classes.push(navClass);
+  if (isRowDirty(payload.rowIndex)) {
+    classes.push('re-table-next-row--dirty');
+  }
+  return classes.join(' ');
+}
+
+/** 使 row-class-name 依赖 activeRowIndex、dirtyCells，热键导航或脏数据变化时 el-table 会重新应用行类 */
+const getRowClassNameBinding = computed(() => {
+  void activeRowIndex.value;
+  void dirtyCells.value;
+  return props.rowActive ? getRowClassNameCombined : undefined;
+});
+
+/** 使 cell-class-name 依赖 activeRowIndex、activeColIndex、dirtyCells，热键导航或脏数据变化时重新应用 */
+const getCellClassNameBinding = computed(() => {
+  void activeRowIndex.value;
+  void activeColIndex.value;
+  void dirtyCells.value;
+  return props.cellActive ? getCellClassNameCombined : undefined;
 });
 
 const confirmEditWithHistory = () => {
   const changes = confirmEdit();
+  if (changes && props.validateOnCellExit) {
+    const rowIndex = changes[0].rowIndex;
+    for (const c of changes) {
+      validateField(rowIndex, c.colProp).catch(() => {});
+    }
+  }
   if (changes) {
+    for (const c of changes) {
+      markDirty(c.rowIndex, c.colProp);
+    }
     pushChange(changes);
   }
   return changes;
 };
 
+/** 包装 undo：执行撤销后清除本批涉及单元格的 dirty 标识 */
+const wrappedUndo = () => {
+  const reverted = undo();
+  if (reverted) {
+    reverted.forEach((c) => clearDirty(c.rowIndex, c.colProp));
+  }
+};
+
+/** 包装 redo：执行重做后把本批涉及单元格标记为 dirty */
+const wrappedRedo = () => {
+  const redone = redo();
+  if (redone) {
+    redone.forEach((c) => markDirty(c.rowIndex, c.colProp));
+  }
+};
+
 // ──── 事件处理 ────
 
-function onCellClick(row: RowData, column: any, _cell: any, event: MouseEvent): void {
+function onCellClick(
+  row: RowData,
+  column: any,
+  _cell: any,
+  event: MouseEvent,
+): void {
   const target = event.target as HTMLElement | null;
   const clickedInsideEditor = !!target?.closest('.re-table-next-cell-editor');
   const prevRow = activeRowIndex.value;
@@ -260,7 +380,10 @@ function onCellClick(row: RowData, column: any, _cell: any, event: MouseEvent): 
       }
     } else {
       // Cell / manual 模式：切换到不同单元格时确认
-      if (activeRowIndex.value !== prevRow || activeColIndex.value !== prevCol) {
+      if (
+        activeRowIndex.value !== prevRow ||
+        activeColIndex.value !== prevCol
+      ) {
         confirmEditWithHistory();
       }
     }
@@ -280,9 +403,10 @@ function focusActiveEditor(): void {
       const activeCell = wrapper.querySelector('td.re-table-next-cell--active');
       const editorEl = (activeCell?.querySelector(
         'input, textarea, [contenteditable="true"]',
-      ) ?? wrapper.querySelector(
-        'input, textarea, [contenteditable="true"]',
-      )) as HTMLElement | null;
+      ) ??
+        wrapper.querySelector(
+          'input, textarea, [contenteditable="true"]',
+        )) as HTMLElement | null;
       if (document.activeElement !== editorEl) {
         editorEl?.focus();
       }
@@ -302,6 +426,17 @@ function onCellDblClick(row: RowData, column: any): void {
   if (activeRowIndex.value >= 0 && activeColIndex.value >= 0) {
     startEditWithFocus();
   }
+}
+
+/** 表头拖拽结束（调整列宽）：将新列宽写入列配置并持久化。参数为 (newWidth, oldWidth, column)。 */
+function onHeaderDragEnd(
+  newWidth: number,
+  _oldWidth: number,
+  column: { property?: string },
+): void {
+  if (!props.columnSetting || !column?.property || typeof newWidth !== 'number' || newWidth <= 0)
+    return;
+  columnOptions.setColumnWidth(column.property, newWidth);
 }
 
 // ──── 热键引擎 ────
@@ -326,8 +461,8 @@ useHotkey({
   cancelEdit,
   updateCellValue: updateEditingValue,
   isCellEditable,
-  undo,
-  redo,
+  undo: wrappedUndo,
+  redo: wrappedRedo,
   canUndo,
   canRedo,
 });
@@ -358,6 +493,17 @@ provide<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, {
   updateEditingValue,
   getEditingValue,
   setEditingValue,
+  getErrorForCell,
+  columnOptions: props.columnSetting
+    ? {
+        toggleColumn: columnOptions.toggleColumn,
+        reorderColumns: columnOptions.reorderColumns,
+        setColumnWidth: columnOptions.setColumnWidth,
+        resetColumns: columnOptions.resetColumns,
+        getOrderedColumnsWithProp: columnOptions.getOrderedColumnsWithProp,
+        isColumnHidden: columnOptions.isColumnHidden,
+      }
+    : undefined,
 });
 
 // ──── Expose ────
@@ -382,9 +528,34 @@ defineExpose({
   confirmEdit: confirmEditWithHistory,
   cancelEdit,
 
-  // 编辑历史
-  undo,
-  redo,
+  // 校验
+  validate,
+  validateField,
+  clearValidation,
+  scrollToFirstError,
+
+  // 行操作
+  insertRow,
+  deleteRow,
+  moveRow,
+  duplicateRow,
+  getModifiedRows,
+  markDirty,
+  clearDirty,
+  resetTracking,
+  getDirtyCells,
+  isCellDirty,
+  isRowDirty,
+
+  // 列操作
+  toggleColumn: columnOptions.toggleColumn,
+  reorderColumns: columnOptions.reorderColumns,
+  setColumnWidth: columnOptions.setColumnWidth,
+  resetColumns: columnOptions.resetColumns,
+
+  // 编辑历史（undo/redo 已包装：执行后同步 dirty 标识）
+  undo: wrappedUndo,
+  redo: wrappedRedo,
   canUndo,
   canRedo,
   clearHistory,

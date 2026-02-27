@@ -20,7 +20,26 @@
     />
   </template>
 
-  <!-- 展示态 -->
+  <!-- 展示态（校验错误时用 tooltip 显示错误信息） -->
+  <template v-else-if="cellError">
+    <el-tooltip
+      :content="cellError"
+      placement="top"
+      effect="dark"
+    >
+      <span class="re-table-next-cell-content re-table-next-cell-content--with-tooltip">
+        <template v-if="$slots[`cell-${item.prop}`]">
+          <slot :name="`cell-${item.prop}`" v-bind="scope" />
+        </template>
+        <template v-else-if="item.render">
+          <component :is="h(item.render, scope, $slots)" />
+        </template>
+        <template v-else>
+          {{ get(scope.row, item.prop, '') }}
+        </template>
+      </span>
+    </el-tooltip>
+  </template>
   <template v-else-if="$slots[`cell-${item.prop}`]">
     <slot :name="`cell-${item.prop}`" v-bind="scope" />
   </template>
@@ -43,6 +62,16 @@ import type { ReTableNextColumn, ReTableNextContext } from './types';
 import { RE_TABLE_NEXT_INJECTION_KEY } from './constants';
 import { ELEMENT_ADAPTER_MAP } from './adapter';
 
+const ctx = inject<ReTableNextContext>(
+  RE_TABLE_NEXT_INJECTION_KEY,
+  undefined as any,
+);
+
+/** 当前单元格校验错误（用于红框由父级 cell-class-name 控制，此处用于 tooltip） */
+const cellError = computed(() =>
+  ctx?.getErrorForCell?.(props.scope.$index, props.item.prop ?? ''),
+);
+
 defineOptions({
   name: 'ReTableNextCell',
   inheritAttrs: false,
@@ -54,11 +83,6 @@ const props = defineProps<{
   /** el-table-column #default scope（含 row、column、$index） */
   scope: Record<string, any>;
 }>();
-
-const ctx = inject<ReTableNextContext>(
-  RE_TABLE_NEXT_INJECTION_KEY,
-  undefined as any,
-);
 
 // ──── 编辑态判断与值访问 ────
 

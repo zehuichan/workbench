@@ -1,5 +1,4 @@
 .re-table-next-wrapper {
-
   width: 100%;
 
   .el-table {
@@ -13,31 +12,9 @@
       font-weight: 400;
     }
 
-    // ── 激活单元格 ──
-    td.el-table__cell.re-table-next-cell--active {
-      position: relative;
-      background-color: var(--el-color-primary-light-9) !important;
-
-      &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border: 2px solid var(--el-color-primary);
-        pointer-events: none;
-        z-index: 1;
-      }
-    }
-
-    // ── 激活行 ──
+    // ── 行激活 ──
     tr.re-table-next-row--active {
-      td.el-table__cell {
-        background-color: var(--el-fill-color) !important;
-      }
-
-      // 激活行中的激活单元格保持单元格样式优先
-      td.el-table__cell.re-table-next-cell--active {
-        background-color: var(--el-color-primary-light-9) !important;
-      }
+      background-color: var(--el-fill-color-light);
     }
   }
 
@@ -45,4 +22,46 @@
   &:focus {
     outline: none;
   }
+}
+
+.re-table-next-header--required::before {
+  content: '*';
+  color: var(--el-color-danger);
+  margin-right: 4px;
+}
+
+.re-table-next-cell-content--with-tooltip {
+  display: block;
+  width: 100%;
+  min-height: 1.5em;
+}
+
+
+// ── 单元格激活 ──
+.re-table-next-cell--active {
+  box-shadow: inset 0 0 0 1px var(--el-color-primary-dark-2);
+}
+
+// ── 单元格脏数据角标 ───
+.re-table-next-cell--dirty {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 6px;
+    height: 6px;
+    background: var(--el-color-warning);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+// ── 单元格校验错误 ───
+.re-table-next-cell--error {
+  position: relative;
+  box-shadow: inset 0 0 0 1px var(--el-color-danger);
 }

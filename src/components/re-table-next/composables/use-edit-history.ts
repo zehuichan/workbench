@@ -31,26 +31,34 @@ export function useEditHistory(options: UseEditHistoryOptions) {
     redoStack.value = []
   }
 
-  function undo(): void {
+  /**
+   * 执行撤销，恢复旧值到 data，并返回本批被还原的变更（便于调用方同步清除 dirty）
+   */
+  function undo(): HistoryEntry | undefined {
     const entries = undoStack.value.pop()
-    if (!entries) return
+    if (!entries) return undefined
 
     for (const change of entries) {
       const row = data.value[change.rowIndex]
       if (row) row[change.colProp] = change.oldValue
     }
     redoStack.value.push(entries)
+    return entries
   }
 
-  function redo(): void {
+  /**
+   * 执行重做，应用新值到 data，并返回本批被重做的变更（便于调用方同步标记 dirty）
+   */
+  function redo(): HistoryEntry | undefined {
     const entries = redoStack.value.pop()
-    if (!entries) return
+    if (!entries) return undefined
 
     for (const change of entries) {
       const row = data.value[change.rowIndex]
       if (row) row[change.colProp] = change.newValue
     }
     undoStack.value.push(entries)
+    return entries
   }
 
   function clearHistory(): void {

@@ -5,7 +5,12 @@
         v-if="$slots[`header-${item.prop}`]"
         :name="`header-${item.prop}`"
         v-bind="scope"
-      />
+      >
+      </slot>
+      <template v-else>
+        <span v-if="item.editable" class="re-table-next-header--required" />
+        {{ item.label }}
+      </template>
     </template>
     <template #default="scope">
       <!-- 多级表头：递归子列 -->
@@ -14,18 +19,12 @@
           v-for="(child, cIdx) in item.children"
           :key="(child as any).key ?? child.prop ?? child.label ?? cIdx"
         >
-          <component
-            :is="h(ReTableNextColumnSelf, { item: child }, $slots)"
-          />
+          <component :is="h(ReTableNextColumnSelf, { item: child }, $slots)" />
         </template>
       </template>
 
       <!-- 单元格渲染（编辑/展示）委托给 Cell 组件 -->
-      <re-table-next-cell
-        v-else
-        :item="item"
-        :scope="scope"
-      >
+      <re-table-next-cell v-else :item="item" :scope="scope">
         <template
           v-for="(_, slotName) in $slots"
           :key="slotName"
