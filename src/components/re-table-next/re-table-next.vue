@@ -1,18 +1,19 @@
 <template>
   <div ref="wrapperEl" class="re-table-next-wrapper" tabindex="0">
-    <!--header（可选，参与自适应高度计算时会被扣除）-->
-    <div class="re-table-next-header flex items-center justify-between p-2">
-      <slot name="title">
-        <div>todo title</div>
-      </slot>
-      <slot name="actions">
+    <div
+      v-if="hasHeaderContent"
+      class="re-table-next-header flex items-center justify-between py-2"
+    >
+      <slot name="title" />
+      <div>
+        <slot name="actions" />
         <re-table-next-column-setting v-if="columnSetting" />
-      </slot>
+      </div>
     </div>
     <el-table
       v-bind="$attrs"
       ref="tableRef"
-      :data="data"
+      :data="displayData"
       :row-key="rowKey"
       :stripe="stripe"
       :border="border"
@@ -63,13 +64,22 @@
         <slot name="empty" />
       </template>
     </el-table>
-    <!--footer（可选，参与自适应高度计算时会被扣除）-->
-    <div class="re-table-next-footer flex items-center justify-between p-2">
-      <slot name="summary">
-        <div>todo summary</div>
-      </slot>
+    <div
+      v-if="hasFooterContent"
+      class="re-table-next-footer flex items-center justify-between py-2"
+    >
+      <slot name="summary" />
       <slot name="pagination">
-        <div>todo pagination</div>
+        <re-table-next-pagination
+          v-if="paginationEnabled"
+          :current-page="currentPage ?? 1"
+          :page-size="pageSize ?? 10"
+          :total="total ?? 0"
+          :page-sizes="pageSizes"
+          :layout="paginationLayout"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
       </slot>
     </div>
   </div>
@@ -91,7 +101,6 @@ import { ElTableColumn } from 'element-plus';
 
 import type {
   AdaptiveConfig,
-  ReTableNextColumn as ColumnType,
   ReTableNextContext,
   ReTableNextProps,
   RowData,
@@ -108,6 +117,7 @@ import {
 } from './constants';
 import {
   useAdaptive,
+  useClassNames,
   useColumnOptions,
   useDirtyTracking,
   useEditable,
@@ -117,8 +127,10 @@ import {
   useRowOptions,
   useValidation,
 } from './composables';
+import { createEditorFocuser } from './utils';
 import ReTableNextColumn from './re-table-next-column.vue';
 import ReTableNextColumnSetting from './re-table-next-column-setting.vue';
+import ReTableNextPagination from './re-table-next-pagination.vue';
 
 import './styles/index.scss';
 
@@ -137,7 +149,6 @@ const props = withDefaults(defineProps<ReTableNextProps>(), {
   cellActive: true,
   rowActive: false,
   hotkeyEnabled: true,
-  tabNavigation: true,
   adaptive: false,
   validateTrigger: 'manual',
   validateOnCellExit: false,
@@ -149,6 +160,9 @@ const emit = defineEmits<{
   'cell-edit-start': [payload: EditCellPayload];
   'cell-edit-end': [payload: EditCellPayload];
   'cell-value-change': [payload: EditValueChangePayload];
+  'update:currentPage': [current: number];
+  'update:pageSize': [size: number];
+  pagination: [payload: { currentPage: number; pageSize: number }];
 }>();
 
 // ──── Slots & Refs ────
@@ -156,6 +170,30 @@ const emit = defineEmits<{
 const slots = useSlots();
 const wrapperEl = ref<HTMLElement | null>(null);
 const tableRef = ref<Record<string, any> | null>(null);
+
+const hasHeaderContent = computed(
+  () => !!props.columnSetting || !!slots.title || !!slots.actions,
+);
+
+const hasFooterContent = computed(
+  () => props.total != null || !!slots.summary || !!slots.pagination,
+);
+
+// ──── 分页（传 total 即启用，仅服务端分页：data 由 parent 按页传入）────
+
+const paginationEnabled = computed(() => props.total != null);
+
+const displayData = computed(() => props.data ?? []);
+
+function handlePageChange(page: number): void {
+  emit('update:currentPage', page);
+  emit('pagination', { currentPage: page, pageSize: props.pageSize ?? 10 });
+}
+
+function handleSizeChange(size: number): void {
+  emit('update:pageSize', size);
+  emit('pagination', { currentPage: props.currentPage ?? 1, pageSize: size });
+}
 
 // ──── 列可见性（含列设置：显隐、排序、持久化）────
 
@@ -166,13 +204,6 @@ const columnOptions = useColumnOptions({
 });
 
 const visibleColumns = columnOptions.visibleColumns;
-
-// ──── 行操作 ────
-
-const { insertRow, deleteRow, moveRow, duplicateRow } = useRowOptions({
-  data: computed(() => props.data ?? []),
-  onDataChange: (newData) => emit('update:data', newData),
-});
 
 // ──── 自适应高度 ────
 
@@ -205,9 +236,17 @@ const {
   getCellClassName,
   getRowClassName,
 } = useNavigation({
-  data: computed(() => props.data ?? []),
+  data: displayData,
   visibleColumns,
   tableRef,
+});
+
+// ──── 行操作（依赖 activeRowIndex，移动行后会同步更新激活行）────
+
+const { insertRow, deleteRow, moveRow, duplicateRow } = useRowOptions({
+  data: computed(() => props.data ?? []),
+  onDataChange: (newData) => emit('update:data', newData),
+  activeRowIndex,
 });
 
 // ──── 编辑系统 ────
@@ -228,7 +267,7 @@ const {
   updateEditingValue,
   isEditingCell,
 } = useEditable({
-  data: computed(() => props.data ?? []),
+  data: displayData,
   navigableColumns,
   activeRowIndex,
   activeColIndex,
@@ -246,7 +285,7 @@ const {
   validateFieldsAffectedByChange,
   clearValidation,
   scrollToFirstError,
-  getErrorForCell,
+  getErrorForCell: getErrorForCellRaw,
 } = useValidation({
   data: computed(() => props.data ?? []),
   columns: navigableColumns,
@@ -255,26 +294,6 @@ const {
   trigger: computed(() => props.validateTrigger ?? 'manual'),
   validateOnCellExit: computed(() => props.validateOnCellExit ?? false),
 });
-
-/** 合并导航高亮 + 校验错误 + 脏单元格样式 */
-function getCellClassNameCombined(payload: {
-  row: RowData;
-  column: any;
-  rowIndex: number;
-  columnIndex: number;
-}): string {
-  const classes: string[] = [];
-  const navClass = getCellClassName(payload);
-  if (navClass) classes.push(navClass);
-  const prop = payload.column?.property;
-  if (prop && getErrorForCell(payload.rowIndex, prop)) {
-    classes.push('re-table-next-cell--error');
-  }
-  if (prop && isCellDirty(payload.rowIndex, prop)) {
-    classes.push('re-table-next-cell--dirty');
-  }
-  return classes.join(' ');
-}
 
 // ──── 编辑历史 ────
 
@@ -296,41 +315,28 @@ const {
   data: computed(() => props.data ?? []),
 });
 
-/** 合并导航高亮行 + 脏数据行类（供 :row-class-name 使用） */
-function getRowClassNameCombined(payload: {
-  row: RowData;
-  rowIndex: number;
-}): string {
-  const classes: string[] = [];
-  const navClass = getRowClassName(payload);
-  if (navClass) classes.push(navClass);
-  if (isRowDirty(payload.rowIndex)) {
-    classes.push('re-table-next-row--dirty');
-  }
-  return classes.join(' ');
-}
-
-/** 使 row-class-name 依赖 activeRowIndex、dirtyCells，热键导航或脏数据变化时 el-table 会重新应用行类 */
-const getRowClassNameBinding = computed(() => {
-  void activeRowIndex.value;
-  void dirtyCells.value;
-  return props.rowActive ? getRowClassNameCombined : undefined;
-});
-
-/** 使 cell-class-name 依赖 activeRowIndex、activeColIndex、dirtyCells，热键导航或脏数据变化时重新应用 */
-const getCellClassNameBinding = computed(() => {
-  void activeRowIndex.value;
-  void activeColIndex.value;
-  void dirtyCells.value;
-  return props.cellActive ? getCellClassNameCombined : undefined;
+const {
+  rowClassNameBinding: getRowClassNameBinding,
+  cellClassNameBinding: getCellClassNameBinding,
+} = useClassNames({
+  cellActive: computed(() => props.cellActive),
+  rowActive: computed(() => props.rowActive),
+  activeRowIndex,
+  activeColIndex,
+  dirtyCells,
+  getCellClassName,
+  getRowClassName,
+  getErrorForCell: getErrorForCellRaw,
+  isCellDirty,
+  isRowDirty,
 });
 
 const confirmEditWithHistory = () => {
   const changes = confirmEdit();
   if (changes && props.validateOnCellExit) {
-    const rowIndex = changes[0].rowIndex;
     for (const c of changes) {
-      validateField(rowIndex, c.colProp).catch(() => {});
+      const globalRow = c.rowIndex;
+      validateFieldsAffectedByChange(globalRow, c.colProp).catch(() => {});
     }
   }
   if (changes) {
@@ -394,25 +400,7 @@ function onCellClick(
   }
 }
 
-/** 主动将焦点移到当前激活单元格的编辑器（input/textarea）。进入编辑后由 startEditWithFocus 调用，避免用 watch 监听。 */
-function focusActiveEditor(): void {
-  nextTick(() => {
-    nextTick(() => {
-      const wrapper = wrapperEl.value;
-      if (!wrapper) return;
-      const activeCell = wrapper.querySelector('td.re-table-next-cell--active');
-      const editorEl = (activeCell?.querySelector(
-        'input, textarea, [contenteditable="true"]',
-      ) ??
-        wrapper.querySelector(
-          'input, textarea, [contenteditable="true"]',
-        )) as HTMLElement | null;
-      if (document.activeElement !== editorEl) {
-        editorEl?.focus();
-      }
-    });
-  });
-}
+const focusActiveEditor = createEditorFocuser(wrapperEl);
 
 /** 进入编辑并随后聚焦编辑器（对外/热键/双击统一走此入口） */
 function startEditWithFocus(rowIndex?: number, colIndex?: number): void {
@@ -434,7 +422,12 @@ function onHeaderDragEnd(
   _oldWidth: number,
   column: { property?: string },
 ): void {
-  if (!props.columnSetting || !column?.property || typeof newWidth !== 'number' || newWidth <= 0)
+  if (
+    !props.columnSetting ||
+    !column?.property ||
+    typeof newWidth !== 'number' ||
+    newWidth <= 0
+  )
     return;
   columnOptions.setColumnWidth(column.property, newWidth);
 }
@@ -444,12 +437,11 @@ function onHeaderDragEnd(
 useHotkey({
   wrapperEl,
   hotkeyEnabled: computed(() => props.hotkeyEnabled ?? true),
-  tabNavigation: computed(() => props.tabNavigation ?? true),
   navigate,
   focusCell,
   activeRowIndex,
   activeColIndex,
-  data: computed(() => props.data ?? []),
+  data: displayData,
   navigableColumns,
   customHotkeys: computed(() => props.hotkeys),
   editMode,
@@ -493,7 +485,8 @@ provide<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, {
   updateEditingValue,
   getEditingValue,
   setEditingValue,
-  getErrorForCell,
+  getErrorForCell: (localRowIndex: number, prop: string) =>
+    getErrorForCellRaw(localRowIndex, prop),
   columnOptions: props.columnSetting
     ? {
         toggleColumn: columnOptions.toggleColumn,
@@ -535,11 +528,30 @@ defineExpose({
   clearValidation,
   scrollToFirstError,
 
-  // 行操作
-  insertRow,
-  deleteRow,
-  moveRow,
-  duplicateRow,
+  // 行操作（索引即 data 数组下标）
+  insertRow: (index?: number, defaultRow?: RowData, count?: number) =>
+    insertRow(index, defaultRow, count),
+  deleteRow: (localIndex?: number | number[]) => deleteRow(localIndex),
+  moveRow: (from: number, to: number) => moveRow(from, to),
+  duplicateRow: (localIndex?: number | number[]) => duplicateRow(localIndex),
+  deleteSelectedRows: () => {
+    const selected: RowData[] = getElTable()?.getSelectionRows() ?? [];
+    if (!selected.length) return;
+    const indices = selected
+      .map((row: RowData) => (props.data ?? []).indexOf(row))
+      .filter((i: number) => i >= 0);
+    deleteRow(indices);
+    getElTable()?.clearSelection();
+  },
+  duplicateSelectedRows: () => {
+    const selected: RowData[] = getElTable()?.getSelectionRows() ?? [];
+    if (!selected.length) return;
+    const indices = selected
+      .map((row: RowData) => (props.data ?? []).indexOf(row))
+      .filter((i: number) => i >= 0);
+    duplicateRow(indices);
+    getElTable()?.clearSelection();
+  },
   getModifiedRows,
   markDirty,
   clearDirty,

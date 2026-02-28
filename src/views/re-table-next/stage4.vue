@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { h, ref } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 import { ElMessage, ElTag } from 'element-plus';
 
 import { ReTableNext } from '@/components';
 import type { ReTableNextColumn } from '@/components/re-table-next';
 import type { RuleItem } from 'async-validator';
+import { buildShortUUID } from '@/utils';
 
 // ──── 数据类型 ────
 
@@ -57,8 +58,33 @@ function createRow(i: number): TaskRow {
 }
 
 const tableData = ref<TaskRow[]>(
-  Array.from({ length: 8 }, (_, i) => createRow(i)),
+  Array.from({ length: 10 }, (_, i) => createRow(i)),
 );
+
+// 分页
+const currentPage = ref(1);
+const pageSize = ref(10);
+const loading = ref(false);
+
+const total = computed(() => tableData.value.length);
+
+/** 模拟请求当前页 */
+function fetchPage() {
+  loading.value = true;
+  setTimeout(() => {
+    loading.value = false;
+  }, 300);
+}
+
+function handlePagination(payload: { currentPage: number; pageSize: number }) {
+  currentPage.value = payload.currentPage;
+  pageSize.value = payload.pageSize;
+  fetchPage();
+}
+
+onMounted(() => {
+  fetchPage();
+});
 
 const statusOptions = [
   { label: '待开始', value: 'pending' },
@@ -75,6 +101,7 @@ const priorityOptions = [
 // ──── 列配置（含校验规则）────
 
 const columns: ReTableNextColumn<TaskRow>[] = [
+  { type: 'selection', width: 55 },
   { type: 'index', label: '#', width: 55 },
   {
     prop: 'id',
@@ -200,11 +227,22 @@ function handleClearValidation() {
   tableRef.value?.clearValidation?.();
 }
 
+const insertRowCount = ref(1);
+
 function handleInsertRow() {
-  tableRef.value?.insertRow?.(undefined, { id: 0, name: '', amount: 0 });
+  const ri = tableRef.value?.activeRowIndex ?? -1;
+  const count = Math.max(1, insertRowCount.value || 1);
+  tableRef.value?.insertRow?.(ri, { _key: buildShortUUID() }, count);
+  ElMessage.success(`已插入 ${count} 行`);
 }
 
 function handleDeleteRow() {
+  const selected = tableRef.value?.getSelectionRows?.() ?? [];
+  if (selected.length > 0) {
+    tableRef.value?.deleteSelectedRows?.();
+    ElMessage.success(`已删除 ${selected.length} 行`);
+    return;
+  }
   const ri = tableRef.value?.activeRowIndex ?? -1;
   if (ri < 0) {
     ElMessage.info('请先选中一行');
@@ -214,12 +252,45 @@ function handleDeleteRow() {
 }
 
 function handleDuplicateRow() {
+  const selected = tableRef.value?.getSelectionRows?.() ?? [];
+  if (selected.length > 0) {
+    tableRef.value?.duplicateSelectedRows?.();
+    ElMessage.success(`已复制 ${selected.length} 行`);
+    return;
+  }
   const ri = tableRef.value?.activeRowIndex ?? -1;
   if (ri < 0) {
     ElMessage.info('请先选中一行');
     return;
   }
   tableRef.value?.duplicateRow?.(ri);
+}
+
+function handleMoveUp() {
+  const ri = tableRef.value?.activeRowIndex ?? -1;
+  if (ri < 0) {
+    ElMessage.info('请先选中一行');
+    return;
+  }
+  if (ri === 0) {
+    ElMessage.info('已在首行');
+    return;
+  }
+  tableRef.value?.moveRow?.(ri, ri - 1);
+}
+
+function handleMoveDown() {
+  const ri = tableRef.value?.activeRowIndex ?? -1;
+  const rowCount = tableData.value.length;
+  if (ri < 0) {
+    ElMessage.info('请先选中一行');
+    return;
+  }
+  if (ri >= rowCount - 1) {
+    ElMessage.info('已在末行');
+    return;
+  }
+  tableRef.value?.moveRow?.(ri, ri + 1);
 }
 
 function handleGetModified() {
@@ -232,7 +303,8 @@ function handleGetModified() {
   <div class="stage4-demo p-4">
     <h2 class="mb-1 text-lg font-semibold">阶段 4 — 校验 + 行/列操作</h2>
     <p class="mb-4 text-sm text-gray-500">
-      校验（表级 + 列级 rules）、失焦校验、行增删移复制、列设置面板、脏数据追踪。
+      校验（表级 + 列级
+      rules）、失焦校验、行增删移复制、列设置面板、脏数据追踪。
     </p>
 
     <div
@@ -240,29 +312,49 @@ function handleGetModified() {
     >
       <el-checkbox v-model="validateOnCellExit">失焦时校验</el-checkbox>
       <el-button size="small" @click="handleValidate">校验全部</el-button>
-      <el-button size="small" @click="handleClearValidation">清除校验</el-button>
+      <el-button size="small" @click="handleClearValidation">
+        清除校验
+      </el-button>
       <el-divider direction="vertical" />
+      <el-input-number
+        v-model="insertRowCount"
+        :min="1"
+        :max="100"
+        size="small"
+        controls-position="right"
+        class="w-24"
+      />
       <el-button size="small" @click="handleInsertRow">插入行</el-button>
-      <el-button size="small" @click="handleDeleteRow">删除当前行</el-button>
-      <el-button size="small" @click="handleDuplicateRow">复制当前行</el-button>
+      <el-button size="small" @click="handleDeleteRow">删除行</el-button>
+      <el-button size="small" @click="handleDuplicateRow">复制行</el-button>
+      <el-button size="small" @click="handleMoveUp">上移</el-button>
+      <el-button size="small" @click="handleMoveDown">下移</el-button>
       <el-divider direction="vertical" />
       <el-button size="small" @click="handleGetModified">已修改行数</el-button>
     </div>
 
     <re-table-next
       ref="tableRef"
+      v-loading="loading"
       v-model:data="tableData"
+      v-model:current-page="currentPage"
+      v-model:page-size="pageSize"
+      :total="total"
       :columns="columns"
       :table-rules="tableRules"
       :validate-on-cell-exit="validateOnCellExit"
       row-active
       editable="cell"
       column-setting
+      adaptive
       border
       row-key="id"
+      @pagination="handlePagination"
     >
       <template #title>
-        <span class="text-sm font-medium">校验 + 行/列操作 Demo</span>
+        <span class="text-sm font-medium">
+          校验 + 行/列操作 + 分页（50 条，模拟后端翻页）
+        </span>
       </template>
       <template #summary>
         <div class="flex items-center gap-2">

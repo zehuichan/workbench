@@ -43,7 +43,7 @@ export interface ReTableNextContext {
   columnOptions?: {
     toggleColumn: (prop: string, visible: boolean) => void;
     reorderColumns: (fromIndex: number, toIndex: number) => void;
-    setColumnWidth: (prop: string, width: number) => void;
+    setColumnWidth: (prop: string, width: string | number) => void;
     resetColumns: () => void;
     getOrderedColumnsWithProp: () => ReTableNextColumn[];
     isColumnHidden: (prop: string) => boolean;
@@ -86,11 +86,11 @@ export interface ReTableNextColumn<T = RowData> extends Partial<
   children?: ReTableNextColumn<T>[];
 }
 
-// ──── 分页配置 ────
+// ──── 分页事件 ────
 
-export interface PaginationConfig {
-  currentPage?: number;
-  pageSize?: number;
+export interface PaginationPayload {
+  currentPage: number;
+  pageSize: number;
   pageSizes?: number[];
   total?: number;
   layout?: string;
@@ -163,14 +163,16 @@ export interface ReTableNextProps<T = RowData> {
   // 列
   columnSetting?: boolean;
 
-  // 热键
+  // 热键（含 Tab/Shift+Tab 导航，由 hotkeyEnabled 统一控制）
   hotkeys?: HotkeyBinding[];
   hotkeyEnabled?: boolean;
-  /** Tab/Shift+Tab 在表格内导航（默认 true） */
-  tabNavigation?: boolean;
 
-  // 分页
-  pagination?: false | PaginationConfig;
+  // 分页（传 total 即启用分页）
+  currentPage?: number;
+  pageSize?: number;
+  pageSizes?: number[];
+  total?: number;
+  paginationLayout?: string;
 
   // 自适应高度
   adaptive?: boolean | AdaptiveConfig;

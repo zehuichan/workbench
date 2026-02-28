@@ -142,7 +142,6 @@ const customHotkeys = [
 
 const cellActive = ref(true);
 const rowActive = ref(false);
-const tabNavigation = ref(true);
 const hotkeyEnabled = ref(true);
 
 function jumpToFirst() {
@@ -173,10 +172,6 @@ function jumpToLast() {
         <span>rowActive（行高亮）</span>
       </label>
       <label class="flex items-center gap-1.5 cursor-pointer">
-        <el-switch v-model="tabNavigation" size="small" />
-        <span>tabNavigation（Tab 导航）</span>
-      </label>
-      <label class="flex items-center gap-1.5 cursor-pointer">
         <el-switch v-model="hotkeyEnabled" size="small" />
         <span>hotkeyEnabled（启用热键）</span>
       </label>
@@ -187,7 +182,7 @@ function jumpToLast() {
     <!-- 热键说明 -->
     <div class="flex gap-6 mb-3 text-xs text-gray-500 flex-wrap">
       <span>↑↓←→ 方向键导航</span>
-      <span>Tab / Shift+Tab 列导航（可配置）</span>
+      <span>Tab / Shift+Tab 列导航（随 hotkeyEnabled）</span>
       <span>Enter / Shift+Enter 行导航</span>
       <span>Home / End 行内首尾</span>
       <span>Ctrl+Home / Ctrl+End 全局首尾</span>
@@ -205,7 +200,6 @@ function jumpToLast() {
       :columns="columns"
       :cell-active="cellActive"
       :row-active="rowActive"
-      :tab-navigation="tabNavigation"
       :hotkey-enabled="hotkeyEnabled"
       :hotkeys="customHotkeys"
       border

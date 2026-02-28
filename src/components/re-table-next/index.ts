@@ -4,7 +4,7 @@ export type {
   CellContext,
   HotkeyBinding,
   HotkeyContext,
-  PaginationConfig,
+  PaginationPayload,
   ReTableNextColumn,
   ReTableNextProps,
   RowData,

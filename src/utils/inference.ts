@@ -1,4 +1,10 @@
-import { isFunction, isObject, isString, isPlainObject, hasOwn } from '@vue/shared'
+import {
+  isFunction,
+  isObject,
+  isString,
+  isPlainObject,
+  hasOwn,
+} from '@vue/shared';
 
 export function noop(): void {}
 
@@ -9,7 +15,7 @@ export function noop(): void {}
  * @returns {boolean} 如果值是undefined，返回true，否则返回false。
  */
 export function isUndefined(value: unknown): value is undefined {
-  return value === undefined
+  return value === undefined;
 }
 
 /**
@@ -18,7 +24,7 @@ export function isUndefined(value: unknown): value is undefined {
  * @returns {boolean} 如果值是布尔值，返回true，否则返回false。
  */
 export function isBoolean(value: unknown): value is boolean {
-  return typeof value === 'boolean'
+  return typeof value === 'boolean';
 }
 
 /**
@@ -37,22 +43,22 @@ export function isBoolean(value: unknown): value is boolean {
  */
 export function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) {
-    return true
+    return true;
   }
 
   if (Array.isArray(value) || isString(value)) {
-    return value.length === 0
+    return value.length === 0;
   }
 
   if (value instanceof Map || value instanceof Set) {
-    return value.size === 0
+    return value.size === 0;
   }
 
   if (isObject(value)) {
-    return Object.keys(value as object).length === 0
+    return Object.keys(value as object).length === 0;
   }
 
-  return false
+  return false;
 }
 
 /**
@@ -63,11 +69,11 @@ export function isEmpty(value: unknown): boolean {
  */
 export function isHttpUrl(url: string): boolean {
   if (!url) {
-    return false
+    return false;
   }
   // 使用正则表达式测试URL是否以http:// 或 https:// 开头
-  const httpRegex = /^https?:\/\/.*$/
-  return httpRegex.test(url)
+  const httpRegex = /^https?:\/\/.*$/;
+  return httpRegex.test(url);
 }
 
 /**
@@ -79,7 +85,7 @@ export function isHttpUrl(url: string): boolean {
 export function isWindow(value: any): boolean {
   return (
     typeof window !== 'undefined' && value !== null && value === value.window
-  )
+  );
 }
 
 /**
@@ -91,8 +97,8 @@ export function isWindow(value: any): boolean {
  * @returns {boolean} 如果当前环境是Mac OS，返回true，否则返回false。
  */
 export function isMacOs(): boolean {
-  const macRegex = /macintosh|mac os x/i
-  return macRegex.test(navigator.userAgent)
+  const macRegex = /macintosh|mac os x/i;
+  return macRegex.test(navigator.userAgent);
 }
 
 /**
@@ -104,8 +110,8 @@ export function isMacOs(): boolean {
  * @returns {boolean} 如果当前环境是Windows OS，返回true，否则返回false。
  */
 export function isWindowsOs(): boolean {
-  const windowsRegex = /windows|win32/i
-  return windowsRegex.test(navigator.userAgent)
+  const windowsRegex = /windows|win32/i;
+  return windowsRegex.test(navigator.userAgent);
 }
 
 /**
@@ -114,14 +120,14 @@ export function isWindowsOs(): boolean {
  * @returns {boolean} 如果值是数字，返回true，否则返回false。
  */
 export function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value)
+  return typeof value === 'number' && Number.isFinite(value);
 }
 
 export function isStringNumber(value: unknown): boolean {
   if (!isString(value)) {
-    return false
+    return false;
   }
-  return !Number.isNaN(Number(value))
+  return !Number.isNaN(Number(value));
 }
 
 /**
@@ -147,19 +153,15 @@ export function isStringNumber(value: unknown): boolean {
  * // Returns undefined because all values are either null or undefined.
  * getFirstNonNullOrUndefined(undefined, null); // undefined
  */
-export function getFirstNonNullOrUndefined<T>(...values: (T | null | undefined)[]): T | undefined {
+export function getFirstNonNullOrUndefined<T>(
+  ...values: (T | null | undefined)[]
+): T | undefined {
   for (const value of values) {
     if (value !== undefined && value !== null) {
-      return value
+      return value;
     }
   }
-  return undefined
+  return undefined;
 }
 
-export {
-  isFunction,
-  isObject,
-  isString,
-  isPlainObject,
-  hasOwn
-}
+export { isFunction, isObject, isString, isPlainObject, hasOwn };

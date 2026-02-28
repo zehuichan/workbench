@@ -67,8 +67,10 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       columnOrder.value = order;
       hiddenColumns.value = hidden;
       columnWidths.value = widths;
-    } catch {
-      // ignore parse errors
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.warn('[ReTableNext] 读取列设置存储失败:', e);
+      }
     }
   }
 
@@ -99,14 +101,18 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
 
     try {
       store.setItem(getStorageKey(tableKey), JSON.stringify(configs));
-    } catch {
-      // ignore quota errors
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.warn('[ReTableNext] 写入列设置存储失败:', e);
+      }
     }
   }
 
   const isColumnHidden = (column: ReTableNextColumn): boolean => {
     if (column.prop && hiddenColumns.value.has(column.prop)) return true;
-    if (isBoolean(column.hidden)) return column.hidden;
+    if (isBoolean(column.hidden)) {
+      return column.hidden;
+    }
     return false;
   };
 
@@ -163,8 +169,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     const cols = initialColumns.value
       .map((c) => c.prop)
       .filter(Boolean) as string[];
-    const order =
-      columnOrder.value.length > 0 ? [...columnOrder.value] : cols;
+    const order = columnOrder.value.length > 0 ? [...columnOrder.value] : cols;
 
     if (
       fromIndex < 0 ||
@@ -175,15 +180,15 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       return;
 
     const [item] = order.splice(fromIndex, 1);
-    order.splice(toIndex, 0, item);
+    order.splice(toIndex, 0, item as any);
     columnOrder.value = order;
     saveToStorage();
   }
 
   /** 更新列宽并持久化（拖拽表头改变宽度时调用） */
   function setColumnWidth(prop: string, width: number): void {
-    if (!prop || width <= 0) return;
-    columnWidths.value = { ...columnWidths.value, [prop]: width };
+    if (!prop) return;
+    columnWidths.value = { ...columnWidths.value, [prop]: width ?? '' };
     saveToStorage();
   }
 

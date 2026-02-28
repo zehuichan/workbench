@@ -100,8 +100,7 @@ function getEffectiveWidth(col: {
 }
 
 function handleWidthInput(prop: string, value: string | number): void {
-  const n = typeof value === 'string' ? Number(value) : value;
-  if (!Number.isNaN(n) && n > 0) columnOptions.value?.setColumnWidth(prop, n);
+  columnOptions.value?.setColumnWidth(prop, value ?? '');
 }
 
 function handleSelectAll(): void {

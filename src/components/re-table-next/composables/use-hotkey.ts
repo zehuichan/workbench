@@ -1,14 +1,14 @@
-import { nextTick, ref, type Ref } from 'vue'
+import { ref, type Ref } from 'vue'
 
 import { useEventListener } from '@vueuse/core'
 
 import type { HotkeyBinding, HotkeyContext, ReTableNextColumn, RowData } from '../types'
 import type { EditMode } from './use-editable'
+import { createEditorFocuser, isPrintableKey, matchesHotkey } from '../utils'
 
 export interface UseHotkeyOptions {
   wrapperEl: Ref<HTMLElement | null>
   hotkeyEnabled: Ref<boolean>
-  tabNavigation: Ref<boolean>
   navigate: (rowDelta: number, colDelta: number) => void
   focusCell: (rowIndex: number, colIndex: number) => void
   activeRowIndex: Ref<number>
@@ -35,32 +35,10 @@ export interface UseHotkeyOptions {
   canRedo: Ref<boolean>
 }
 
-function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
-  const parts = hotkey.toLowerCase().split('+').map((s) => s.trim())
-  const mainKey = parts.find(
-    (p) => !['ctrl', 'shift', 'alt', 'meta'].includes(p),
-  )
-  if (!mainKey) return false
-
-  return (
-    event.ctrlKey === parts.includes('ctrl') &&
-    event.shiftKey === parts.includes('shift') &&
-    event.altKey === parts.includes('alt') &&
-    event.metaKey === parts.includes('meta') &&
-    event.key.toLowerCase() === mainKey
-  )
-}
-
-function isPrintableKey(event: KeyboardEvent): boolean {
-  if (event.ctrlKey || event.altKey || event.metaKey) return false
-  return event.key.length === 1
-}
-
 export function useHotkey(options: UseHotkeyOptions) {
   const {
     wrapperEl,
     hotkeyEnabled,
-    tabNavigation,
     navigate,
     focusCell,
     activeRowIndex,
@@ -99,21 +77,7 @@ export function useHotkey(options: UseHotkeyOptions) {
     hasFocus.value = false
   })
 
-  // ── 编辑器聚焦辅助 ──
-
-  function focusActiveEditor(): void {
-    nextTick(() => {
-      const wrapper = wrapperEl.value
-      if (!wrapper) return
-      const activeCell = wrapper.querySelector('td.re-table-next-cell--active')
-      const editorEl = (
-        activeCell?.querySelector(
-          '.re-table-next-cell-editor input, .re-table-next-cell-editor textarea, .re-table-next-cell-editor .el-input__inner',
-        )
-      ) as HTMLElement | null
-      editorEl?.focus()
-    })
-  }
+  const focusActiveEditor = createEditorFocuser(wrapperEl)
 
   // ── 热键处理 ──
 
@@ -184,7 +148,6 @@ export function useHotkey(options: UseHotkeyOptions) {
         return true
 
       case 'Tab':
-        if (!tabNavigation.value) return false
         event.preventDefault()
         navigate(0, event.shiftKey ? -1 : 1)
         focusActiveEditor()
@@ -212,7 +175,6 @@ export function useHotkey(options: UseHotkeyOptions) {
         return true
 
       case 'Tab': {
-        if (!tabNavigation.value) return false
         event.preventDefault()
 
         if (editMode.value === 'row') {
@@ -337,7 +299,6 @@ export function useHotkey(options: UseHotkeyOptions) {
         return true
 
       case 'Tab':
-        if (!tabNavigation.value) return false
         event.preventDefault()
         ensureActive() || navigate(0, event.shiftKey ? -1 : 1)
         if (isAll) focusActiveEditor()

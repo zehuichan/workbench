@@ -8,3 +8,4 @@ export * from './tree-helper';
 export * from './unique';
 export * from './util';
 export * from './popper';
+export * from './uuid';

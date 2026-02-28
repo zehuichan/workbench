@@ -1,5 +1,5 @@
 import { cloneDeep, isEqual } from 'es-toolkit';
-import { ref, shallowRef, watch, type Ref, type ShallowRef } from 'vue';
+import { shallowRef, triggerRef, watch, type Ref, type ShallowRef } from 'vue';
 
 import type { RowData } from '../types';
 
@@ -15,7 +15,8 @@ export type DirtyCellKey = string;
 export function useDirtyTracking(options: UseDirtyTrackingOptions) {
   const { data } = options;
 
-  const dirtyCells = ref(new Set<DirtyCellKey>());
+  /** 行索引 -> 脏列名集合 */
+  const dirtyCells = shallowRef(new Map<number, Set<string>>());
 
   const cachedData: ShallowRef<RowData[]> =
     options.cachedData ?? shallowRef<RowData[]>([]);
@@ -38,25 +39,32 @@ export function useDirtyTracking(options: UseDirtyTrackingOptions) {
   function markDirty(rowIndex: number, prop: string): void {
     const oldVal = cachedData.value[rowIndex]?.[prop];
     const newVal = data.value[rowIndex]?.[prop];
-    const key: DirtyCellKey = `${rowIndex}:${prop}`;
-    const next = new Set(dirtyCells.value);
+    const map = dirtyCells.value;
+
     if (isEqual(oldVal, newVal)) {
-      next.delete(key);
+      const rowSet = map.get(rowIndex);
+      if (rowSet) {
+        rowSet.delete(prop);
+        if (rowSet.size === 0) map.delete(rowIndex);
+        triggerRef(dirtyCells);
+      }
     } else {
-      next.add(key);
+      let rowSet = map.get(rowIndex);
+      if (!rowSet) {
+        rowSet = new Set();
+        map.set(rowIndex, rowSet);
+      }
+      rowSet.add(prop);
+      triggerRef(dirtyCells);
     }
-    dirtyCells.value = next;
   }
 
-  /** 判断某单元格是否为脏 */
   function isCellDirty(rowIndex: number, prop: string): boolean {
-    return dirtyCells.value.has(`${rowIndex}:${prop}`);
+    return dirtyCells.value.get(rowIndex)?.has(prop) ?? false;
   }
 
-  /** 判断某行是否含有脏单元格 */
   function isRowDirty(rowIndex: number): boolean {
-    const prefix = `${rowIndex}:`;
-    return Array.from(dirtyCells.value).some((k) => k.startsWith(prefix));
+    return (dirtyCells.value.get(rowIndex)?.size ?? 0) > 0;
   }
 
   /**
@@ -64,31 +72,25 @@ export function useDirtyTracking(options: UseDirtyTrackingOptions) {
    */
   function clearDirty(rowIndex?: number, prop?: string): void {
     if (rowIndex === undefined) {
-      dirtyCells.value = new Set();
+      dirtyCells.value = new Map();
       return;
     }
-    const next = new Set(dirtyCells.value);
+    const map = dirtyCells.value;
     if (prop !== undefined) {
-      next.delete(`${rowIndex}:${prop}`);
+      const rowSet = map.get(rowIndex);
+      if (!rowSet) return;
+      rowSet.delete(prop);
+      if (rowSet.size === 0) map.delete(rowIndex);
     } else {
-      const prefix = `${rowIndex}:`;
-      for (const k of next) {
-        if (k.startsWith(prefix)) next.delete(k);
-      }
+      if (!map.delete(rowIndex)) return;
     }
-    dirtyCells.value = next;
+    triggerRef(dirtyCells);
   }
 
   /** 返回至少有一个脏单元格的行（行数据数组） */
   function getModifiedRows(): RowData[] {
     const list = data.value;
-    const rowIndices = new Set<number>();
-    for (const key of dirtyCells.value) {
-      const i = Number(key.split(':')[0]);
-      if (!Number.isNaN(i) && i >= 0 && i < list.length) {
-        rowIndices.add(i);
-      }
-    }
+    const rowIndices = new Set<number>(dirtyCells.value.keys());
     return list.filter((_, i) => rowIndices.has(i));
   }
 
@@ -97,11 +99,18 @@ export function useDirtyTracking(options: UseDirtyTrackingOptions) {
    */
   function resetTracking(): void {
     cachedData.value = cloneDeep(data.value);
-    dirtyCells.value = new Set();
+    dirtyCells.value = new Map();
   }
 
+  /** 返回所有脏单元格 key 集合（兼容旧格式 `${rowIndex}:${prop}`） */
   function getDirtyCells(): Set<DirtyCellKey> {
-    return new Set(dirtyCells.value);
+    const result = new Set<DirtyCellKey>();
+    for (const [rowIndex, props] of dirtyCells.value) {
+      for (const prop of props) {
+        result.add(`${rowIndex}:${prop}`);
+      }
+    }
+    return result;
   }
 
   return {
