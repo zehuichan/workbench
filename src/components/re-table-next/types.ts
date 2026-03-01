@@ -9,6 +9,7 @@ export type RowData = Record<string, any>;
 export interface ReTableNextContext {
   tableEl: Ref<HTMLElement | null>;
   tableInstance: Ref<Record<string, any> | null>;
+  rules: Ref<Record<string, RuleItem | RuleItem[]> | undefined>;
   columns: Ref<ReTableNextColumn[]>;
   visibleColumns: Ref<ReTableNextColumn[]>;
   navigableColumns: Ref<ReTableNextColumn[]>;
@@ -80,6 +81,8 @@ export interface ReTableNextColumn<T = RowData> extends Partial<
     | ((row: T, column: ReTableNextColumn<T>) => Record<string, any>);
   /** 校验规则（扩展，async-validator RuleItem） */
   rules?: RuleItem | RuleItem[];
+  /** 是否必填 */
+  required?: boolean;
   /** 单元格自定义渲染（扩展，与 formatter 并存） */
   render?: (ctx: CellContext<T>) => VNode;
   /** 多级表头子列（与 TableColumnCtx.children 兼容） */
@@ -154,7 +157,7 @@ export interface ReTableNextProps<T = RowData> {
   editable?: boolean | 'row' | 'cell' | 'manual';
 
   /** 表级校验规则（按 prop 聚合） */
-  tableRules?: Record<string, RuleItem | RuleItem[]>;
+  rules?: Record<string, RuleItem | RuleItem[]>;
   /** 校验触发时机：change | blur | manual */
   validateTrigger?: 'change' | 'blur' | 'manual';
   /** 单元格失焦时是否校验（blur 时或 confirm 时） */

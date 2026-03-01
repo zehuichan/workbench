@@ -289,7 +289,7 @@ const {
 } = useValidation({
   data: computed(() => props.data ?? []),
   columns: navigableColumns,
-  tableRules: computed(() => props.tableRules),
+  tableRules: computed(() => props.rules),
   tableEl: wrapperEl,
   trigger: computed(() => props.validateTrigger ?? 'manual'),
   validateOnCellExit: computed(() => props.validateOnCellExit ?? false),
@@ -464,6 +464,7 @@ useHotkey({
 provide<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, {
   tableEl: wrapperEl,
   tableInstance: computed(() => tableRef.value) as any,
+  rules: computed(() => props.rules),
   columns: computed(() => props.columns ?? []),
   visibleColumns,
   navigableColumns,

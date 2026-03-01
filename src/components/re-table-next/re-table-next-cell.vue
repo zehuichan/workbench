@@ -7,7 +7,7 @@
       :name="`editor-${item.prop}`"
       v-bind="editorSlotScope"
     />
-    <!-- 默认编辑器 -->
+    <!-- 默认编辑器：用 div 在 capture 阶段拦截 Esc，防止下拉框等弹层吞掉事件 -->
     <component
       v-else
       :is="editorComponent"
@@ -16,18 +16,15 @@
       class="re-table-next-cell-editor w-full!"
       size="small"
       @update:model-value="setCellEditorValue"
-      @keydown.esc.stop.prevent="onEditorEsc"
+      @keydown.esc.capture.stop="onEditorEsc"
     />
   </template>
-
   <!-- 展示态（校验错误时用 tooltip 显示错误信息） -->
   <template v-else-if="cellError">
-    <el-tooltip
-      :content="cellError"
-      placement="top"
-      effect="dark"
-    >
-      <span class="re-table-next-cell-content re-table-next-cell-content--with-tooltip">
+    <el-tooltip :content="cellError" placement="top" effect="dark">
+      <span
+        class="re-table-next-cell-content re-table-next-cell-content--with-tooltip"
+      >
         <template v-if="$slots[`cell-${item.prop}`]">
           <slot :name="`cell-${item.prop}`" v-bind="scope" />
         </template>

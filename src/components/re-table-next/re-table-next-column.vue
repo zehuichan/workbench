@@ -8,7 +8,7 @@
       >
       </slot>
       <template v-else>
-        <span v-if="item.editable" class="re-table-next-header--required" />
+        <span v-if="isRequired" class="re-table-next-header--required" />
         {{ item.label }}
       </template>
     </template>
@@ -38,9 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h } from 'vue';
-
-import type { ReTableNextColumn } from './types';
+import { computed, h, inject } from 'vue';
+import type { RuleItem } from 'async-validator';
+import { castArray } from 'es-toolkit/compat';
+import type { ReTableNextColumn, ReTableNextContext } from './types';
+import { RE_TABLE_NEXT_INJECTION_KEY } from './constants';
 import ReTableNextCell from './re-table-next-cell.vue';
 import ReTableNextColumnSelf from './re-table-next-column.vue';
 
@@ -52,6 +54,29 @@ defineOptions({
 const props = defineProps<{
   item?: ReTableNextColumn;
 }>();
+
+const ctx = inject<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, null);
+
+const isRequired = computed(() =>
+  normalizedRules.value.some((rule) => rule.required),
+);
+
+const normalizedRules = computed(() => {
+  const { item } = props;
+  const { required } = item;
+
+  const rules: RuleItem[] = [];
+
+  if (item.rules) {
+    rules.push(...castArray(item.rules));
+  }
+
+  if (required !== undefined) {
+    rules.push({ required });
+  }
+
+  return rules;
+});
 
 /** 过滤掉不应透传给 el-table-column 的扩展属性 */
 const columnBindings = computed(() => {

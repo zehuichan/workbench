@@ -308,9 +308,10 @@ function handleGetModified() {
     </p>
 
     <div
-      class="mb-4 flex flex-wrap items-center gap-3 rounded-lg border bg-gray-50 p-3 text-sm"
+      class="mb-4 flex flex-wrap items-center rounded-lg border bg-gray-50 p-3 text-sm"
     >
       <el-checkbox v-model="validateOnCellExit">失焦时校验</el-checkbox>
+      <el-divider direction="vertical" />
       <el-button size="small" @click="handleValidate">校验全部</el-button>
       <el-button size="small" @click="handleClearValidation">
         清除校验
@@ -324,6 +325,7 @@ function handleGetModified() {
         controls-position="right"
         class="w-24"
       />
+      <el-divider direction="vertical" />
       <el-button size="small" @click="handleInsertRow">插入行</el-button>
       <el-button size="small" @click="handleDeleteRow">删除行</el-button>
       <el-button size="small" @click="handleDuplicateRow">复制行</el-button>
@@ -341,7 +343,7 @@ function handleGetModified() {
       v-model:page-size="pageSize"
       :total="total"
       :columns="columns"
-      :table-rules="tableRules"
+      :rules="tableRules"
       :validate-on-cell-exit="validateOnCellExit"
       row-active
       editable="cell"
