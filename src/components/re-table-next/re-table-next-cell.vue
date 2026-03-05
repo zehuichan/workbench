@@ -22,7 +22,7 @@
   </template>
   <!-- 展示态（校验错误时用 tooltip 显示错误信息） -->
   <template v-else-if="cellError">
-    <el-tooltip :content="cellError" placement="top" effect="dark">
+    <el-tooltip :content="cellError">
       <span
         class="re-table-next-cell-content re-table-next-cell-content--with-tooltip"
       >
@@ -71,10 +71,11 @@ const cellError = computed(() =>
 );
 
 /** 单元格联动：依赖解析状态（disabled / componentProps 等） */
-const depState = computed(() =>
-  ctx?.resolveDependencyState?.(props.scope.$index, props.item) ?? {
-    disabled: false,
-  },
+const depState = computed(
+  () =>
+    ctx?.resolveDependencyState?.(props.scope.$index, props.item) ?? {
+      disabled: false,
+    },
 );
 
 defineOptions({
