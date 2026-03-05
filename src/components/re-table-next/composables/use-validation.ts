@@ -2,7 +2,11 @@ import { computed, nextTick, ref, type Ref } from 'vue';
 
 import Schema, { type Rules, type RuleItem } from 'async-validator';
 
-import type { ReTableNextColumn, RowData } from '../types';
+import type {
+  DependencyState,
+  ReTableNextColumn,
+  RowData,
+} from '../types';
 
 export interface ValidationResult {
   valid: boolean;
@@ -22,6 +26,8 @@ export interface UseValidationOptions {
   tableEl: Ref<HTMLElement | null>;
   trigger?: Ref<'change' | 'blur' | 'manual'>;
   validateOnCellExit?: Ref<boolean>;
+  /** 单元格联动：解析依赖状态（动态 rules/required） */
+  resolveDeps?: (rowIndex: number, column: ReTableNextColumn) => DependencyState;
 }
 
 /** Map: when prop A changes, re-validate props [B, C, ...] */
@@ -58,6 +64,7 @@ export function useValidation(options: UseValidationOptions) {
     tableEl,
     trigger: _trigger = ref('manual'),
     validateOnCellExit: _validateOnCellExit = ref(false),
+    resolveDeps,
   } = options;
 
   const errors = ref(new Map<string, string>());
@@ -66,6 +73,7 @@ export function useValidation(options: UseValidationOptions) {
   function mergeRules(
     prop: string,
     column: ReTableNextColumn,
+    rowIndex?: number,
   ): RuleItem[] {
     const tableLevel = tableRules.value?.[prop];
     const columnLevel = column.rules;
@@ -79,6 +87,21 @@ export function useValidation(options: UseValidationOptions) {
       rules.push(
         ...(Array.isArray(columnLevel) ? columnLevel : [columnLevel]),
       );
+    }
+
+    if (rowIndex != null && resolveDeps && column.dependencies) {
+      const depState = resolveDeps(rowIndex, column);
+      if (depState.rules) {
+        rules.push(
+          ...(Array.isArray(depState.rules) ? depState.rules : [depState.rules]),
+        );
+      }
+      if (depState.required) {
+        rules.push({
+          required: true,
+          message: `${column.label ?? prop} 必填`,
+        });
+      }
     }
 
     return rules;
@@ -95,7 +118,7 @@ export function useValidation(options: UseValidationOptions) {
 
     for (const column of columns.value) {
       if (!column.prop) continue;
-      const fieldRules = mergeRules(column.prop, column);
+      const fieldRules = mergeRules(column.prop, column, rowIndex);
       if (fieldRules.length > 0) {
         rules[column.prop] = fieldRules;
       }
@@ -177,7 +200,7 @@ export function useValidation(options: UseValidationOptions) {
     const column = columns.value.find((c) => c.prop === prop);
     if (!column) return true;
 
-    const fieldRules = mergeRules(prop, column);
+    const fieldRules = mergeRules(prop, column, rowIndex);
     if (fieldRules.length === 0) return true;
 
     const validator = new Schema({ [prop]: fieldRules });

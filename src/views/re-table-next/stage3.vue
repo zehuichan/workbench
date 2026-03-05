@@ -367,8 +367,8 @@ function handleRowEditRemark(rowIndex: number) {
       :data="tableData"
       :columns="columns"
       :editable="editableMode"
+      adaptive
       border
-      stripe
       @cell-edit-start="onEditStart"
       @cell-edit-end="onEditEnd"
       @cell-value-change="onValueChange"

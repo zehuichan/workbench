@@ -3,7 +3,10 @@ import { h, ref } from 'vue';
 import { ElTag } from 'element-plus';
 
 import { ReTableNext } from '@/components';
-import type { ReTableNextColumn, HotkeyContext } from '@/components/re-table-next';
+import type {
+  ReTableNextColumn,
+  HotkeyContext,
+} from '@/components/re-table-next';
 
 // ──── 数据类型 ────
 
@@ -20,7 +23,10 @@ interface TaskRow {
 
 // ──── 模拟数据 ────
 
-const statusMap: Record<string, { label: string; type: 'info' | 'warning' | 'success' }> = {
+const statusMap: Record<
+  string,
+  { label: string; type: 'info' | 'warning' | 'success' }
+> = {
   pending: { label: '待开始', type: 'info' },
   active: { label: '进行中', type: 'warning' },
   done: { label: '已完成', type: 'success' },
@@ -52,7 +58,9 @@ function createRow(i: number): TaskRow {
   };
 }
 
-const tableData = ref<TaskRow[]>(Array.from({ length: 30 }, (_, i) => createRow(i)));
+const tableData = ref<TaskRow[]>(
+  Array.from({ length: 30 }, (_, i) => createRow(i)),
+);
 
 // ──── 列配置 ────
 
@@ -150,28 +158,33 @@ function jumpToFirst() {
 
 function jumpToLast() {
   const rowCount = tableData.value.length;
-  tableRef.value?.focusCell(rowCount - 1, columns.filter(c => !c.type).length - 1);
+  tableRef.value?.focusCell(
+    rowCount - 1,
+    columns.filter((c) => !c.type).length - 1,
+  );
 }
 </script>
 
 <template>
   <div class="stage2-demo p-4">
-    <h2 class="text-lg font-semibold mb-1">阶段 2 — 单元格导航 + 热键</h2>
-    <p class="text-sm text-gray-500 mb-4">
+    <h2 class="mb-1 text-lg font-semibold">阶段 2 — 单元格导航 + 热键</h2>
+    <p class="mb-4 text-sm text-gray-500">
       点击任意单元格激活，然后使用方向键 / Tab / Enter / Home / End 导航。
     </p>
 
     <!-- 控制面板 -->
-    <div class="flex flex-wrap gap-4 mb-4 p-3 bg-gray-50 rounded-lg border text-sm">
-      <label class="flex items-center gap-1.5 cursor-pointer">
+    <div
+      class="mb-4 flex flex-wrap gap-4 rounded-lg border bg-gray-50 p-3 text-sm"
+    >
+      <label class="flex cursor-pointer items-center gap-1.5">
         <el-switch v-model="cellActive" size="small" />
         <span>cellActive（单元格高亮）</span>
       </label>
-      <label class="flex items-center gap-1.5 cursor-pointer">
+      <label class="flex cursor-pointer items-center gap-1.5">
         <el-switch v-model="rowActive" size="small" />
         <span>rowActive（行高亮）</span>
       </label>
-      <label class="flex items-center gap-1.5 cursor-pointer">
+      <label class="flex cursor-pointer items-center gap-1.5">
         <el-switch v-model="hotkeyEnabled" size="small" />
         <span>hotkeyEnabled（启用热键）</span>
       </label>
@@ -180,7 +193,7 @@ function jumpToLast() {
     </div>
 
     <!-- 热键说明 -->
-    <div class="flex gap-6 mb-3 text-xs text-gray-500 flex-wrap">
+    <div class="mb-3 flex flex-wrap gap-6 text-xs text-gray-500">
       <span>↑↓←→ 方向键导航</span>
       <span>Tab / Shift+Tab 列导航（随 hotkeyEnabled）</span>
       <span>Enter / Shift+Enter 行导航</span>
@@ -203,10 +216,9 @@ function jumpToLast() {
       :hotkey-enabled="hotkeyEnabled"
       :hotkeys="customHotkeys"
       border
-      stripe
     >
       <template #title>
-        <span class="font-medium text-sm">任务列表（30 行）</span>
+        <span class="text-sm font-medium">任务列表（30 行）</span>
       </template>
       <template #actions>
         <el-tag size="small" type="info">

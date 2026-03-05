@@ -229,7 +229,7 @@ const columns: ReTableNextColumn<TaskRow>[] = [
     <ReTableNext
       :columns="columns"
       :data="tableData"
-      :adaptive="true"
+      adaptive
       @sort-change="handleSortChange"
     >
       <!-- header 插槽 -->

@@ -21,6 +21,8 @@ export interface UseEditableOptions {
   activeRowIndex: Ref<number>
   activeColIndex: Ref<number>
   editable: Ref<boolean | 'row' | 'cell' | 'manual'>
+  /** 单元格联动：依赖 disabled 为 true 时阻止进入编辑 */
+  isDepDisabled?: (rowIndex: number, colProp: string) => boolean
   onEditStart?: (payload: EditCellPayload) => void
   onEditEnd?: (payload: EditCellPayload) => void
   onValueChange?: (payload: EditValueChangePayload) => void
@@ -48,6 +50,7 @@ export function useEditable(options: UseEditableOptions) {
     activeRowIndex,
     activeColIndex,
     editable,
+    isDepDisabled,
     onEditStart,
     onEditEnd,
     onValueChange,
@@ -85,8 +88,8 @@ export function useEditable(options: UseEditableOptions) {
     if (!row) return false
 
     if (column.editable === false) return false
-    if (typeof column.editable === 'function') return column.editable(row)
-    if (column.editable === true) return true
+    if (typeof column.editable === 'function' && !column.editable(row)) return false
+    if (isDepDisabled?.(rowIndex, column.prop ?? '')) return false
 
     return editMode.value !== 'none'
   }

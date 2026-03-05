@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, h, onMounted, ref } from 'vue';
+import { computed, h, ref } from 'vue';
 import { ElMessage, ElTag } from 'element-plus';
 
 import { ReTableNext } from '@/components';
-import type { ReTableNextColumn } from '@/components/re-table-next';
+import type {
+  DependencyApi,
+  ReTableNextColumn,
+} from '@/components/re-table-next';
 import type { RuleItem } from 'async-validator';
 import { buildShortUUID } from '@/utils';
 
@@ -40,51 +43,35 @@ const defaultStatus = { label: '未知', type: 'info' as const };
 const defaultPriority = { label: '未知', color: '#909399' };
 
 const departments = ['技术部', '产品部', '设计部', '市场部'];
-const assignees = ['张三', '李四', '王五', '赵六', '陈七', '周八'];
+
+/** 部门 → 人员映射（用于动态下拉） */
+const departmentAssignees: Record<string, string[]> = {
+  技术部: ['张三', '李四'],
+  产品部: ['王五', '赵六'],
+  设计部: ['陈七', '周八'],
+  市场部: ['周八', '陈七'],
+};
 
 function createRow(i: number): TaskRow {
   const statuses: TaskRow['status'][] = ['pending', 'active', 'done'];
   const priorities: TaskRow['priority'][] = ['low', 'medium', 'high'];
+  const dept = departments[i % departments.length];
+  const assigneesForDept = departmentAssignees[dept] ?? [];
   return {
     id: i + 1,
     name: `任务 ${i + 1} — ${['需求评审', '接口开发', '联调测试', 'UI 走查', '性能优化'][i % 5]}`,
     status: statuses[i % 3],
     priority: priorities[i % 3],
     amount: 1000 + (i % 20) * 500,
-    assignee: assignees[i % assignees.length],
-    department: departments[i % departments.length],
-    remark: 'remark',
+    department: dept,
+    assignee: assigneesForDept[i % assigneesForDept.length] ?? assigneesForDept[0] ?? '',
+    remark: '',
   };
 }
 
 const tableData = ref<TaskRow[]>(
   Array.from({ length: 10 }, (_, i) => createRow(i)),
 );
-
-// 分页
-const currentPage = ref(1);
-const pageSize = ref(10);
-const loading = ref(false);
-
-const total = computed(() => tableData.value.length);
-
-/** 模拟请求当前页 */
-function fetchPage() {
-  loading.value = true;
-  setTimeout(() => {
-    loading.value = false;
-  }, 300);
-}
-
-function handlePagination(payload: { currentPage: number; pageSize: number }) {
-  currentPage.value = payload.currentPage;
-  pageSize.value = payload.pageSize;
-  fetchPage();
-}
-
-onMounted(() => {
-  fetchPage();
-});
 
 const statusOptions = [
   { label: '待开始', value: 'pending' },
@@ -98,7 +85,7 @@ const priorityOptions = [
   { label: '低', value: 'low' },
 ];
 
-// ──── 列配置（含校验规则）────
+// ──── 列配置（含 dependencies）────
 
 const columns: ReTableNextColumn<TaskRow>[] = [
   { type: 'selection', width: 55 },
@@ -145,6 +132,12 @@ const columns: ReTableNextColumn<TaskRow>[] = [
       clearable: true,
       options: priorityOptions,
     },
+    dependencies: {
+      triggerFields: ['status'],
+      disabled(values: TaskRow) {
+        return values.status === 'done';
+      },
+    },
     render: (scope) => {
       const priority =
         priorityMap[scope?.row?.priority as string] ?? defaultPriority;
@@ -168,10 +161,15 @@ const columns: ReTableNextColumn<TaskRow>[] = [
     },
     formatter: (row: TaskRow) =>
       `¥ ${(row.amount ?? 0).toLocaleString('zh-CN')}`,
-    rules: [
-      { required: true, message: '请输入金额' },
-      { type: 'number', min: 0, message: '金额不能为负' },
-    ],
+  },
+  {
+    prop: 'department',
+    label: '部门',
+    editable: true,
+    component: 'select',
+    componentProps: {
+      options: departments.map((d) => ({ label: d, value: d })),
+    },
   },
   {
     prop: 'assignee',
@@ -179,22 +177,35 @@ const columns: ReTableNextColumn<TaskRow>[] = [
     editable: true,
     component: 'select',
     componentProps: {
-      options: assignees.map((a) => ({ label: a, value: a })),
+      options: ['张三', '李四', '王五', '赵六', '陈七', '周八'].map((a) => ({
+        label: a,
+        value: a,
+      })),
     },
-  },
-  {
-    prop: 'department',
-    label: '部门',
-    editable: (row) => row.status !== 'done',
-    component: 'select',
-    componentProps: {
-      options: departments.map((d) => ({ label: d, value: d })),
+    dependencies: {
+      triggerFields: ['department'],
+      required(values: TaskRow) {
+        return values.status === 'active';
+      },
+      componentProps(values: TaskRow) {
+        const dept = values.department;
+        const list = dept ? (departmentAssignees[dept] ?? []) : [];
+        return {
+          options: list.map((a) => ({ label: a, value: a })),
+        };
+      },
     },
   },
   {
     prop: 'remark',
     label: '备注',
     editable: true,
+    dependencies: {
+      triggerFields: ['name'],
+      trigger(_values, api: DependencyApi<TaskRow>) {
+        api.setFieldValue('remark', '');
+      },
+    },
   },
 ];
 
@@ -229,16 +240,6 @@ function handleInsertRow() {
 }
 
 function handleDeleteRow() {
-  const selected = tableRef.value?.getSelectionRows?.() ?? [];
-  if (selected.length > 0) {
-    const indices = selected
-      .map((row) => (tableData.value ?? []).indexOf(row as TaskRow))
-      .filter((i) => i >= 0);
-    tableRef.value?.deleteRow?.(indices);
-    tableRef.value?.clearSelection?.();
-    ElMessage.success(`已删除 ${selected.length} 行`);
-    return;
-  }
   const ri = tableRef.value?.activeRowIndex ?? -1;
   if (ri < 0) {
     ElMessage.info('请先选中一行');
@@ -246,65 +247,13 @@ function handleDeleteRow() {
   }
   tableRef.value?.deleteRow?.(ri);
 }
-
-function handleDuplicateRow() {
-  const selected = tableRef.value?.getSelectionRows?.() ?? [];
-  if (selected.length > 0) {
-    const indices = selected
-      .map((row) => (tableData.value ?? []).indexOf(row as TaskRow))
-      .filter((i) => i >= 0);
-    tableRef.value?.duplicateRow?.(indices);
-    tableRef.value?.clearSelection?.();
-    ElMessage.success(`已复制 ${selected.length} 行`);
-    return;
-  }
-  const ri = tableRef.value?.activeRowIndex ?? -1;
-  if (ri < 0) {
-    ElMessage.info('请先选中一行');
-    return;
-  }
-  tableRef.value?.duplicateRow?.(ri);
-}
-
-function handleMoveUp() {
-  const ri = tableRef.value?.activeRowIndex ?? -1;
-  if (ri < 0) {
-    ElMessage.info('请先选中一行');
-    return;
-  }
-  if (ri === 0) {
-    ElMessage.info('已在首行');
-    return;
-  }
-  tableRef.value?.moveRow?.(ri, ri - 1);
-}
-
-function handleMoveDown() {
-  const ri = tableRef.value?.activeRowIndex ?? -1;
-  const rowCount = tableData.value.length;
-  if (ri < 0) {
-    ElMessage.info('请先选中一行');
-    return;
-  }
-  if (ri >= rowCount - 1) {
-    ElMessage.info('已在末行');
-    return;
-  }
-  tableRef.value?.moveRow?.(ri, ri + 1);
-}
-
-function handleGetModified() {
-  const rows = tableRef.value?.getModifiedRows?.() ?? [];
-  ElMessage.info(`已修改 ${rows.length} 行`);
-}
 </script>
 
 <template>
-  <div class="stage4-demo p-4">
-    <h2 class="mb-1 text-lg font-semibold">阶段 4 — 校验 + 行/列操作</h2>
+  <div class="stage5-demo p-4">
+    <h2 class="mb-1 text-lg font-semibold">阶段 5 — 单元格联动（Cell Dependencies）</h2>
     <p class="mb-4 text-sm text-gray-500">
-      校验（表级 + 列级
-      rules）、失焦校验、行增删移复制、列设置面板、脏数据追踪。
+      联动禁用、联动赋值、动态下拉选项、动态必填。修改任务名称会清空备注；status=已完成时优先级不可编辑；部门变更时负责人选项过滤；status=进行中时负责人必填。
     </p>
 
     <div
@@ -313,9 +262,7 @@ function handleGetModified() {
       <el-checkbox v-model="validateOnCellExit">失焦时校验</el-checkbox>
       <el-divider direction="vertical" />
       <el-button size="small" @click="handleValidate">校验全部</el-button>
-      <el-button size="small" @click="handleClearValidation">
-        清除校验
-      </el-button>
+      <el-button size="small" @click="handleClearValidation">清除校验</el-button>
       <el-divider direction="vertical" />
       <el-input-number
         v-model="insertRowCount"
@@ -328,20 +275,11 @@ function handleGetModified() {
       <el-divider direction="vertical" />
       <el-button size="small" @click="handleInsertRow">插入行</el-button>
       <el-button size="small" @click="handleDeleteRow">删除行</el-button>
-      <el-button size="small" @click="handleDuplicateRow">复制行</el-button>
-      <el-button size="small" @click="handleMoveUp">上移</el-button>
-      <el-button size="small" @click="handleMoveDown">下移</el-button>
-      <el-divider direction="vertical" />
-      <el-button size="small" @click="handleGetModified">已修改行数</el-button>
     </div>
 
     <re-table-next
       ref="tableRef"
-      v-loading="loading"
       v-model:data="tableData"
-      v-model:current-page="currentPage"
-      v-model:page-size="pageSize"
-      :total="total"
       :columns="columns"
       :rules="tableRules"
       :validate-on-cell-exit="validateOnCellExit"
@@ -349,21 +287,15 @@ function handleGetModified() {
       adaptive
       border
       row-key="id"
-      @pagination="handlePagination"
     >
       <template #title>
-        <span class="text-sm font-medium">
-          校验 + 行/列操作 + 分页（50 条，模拟后端翻页）
-        </span>
+        <span class="text-sm font-medium">单元格联动 Demo</span>
       </template>
       <template #summary>
-        <div class="flex items-center gap-2">
-          <el-tag type="info">
-            激活：行 {{ (tableRef?.activeRowIndex ?? -1) + 1 }} / 列
-            {{ (tableRef?.activeColIndex ?? -1) + 1 }}
-          </el-tag>
-          <span class="text-xs text-gray-400">| 列设置按钮在右侧</span>
-        </div>
+        <el-tag type="info">
+          激活：行 {{ (tableRef?.activeRowIndex ?? -1) + 1 }} / 列
+          {{ (tableRef?.activeColIndex ?? -1) + 1 }}
+        </el-tag>
       </template>
     </re-table-next>
   </div>

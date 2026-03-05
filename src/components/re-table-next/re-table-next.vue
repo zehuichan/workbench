@@ -119,6 +119,7 @@ import {
   useAdaptive,
   useClassNames,
   useColumnOptions,
+  useDependencies,
   useDirtyTracking,
   useEditable,
   useEditHistory,
@@ -147,9 +148,10 @@ const props = withDefaults(defineProps<ReTableNextProps>(), {
   showOverflowTooltip: true,
   editable: false,
   cellActive: true,
-  rowActive: false,
+  rowActive: true,
   hotkeyEnabled: true,
-  adaptive: false,
+  adaptive: true,
+  columnSetting: true,
   validateTrigger: 'manual',
   validateOnCellExit: false,
 });
@@ -249,6 +251,29 @@ const { insertRow, deleteRow, moveRow, duplicateRow } = useRowOptions({
   activeRowIndex,
 });
 
+// ──── 脏数据追踪（useDependencies 依赖 markDirty）────
+
+const {
+  dirtyCells,
+  markDirty,
+  clearDirty,
+  getModifiedRows,
+  isRowDirty,
+  isCellDirty,
+  resetTracking,
+  getDirtyCells,
+} = useDirtyTracking({
+  data: computed(() => props.data ?? []),
+});
+
+// ──── 单元格联动（useEditable 依赖 isDepDisabled）────
+
+const { resolveDependencyState, onFieldChange } = useDependencies({
+  columns: visibleColumns,
+  data: displayData,
+  markDirty,
+});
+
 // ──── 编辑系统 ────
 
 const {
@@ -272,6 +297,11 @@ const {
   activeRowIndex,
   activeColIndex,
   editable: computed(() => props.editable ?? false),
+  isDepDisabled: (rowIndex, colProp) => {
+    const column = navigableColumns.value.find((c) => c.prop === colProp);
+    if (!column) return false;
+    return resolveDependencyState(rowIndex, column).disabled;
+  },
   onEditStart: (payload) => emit('cell-edit-start', payload),
   onEditEnd: (payload) => emit('cell-edit-end', payload),
   onValueChange: (payload) => emit('cell-value-change', payload),
@@ -293,6 +323,7 @@ const {
   tableEl: wrapperEl,
   trigger: computed(() => props.validateTrigger ?? 'manual'),
   validateOnCellExit: computed(() => props.validateOnCellExit ?? false),
+  resolveDeps: resolveDependencyState,
 });
 
 // ──── 编辑历史 ────
@@ -301,19 +332,6 @@ const { canUndo, canRedo, pushChange, undo, redo, clearHistory } =
   useEditHistory({
     data: computed(() => props.data ?? []),
   });
-
-const {
-  dirtyCells,
-  markDirty,
-  clearDirty,
-  getModifiedRows,
-  isRowDirty,
-  isCellDirty,
-  resetTracking,
-  getDirtyCells,
-} = useDirtyTracking({
-  data: computed(() => props.data ?? []),
-});
 
 const {
   rowClassNameBinding: getRowClassNameBinding,
@@ -344,6 +362,9 @@ const confirmEditWithHistory = () => {
       markDirty(c.rowIndex, c.colProp);
     }
     pushChange(changes);
+    for (const c of changes) {
+      onFieldChange(c.rowIndex, c.colProp);
+    }
   }
   return changes;
 };
@@ -488,6 +509,9 @@ provide<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, {
   setEditingValue,
   getErrorForCell: (localRowIndex: number, prop: string) =>
     getErrorForCellRaw(localRowIndex, prop),
+  resolveDependencyState,
+  onFieldChange,
+  markDirty,
   columnOptions: props.columnSetting
     ? {
         toggleColumn: columnOptions.toggleColumn,
@@ -535,24 +559,6 @@ defineExpose({
   deleteRow: (localIndex?: number | number[]) => deleteRow(localIndex),
   moveRow: (from: number, to: number) => moveRow(from, to),
   duplicateRow: (localIndex?: number | number[]) => duplicateRow(localIndex),
-  deleteSelectedRows: () => {
-    const selected: RowData[] = getElTable()?.getSelectionRows() ?? [];
-    if (!selected.length) return;
-    const indices = selected
-      .map((row: RowData) => (props.data ?? []).indexOf(row))
-      .filter((i: number) => i >= 0);
-    deleteRow(indices);
-    getElTable()?.clearSelection();
-  },
-  duplicateSelectedRows: () => {
-    const selected: RowData[] = getElTable()?.getSelectionRows() ?? [];
-    if (!selected.length) return;
-    const indices = selected
-      .map((row: RowData) => (props.data ?? []).indexOf(row))
-      .filter((i: number) => i >= 0);
-    duplicateRow(indices);
-    getElTable()?.clearSelection();
-  },
   getModifiedRows,
   markDirty,
   clearDirty,

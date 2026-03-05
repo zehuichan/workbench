@@ -1,4 +1,5 @@
 export { useAdaptive } from './use-adaptive'
+export { useDependencies } from './use-dependencies'
 export { useClassNames } from './use-class-names'
 export { useNavigation } from './use-navigation'
 export { useHotkey } from './use-hotkey'

@@ -2,6 +2,9 @@ export { default as ReTableNext } from './re-table-next.vue'
 export type {
   AdaptiveConfig,
   CellContext,
+  ColumnDependencies,
+  DependencyApi,
+  DependencyState,
   HotkeyBinding,
   HotkeyContext,
   PaginationPayload,

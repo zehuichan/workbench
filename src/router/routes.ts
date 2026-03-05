@@ -4,17 +4,7 @@ const routes = [
   {
     name: 'Root',
     path: '/',
-    redirect: '/plus-table',
-  },
-  {
-    name: 'plus-table',
-    path: '/plus-table',
-    component: () => import('@/views/plus-table/index.vue'),
-  },
-  {
-    name: 're-table',
-    path: '/re-table',
-    component: () => import('@/views/re-table/index.vue'),
+    redirect: '/re-table-next',
   },
   {
     name: 're-table-next',
@@ -40,6 +30,11 @@ const routes = [
     name: 're-table-next-stage4',
     path: '/re-table-next/stage4',
     component: () => import('@/views/re-table-next/stage4.vue'),
+  },
+  {
+    name: 're-table-next-stage5',
+    path: '/re-table-next/stage5',
+    component: () => import('@/views/re-table-next/stage5.vue'),
   },
 ] as RouteRecordRaw[];
 

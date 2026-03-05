@@ -89,6 +89,7 @@ const columnBindings = computed(() => {
     rules: _rules,
     render: _render,
     children: _children,
+    dependencies: _dependencies,
     ...rest
   } = props.item;
   return rest;

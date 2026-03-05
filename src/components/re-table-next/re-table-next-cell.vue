@@ -12,7 +12,8 @@
       v-else
       :is="editorComponent"
       :model-value="cellEditorValue"
-      v-bind="editorBindProps"
+      v-bind="mergedEditorProps"
+      :disabled="depState.disabled"
       class="re-table-next-cell-editor w-full!"
       size="small"
       @update:model-value="setCellEditorValue"
@@ -69,6 +70,13 @@ const cellError = computed(() =>
   ctx?.getErrorForCell?.(props.scope.$index, props.item.prop ?? ''),
 );
 
+/** 单元格联动：依赖解析状态（disabled / componentProps 等） */
+const depState = computed(() =>
+  ctx?.resolveDependencyState?.(props.scope.$index, props.item) ?? {
+    disabled: false,
+  },
+);
+
 defineOptions({
   name: 'ReTableNextCell',
   inheritAttrs: false,
@@ -98,13 +106,19 @@ const cellEditorValue = computed(() => {
 });
 
 function setCellEditorValue(val: any) {
+  const prop = props.item.prop;
+  if (!prop) return;
+
   if (isAllMode.value) {
-    if (props.item.prop) {
-      props.scope.row[props.item.prop] = val;
+    const oldVal = props.scope.row[prop];
+    props.scope.row[prop] = val;
+    if (oldVal !== val) {
+      ctx?.markDirty?.(props.scope.$index, prop);
+      ctx?.onFieldChange?.(props.scope.$index, prop);
     }
     return;
   }
-  ctx!.setEditingValue(props.item.prop!, val);
+  ctx!.setEditingValue(prop, val);
 }
 
 const editorSlotScope = computed(() => ({
@@ -137,6 +151,12 @@ const editorBindProps = computed(() => {
   if (typeof cp === 'function') return cp(props.scope.row, props.item);
   return cp;
 });
+
+/** 合并静态 componentProps 与 dependencies.componentProps（动态优先） */
+const mergedEditorProps = computed(() => ({
+  ...editorBindProps.value,
+  ...(depState.value.componentProps ?? {}),
+}));
 
 // ──── 编辑器 Esc ────
 
