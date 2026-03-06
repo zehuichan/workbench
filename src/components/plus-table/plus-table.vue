@@ -410,6 +410,19 @@ function startEditWithFocus(rowIndex?: number, colIndex?: number): void {
   if (isEditing.value) focusActiveEditor();
 }
 
+/** 按列 prop 解析为 navigableColumns 中的索引（列重排后仍能正确定位） */
+function getColIndexByProp(colProp: string): number {
+  const idx = navigableColumns.value.findIndex((c) => c.prop === colProp);
+  return idx >= 0 ? idx : 0;
+}
+
+/** 按 prop 定位到单元格并进入编辑（列移动后仍能命中正确列） */
+function focusAndEditByProp(rowIndex: number, colProp: string): void {
+  const colIndex = getColIndexByProp(colProp);
+  focusCell(rowIndex, colIndex);
+  startEditWithFocus(rowIndex, colIndex);
+}
+
 function onCellDblClick(row: RowData, column: any): void {
   if (!autoTriggerEnabled.value) return;
   handleCellClick(row, column);
@@ -519,6 +532,8 @@ defineExpose({
   // 导航
   navigate,
   focusCell,
+  getColIndexByProp,
+  focusAndEditByProp,
   activeRowIndex,
   activeColIndex,
   activeRow,
