@@ -1,17 +1,15 @@
 import type { PlusTableColumn } from '../types';
 
-import { EXPAND_COLUMN, INDEX_COLUMN, SELECTION_COLUMN } from '../constants';
+import { SPECIAL_COLUMN_TYPES } from '../constants';
 
-/** 不在列设置面板中展示的特殊列类型 */
-const COLUMN_SETTING_EXCLUDED_TYPES = [
-  EXPAND_COLUMN,
-  SELECTION_COLUMN,
-  INDEX_COLUMN,
-] as const;
+/** 判断列是否为特殊列（selection/index/expand，不在列设置面板展示、不可导航） */
+export function isSpecialColumn(col: PlusTableColumn): boolean {
+  const type = (col as { type?: string }).type;
+  return !!type && (SPECIAL_COLUMN_TYPES as readonly string[]).includes(type);
+}
 
 function isExcludedFromColumnSetting(col: PlusTableColumn): boolean {
-  const type = (col as { type?: string }).type;
-  return !!type && COLUMN_SETTING_EXCLUDED_TYPES.includes(type as any);
+  return isSpecialColumn(col);
 }
 
 /**
@@ -61,7 +59,7 @@ export function getColumnDisplayLabel(col: PlusTableColumn): string {
   if (col.prop) return col.prop;
   const type = (col as { type?: string }).type;
   if (type && type in SPECIAL_COLUMN_LABELS) {
-    return SPECIAL_COLUMN_LABELS[type];
+    return SPECIAL_COLUMN_LABELS[type] ?? String(type);
   }
   if (col.children?.length) return (col.label ?? '分组') as string;
   return '列';
@@ -160,11 +158,40 @@ export function getTopLevelIds(columns: PlusTableColumn[]): string[] {
 export function getSpecialColumnIds(columns: PlusTableColumn[]): string[] {
   const ids: string[] = [];
   for (const col of columns) {
-    if (isExcludedFromColumnSetting(col)) {
+    if (isSpecialColumn(col)) {
       ids.push(getColumnId(col));
     }
   }
   return ids;
+}
+
+/**
+ * 递归收集列设置树中的叶子节点（有 prop 的）
+ */
+export function collectLeafNodes(nodes: ColumnSettingNode[]): ColumnSettingNode[] {
+  const result: ColumnSettingNode[] = [];
+  for (const n of nodes) {
+    if (n.children?.length) {
+      result.push(...collectLeafNodes(n.children));
+    } else if (n.column.prop) {
+      result.push(n);
+    }
+  }
+  return result;
+}
+
+/**
+ * 递归收集列设置树中的所有节点（含分组）
+ */
+export function collectAllNodes(nodes: ColumnSettingNode[]): ColumnSettingNode[] {
+  const result: ColumnSettingNode[] = [];
+  for (const n of nodes) {
+    result.push(n);
+    if (n.children?.length) {
+      result.push(...collectAllNodes(n.children));
+    }
+  }
+  return result;
 }
 
 /**

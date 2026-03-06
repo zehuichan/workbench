@@ -122,6 +122,7 @@ import {
   useDependencies,
   useDirtyTracking,
   useEditable,
+  useEditActions,
   useEditHistory,
   useHotkey,
   useNavigation,
@@ -349,41 +350,21 @@ const {
   isRowDirty,
 });
 
-const confirmEditWithHistory = () => {
-  const changes = confirmEdit();
-  if (changes && props.validateOnCellExit) {
-    for (const c of changes) {
-      const globalRow = c.rowIndex;
-      validateFieldsAffectedByChange(globalRow, c.colProp).catch(() => {});
-    }
-  }
-  if (changes) {
-    for (const c of changes) {
-      markDirty(c.rowIndex, c.colProp);
-    }
-    pushChange(changes);
-    for (const c of changes) {
-      onFieldChange(c.rowIndex, c.colProp);
-    }
-  }
-  return changes;
-};
-
-/** 包装 undo：执行撤销后清除本批涉及单元格的 dirty 标识 */
-const wrappedUndo = () => {
-  const reverted = undo();
-  if (reverted) {
-    reverted.forEach((c) => clearDirty(c.rowIndex, c.colProp));
-  }
-};
-
-/** 包装 redo：执行重做后把本批涉及单元格标记为 dirty */
-const wrappedRedo = () => {
-  const redone = redo();
-  if (redone) {
-    redone.forEach((c) => markDirty(c.rowIndex, c.colProp));
-  }
-};
+const {
+  confirmEditWithHistory,
+  wrappedUndo,
+  wrappedRedo,
+} = useEditActions({
+  confirmEdit,
+  undo,
+  redo,
+  markDirty,
+  clearDirty,
+  pushChange,
+  onFieldChange,
+  validateOnCellExit: props.validateOnCellExit ?? false,
+  validateFieldsAffectedByChange,
+});
 
 // ──── 事件处理 ────
 

@@ -1,8 +1,7 @@
 import { computed, nextTick, ref, type Ref } from 'vue'
 
-import { SPECIAL_COLUMN_TYPES } from '../constants'
 import type { PlusTableColumn, RowData } from '../types'
-import { flattenColumnsWithProp } from '../utils/column-utils'
+import { flattenColumnsWithProp, isSpecialColumn } from '../utils/column-utils'
 
 export interface UseNavigationOptions {
   data: Ref<RowData[]>
@@ -13,7 +12,7 @@ export interface UseNavigationOptions {
 /** 判断列是否可导航（非特殊列、非隐藏列） */
 function isNavigableColumn(col: PlusTableColumn): boolean {
   if (col.hidden) return false
-  if (col.type && (SPECIAL_COLUMN_TYPES as readonly string[]).includes(col.type)) return false
+  if (isSpecialColumn(col)) return false
   return true
 }
 
@@ -124,10 +123,7 @@ export function useNavigation(options: UseNavigationOptions) {
     if (!column) return;
 
     // 跳过特殊列
-    if (
-      column.type &&
-      (SPECIAL_COLUMN_TYPES as readonly string[]).includes(column.type)
-    )
+    if (column?.type && isSpecialColumn({ type: column.type } as PlusTableColumn))
       return;
 
     const rowIndex = data.value.indexOf(row);

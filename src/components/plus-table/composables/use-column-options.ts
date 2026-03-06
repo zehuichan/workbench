@@ -13,6 +13,10 @@ import {
   applyTopLevelOrder,
   getColumnId,
 } from '../utils/column-utils';
+
+function getEffectiveOrder(cols: PlusTableColumn[], order: string[]): string[] {
+  return order.length > 0 ? order : getTopLevelIds(cols);
+}
 import type { ColumnSettingNode } from '../utils/column-utils';
 
 export interface UseColumnOptionsOptions {
@@ -99,8 +103,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     if (!store) return;
 
     const cols = initialColumns.value;
-    const topLevelOrder =
-      columnOrder.value.length > 0 ? columnOrder.value : getTopLevelIds(cols);
+    const topLevelOrder = getEffectiveOrder(cols, columnOrder.value);
     const widths = columnWidths.value;
     const configs: PersistedColumnConfig[] = [];
     topLevelOrder.forEach((id, index) => {
@@ -150,9 +153,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
 
   const visibleColumns = computed(() => {
     const cols = initialColumns.value;
-    const order = columnOrder.value;
-    const topLevelOrder =
-      order.length > 0 ? order : getTopLevelIds(cols);
+    const topLevelOrder = getEffectiveOrder(cols, columnOrder.value);
     const ordered = applyTopLevelOrder(cols, topLevelOrder);
     const filtered = filterColumnsTree(ordered, (col) => isColumnHidden(col));
     const widths = columnWidths.value;
@@ -186,20 +187,13 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
   }
 
   function getColumnSettingTree(): ColumnSettingNode[] {
-    return buildColumnSettingTree(
-      initialColumns.value,
-      columnOrder.value.length > 0
-        ? columnOrder.value
-        : getTopLevelIds(initialColumns.value),
-    );
+    const cols = initialColumns.value;
+    return buildColumnSettingTree(cols, getEffectiveOrder(cols, columnOrder.value));
   }
 
   function reorderColumns(fromIndex: number, toIndex: number): void {
     const cols = initialColumns.value;
-    const order =
-      columnOrder.value.length > 0
-        ? [...columnOrder.value]
-        : getTopLevelIds(cols);
+    const order = [...getEffectiveOrder(cols, columnOrder.value)];
 
     if (
       fromIndex < 0 ||
@@ -216,10 +210,24 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     saveToStorage();
   }
 
-  /** 更新列宽并持久化（拖拽表头改变宽度时调用） */
+  /** 将宽值规范为有效数字（用于持久化），无效则返回 undefined */
+  function normalizeWidth(val: string | number | null | undefined): number | undefined {
+    if (val == null || val === '') return undefined;
+    const n = typeof val === 'number' ? val : Number(val);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  }
+
+  /** 更新列宽并持久化（拖拽表头或列设置面板输入时调用） */
   function setColumnWidth(prop: string, width: string | number): void {
     if (!prop) return;
-    columnWidths.value = { ...columnWidths.value, [prop]: width ?? '' };
+    const parsed = normalizeWidth(width);
+    const next = { ...columnWidths.value };
+    if (parsed != null) {
+      next[prop] = parsed;
+    } else {
+      delete next[prop];
+    }
+    columnWidths.value = next;
     saveToStorage();
   }
 
@@ -260,11 +268,10 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
 
   loadFromStorage();
 
+  /** 列签名：columns 增删或顺序变化时需重新加载持久化 */
   watch(
-    () => initialColumns.value.length,
-    () => {
-      loadFromStorage();
-    },
+    () => initialColumns.value.map((c) => getColumnId(c)).join(','),
+    loadFromStorage,
   );
 
   return {

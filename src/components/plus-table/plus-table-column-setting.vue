@@ -71,12 +71,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, watchEffect } from 'vue';
+import { computed, inject, ref } from 'vue';
 import { Setting } from '@element-plus/icons-vue';
 
 import type { PlusTableContext } from './types';
 import { PLUS_TABLE_INJECTION_KEY } from './constants';
-import { extractTopLevelIds } from './utils/column-utils';
+import {
+  collectLeafNodes,
+  collectAllNodes,
+  extractTopLevelIds,
+} from './utils/column-utils';
 import type { ColumnSettingNode } from './utils/column-utils';
 
 defineOptions({
@@ -89,16 +93,9 @@ const show = ref(false);
 
 const columnOptions = computed(() => ctx?.columnOptions ?? null);
 
-const treeData = ref<ColumnSettingNode[]>([]);
-
-watchEffect(() => {
-  const ops = columnOptions.value;
-  if (ops) {
-    treeData.value = ops.getColumnSettingTree();
-  } else {
-    treeData.value = [];
-  }
-});
+const treeData = computed<ColumnSettingNode[]>(
+  () => columnOptions.value?.getColumnSettingTree() ?? [],
+);
 
 const isNodeHidden = (node: ColumnSettingNode) =>
   columnOptions.value?.isNodeHidden(node) ?? false;
@@ -119,31 +116,6 @@ function getEffectiveWidth(col: {
 
 function handleWidthInput(prop: string, value: string | number): void {
   columnOptions.value?.setColumnWidth(prop, value ?? '');
-}
-
-/** 递归收集所有叶子节点（有 prop 的） */
-function collectLeafNodes(nodes: ColumnSettingNode[]): ColumnSettingNode[] {
-  const result: ColumnSettingNode[] = [];
-  for (const n of nodes) {
-    if (n.children?.length) {
-      result.push(...collectLeafNodes(n.children));
-    } else if (n.column.prop) {
-      result.push(n);
-    }
-  }
-  return result;
-}
-
-/** 递归收集所有节点（含组） */
-function collectAllNodes(nodes: ColumnSettingNode[]): ColumnSettingNode[] {
-  const result: ColumnSettingNode[] = [];
-  for (const n of nodes) {
-    result.push(n);
-    if (n.children?.length) {
-      result.push(...collectAllNodes(n.children));
-    }
-  }
-  return result;
 }
 
 const isAllChecked = computed(() => {
