@@ -1,1 +1,2 @@
-export { ReTableNext } from './re-table-next';
+export * from './plus-table';
+export { PlusTable } from './plus-table';

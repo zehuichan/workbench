@@ -1,16 +1,16 @@
 import { computed, nextTick, ref, type Ref } from 'vue'
 
 import { SPECIAL_COLUMN_TYPES } from '../constants'
-import type { ReTableNextColumn, RowData } from '../types'
+import type { PlusTableColumn, RowData } from '../types'
 
 export interface UseNavigationOptions {
   data: Ref<RowData[]>
-  visibleColumns: Ref<ReTableNextColumn[]>
+  visibleColumns: Ref<PlusTableColumn[]>
   tableRef: Ref<Record<string, any> | null>
 }
 
 /** 判断列是否可导航（非特殊列、非隐藏列） */
-function isNavigableColumn(col: ReTableNextColumn): boolean {
+function isNavigableColumn(col: PlusTableColumn): boolean {
   if (col.hidden) return false
   if (col.type && (SPECIAL_COLUMN_TYPES as readonly string[]).includes(col.type)) return false
   return true
@@ -64,7 +64,7 @@ export function useNavigation(options: UseNavigationOptions) {
       const tableEl = tableRef.value?.$el as HTMLElement | undefined;
       if (!tableEl) return;
       const cell = tableEl.querySelector(
-        'td.re-table-next-cell--active',
+        'td.plus-table-cell--active',
       ) as HTMLElement | null;
       cell?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
@@ -143,7 +143,7 @@ export function useNavigation(options: UseNavigationOptions) {
 
   /**
    * 供 el-table :cell-class-name 使用
-   * 激活单元格加 're-table-next-cell--active'
+   * 激活单元格加 'plus-table-cell--active'
    */
   function getCellClassName({
     column,
@@ -159,14 +159,14 @@ export function useNavigation(options: UseNavigationOptions) {
       rowIndex === activeRowIndex.value &&
       column.property === activeColumn.value?.prop
     ) {
-      return 're-table-next-cell--active';
+      return 'plus-table-cell--active';
     }
     return '';
   }
 
   /**
    * 供 el-table :row-class-name 使用
-   * 激活行加 're-table-next-row--active'
+   * 激活行加 'plus-table-row--active'
    */
   function getRowClassName({
     rowIndex,
@@ -174,7 +174,7 @@ export function useNavigation(options: UseNavigationOptions) {
     row: RowData;
     rowIndex: number;
   }): string {
-    return rowIndex === activeRowIndex.value ? 're-table-next-row--active' : '';
+    return rowIndex === activeRowIndex.value ? 'plus-table-row--active' : '';
   }
 
   return {

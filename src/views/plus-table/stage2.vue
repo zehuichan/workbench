@@ -2,9 +2,9 @@
 import { h, ref } from 'vue';
 import { ElTag } from 'element-plus';
 
-import { ReTableNext } from '@/components';
+import { PlusTable } from '@/components';
 import type {
-  ReTableNextColumn,
+  PlusTableColumn,
   HotkeyContext,
 } from '@/components/re-table-next';
 
@@ -64,7 +64,7 @@ const tableData = ref<TaskRow[]>(
 
 // ──── 列配置 ────
 
-const columns: ReTableNextColumn<TaskRow>[] = [
+const columns: PlusTableColumn<TaskRow>[] = [
   { type: 'index', label: '#', width: 55, fixed: 'left' },
   {
     prop: 'id',
@@ -122,7 +122,7 @@ const columns: ReTableNextColumn<TaskRow>[] = [
 
 // ──── 状态展示 ────
 
-const tableRef = ref<InstanceType<typeof ReTableNext> | null>(null);
+const tableRef = ref<InstanceType<typeof PlusTable> | null>(null);
 const lastHotkeyLog = ref<string>('—');
 
 // ──── 自定义热键 ────
@@ -207,7 +207,7 @@ function jumpToLast() {
       自定义热键触发：<span class="text-blue-500">{{ lastHotkeyLog }}</span>
     </div>
 
-    <re-table-next
+    <plus-table
       ref="tableRef"
       :data="tableData"
       :columns="columns"
@@ -226,6 +226,6 @@ function jumpToLast() {
           {{ (tableRef?.activeColIndex ?? -1) + 1 }}
         </el-tag>
       </template>
-    </re-table-next>
+    </plus-table>
   </div>
 </template>

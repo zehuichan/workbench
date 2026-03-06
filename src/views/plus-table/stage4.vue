@@ -2,8 +2,8 @@
 import { computed, h, onMounted, ref } from 'vue';
 import { ElMessage, ElTag } from 'element-plus';
 
-import { ReTableNext } from '@/components';
-import type { ReTableNextColumn } from '@/components/re-table-next';
+import { PlusTable } from '@/components';
+import type { PlusTableColumn } from '@/components/re-table-next';
 import type { RuleItem } from 'async-validator';
 import { buildShortUUID } from '@/utils';
 
@@ -100,7 +100,7 @@ const priorityOptions = [
 
 // ──── 列配置（含校验规则）────
 
-const columns: ReTableNextColumn<TaskRow>[] = [
+const columns: PlusTableColumn<TaskRow>[] = [
   { type: 'selection', width: 55 },
   { type: 'index', label: '#', width: 55 },
   {
@@ -202,7 +202,7 @@ const tableRules: Record<string, RuleItem | RuleItem[]> = {
   name: [{ required: true, message: '任务名称必填' }],
 };
 
-const tableRef = ref<InstanceType<typeof ReTableNext> | null>(null);
+const tableRef = ref<InstanceType<typeof PlusTable> | null>(null);
 const validateOnCellExit = ref(true);
 
 async function handleValidate() {
@@ -335,7 +335,7 @@ function handleGetModified() {
       <el-button size="small" @click="handleGetModified">已修改行数</el-button>
     </div>
 
-    <re-table-next
+    <plus-table
       ref="tableRef"
       v-loading="loading"
       v-model:data="tableData"
@@ -365,6 +365,6 @@ function handleGetModified() {
           <span class="text-xs text-gray-400">| 列设置按钮在右侧</span>
         </div>
       </template>
-    </re-table-next>
+    </plus-table>
   </div>
 </template>

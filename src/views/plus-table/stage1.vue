@@ -2,8 +2,8 @@
 import { h, ref, VNode } from 'vue';
 import { ElTag, ElProgress, TableColumnCtx } from 'element-plus';
 
-import { ReTableNext } from '@/components';
-import type { ReTableNextColumn } from '@/components/re-table-next';
+import { PlusTable } from '@/components';
+import type { PlusTableColumn } from '@/components/re-table-next';
 
 // ──── 数据类型 ────
 
@@ -79,7 +79,7 @@ function handleSortChange({ prop, order }: { prop: string; order: string }) {
 
 // ──── 列配置 ────
 
-const columns: ReTableNextColumn<TaskRow>[] = [
+const columns: PlusTableColumn<TaskRow>[] = [
   // 1.4 — 特殊列类型
   { type: 'expand', width: 55 },
   { type: 'selection', width: 55 },
@@ -205,7 +205,7 @@ const columns: ReTableNextColumn<TaskRow>[] = [
 <template>
   <div class="stage1-demo">
     <div class="demo-header">
-      <h2 class="title">ReTableNext — 阶段 1：配置式列 + 渲染器</h2>
+      <h2 class="title">PlusTable — 阶段 1：配置式列 + 渲染器</h2>
       <p class="desc">
         演示：render 函数、renderHeader、formatter、selection / index / expand
         列类型、 #cell-* / #header-* 插槽、showOverflowTooltip 溢出省略、align
@@ -226,7 +226,7 @@ const columns: ReTableNextColumn<TaskRow>[] = [
       <el-tag size="small" type="info">1.10 多级表头</el-tag>
     </div>
 
-    <ReTableNext
+    <PlusTable
       :columns="columns"
       :data="tableData"
       adaptive
@@ -286,7 +286,7 @@ const columns: ReTableNextColumn<TaskRow>[] = [
           共 {{ tableData.length }} 条数据
         </span>
       </template>
-    </ReTableNext>
+    </PlusTable>
   </div>
 </template>
 

@@ -4,7 +4,7 @@ import Schema, { type Rules, type RuleItem } from 'async-validator';
 
 import type {
   DependencyState,
-  ReTableNextColumn,
+  PlusTableColumn,
   RowData,
 } from '../types';
 
@@ -21,18 +21,18 @@ export interface RuleItemWithDeps extends RuleItem {
 export interface UseValidationOptions {
   data: Ref<RowData[]>;
   /** 参与校验的列（通常为 navigableColumns，仅含 prop 的列） */
-  columns: Ref<ReTableNextColumn[]>;
+  columns: Ref<PlusTableColumn[]>;
   tableRules: Ref<Record<string, RuleItem | RuleItem[]> | undefined>;
   tableEl: Ref<HTMLElement | null>;
   trigger?: Ref<'change' | 'blur' | 'manual'>;
   validateOnCellExit?: Ref<boolean>;
   /** 单元格联动：解析依赖状态（动态 rules/required） */
-  resolveDeps?: (rowIndex: number, column: ReTableNextColumn) => DependencyState;
+  resolveDeps?: (rowIndex: number, column: PlusTableColumn) => DependencyState;
 }
 
 /** Map: when prop A changes, re-validate props [B, C, ...] */
 function buildDependencyGraph(
-  columns: ReTableNextColumn[],
+  columns: PlusTableColumn[],
 ): Map<string, Set<string>> {
   const graph = new Map<string, Set<string>>();
   for (const column of columns) {
@@ -72,7 +72,7 @@ export function useValidation(options: UseValidationOptions) {
 
   function mergeRules(
     prop: string,
-    column: ReTableNextColumn,
+    column: PlusTableColumn,
     rowIndex?: number,
   ): RuleItem[] {
     const tableLevel = tableRules.value?.[prop];

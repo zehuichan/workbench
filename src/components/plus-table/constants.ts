@@ -1,6 +1,6 @@
 import type { InjectionKey } from 'vue';
 
-import type { ReTableNextContext } from './types';
+import type { PlusTableContext } from './types';
 
 // ──── 特殊列类型 ────
 
@@ -21,5 +21,5 @@ export const DEFAULT_ADAPTIVE_OFFSET_BOTTOM = 0;
 
 // ──── Provide / Inject ────
 
-export const RE_TABLE_NEXT_INJECTION_KEY: InjectionKey<ReTableNextContext> =
-  Symbol('ReTableNext');
+export const PLUS_TABLE_INJECTION_KEY: InjectionKey<PlusTableContext> =
+  Symbol('PlusTable');

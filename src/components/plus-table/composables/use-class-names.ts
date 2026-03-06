@@ -42,10 +42,10 @@ export function useClassNames(options: UseClassNamesOptions) {
     const prop = payload.column?.property
     const globalRowIndex = payload.rowIndex
     if (prop && getErrorForCell(globalRowIndex, prop)) {
-      classes.push('re-table-next-cell--error')
+      classes.push('plus-table-cell--error')
     }
     if (prop && isCellDirty(globalRowIndex, prop)) {
-      classes.push('re-table-next-cell--dirty')
+      classes.push('plus-table-cell--dirty')
     }
     return classes.join(' ')
   }
@@ -58,7 +58,7 @@ export function useClassNames(options: UseClassNamesOptions) {
     const navClass = getRowClassName(payload)
     if (navClass) classes.push(navClass)
     if (isRowDirty(payload.rowIndex)) {
-      classes.push('re-table-next-row--dirty')
+      classes.push('plus-table-row--dirty')
     }
     return classes.join(' ')
   }

@@ -4,18 +4,18 @@ import type {
   ColumnDependencies,
   DependencyApi,
   DependencyState,
-  ReTableNextColumn,
+  PlusTableColumn,
   RowData,
 } from '../types';
 
 export interface UseDependenciesOptions {
-  columns: Ref<ReTableNextColumn[]>;
+  columns: Ref<PlusTableColumn[]>;
   data: Ref<RowData[]>;
   markDirty?: (rowIndex: number, prop: string) => void;
 }
 
 export interface TriggerMapEntry {
-  column: ReTableNextColumn;
+  column: PlusTableColumn;
   dep: ColumnDependencies;
 }
 
@@ -23,9 +23,9 @@ const DEFAULT_STATE: DependencyState = { disabled: false };
 
 /** 递归展平列（含 children），仅保留有 prop 的列 */
 function flattenColumnsWithProp(
-  columns: ReTableNextColumn[],
-): ReTableNextColumn[] {
-  const result: ReTableNextColumn[] = [];
+  columns: PlusTableColumn[],
+): PlusTableColumn[] {
+  const result: PlusTableColumn[] = [];
   for (const col of columns) {
     if (col.children?.length) {
       result.push(...flattenColumnsWithProp(col.children));
@@ -37,7 +37,7 @@ function flattenColumnsWithProp(
 }
 
 function buildTriggerMap(
-  columns: ReTableNextColumn[],
+  columns: PlusTableColumn[],
 ): Map<string, TriggerMapEntry[]> {
   const map = new Map<string, TriggerMapEntry[]>();
   const flat = flattenColumnsWithProp(columns);
@@ -65,7 +65,7 @@ export function useDependencies(options: UseDependenciesOptions) {
   function createDependencyApi(
     rowIndex: number,
     row: RowData,
-    column: ReTableNextColumn,
+    column: PlusTableColumn,
     onSetField?: (rowIndex: number, prop: string) => void,
   ): DependencyApi {
     return {
@@ -83,7 +83,7 @@ export function useDependencies(options: UseDependenciesOptions) {
 
   function resolveDependencyState(
     rowIndex: number,
-    column: ReTableNextColumn,
+    column: PlusTableColumn,
   ): DependencyState {
     const dep = column.dependencies;
     if (!dep) return DEFAULT_STATE;

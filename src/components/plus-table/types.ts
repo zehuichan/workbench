@@ -6,13 +6,13 @@ import type { RuleItem } from 'async-validator';
 
 export type RowData = Record<string, any>;
 
-export interface ReTableNextContext {
+export interface PlusTableContext {
   tableEl: Ref<HTMLElement | null>;
   tableInstance: Ref<Record<string, any> | null>;
   rules: Ref<Record<string, RuleItem | RuleItem[]> | undefined>;
-  columns: Ref<ReTableNextColumn[]>;
-  visibleColumns: Ref<ReTableNextColumn[]>;
-  navigableColumns: Ref<ReTableNextColumn[]>;
+  columns: Ref<PlusTableColumn[]>;
+  visibleColumns: Ref<PlusTableColumn[]>;
+  navigableColumns: Ref<PlusTableColumn[]>;
   data: Ref<RowData[]>;
   editable: Ref<boolean | 'row' | 'cell' | 'manual'>;
   /** 当前激活行索引（-1 表示无激活） */
@@ -41,7 +41,7 @@ export interface ReTableNextContext {
   getErrorForCell?: (rowIndex: number, prop: string) => string | undefined;
 
   /** 单元格联动：解析依赖状态（供 Cell 消费 disabled/componentProps 等） */
-  resolveDependencyState?: (rowIndex: number, column: ReTableNextColumn) => DependencyState;
+  resolveDependencyState?: (rowIndex: number, column: PlusTableColumn) => DependencyState;
   /** 单元格联动：字段变更时触发依赖方 trigger 回调 */
   onFieldChange?: (rowIndex: number, changedProp: string) => void;
   /** 脏数据：标记单元格已修改（all 模式 Cell 用） */
@@ -53,7 +53,7 @@ export interface ReTableNextContext {
     reorderColumns: (fromIndex: number, toIndex: number) => void;
     setColumnWidth: (prop: string, width: string | number) => void;
     resetColumns: () => void;
-    getOrderedColumnsWithProp: () => ReTableNextColumn[];
+    getOrderedColumnsWithProp: () => PlusTableColumn[];
     isColumnHidden: (prop: string) => boolean;
     /** 列宽覆盖（prop -> width），供列设置面板显示与绑定 */
     columnWidths: Ref<Record<string, number>>;
@@ -64,7 +64,7 @@ export interface ReTableNextContext {
 
 export interface CellContext<T = RowData> {
   row: T;
-  column: ReTableNextColumn<T>;
+  column: PlusTableColumn<T>;
   value: any;
   rowIndex: number;
   colIndex: number;
@@ -79,7 +79,7 @@ export interface DependencyApi<T = RowData> {
   /** 当前行数据（引用） */
   row: T;
   /** 当前列配置 */
-  column: ReTableNextColumn<T>;
+  column: PlusTableColumn<T>;
   /** 读取当前行任意字段值 */
   getFieldValue: (prop: string) => any;
   /** 设置当前行任意字段值（直接写入 row，同步标记 dirty） */
@@ -113,7 +113,7 @@ export interface DependencyState {
 // ──── 列配置（继承 Element Plus TableColumnCtx，仅声明扩展项）────
 
 /** 列配置：继承 el-table-column 的 TableColumnCtx，prop/label/width/formatter/renderHeader 等由基类提供 */
-export interface ReTableNextColumn<T = RowData> extends Partial<
+export interface PlusTableColumn<T = RowData> extends Partial<
   Omit<TableColumnCtx, 'children'>
 > {
   /** 列显隐（扩展，非 el-table 原生） */
@@ -125,7 +125,7 @@ export interface ReTableNextColumn<T = RowData> extends Partial<
   /** 编辑组件 props（扩展） */
   componentProps?:
     | Record<string, any>
-    | ((row: T, column: ReTableNextColumn<T>) => Record<string, any>);
+    | ((row: T, column: PlusTableColumn<T>) => Record<string, any>);
   /** 校验规则（扩展，async-validator RuleItem） */
   rules?: RuleItem | RuleItem[];
   /** 是否必填 */
@@ -135,7 +135,7 @@ export interface ReTableNextColumn<T = RowData> extends Partial<
   /** 单元格自定义渲染（扩展，与 formatter 并存） */
   render?: (ctx: CellContext<T>) => VNode;
   /** 多级表头子列（与 TableColumnCtx.children 兼容） */
-  children?: ReTableNextColumn<T>[];
+  children?: PlusTableColumn<T>[];
 }
 
 // ──── 分页事件 ────
@@ -164,9 +164,9 @@ export interface HotkeyContext {
   activeRowIndex: number;
   activeColIndex: number;
   row: RowData | null;
-  column: ReTableNextColumn | null;
+  column: PlusTableColumn | null;
   tableData: RowData[];
-  columns: ReTableNextColumn[];
+  columns: PlusTableColumn[];
   navigate: (rowDelta: number, colDelta: number) => void;
   startEdit: () => void;
   cancelEdit: () => void;
@@ -186,9 +186,9 @@ export interface AdaptiveConfig {
 
 // ──── 表格 Props ────
 
-export interface ReTableNextProps<T = RowData> {
+export interface PlusTableProps<T = RowData> {
   data?: T[];
-  columns?: ReTableNextColumn<any>[];
+  columns?: PlusTableColumn<any>[];
   rowKey?: string | ((row: T) => string | number);
 
   // 基础展示

@@ -2,8 +2,8 @@
 import { h, ref } from 'vue';
 import { ElTag } from 'element-plus';
 
-import { ReTableNext } from '@/components';
-import type { ReTableNextColumn } from '@/components/re-table-next';
+import { PlusTable } from '@/components';
+import type { PlusTableColumn } from '@/components/re-table-next';
 
 // ──── 数据类型 ────
 
@@ -75,7 +75,7 @@ const priorityOptions = [
   { label: '低', value: 'low' },
 ];
 
-const columns: ReTableNextColumn<TaskRow>[] = [
+const columns: PlusTableColumn<TaskRow>[] = [
   { type: 'index', label: '#', width: 55 },
   {
     prop: 'id',
@@ -180,7 +180,7 @@ const columns: ReTableNextColumn<TaskRow>[] = [
 
 // ──── 状态 ────
 
-const tableRef = ref<InstanceType<typeof ReTableNext> | null>(null);
+const tableRef = ref<InstanceType<typeof PlusTable> | null>(null);
 const editLog = ref('—');
 
 type EditModeValue = boolean | 'cell' | 'row' | 'manual';
@@ -362,7 +362,7 @@ function handleRowEditRemark(rowIndex: number) {
       编辑事件：<span class="text-blue-500">{{ editLog }}</span>
     </div>
 
-    <re-table-next
+    <plus-table
       ref="tableRef"
       :data="tableData"
       :columns="columns"
@@ -393,7 +393,7 @@ function handleRowEditRemark(rowIndex: number) {
         <el-input
           v-bind="scope"
           placeholder="请输入备注…"
-          class="re-table-next-cell-editor"
+          class="plus-table-cell-editor"
           @keydown.esc.stop.prevent
         />
       </template>
@@ -417,6 +417,6 @@ function handleRowEditRemark(rowIndex: number) {
           编辑备注
         </el-button>
       </template>
-    </re-table-next>
+    </plus-table>
   </div>
 </template>

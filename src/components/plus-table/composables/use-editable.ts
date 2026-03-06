@@ -1,10 +1,10 @@
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 
-import type { ReTableNextColumn, RowData } from '../types'
+import type { PlusTableColumn, RowData } from '../types'
 
 export interface EditCellPayload {
   row: RowData
-  column: ReTableNextColumn
+  column: PlusTableColumn
   value: any
   rowIndex: number
   colIndex: number
@@ -17,7 +17,7 @@ export interface EditValueChangePayload extends EditCellPayload {
 
 export interface UseEditableOptions {
   data: Ref<RowData[]>
-  navigableColumns: Ref<ReTableNextColumn[]>
+  navigableColumns: Ref<PlusTableColumn[]>
   activeRowIndex: Ref<number>
   activeColIndex: Ref<number>
   editable: Ref<boolean | 'row' | 'cell' | 'manual'>

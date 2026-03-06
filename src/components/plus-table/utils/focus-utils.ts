@@ -12,7 +12,7 @@ export function createEditorFocuser(wrapperEl: Ref<HTMLElement | null>) {
       nextTick(() => {
         const wrapper = wrapperEl.value
         if (!wrapper) return
-        const activeCell = wrapper.querySelector('td.re-table-next-cell--active')
+        const activeCell = wrapper.querySelector('td.plus-table-cell--active')
         const editorEl = (
           activeCell?.querySelector(EDITOR_INPUT_SELECTOR) ??
           wrapper.querySelector(EDITOR_INPUT_SELECTOR)

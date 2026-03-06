@@ -11,7 +11,7 @@ import {
 export interface UseAdaptiveOptions {
   /** 自适应配置，false/undefined 表示禁用 */
   adaptive: Ref<boolean | AdaptiveConfig | undefined>
-  /** 表格容器 el（.re-table-next-wrapper） */
+  /** 表格容器 el（.plus-table-wrapper） */
   wrapperEl: Ref<HTMLElement | null>
 }
 
@@ -118,8 +118,8 @@ export function useAdaptive(options: UseAdaptiveOptions) {
 
     // 扣除 wrapper 内 header/footer 高度（可选区域），避免双滚动条
     let innerReserved = 0
-    const headerEl = el.querySelector('.re-table-next-header') as HTMLElement | null
-    const footerEl = el.querySelector('.re-table-next-footer') as HTMLElement | null
+    const headerEl = el.querySelector('.plus-table-header') as HTMLElement | null
+    const footerEl = el.querySelector('.plus-table-footer') as HTMLElement | null
     if (headerEl) innerReserved += getElementFullHeight(headerEl)
     if (footerEl) innerReserved += getElementFullHeight(footerEl)
 

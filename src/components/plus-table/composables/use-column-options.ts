@@ -3,11 +3,11 @@ import { computed, ref, watch } from 'vue';
 
 import { isBoolean } from '@/utils';
 
-import type { ReTableNextColumn, RowData } from '../types';
+import type { PlusTableColumn, RowData } from '../types';
 
 export interface UseColumnOptionsOptions {
   /** 列配置来源（通常为 props.columns） */
-  initialColumns: Ref<ReTableNextColumn[]>;
+  initialColumns: Ref<PlusTableColumn[]>;
   /** 持久化 key，与 storage 一起使用 */
   tableKey?: string;
   /** 持久化存储：local | session | false */
@@ -23,7 +23,7 @@ interface PersistedColumnConfig {
 }
 
 function getStorageKey(tableKey: string): string {
-  return `re-table-next:${tableKey}:columns`;
+  return `plus-table:${tableKey}:columns`;
 }
 
 function getStorage(type: 'local' | 'session'): Storage | null {
@@ -69,7 +69,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       columnWidths.value = widths;
     } catch (e) {
       if (import.meta.env.DEV) {
-        console.warn('[ReTableNext] 读取列设置存储失败:', e);
+        console.warn('[PlusTable] 读取列设置存储失败:', e);
       }
     }
   }
@@ -103,12 +103,12 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       store.setItem(getStorageKey(tableKey), JSON.stringify(configs));
     } catch (e) {
       if (import.meta.env.DEV) {
-        console.warn('[ReTableNext] 写入列设置存储失败:', e);
+        console.warn('[PlusTable] 写入列设置存储失败:', e);
       }
     }
   }
 
-  const isColumnHidden = (column: ReTableNextColumn): boolean => {
+  const isColumnHidden = (column: PlusTableColumn): boolean => {
     if (column.prop && hiddenColumns.value.has(column.prop)) return true;
     if (isBoolean(column.hidden)) {
       return column.hidden;
@@ -120,10 +120,10 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     const cols = initialColumns.value;
     const order = columnOrder.value;
 
-    let ordered: ReTableNextColumn[];
+    let ordered: PlusTableColumn[];
     if (order.length > 0) {
-      const colMap = new Map<string, ReTableNextColumn>();
-      const specialCols: ReTableNextColumn[] = [];
+      const colMap = new Map<string, PlusTableColumn>();
+      const specialCols: PlusTableColumn[] = [];
 
       for (const col of cols) {
         if (col.prop) {
@@ -203,17 +203,17 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
   }
 
   /** 获取所有有 prop 的列（含隐藏），按顺序，供列设置面板使用 */
-  function getOrderedColumnsWithProp(): ReTableNextColumn<RowData>[] {
+  function getOrderedColumnsWithProp(): PlusTableColumn<RowData>[] {
     const cols = initialColumns.value;
     const props =
       columnOrder.value.length > 0
         ? columnOrder.value
         : (cols.map((c) => c.prop).filter(Boolean) as string[]);
-    const colMap = new Map<string, ReTableNextColumn>();
+    const colMap = new Map<string, PlusTableColumn>();
     for (const col of cols) {
       if (col.prop) colMap.set(col.prop, col);
     }
-    const result: ReTableNextColumn<RowData>[] = [];
+    const result: PlusTableColumn<RowData>[] = [];
     for (const p of props) {
       const col = colMap.get(p);
       if (col) {

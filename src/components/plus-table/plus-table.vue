@@ -1,13 +1,13 @@
 <template>
-  <div ref="wrapperEl" class="re-table-next-wrapper" tabindex="0">
+  <div ref="wrapperEl" class="plus-table-wrapper" tabindex="0">
     <div
       v-if="hasHeaderContent"
-      class="re-table-next-header flex items-center justify-between py-2"
+      class="plus-table-header flex items-center justify-between py-2"
     >
       <slot name="title" />
       <div>
         <slot name="actions" />
-        <re-table-next-column-setting v-if="columnSetting" />
+        <plus-table-column-setting v-if="columnSetting" />
       </div>
     </div>
     <el-table
@@ -50,7 +50,7 @@
 
             <component
               v-else
-              :is="h(ReTableNextColumn, { item: column }, slots)"
+              :is="h(PlusTableColumn, { item: column }, slots)"
             />
           </template>
         </slot>
@@ -66,11 +66,11 @@
     </el-table>
     <div
       v-if="hasFooterContent"
-      class="re-table-next-footer flex items-center justify-between py-2"
+      class="plus-table-footer flex items-center justify-between py-2"
     >
       <slot name="summary" />
       <slot name="pagination">
-        <re-table-next-pagination
+        <plus-table-pagination
           v-if="paginationEnabled"
           :current-page="currentPage ?? 1"
           :page-size="pageSize ?? 10"
@@ -101,8 +101,8 @@ import { ElTableColumn } from 'element-plus';
 
 import type {
   AdaptiveConfig,
-  ReTableNextContext,
-  ReTableNextProps,
+  PlusTableContext,
+  PlusTableProps,
   RowData,
 } from './types';
 import type {
@@ -112,7 +112,7 @@ import type {
 import {
   EXPAND_COLUMN,
   INDEX_COLUMN,
-  RE_TABLE_NEXT_INJECTION_KEY,
+  PLUS_TABLE_INJECTION_KEY,
   SELECTION_COLUMN,
 } from './constants';
 import {
@@ -129,18 +129,18 @@ import {
   useValidation,
 } from './composables';
 import { createEditorFocuser } from './utils';
-import ReTableNextColumn from './re-table-next-column.vue';
-import ReTableNextColumnSetting from './re-table-next-column-setting.vue';
-import ReTableNextPagination from './re-table-next-pagination.vue';
+import PlusTableColumn from './plus-table-column.vue';
+import PlusTableColumnSetting from './plus-table-column-setting.vue';
+import PlusTablePagination from './plus-table-pagination.vue';
 
 import './styles/index.scss';
 
 defineOptions({
-  name: 'ReTableNext',
+  name: 'PlusTable',
   inheritAttrs: false,
 });
 
-const props = withDefaults(defineProps<ReTableNextProps>(), {
+const props = withDefaults(defineProps<PlusTableProps>(), {
   columns: () => [],
   data: () => [],
   stripe: false,
@@ -201,7 +201,7 @@ function handleSizeChange(size: number): void {
 
 const columnOptions = useColumnOptions({
   initialColumns: computed(() => props.columns ?? []),
-  tableKey: props.columnSetting ? 're-table-next-default' : undefined,
+  tableKey: props.columnSetting ? 'plus-table-default' : undefined,
   storage: props.columnSetting ? 'local' : false,
 });
 
@@ -394,7 +394,7 @@ function onCellClick(
   event: MouseEvent,
 ): void {
   const target = event.target as HTMLElement | null;
-  const clickedInsideEditor = !!target?.closest('.re-table-next-cell-editor');
+  const clickedInsideEditor = !!target?.closest('.plus-table-cell-editor');
   const prevRow = activeRowIndex.value;
   const prevCol = activeColIndex.value;
   handleCellClick(row, column);
@@ -482,7 +482,7 @@ useHotkey({
 
 // ──── Provide ────
 
-provide<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, {
+provide<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, {
   tableEl: wrapperEl,
   tableInstance: computed(() => tableRef.value) as any,
   rules: computed(() => props.rules),

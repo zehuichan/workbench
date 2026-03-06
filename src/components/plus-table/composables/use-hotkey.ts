@@ -2,7 +2,7 @@ import { ref, type Ref } from 'vue'
 
 import { useEventListener } from '@vueuse/core'
 
-import type { HotkeyBinding, HotkeyContext, ReTableNextColumn, RowData } from '../types'
+import type { HotkeyBinding, HotkeyContext, PlusTableColumn, RowData } from '../types'
 import type { EditMode } from './use-editable'
 import { createEditorFocuser, isPrintableKey, matchesHotkey } from '../utils'
 
@@ -14,7 +14,7 @@ export interface UseHotkeyOptions {
   activeRowIndex: Ref<number>
   activeColIndex: Ref<number>
   data: Ref<RowData[]>
-  navigableColumns: Ref<ReTableNextColumn[]>
+  navigableColumns: Ref<PlusTableColumn[]>
   customHotkeys?: Ref<HotkeyBinding[] | undefined>
 
   // ──── 编辑相关 ────
@@ -113,7 +113,7 @@ export function useHotkey(options: UseHotkeyOptions) {
 
   function isTargetInEditor(event: KeyboardEvent): boolean {
     const target = event.target as HTMLElement | null
-    return !!target?.closest('.re-table-next-cell-editor')
+    return !!target?.closest('.plus-table-cell-editor')
   }
 
   /** 'all' 模式：编辑器内仅处理 Tab/Enter/Esc，其余交给编辑器自行处理 */

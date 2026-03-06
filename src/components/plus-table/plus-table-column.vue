@@ -8,7 +8,7 @@
       >
       </slot>
       <template v-else>
-        <span v-if="isRequired" class="re-table-next-header--required" />
+        <span v-if="isRequired" class="plus-table-header--required" />
         {{ item.label }}
       </template>
     </template>
@@ -19,12 +19,12 @@
           v-for="(child, cIdx) in item.children"
           :key="(child as any).key ?? child.prop ?? child.label ?? cIdx"
         >
-          <component :is="h(ReTableNextColumnSelf, { item: child }, $slots)" />
+          <component :is="h(PlusTableColumnSelf, { item: child }, $slots)" />
         </template>
       </template>
 
       <!-- 单元格渲染（编辑/展示）委托给 Cell 组件 -->
-      <re-table-next-cell v-else :item="item" :scope="scope">
+      <plus-table-cell v-else :item="item" :scope="scope">
         <template
           v-for="(_, slotName) in $slots"
           :key="slotName"
@@ -32,7 +32,7 @@
         >
           <slot :name="slotName" v-bind="slotScope ?? {}" />
         </template>
-      </re-table-next-cell>
+      </plus-table-cell>
     </template>
   </el-table-column>
 </template>
@@ -41,21 +41,21 @@
 import { computed, h, inject } from 'vue';
 import type { RuleItem } from 'async-validator';
 import { castArray } from 'es-toolkit/compat';
-import type { ReTableNextColumn, ReTableNextContext } from './types';
-import { RE_TABLE_NEXT_INJECTION_KEY } from './constants';
-import ReTableNextCell from './re-table-next-cell.vue';
-import ReTableNextColumnSelf from './re-table-next-column.vue';
+import type { PlusTableColumn, PlusTableContext } from './types';
+import { PLUS_TABLE_INJECTION_KEY } from './constants';
+import PlusTableCell from './plus-table-cell.vue';
+import PlusTableColumnSelf from './plus-table-column.vue';
 
 defineOptions({
-  name: 'ReTableNextColumn',
+  name: 'PlusTableColumn',
   inheritAttrs: false,
 });
 
 const props = defineProps<{
-  item?: ReTableNextColumn;
+  item?: PlusTableColumn;
 }>();
 
-const ctx = inject<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, null);
+const ctx = inject<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, null);
 
 const isRequired = computed(() =>
   normalizedRules.value.some((rule) => rule.required),

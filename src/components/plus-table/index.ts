@@ -1,4 +1,4 @@
-export { default as ReTableNext } from './re-table-next.vue'
+export { default as PlusTable } from './plus-table.vue'
 export type {
   AdaptiveConfig,
   CellContext,
@@ -8,8 +8,8 @@ export type {
   HotkeyBinding,
   HotkeyContext,
   PaginationPayload,
-  ReTableNextColumn,
-  ReTableNextProps,
+  PlusTableColumn,
+  PlusTableProps,
   RowData,
 } from './types'
-export { RE_TABLE_NEXT_INJECTION_KEY } from './constants'
+export { PLUS_TABLE_INJECTION_KEY } from './constants'

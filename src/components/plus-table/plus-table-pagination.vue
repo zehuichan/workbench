@@ -1,5 +1,5 @@
 <template>
-  <div class="re-table-next-pagination">
+  <div class="plus-table-pagination">
     <el-pagination
       :current-page="currentPage"
       :page-size="pageSize"
@@ -17,7 +17,7 @@
 import { computed } from 'vue';
 
 defineOptions({
-  name: 'ReTableNextPagination',
+  name: 'PlusTablePagination',
 });
 
 const props = withDefaults(
@@ -50,7 +50,7 @@ const computedLayout = computed(
 </script>
 
 <style scoped lang="scss">
-.re-table-next-pagination {
+.plus-table-pagination {
   display: flex;
   justify-content: flex-end;
 }

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { ReTableNext } from '@/components';
-import type { ReTableNextColumn } from '@/components/re-table-next';
+import { PlusTable } from '@/components';
+import type { PlusTableColumn } from '@/components/re-table-next';
 
 interface TableRow {
   id: string;
@@ -54,7 +54,7 @@ const tableData = ref<TableRow[]>(
 
 const adaptiveEnabled = ref(true);
 
-const columns: ReTableNextColumn<TableRow>[] = [
+const columns: PlusTableColumn<TableRow>[] = [
   { type: 'selection', width: 55 },
   { type: 'index', label: '#', width: 55 },
   {
@@ -94,9 +94,9 @@ const columns: ReTableNextColumn<TableRow>[] = [
 </script>
 
 <template>
-  <div class="re-table-next-demo">
+  <div class="plus-table-demo">
     <div class="demo-header">
-      <h2 class="title">ReTableNext 基础演示</h2>
+      <h2 class="title">PlusTable 基础演示</h2>
       <p class="desc">
         基于 el-table 的增强表格组件。阶段 0：基础渲染（斑马纹、边框、对齐） +
         自适应高度。
@@ -111,7 +111,7 @@ const columns: ReTableNextColumn<TableRow>[] = [
       </el-space>
     </div>
 
-    <ReTableNext
+    <PlusTable
       :columns="columns"
       :data="tableData"
       :adaptive="adaptiveEnabled"
@@ -130,12 +130,12 @@ const columns: ReTableNextColumn<TableRow>[] = [
           {{ row.status }}
         </el-tag>
       </template>
-    </ReTableNext>
+    </PlusTable>
   </div>
 </template>
 
 <style scoped lang="scss">
-.re-table-next-demo {
+.plus-table-demo {
   padding: 16px;
   background: var(--el-bg-color);
   border-radius: 8px;

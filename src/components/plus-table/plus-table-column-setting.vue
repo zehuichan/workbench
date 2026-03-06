@@ -11,11 +11,11 @@
     title="列设置"
     size="360"
     direction="rtl"
-    class="re-table-next-column-setting-drawer"
+    class="plus-table-column-setting-drawer"
   >
     <template #default>
       <el-scrollbar class="column-setting-scrollbar">
-        <div class="re-table-next-column-setting">
+        <div class="plus-table-column-setting">
           <p class="column-setting-hint">勾选显示列，拖拽调整顺序</p>
           <div ref="listEl" class="column-setting-list">
             <div
@@ -63,14 +63,14 @@
 import { computed, inject, ref } from 'vue';
 import { Rank, Setting } from '@element-plus/icons-vue';
 
-import type { ReTableNextContext } from './types';
-import { RE_TABLE_NEXT_INJECTION_KEY } from './constants';
+import type { PlusTableContext } from './types';
+import { PLUS_TABLE_INJECTION_KEY } from './constants';
 
 defineOptions({
-  name: 'ReTableNextColumnSetting',
+  name: 'PlusTableColumnSetting',
 });
 
-const ctx = inject<ReTableNextContext>(RE_TABLE_NEXT_INJECTION_KEY, null);
+const ctx = inject<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, null);
 
 const show = ref(false);
 
@@ -159,7 +159,7 @@ function handleDrop(e: DragEvent): void {
   cursor: pointer;
 }
 
-.re-table-next-column-setting-drawer {
+.plus-table-column-setting-drawer {
   .el-drawer__header {
     padding: 12px 16px;
     border-bottom: 1px solid var(--el-border-color-lighter);
@@ -184,7 +184,7 @@ function handleDrop(e: DragEvent): void {
   min-height: 0;
 }
 
-.re-table-next-column-setting {
+.plus-table-column-setting {
   padding: 12px;
 
   .column-setting-hint {

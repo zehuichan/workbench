@@ -14,7 +14,7 @@
       :model-value="cellEditorValue"
       v-bind="mergedEditorProps"
       :disabled="depState.disabled"
-      class="re-table-next-cell-editor w-full!"
+      class="plus-table-cell-editor w-full!"
       size="small"
       @update:model-value="setCellEditorValue"
       @keydown.esc.capture.stop="onEditorEsc"
@@ -24,7 +24,7 @@
   <template v-else-if="cellError">
     <el-tooltip :content="cellError">
       <span
-        class="re-table-next-cell-content re-table-next-cell-content--with-tooltip"
+        class="plus-table-cell-content plus-table-cell-content--with-tooltip"
       >
         <template v-if="$slots[`cell-${item.prop}`]">
           <slot :name="`cell-${item.prop}`" v-bind="scope" />
@@ -56,12 +56,12 @@ import { get } from 'es-toolkit/compat';
 
 import { isString } from '@/utils';
 
-import type { ReTableNextColumn, ReTableNextContext } from './types';
-import { RE_TABLE_NEXT_INJECTION_KEY } from './constants';
+import type { PlusTableColumn, PlusTableContext } from './types';
+import { PLUS_TABLE_INJECTION_KEY } from './constants';
 import { ELEMENT_ADAPTER_MAP } from './adapter';
 
-const ctx = inject<ReTableNextContext>(
-  RE_TABLE_NEXT_INJECTION_KEY,
+const ctx = inject<PlusTableContext>(
+  PLUS_TABLE_INJECTION_KEY,
   undefined as any,
 );
 
@@ -79,13 +79,13 @@ const depState = computed(
 );
 
 defineOptions({
-  name: 'ReTableNextCell',
+  name: 'PlusTableCell',
   inheritAttrs: false,
 });
 
 const props = defineProps<{
   /** 列配置 */
-  item: ReTableNextColumn;
+  item: PlusTableColumn;
   /** el-table-column #default scope（含 row、column、$index） */
   scope: Record<string, any>;
 }>();
@@ -139,7 +139,7 @@ function resolveComponent(component?: string | Component) {
     ? ELEMENT_ADAPTER_MAP?.[component]
     : component;
   if (!resolved) {
-    console.warn(`[ReTableNext] Component "${component}" is not registered`);
+    console.warn(`[PlusTable] Component "${component}" is not registered`);
   }
   return resolved as Component;
 }
