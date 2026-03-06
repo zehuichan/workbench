@@ -4,6 +4,16 @@ import { computed, ref, watch } from 'vue';
 import { isBoolean } from '@/utils';
 
 import type { PlusTableColumn, RowData } from '../types';
+import {
+  collectLeafProps,
+  flattenColumnsWithProp,
+  getColumnSettingTree as buildColumnSettingTree,
+  getTopLevelIds,
+  getSpecialColumnIds,
+  applyTopLevelOrder,
+  getColumnId,
+} from '../utils/column-utils';
+import type { ColumnSettingNode } from '../utils/column-utils';
 
 export interface UseColumnOptionsOptions {
   /** 列配置来源（通常为 props.columns） */
@@ -55,10 +65,19 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       const order: string[] = [];
       const hidden = new Set<string>();
       const widths: Record<string, number> = {};
+      const cols = initialColumns.value;
+      const idToCol = new Map(cols.map((c) => [getColumnId(c), c]));
 
       for (const config of configs.sort((a, b) => a.order - b.order)) {
         order.push(config.prop);
-        if (config.hidden) hidden.add(config.prop);
+        if (config.hidden) {
+          const col = idToCol.get(config.prop);
+          if (col?.children?.length) {
+            collectLeafProps(col).forEach((p) => hidden.add(p));
+          } else {
+            hidden.add(config.prop);
+          }
+        }
         if (config.width != null && config.width > 0) {
           widths[config.prop] = config.width;
         }
@@ -79,23 +98,18 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     const store = getStorage(storage);
     if (!store) return;
 
-    const all = initialColumns.value;
-    const configs: PersistedColumnConfig[] = [];
-    const orderedProps =
-      columnOrder.value.length > 0
-        ? columnOrder.value
-        : (all.map((c) => c.prop).filter(Boolean) as string[]);
-
+    const cols = initialColumns.value;
+    const topLevelOrder =
+      columnOrder.value.length > 0 ? columnOrder.value : getTopLevelIds(cols);
     const widths = columnWidths.value;
-    orderedProps.forEach((prop, index) => {
-      const item: PersistedColumnConfig = {
-        prop,
-        hidden: hiddenColumns.value.has(prop),
-        order: index,
-      };
-      if (widths[prop] != null && widths[prop] > 0) {
-        item.width = widths[prop];
-      }
+    const configs: PersistedColumnConfig[] = [];
+    topLevelOrder.forEach((id, index) => {
+      const col = cols.find((c) => getColumnId(c) === id);
+      const hidden = col?.children?.length
+        ? collectLeafProps(col).every((p) => hiddenColumns.value.has(p))
+        : hiddenColumns.value.has(id);
+      const item: PersistedColumnConfig = { prop: id, hidden, order: index };
+      if (widths[id] != null && widths[id] > 0) item.width = widths[id];
       configs.push(item);
     });
 
@@ -111,42 +125,36 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
   const isColumnHidden = (column: PlusTableColumn): boolean => {
     if (column.prop && hiddenColumns.value.has(column.prop)) return true;
     if (isBoolean(column.hidden)) {
-      return column.hidden;
+      return column.hidden === true;
     }
     return false;
   };
 
+  /** 递归过滤树形列：隐藏的叶子移除；若父列下所有子列都被隐藏则移除父列 */
+  function filterColumnsTree(
+    cols: PlusTableColumn[],
+    isHidden: (c: PlusTableColumn) => boolean,
+  ): PlusTableColumn[] {
+    const result: PlusTableColumn[] = [];
+    for (const col of cols) {
+      if (col.children?.length) {
+        const filteredChildren = filterColumnsTree(col.children, isHidden);
+        if (filteredChildren.length === 0) continue;
+        result.push({ ...col, children: filteredChildren });
+      } else if (!isHidden(col)) {
+        result.push(col);
+      }
+    }
+    return result;
+  }
+
   const visibleColumns = computed(() => {
     const cols = initialColumns.value;
     const order = columnOrder.value;
-
-    let ordered: PlusTableColumn[];
-    if (order.length > 0) {
-      const colMap = new Map<string, PlusTableColumn>();
-      const specialCols: PlusTableColumn[] = [];
-
-      for (const col of cols) {
-        if (col.prop) {
-          colMap.set(col.prop, col);
-        } else {
-          specialCols.push(col);
-        }
-      }
-
-      ordered = [...specialCols];
-      for (const prop of order) {
-        const col = colMap.get(prop);
-        if (col) ordered.push(col);
-        colMap.delete(prop);
-      }
-      for (const col of colMap.values()) {
-        ordered.push(col);
-      }
-    } else {
-      ordered = cols;
-    }
-
-    const filtered = ordered.filter((col) => !isColumnHidden(col));
+    const topLevelOrder =
+      order.length > 0 ? order : getTopLevelIds(cols);
+    const ordered = applyTopLevelOrder(cols, topLevelOrder);
+    const filtered = filterColumnsTree(ordered, (col) => isColumnHidden(col));
     const widths = columnWidths.value;
     return filtered.map((col) => {
       if (!col.prop || widths[col.prop] == null) return col;
@@ -156,20 +164,42 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
 
   function toggleColumn(prop: string, visible: boolean): void {
     const next = new Set(hiddenColumns.value);
-    if (visible) {
-      next.delete(prop);
-    } else {
-      next.add(prop);
+    const cols = initialColumns.value;
+    const col = cols.find((c) => getColumnId(c) === prop);
+    const propsToToggle = col?.children?.length
+      ? collectLeafProps(col)
+      : [prop];
+    for (const p of propsToToggle) {
+      if (visible) next.delete(p);
+      else next.add(p);
     }
     hiddenColumns.value = next;
     saveToStorage();
   }
 
+  function setColumnOrderByIds(ids: string[]): void {
+    const specialIds = getSpecialColumnIds(initialColumns.value);
+    const specialSet = new Set(specialIds);
+    const configurableIds = ids.filter((id) => !specialSet.has(id));
+    columnOrder.value = [...specialIds, ...configurableIds];
+    saveToStorage();
+  }
+
+  function getColumnSettingTree(): ColumnSettingNode[] {
+    return buildColumnSettingTree(
+      initialColumns.value,
+      columnOrder.value.length > 0
+        ? columnOrder.value
+        : getTopLevelIds(initialColumns.value),
+    );
+  }
+
   function reorderColumns(fromIndex: number, toIndex: number): void {
-    const cols = initialColumns.value
-      .map((c) => c.prop)
-      .filter(Boolean) as string[];
-    const order = columnOrder.value.length > 0 ? [...columnOrder.value] : cols;
+    const cols = initialColumns.value;
+    const order =
+      columnOrder.value.length > 0
+        ? [...columnOrder.value]
+        : getTopLevelIds(cols);
 
     if (
       fromIndex < 0 ||
@@ -180,13 +210,14 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       return;
 
     const [item] = order.splice(fromIndex, 1);
-    order.splice(toIndex, 0, item as any);
+    if (item == null) return;
+    order.splice(toIndex, 0, item);
     columnOrder.value = order;
     saveToStorage();
   }
 
   /** 更新列宽并持久化（拖拽表头改变宽度时调用） */
-  function setColumnWidth(prop: string, width: number): void {
+  function setColumnWidth(prop: string, width: string | number): void {
     if (!prop) return;
     columnWidths.value = { ...columnWidths.value, [prop]: width ?? '' };
     saveToStorage();
@@ -202,15 +233,15 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     }
   }
 
-  /** 获取所有有 prop 的列（含隐藏），按顺序，供列设置面板使用 */
+  /** 获取所有有 prop 的列（含隐藏、含多级表头子列），按顺序，供列设置面板使用 */
   function getOrderedColumnsWithProp(): PlusTableColumn<RowData>[] {
-    const cols = initialColumns.value;
+    const flat = flattenColumnsWithProp(initialColumns.value);
     const props =
       columnOrder.value.length > 0
         ? columnOrder.value
-        : (cols.map((c) => c.prop).filter(Boolean) as string[]);
+        : (flat.map((c) => c.prop).filter(Boolean) as string[]);
     const colMap = new Map<string, PlusTableColumn>();
-    for (const col of cols) {
+    for (const col of flat) {
       if (col.prop) colMap.set(col.prop, col);
     }
     const result: PlusTableColumn<RowData>[] = [];
@@ -240,11 +271,22 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     visibleColumns,
     hiddenColumns,
     columnWidths,
+    columnOrder,
     toggleColumn,
     reorderColumns,
+    setColumnOrderByIds,
     setColumnWidth,
     resetColumns,
     getOrderedColumnsWithProp,
+    getColumnSettingTree,
     isColumnHidden: (prop: string) => hiddenColumns.value.has(prop),
+    isNodeHidden: (node: ColumnSettingNode) => {
+      if (node.column.children?.length) {
+        return collectLeafProps(node.column).every((p) =>
+          hiddenColumns.value.has(p),
+        );
+      }
+      return !!node.column.prop && hiddenColumns.value.has(node.column.prop);
+    },
   };
 }

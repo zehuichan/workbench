@@ -1,6 +1,7 @@
 import type { Component, VNode, Ref } from 'vue';
 import type { TableColumnCtx } from 'element-plus';
 import type { RuleItem } from 'async-validator';
+import type { ColumnSettingNode } from './utils/column-utils';
 
 // ──── 基础类型 ────
 
@@ -51,10 +52,13 @@ export interface PlusTableContext {
   columnOptions?: {
     toggleColumn: (prop: string, visible: boolean) => void;
     reorderColumns: (fromIndex: number, toIndex: number) => void;
+    setColumnOrderByIds: (ids: string[]) => void;
     setColumnWidth: (prop: string, width: string | number) => void;
     resetColumns: () => void;
     getOrderedColumnsWithProp: () => PlusTableColumn[];
+    getColumnSettingTree: () => ColumnSettingNode[];
     isColumnHidden: (prop: string) => boolean;
+    isNodeHidden: (node: ColumnSettingNode) => boolean;
     /** 列宽覆盖（prop -> width），供列设置面板显示与绑定 */
     columnWidths: Ref<Record<string, number>>;
   };

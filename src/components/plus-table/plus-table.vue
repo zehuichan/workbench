@@ -516,10 +516,13 @@ provide<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, {
     ? {
         toggleColumn: columnOptions.toggleColumn,
         reorderColumns: columnOptions.reorderColumns,
+        setColumnOrderByIds: columnOptions.setColumnOrderByIds,
         setColumnWidth: columnOptions.setColumnWidth,
         resetColumns: columnOptions.resetColumns,
         getOrderedColumnsWithProp: columnOptions.getOrderedColumnsWithProp,
+        getColumnSettingTree: columnOptions.getColumnSettingTree,
         isColumnHidden: columnOptions.isColumnHidden,
+        isNodeHidden: columnOptions.isNodeHidden,
         columnWidths: columnOptions.columnWidths,
       }
     : undefined,

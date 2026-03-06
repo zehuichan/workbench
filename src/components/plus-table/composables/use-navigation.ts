@@ -2,6 +2,7 @@ import { computed, nextTick, ref, type Ref } from 'vue'
 
 import { SPECIAL_COLUMN_TYPES } from '../constants'
 import type { PlusTableColumn, RowData } from '../types'
+import { flattenColumnsWithProp } from '../utils/column-utils'
 
 export interface UseNavigationOptions {
   data: Ref<RowData[]>
@@ -34,9 +35,9 @@ export function useNavigation(options: UseNavigationOptions) {
   /** 当前激活列（navigableColumns 中的索引） */
   const activeColIndex = ref(-1);
 
-  /** 可导航列：过滤掉 selection/index/expand 及 hidden 列 */
+  /** 可导航列：展平多级表头，过滤掉 selection/index/expand 及 hidden 列 */
   const navigableColumns = computed(() =>
-    visibleColumns.value.filter(isNavigableColumn),
+    flattenColumnsWithProp(visibleColumns.value).filter(isNavigableColumn),
   );
 
   /** 激活列的列配置（从 navigableColumns 中取） */
