@@ -307,9 +307,9 @@ const lastHotkeyLog = ref<string>('—');
 const editLog = ref('—');
 const insertRowCount = ref(1);
 
-// navigableColumns 中：id=0, name=1, status=2, progress=3, priority=4, amount=5, assignee=6, department=7, team=8, startDate=9, endDate=10, remark=11, _action=12
+// navigableColumns 中：id=0, name=1, status=2, progress=3, priority=4, amount=5, assignee=6, 组织信息=7, startDate=8, endDate=9, remark=10, _action=11（组织信息为父列，含 department/team 子列）
 const NAME_COL_INDEX = 1;
-const REMARK_COL_INDEX = 11;
+const REMARK_COL_INDEX = 10;
 
 function handleSortChange(payload: { prop: string; order: string }) {
   sortInfo.value = { prop: payload.prop ?? '', order: payload.order ?? '' };
