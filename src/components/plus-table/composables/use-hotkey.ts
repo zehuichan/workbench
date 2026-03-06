@@ -407,6 +407,8 @@ export function useHotkey(options: UseHotkeyOptions) {
       activeColIndex.value >= 0 &&
       isCellEditable(activeRowIndex.value, activeColIndex.value)
     ) {
+      event.preventDefault()
+      event.stopPropagation()
       startEdit()
       updateCellValue(event.key)
       focusActiveEditor()
