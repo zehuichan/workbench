@@ -65,17 +65,18 @@ export function useRowOptions(options: UseRowOptionsOptions) {
     onDataChange(list);
 
     if (activeRowIndex != null && activeRowIndex.value >= 0) {
-      activeRowIndex.value = computeShiftedIndex(activeRowIndex.value, fromIndex, toIndex);
+      activeRowIndex.value = computeShiftedIndex(
+        activeRowIndex.value,
+        fromIndex,
+        toIndex,
+      );
     }
   }
 
   function duplicateRow(rowIndex?: number | number[]): void {
     const updated = rowIndex == null ? [] : castArray(rowIndex);
     const sorted = [...new Set(updated)]
-      .filter(
-        (i): i is number =>
-          typeof i === 'number' && i >= 0 && i < data.value.length,
-      )
+      .filter((i): i is number => i >= 0 && i < (data.value.length ?? 0))
       .sort((a, b) => a - b);
     if (!sorted.length) return;
     const list = [...data.value];
