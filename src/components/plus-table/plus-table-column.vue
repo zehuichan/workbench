@@ -7,6 +7,10 @@
         v-bind="scope"
       >
       </slot>
+      <component
+        v-else-if="item.renderHeader"
+        :is="() => item.renderHeader?.(scope)"
+      />
       <template v-else>
         <span v-if="isRequired" class="plus-table-header--required" />
         {{ item.label }}
@@ -78,7 +82,7 @@ const normalizedRules = computed(() => {
   return rules;
 });
 
-/** 过滤掉不应透传给 el-table-column 的扩展属性 */
+/** 过滤掉不应透传给 el-table-column 的扩展属性（含 renderHeader，Element Plus 推荐用 scoped-slot header） */
 const columnBindings = computed(() => {
   if (!props.item) return {};
   const {
@@ -88,6 +92,7 @@ const columnBindings = computed(() => {
     componentProps: _componentProps,
     rules: _rules,
     render: _render,
+    renderHeader: _renderHeader,
     children: _children,
     dependencies: _dependencies,
     ...rest
