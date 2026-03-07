@@ -56,6 +56,30 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
   /** 列宽覆盖（prop -> width），拖拽表头或持久化恢复时写入 */
   const columnWidths = ref<Record<string, number>>({});
 
+  /** 列设置面板打开时的快照，用于取消时恢复 */
+  let columnStateSnapshot: {
+    order: string[];
+    hidden: Set<string>;
+    widths: Record<string, number>;
+  } | null = null;
+
+  function snapshotColumnState(): void {
+    columnStateSnapshot = {
+      order: [...columnOrder.value],
+      hidden: new Set(hiddenColumns.value),
+      widths: { ...columnWidths.value },
+    };
+  }
+
+  function restoreColumnState(): void {
+    if (!columnStateSnapshot) return;
+    columnOrder.value = columnStateSnapshot.order;
+    hiddenColumns.value = new Set(columnStateSnapshot.hidden);
+    columnWidths.value = { ...columnStateSnapshot.widths };
+    columnStateSnapshot = null;
+    saveToStorage();
+  }
+
   function loadFromStorage(): void {
     if (!storage || !tableKey) return;
     const store = getStorage(storage);
@@ -284,6 +308,8 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     setColumnOrderByIds,
     setColumnWidth,
     resetColumns,
+    snapshotColumnState,
+    restoreColumnState,
     getOrderedColumnsWithProp,
     getColumnSettingTree,
     isColumnHidden: (prop: string) => hiddenColumns.value.has(prop),

@@ -55,6 +55,8 @@ export interface PlusTableContext {
     setColumnOrderByIds: (ids: string[]) => void;
     setColumnWidth: (prop: string, width: string | number) => void;
     resetColumns: () => void;
+    snapshotColumnState: () => void;
+    restoreColumnState: () => void;
     getOrderedColumnsWithProp: () => PlusTableColumn[];
     getColumnSettingTree: () => ColumnSettingNode[];
     isColumnHidden: (prop: string) => boolean;

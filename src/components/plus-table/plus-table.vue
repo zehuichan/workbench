@@ -513,6 +513,8 @@ provide<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, {
         setColumnOrderByIds: columnOptions.setColumnOrderByIds,
         setColumnWidth: columnOptions.setColumnWidth,
         resetColumns: columnOptions.resetColumns,
+        snapshotColumnState: columnOptions.snapshotColumnState,
+        restoreColumnState: columnOptions.restoreColumnState,
         getOrderedColumnsWithProp: columnOptions.getOrderedColumnsWithProp,
         getColumnSettingTree: columnOptions.getColumnSettingTree,
         isColumnHidden: columnOptions.isColumnHidden,

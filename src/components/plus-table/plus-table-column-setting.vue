@@ -25,7 +25,9 @@
               全部
             </el-checkbox>
           </div>
-          <p class="column-setting-hint">勾选显示列，拖拽调整顺序（仅顶层可拖拽）</p>
+          <p class="column-setting-hint">
+            勾选显示列，拖拽调整顺序（仅顶层可拖拽）
+          </p>
           <el-tree
             :data="treeData"
             node-key="id"
@@ -49,7 +51,9 @@
                 <el-input
                   v-if="data.column.prop"
                   :model-value="getEffectiveWidth(data.column)"
-                  @update:model-value="handleWidthInput(data.column.prop!, $event)"
+                  @update:model-value="
+                    handleWidthInput(data.column.prop!, $event)
+                  "
                   placeholder="宽度"
                   class="column-width-input"
                   @click.stop
@@ -62,16 +66,16 @@
     </template>
     <template #footer>
       <div class="column-setting-footer">
-        <el-button @click="handleInvert">反选</el-button>
-        <el-button @click="handleReset">重置</el-button>
-        <el-button type="primary" @click="handleSelectAll">全选</el-button>
+        <el-button @click="handleCancel">取消</el-button>
+        <el-button type="warning" @click="handleReset">重置</el-button>
+        <el-button type="primary" @click="handleConfirm">确认</el-button>
       </div>
     </template>
   </el-drawer>
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import { Setting } from '@element-plus/icons-vue';
 
 import type { PlusTableContext } from './types';
@@ -92,6 +96,10 @@ const ctx = inject<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, null);
 const show = ref(false);
 
 const columnOptions = computed(() => ctx?.columnOptions ?? null);
+
+watch(show, (v) => {
+  if (v) columnOptions.value?.snapshotColumnState?.();
+});
 
 const treeData = computed<ColumnSettingNode[]>(
   () => columnOptions.value?.getColumnSettingTree() ?? [],
@@ -142,16 +150,13 @@ function handleSelectAllOrNone(checked: boolean): void {
   }
 }
 
-function handleSelectAll(): void {
-  handleSelectAllOrNone(true);
+function handleCancel(): void {
+  columnOptions.value?.restoreColumnState?.();
+  show.value = false;
 }
 
-function handleInvert(): void {
-  const all = collectAllNodes(treeData.value);
-  for (const node of all) {
-    const hidden = columnOptions.value?.isNodeHidden(node);
-    columnOptions.value?.toggleColumn(node.id, !!hidden);
-  }
+function handleConfirm(): void {
+  show.value = false;
 }
 
 function handleReset(): void {
@@ -247,10 +252,5 @@ function handleNodeDrop(): void {
       }
     }
   }
-}
-
-.column-setting-footer {
-  display: flex;
-  gap: 8px;
 }
 </style>
