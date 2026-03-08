@@ -131,19 +131,6 @@ const editorSlotScope = computed(() => ({
   cancel: ctx!.cancelEdit,
 }));
 
-// ──── 编辑器组件解析 ────
-
-function resolveComponent(component?: string | Component) {
-  if (!component) return ELEMENT_ADAPTER_MAP.input;
-  const resolved = isString(component)
-    ? ELEMENT_ADAPTER_MAP?.[component]
-    : component;
-  if (!resolved) {
-    console.warn(`[PlusTable] Component "${component}" is not registered`);
-  }
-  return resolved as Component;
-}
-
 const editorComponent = computed(() => resolveComponent(props.item.component));
 
 const editorBindProps = computed(() => {
@@ -158,6 +145,19 @@ const mergedEditorProps = computed(() => ({
   ...editorBindProps.value,
   ...(depState.value.componentProps ?? {}),
 }));
+
+// ──── 编辑器组件解析 ────
+
+function resolveComponent(component?: string | Component) {
+  if (!component) return ELEMENT_ADAPTER_MAP.input;
+  const resolved = isString(component)
+    ? ELEMENT_ADAPTER_MAP?.[component]
+    : component;
+  if (!resolved) {
+    console.warn(`[PlusTable] Component "${component}" is not registered`);
+  }
+  return resolved as Component;
+}
 
 // ──── 编辑器 Esc ────
 
