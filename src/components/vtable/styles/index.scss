@@ -7,3 +7,15 @@
     outline: none;
   }
 }
+
+.vtable-inner {
+  height: 100%;
+}
+
+.vtable-table-area {
+  overflow: hidden;
+}
+
+.vtable-footer {
+  border-top: 1px solid var(--el-border-color-light, #ebeef5);
+}

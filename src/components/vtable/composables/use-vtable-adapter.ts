@@ -31,6 +31,7 @@ export function useVTableAdapter<T extends Record<string, unknown>>(
 
   const tableOption = computed(() => {
     const cols = getDataColumns(columns.value)
+    const frozenColCount = cols.filter((c) => c.fixed === 'left').length
     // 二维数组 records 时，field 必须为 '0'/'1'/... 对应列索引
     const header: VTableHeaderItem[] = cols.map((col, idx) => {
       const item: VTableHeaderItem = {
@@ -51,9 +52,11 @@ export function useVTableAdapter<T extends Record<string, unknown>>(
       }
       return item
     })
-    return {
+    const opt: { header: VTableHeaderItem[]; frozenColCount?: number; frozenRowCount?: number } = {
       header,
     }
+    if (frozenColCount > 0) opt.frozenColCount = frozenColCount
+    return opt
   })
 
   const records = computed(() => {

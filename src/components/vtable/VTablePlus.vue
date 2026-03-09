@@ -22,16 +22,39 @@ const emit = defineEmits<{
   clickCell: [event: unknown]
   dblClickCell: [event: unknown]
   keyDown: [event: unknown]
+  sortClick: [event: unknown]
+  resizeColumn: [event: unknown]
+  resizeColumnEnd: [event: unknown]
+  pagination: [payload: { currentPage: number; pageSize: number }]
 }>()
 
-// ──── 适配层：columns + data → option + records ────
+// ──── 分页与展示数据 ────
 
 const columnsRef = computed(() => props.columns as VTablePlusColumn[])
 const dataRef = computed(() => props.data ?? [])
 
+const paginationEnabled = computed(
+  () =>
+    props.pagination != null &&
+    props.pagination.total != null &&
+    props.pagination.total > 0,
+)
+
+const displayData = computed(() => {
+  const rows = dataRef.value
+  if (!paginationEnabled.value) return rows
+  const p = props.pagination!
+  const page = (p.currentPage ?? 1) - 1
+  const size = p.pageSize ?? 10
+  const start = page * size
+  return rows.slice(start, start + size)
+})
+
+// ──── 适配层：columns + data → option + records ────
+
 const { tableOption: adapterOption, records: adapterRecords } = useVTableAdapter({
   columns: columnsRef,
-  data: dataRef,
+  data: displayData,
 })
 
 // 当 columns 和 data 有内容时使用 adapter，否则使用兜底数据（兼容阶段 0）
@@ -89,6 +112,32 @@ const tableHeight = computed(() => {
   return Math.floor(h)
 })
 
+// ──── 分页 ────
+
+function handlePageChange(page: number) {
+  emit('pagination', {
+    currentPage: page,
+    pageSize: props.pagination?.pageSize ?? 10,
+  })
+}
+
+function handleSizeChange(size: number) {
+  emit('pagination', {
+    currentPage: 1,
+    pageSize: size,
+  })
+}
+
+const paginationScope = computed(() => ({
+  currentPage: props.pagination?.currentPage ?? 1,
+  pageSize: props.pagination?.pageSize ?? 10,
+  total: props.pagination?.total ?? 0,
+  pageSizes: props.pagination?.pageSizes ?? [10, 20, 50, 100],
+  layout: props.pagination?.layout ?? 'total, sizes, prev, pager, next, jumper',
+  onCurrentChange: handlePageChange,
+  onSizeChange: handleSizeChange,
+}))
+
 // ──── 事件透传 ────
 
 function onClickCell(e: unknown) {
@@ -103,6 +152,18 @@ function onKeyDown(e: unknown) {
   emit('keyDown', e)
 }
 
+function onSortClick(e: unknown) {
+  emit('sortClick', e)
+}
+
+function onResizeColumn(e: unknown) {
+  emit('resizeColumn', e)
+}
+
+function onResizeColumnEnd(e: unknown) {
+  emit('resizeColumnEnd', e)
+}
+
 // ──── 暴露实例 ────
 
 defineExpose({
@@ -113,15 +174,29 @@ defineExpose({
 
 <template>
   <div ref="wrapperEl" class="vtable-wrapper" tabindex="0">
-    <ListTable
-      ref="tableRef"
-      :options="tableOption"
-      :records="tableRecords"
-      :width="tableWidth"
-      :height="tableHeight"
-      @onClickCell="onClickCell"
-      @onDblClickCell="onDblClickCell"
-      @onKeyDown="onKeyDown"
-    />
+    <div class="vtable-inner flex flex-col h-full">
+      <div class="vtable-table-area min-h-0 flex-1">
+        <ListTable
+          ref="tableRef"
+          :options="tableOption"
+          :records="tableRecords"
+          :width="tableWidth"
+          :height="tableHeight"
+          :keep-column-width-change="true"
+          @onClickCell="onClickCell"
+          @onDblClickCell="onDblClickCell"
+          @onKeyDown="onKeyDown"
+          @onSortClick="onSortClick"
+          @onResizeColumn="onResizeColumn"
+          @onResizeColumnEnd="onResizeColumnEnd"
+        />
+      </div>
+      <div
+        v-if="paginationEnabled && $slots.pagination"
+        class="vtable-footer flex shrink-0 items-center justify-end py-2"
+      >
+        <slot name="pagination" v-bind="paginationScope" />
+      </div>
+    </div>
   </div>
 </template>

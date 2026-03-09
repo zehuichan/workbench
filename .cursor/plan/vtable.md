@@ -11,13 +11,13 @@
 |------|------|------|--------|------|
 | 0 | 依赖引入 + 基础 ListTable 渲染 | ✅ 已完成 | 8/8 | `/vtable` |
 | 1 | 配置适配层 + 类 PlusTable API | ✅ 已完成 | 10/10 | `/vtable/stage1` |
-| 2 | 分页 + 排序 + 固定列 | ⏳ 未开始 | 0/8 | `/vtable/stage2` |
+| 2 | 分页 + 排序 + 固定列 | ✅ 已完成 | 8/8 | `/vtable/stage2` |
 | 3 | 单元格编辑 + 自定义渲染 | ⏳ 未开始 | 0/9 | `/vtable/stage3` |
 | 4 | 主题 + 导出 + 事件透传 | ⏳ 未开始 | 0/7 | `/vtable/stage4` |
 
-**当前进度：** 阶段 1 已完成
+**当前进度：** 阶段 2 已完成
 
-**整体完成度：** 18/42 任务（约 43%）
+**整体完成度：** 26/42 任务（约 62%）
 
 ---
 
@@ -364,18 +364,128 @@ views/vtable/stage1.vue
 
 ### 阶段 2：分页 + 排序 + 固定列（约 2 天）
 
-- [ ] **2.1** 实现 VTable 分页：参考 [pagination demo](https://visactor.io/vtable/demo/basic-functionality/pagination)
-- [ ] **2.2** 支持 `pagination` prop：currentPage、pageSize、total，内部 `setPage` 等
-- [ ] **2.3** 分页器由调用方通过插槽 `#pagination` 提供，根据项目 UI 库（Element Plus、Ant Design Vue 等）自行选型
-- [ ] **2.4** 排序：透传 `onSortClick`，支持 sortable 列
-- [ ] **2.5** 固定列：`frozenColCount` 或列级 `frozen`，映射 column.fixed
-- [ ] **2.6** 固定行：可选支持 `frozenRowCount`
-- [ ] **2.7** Demo stage2：分页、排序、固定列演示
-- [ ] **2.8** 列宽拖拽：VTable 原生支持，确保 `resizeColumn` 等事件透传
+- [x] **2.1** 实现 VTable 分页：参考 [pagination demo](https://visactor.io/vtable/demo/basic-functionality/pagination)
+- [x] **2.2** 支持 `pagination` prop：currentPage、pageSize、total，内部 data 切片
+- [x] **2.3** 分页器由调用方通过插槽 `#pagination` 提供，根据项目 UI 库（Element Plus、Ant Design Vue 等）自行选型
+- [x] **2.4** 排序：透传 `onSortClick`，支持 sortable 列
+- [x] **2.5** 固定列：`frozenColCount` 或列级 `frozen`，映射 column.fixed
+- [x] **2.6** 固定行：可选支持 `frozenRowCount`
+- [x] **2.7** Demo stage2：分页、排序、固定列演示
+- [x] **2.8** 列宽拖拽：VTable 原生支持，确保 `resizeColumn` 等事件透传
 
 **产出验收：** 分页切换、列排序、固定列正常
 
 **分页插槽约定**：`#pagination` 接收 `{ currentPage, pageSize, total }` 等 scope，调用方使用 `el-pagination`、`a-pagination` 等组件并 `@current-change` / `@size-change` 调用 `tableRef.setPage()` 或更新 `pagination` 配置。
+
+---
+
+#### 阶段 2 详细规划（Prompt 增强 + UI/UX + 功能规划）
+
+##### 2.0 Prompt 增强结果
+
+| 维度 | 补全内容 |
+|------|----------|
+| **目标** | 支持分页、排序、固定列；分页采用客户端切片或服务端由调用方控制 data；排序透传 onSortClick；固定列映射 column.fixed → frozenColCount |
+| **技术约束** | VTable option 支持 pagination、frozenColCount；分页器通过 #pagination 插槽由调用方提供（el-pagination）；项目使用 Element Plus |
+| **范围边界** | 仅阶段 2 的 8 项；不实现服务端分页逻辑（由调用方按页传 data）；fixed 仅支持 'left' |
+| **验收标准** | 分页切换、列排序（图标+事件）、固定列、列宽拖拽事件透传；Demo stage2 可验收 |
+| **隐含假设** | 客户端分页：内部按 currentPage/pageSize 对 data 切片后传 records；服务端分页：调用方按页传 data，VTablePlus 只透传 |
+
+##### 2.1 UI/UX 设计方案
+
+**设计目标**
+
+- 用户目标：表格支持分页切换、列头排序、左侧固定列、列宽拖拽
+- 业务目标：与 PlusTable 分页/排序/固定列能力对齐
+
+**Demo 页面结构（stage2）**
+
+```
++----------------------------------------------------------+
+|  views/vtable/stage2.vue                                  |
+|  +------------------------------------------------------+ |
+|  | 标题：VTable 分页 / 排序 / 固定列 Demo（阶段 2）     | |
+|  +------------------------------------------------------+ |
+|  | VTablePlus :columns :data :pagination                 | |
+|  |   #pagination → el-pagination                         | |
+|  |   - 客户端分页：1000 条，每页 20 条                  | |
+|  |   - 部分列 sortable，部分列 fixed: 'left'            | |
+|  +------------------------------------------------------+ |
++----------------------------------------------------------+
+```
+
+**组件树**
+
+```
+views/vtable/stage2.vue
+├── 标题 + 说明
+└── VTablePlus
+    ├── props: columns, data, pagination
+    ├── 内部：按 pagination 切片 data → records
+    ├── #pagination 插槽 → el-pagination
+    └── 透传 onSortClick、onResizeColumn
+```
+
+**交互**
+
+- 分页：el-pagination 切换页/每页条数 → emit pagination → 父更新 currentPage/pageSize → 切片 data
+- 排序：点击 sortable 列表头 → onSortClick → 父可监听并自行排序 data（或阶段 2 仅透传事件）
+- 固定列：左固定列不随横向滚动
+- 列宽拖拽：VTable 原生支持，透传 onResizeColumn
+
+##### 2.2 功能规划（任务依赖与实现要点）
+
+| 任务 | 依赖 | 关键实现 |
+|------|------|----------|
+| 2.1 | 无 | 研究 VTable pagination 配置；客户端分页采用 data 切片，不依赖 VTable 内置分页 |
+| 2.2 | 2.1 | pagination prop：{ currentPage, pageSize, total }；有 total 时对 data 按页切片传入 records |
+| 2.3 | 2.2 | 主组件增加 #pagination 插槽；layout 含 header/table/footer，footer 放 #pagination |
+| 2.4 | 1.x | 透传 @onSortClick；sortable 列已由 adapter 配置，事件透传即可 |
+| 2.5 | 1.2 | adapter 计算 frozenColCount = fixed==='left' 的列数；option 增加 frozenColCount |
+| 2.6 | 2.5 | frozenRowCount 可选，option 增加；阶段 2 可为 0 |
+| 2.7 | 2.1–2.6 | stage2.vue + 路由 /vtable/stage2；1000 条数据，分页 20 条，固定 ID 列 |
+| 2.8 | 1.6 | 透传 @onResizeColumn、@onResizeColumnEnd |
+
+**关键文件**
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/components/vtable/types.ts` | 修改 | 增加 VTablePlusPagination 类型 |
+| `src/components/vtable/composables/use-vtable-adapter.ts` | 修改 | 支持 frozenColCount，映射 column.fixed |
+| `src/components/vtable/VTablePlus.vue` | 修改 | pagination prop、#pagination 插槽、data 切片、透传 onSortClick/onResizeColumn |
+| `src/views/vtable/stage2.vue` | 新增 | Demo |
+| `src/router/routes.ts` | 修改 | 添加 /vtable/stage2 |
+
+**分页与切片逻辑**
+
+```ts
+// pagination = { currentPage: 1, pageSize: 20, total: 1000 }
+// 客户端分页：slicedData = data.slice((currentPage-1)*pageSize, currentPage*pageSize)
+// records 由 adapter 基于 slicedData 生成
+// 无 pagination 时：使用完整 data
+```
+
+**固定列映射**
+
+```ts
+// frozenColCount = columns.filter(c => c.fixed === 'left').length
+// option.frozenColCount = frozenColCount
+```
+
+**风险与缓解**
+
+| 风险 | 缓解 |
+|------|------|
+| VTable 与 Vue 响应式导致列宽重置 | 使用 keepColumnWidthChange（Vue-VTable 文档） |
+| 排序逻辑由谁实现 | 阶段 2 仅透传 onSortClick，父可监听后排序 data；或后续在 adapter 内做客户端排序 |
+
+**实现调整**
+
+| 调整项 | 说明 |
+|--------|------|
+| 客户端分页 | 有 total 时对 data 按 currentPage/pageSize 切片，displayData 传入 adapter |
+| frozenRowCount | 阶段 2 未实现，adapter 仅增加 frozenColCount |
+| keepColumnWidthChange | ListTable 增加 :keep-column-width-change="true" 避免列宽重置 |
 
 ---
 
