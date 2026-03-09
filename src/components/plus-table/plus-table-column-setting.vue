@@ -11,6 +11,7 @@
     title="列设置"
     size="360"
     direction="rtl"
+    append-to-body
     class="plus-table-column-setting-drawer"
   >
     <template #default>
