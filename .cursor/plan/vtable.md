@@ -10,14 +10,14 @@
 | 阶段 | 名称 | 状态 | 完成度 | Demo |
 |------|------|------|--------|------|
 | 0 | 依赖引入 + 基础 ListTable 渲染 | ✅ 已完成 | 8/8 | `/vtable` |
-| 1 | 配置适配层 + 类 PlusTable API | ⏳ 未开始 | 0/10 | `/vtable/stage1` |
+| 1 | 配置适配层 + 类 PlusTable API | ✅ 已完成 | 10/10 | `/vtable/stage1` |
 | 2 | 分页 + 排序 + 固定列 | ⏳ 未开始 | 0/8 | `/vtable/stage2` |
 | 3 | 单元格编辑 + 自定义渲染 | ⏳ 未开始 | 0/9 | `/vtable/stage3` |
 | 4 | 主题 + 导出 + 事件透传 | ⏳ 未开始 | 0/7 | `/vtable/stage4` |
 
-**当前进度：** 阶段 0 已完成
+**当前进度：** 阶段 1 已完成
 
-**整体完成度：** 8/42 任务（约 19%）
+**整体完成度：** 18/42 任务（约 43%）
 
 ---
 
@@ -232,18 +232,133 @@ views/vtable/index.vue
 
 ### 阶段 1：配置适配层 + 类 PlusTable API（约 2–3 天）
 
-- [ ] **1.1** 编写 `types.ts`：`VTablePlusColumn`、`VTablePlusProps`（兼容 PlusTableColumn 子集）
-- [ ] **1.2** 实现 `use-vtable-adapter.ts`：`columns` + `data` → `option.header` + `records`
-- [ ] **1.3** 支持 `field` = column.prop，`caption` = column.label
-- [ ] **1.4** 支持 `width`、`minWidth`、`maxWidth` 映射
-- [ ] **1.5** 支持 `sortable` → VTable sort 配置
-- [ ] **1.6** 主组件 `VTablePlus.vue` 接收 `columns`、`data`，内部调用 adapter
-- [ ] **1.7** 透传 VTable 事件：onClickCell、onDblClickCell、onKeyDown
-- [ ] **1.8** 暴露 ref：`getTableInstance()` 获取 VTable 实例
-- [ ] **1.9** 支持 `rowKey`：用于 records 行标识（若 VTable 支持）
-- [ ] **1.10** Demo stage1：使用 columns + data 驱动，与 PlusTable 用法对比
+- [x] **1.1** 编写 `types.ts`：`VTablePlusColumn`、`VTablePlusProps`（兼容 PlusTableColumn 子集）
+- [x] **1.2** 实现 `use-vtable-adapter.ts`：`columns` + `data` → `option.header` + `records`
+- [x] **1.3** 支持 `field` = column.prop，`caption` = column.label
+- [x] **1.4** 支持 `width`、`minWidth`、`maxWidth` 映射
+- [x] **1.5** 支持 `sortable` → VTable sort 配置
+- [x] **1.6** 主组件 `VTablePlus.vue` 接收 `columns`、`data`，内部调用 adapter
+- [x] **1.7** 透传 VTable 事件：onClickCell、onDblClickCell、onKeyDown
+- [x] **1.8** 暴露 ref：`getTableInstance()` 获取 VTable 实例
+- [x] **1.9** 支持 `rowKey`：用于 records 行标识（若 VTable 支持）
+- [x] **1.10** Demo stage1：使用 columns + data 驱动，与 PlusTable 用法对比
 
 **产出验收：** 使用 `columns`、`data` 配置即可渲染，无需手写 option
+
+---
+
+#### 阶段 1 详细规划（Prompt 增强 + UI/UX + 功能规划）
+
+##### 1.0 Prompt 增强结果
+
+| 维度 | 补全内容 |
+|------|----------|
+| **目标** | 实现 columns + data 配置式 API，与 PlusTable 用法对齐；内部通过 useVTableAdapter 转为 VTable option/records |
+| **技术约束** | VTable header.field 与 records 列序对应；二维数组 records 时 field 为 '0'/'1'/…；对象数组时 field = prop |
+| **范围边界** | 仅阶段 1 的 10 项；不实现 type 列（expand/selection/index）、不实现 formatter/render（阶段 3）；sortable 仅做配置映射 |
+| **验收标准** | `columns`、`data` 配置驱动渲染；透传 onClickCell/onDblClickCell/onKeyDown；暴露 getTableInstance；vue-tsc 无报错 |
+| **隐含假设** | 阶段 1 优先使用二维数组 records，adapter 按 columns 顺序取 data 行中 prop 对应值；type 列（expand/selection/index）暂过滤或延后 |
+
+##### 1.1 UI/UX 设计方案
+
+**设计目标**
+
+- 用户目标：用与 PlusTable 相同的 columns、data 配置驱动 VTable，降低迁移成本
+- 业务目标：验证配置适配层可行，为阶段 2～4 打基础
+
+**Demo 页面结构（stage1）**
+
+```
++----------------------------------------------------------+
+|  views/vtable/stage1.vue                                  |
+|  +------------------------------------------------------+ |
+|  | 标题：VTable 配置适配 Demo（阶段 1）                  | |
+|  +------------------------------------------------------+ |
+|  | 说明：columns + data 驱动，与 PlusTable 用法一致      | |
+|  +------------------------------------------------------+ |
+|  | VTablePlus :columns="columns" :data="tableData"       | |
+|  |   - 复用 PlusTable Demo 的 columns/data 结构（简化）  | |
+|  +------------------------------------------------------+ |
++----------------------------------------------------------+
+```
+
+**组件树**
+
+```
+views/vtable/stage1.vue
+├── 标题 + 说明
+└── VTablePlus
+    ├── props: columns, data, width?, height?, adaptive?
+    ├── useVTableAdapter(columns, data) → option, records
+    └── ListTable :options="option" :records="records"
+```
+
+**交互**
+
+- 传入 columns（prop/label/width/minWidth/maxWidth/sortable/fixed）和 data（对象数组）
+- 表格按列配置渲染；sortable 列显示排序图标（实际排序逻辑阶段 2）
+- 点击单元格可透传 onClickCell 等事件
+
+##### 1.2 功能规划（任务依赖与实现要点）
+
+| 任务 | 依赖 | 关键实现 |
+|------|------|----------|
+| 1.1 | 无 | types.ts：VTablePlusColumn（prop, label, width, minWidth, maxWidth, sortable, fixed）；VTablePlusProps（columns, data, rowKey?） |
+| 1.2 | 1.1 | use-vtable-adapter.ts：columns→header[]，data→records[][]；过滤 type 列，按 columns 顺序取 row[prop] |
+| 1.3 | 1.2 | header.field = column.prop，header.caption = column.label |
+| 1.4 | 1.2 | header.width/minWidth/maxWidth 映射 |
+| 1.5 | 1.2 | sortable → header.sort: { order: 'asc'\|'desc' } 或 true |
+| 1.6 | 1.2 | VTablePlus.vue 接收 columns、data，computed 调用 adapter 得到 option、records |
+| 1.7 | 1.6 | 透传 @onClickCell、@onDblClickCell、@onKeyDown |
+| 1.8 | 1.6 | defineExpose({ getTableInstance: () => tableRef.value?.table }) |
+| 1.9 | 1.2 | rowKey 用于后续扩展；records 二维数组时无行唯一标识，可先占位 |
+| 1.10 | 1.6 | stage1.vue + 路由 /vtable/stage1；columns/data 与 PlusTable 子集一致 |
+
+**关键文件**
+
+| 文件 | 操作 | 说明 |
+|------|------|------|
+| `src/components/vtable/types.ts` | 新增 | VTablePlusColumn、VTablePlusProps |
+| `src/components/vtable/composables/use-vtable-adapter.ts` | 新增 | columns/data → option.header + records |
+| `src/components/vtable/VTablePlus.vue` | 修改 | 接入 columns、data、adapter，透传事件，暴露 getTableInstance |
+| `src/views/vtable/stage1.vue` | 新增 | Demo |
+| `src/router/routes.ts` | 修改 | 添加 /vtable/stage1 |
+
+**VTable header 与 PlusTableColumn 映射**
+
+| PlusTableColumn | VTable header | 备注 |
+|-----------------|---------------|------|
+| prop | field | 必填，作为列标识 |
+| label | caption | 表头文案 |
+| width | width | 列宽 |
+| minWidth | minWidth | 最小列宽 |
+| maxWidth | maxWidth | 最大列宽 |
+| sortable | sort | `true` 或 `{ order: 'asc' }` |
+| fixed | freeze 列配置 | 阶段 2 实现，1.1 类型可预留 |
+
+**数据转换逻辑**
+
+```ts
+// data = [{ id: 1, name: 'A' }, ...]
+// columns = [{ prop: 'id' }, { prop: 'name' }, ...]
+// records = data.map(row => columns.filter(c => c.prop).map(c => row[c.prop]))
+// header = columns.filter(c => c.prop).map(c => ({ field: c.prop, caption: c.label, ... }))
+```
+
+**风险与缓解**
+
+| 风险 | 缓解 |
+|------|------|
+| ListTable 需通过 ref 获取实例 | Vue-VTable ListTable 可能暴露 table 属性，需查阅文档或源码 |
+| type 列（expand/selection/index） | 阶段 1 过滤，阶段 2/3 再考虑 |
+| formatter/render | 阶段 3 实现，1.1 类型可预留 |
+
+**实现调整**
+
+| 调整项 | 说明 |
+|--------|------|
+| records 为二维数组 | header.field 使用列索引字符串 '0'/'1'/...，与 VTable 二维数组格式一致 |
+| 无 columns/data 时 | 使用兜底硬编码 option/records，保持阶段 0 Demo `/vtable` 可用 |
 
 ---
 
