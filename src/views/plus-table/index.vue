@@ -373,7 +373,11 @@ function handleClearValidation() {
 function handleInsertRow() {
   const ri = tableRef.value?.activeRowIndex ?? -1;
   const count = Math.max(1, insertRowCount.value || 1);
-  tableRef.value?.insertRow?.(ri, { _key: buildShortUUID() } as TaskRow, count);
+  tableRef.value?.insertRow?.(
+    ri,
+    { _key: buildShortUUID() } as unknown as TaskRow,
+    count,
+  );
   ElMessage.success(`已插入 ${count} 行`);
 }
 

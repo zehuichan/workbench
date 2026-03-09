@@ -1,21 +1,5 @@
 import { defineAsyncComponent } from 'vue';
 
-const loadComponent = (name: string) =>
-  defineAsyncComponent(() =>
-    Promise.all([
-      import(`../../node_modules/element-plus/es/components/${name}/index.mjs`),
-      import(
-        `../../node_modules/element-plus/es/components/${name}/style/css.mjs`
-      ),
-    ]).then(([mod]) => {
-      const pascalName = `El${name
-        .split('-')
-        .map((s) => s[0].toUpperCase() + s.slice(1))
-        .join('')}`;
-      return mod[pascalName] ?? mod.default;
-    }),
-  );
-
 const ElInput = defineAsyncComponent(() =>
   Promise.all([
     import('element-plus/es/components/input/index'),
