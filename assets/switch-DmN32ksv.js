@@ -1,0 +1,1 @@
+import{c as e,l as t,s as n}from"./index-BwcdwWQy.js";export{n as ElSwitch,n as default,e as switchEmits,t as switchProps};
