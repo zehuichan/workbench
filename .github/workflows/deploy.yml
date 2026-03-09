@@ -8,6 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 推送 gh-pages 分支需要写权限
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
