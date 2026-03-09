@@ -1,23 +1,23 @@
 /**
  * VTablePlus 列配置（兼容 PlusTableColumn 子集）
  */
-export interface VTablePlusColumn<T = Record<string, unknown>> {
+export interface VTablePlusColumn {
   /** 字段名，对应 data 中的 key */
-  prop: string
+  prop: string;
   /** 表头文案 */
-  label?: string
+  label?: string;
   /** 列宽 */
-  width?: number | string
+  width?: number | string;
   /** 最小列宽 */
-  minWidth?: number | string
+  minWidth?: number | string;
   /** 最大列宽 */
-  maxWidth?: number | string
+  maxWidth?: number | string;
   /** 是否支持排序 */
-  sortable?: boolean | 'custom'
+  sortable?: boolean | 'custom';
   /** 固定列：'left' | 'right'，阶段 2 实现 */
-  fixed?: 'left' | 'right'
+  fixed?: 'left' | 'right';
   /** 列显隐 */
-  hidden?: boolean
+  hidden?: boolean;
   /** 预留：formatter/render 阶段 3 */
   // formatter?: ...
   // render?: ...
@@ -36,8 +36,10 @@ export interface VTablePlusPagination {
  * VTablePlus 表格 Props
  */
 export interface VTablePlusProps<T = Record<string, unknown>> {
+  /** VTable option */
+  options?: {}
   /** 列配置 */
-  columns?: VTablePlusColumn<T>[]
+  columns?: VTablePlusColumn[]
   /** 表格数据（对象数组） */
   data?: T[]
   /** 行唯一标识字段，预留 */
@@ -60,4 +62,24 @@ export interface VTableHeaderItem {
   minWidth?: number
   maxWidth?: number
   sort?: boolean | { order: 'asc' | 'desc' }
+}
+
+/**
+ * ListColumn #customLayout 插槽作用域（自定义单元格）
+ * 使用 VisTableCell 或 #cell-{prop} 插槽时传入
+ */
+export interface VisTableCellScope {
+  table?: unknown
+  row?: number
+  col?: number
+  /** 单元格展示值 */
+  value?: unknown
+  /** 原始数据值 */
+  dataValue?: unknown
+  /** 行数据 */
+  record?: Record<string, unknown>
+  /** 单元格区域 */
+  rect?: { x?: number; y?: number; width?: number; height?: number }
+  height?: number
+  width?: number
 }

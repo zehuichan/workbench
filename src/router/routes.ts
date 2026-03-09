@@ -12,19 +12,19 @@ const routes = [
     component: () => import('@/views/plus-table/index.vue'),
   },
   {
-    name: 'vtable',
-    path: '/vtable',
-    component: () => import('@/views/vtable/index.vue'),
+    name: 'vistable',
+    path: '/vistable',
+    component: () => import('@/views/vistable/index.vue'),
   },
   {
-    name: 'vtable-stage1',
-    path: '/vtable/stage1',
-    component: () => import('@/views/vtable/stage1.vue'),
+    name: 'vistable-stage1',
+    path: '/vistable/stage1',
+    component: () => import('@/views/vistable/stage1.vue'),
   },
   {
-    name: 'vtable-stage2',
-    path: '/vtable/stage2',
-    component: () => import('@/views/vtable/stage2.vue'),
+    name: 'vistable-stage2',
+    path: '/vistable/stage2',
+    component: () => import('@/views/vistable/stage2.vue'),
   },
 ] as RouteRecordRaw[];
 

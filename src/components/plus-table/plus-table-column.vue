@@ -1,5 +1,5 @@
 <template>
-  <el-table-column v-bind="columnBindings">
+  <el-table-column v-bind="bindings">
     <template #header="scope">
       <slot
         v-if="$slots[`header-${item.prop}`]"
@@ -83,7 +83,7 @@ const normalizedRules = computed(() => {
 });
 
 /** 过滤掉不应透传给 el-table-column 的扩展属性（含 renderHeader，Element Plus 推荐用 scoped-slot header） */
-const columnBindings = computed(() => {
+const bindings = computed(() => {
   if (!props.item) return {};
   const {
     hidden: _hidden,

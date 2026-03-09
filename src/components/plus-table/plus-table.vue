@@ -1,90 +1,3 @@
-<template>
-  <div ref="wrapperEl" class="plus-table-wrapper" tabindex="0">
-    <div
-      v-if="hasHeaderContent"
-      class="plus-table-header flex items-center justify-between py-2"
-    >
-      <slot name="title" />
-      <div>
-        <slot name="actions" />
-        <plus-table-column-setting v-if="columnSetting" />
-      </div>
-    </div>
-    <el-table
-      v-bind="$attrs"
-      ref="tableRef"
-      :data="displayData"
-      :row-key="rowKey"
-      :stripe="stripe"
-      :border="border"
-      :show-overflow-tooltip="showOverflowTooltip"
-      :max-height="maxHeight ?? adaptiveMaxHeight"
-      :cell-class-name="getCellClassNameBinding"
-      :row-class-name="getRowClassNameBinding"
-      @cell-click="onCellClick"
-      @cell-dblclick="onCellDblClick"
-      @header-dragend="onHeaderDragEnd"
-    >
-      <template #default>
-        <slot>
-          <template
-            v-for="(column, idx) in visibleColumns"
-            :key="(column as any).key ?? column.prop ?? column.type ?? idx"
-          >
-            <component
-              v-if="
-                [SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)
-              "
-              :is="h(ElTableColumn, column, slots)"
-            />
-
-            <component
-              v-else-if="[EXPAND_COLUMN].includes(column.type as any)"
-              :is="
-                h(ElTableColumn, column, {
-                  default: (scope: unknown) =>
-                    slots.expand && slots.expand(scope),
-                })
-              "
-            />
-
-            <component
-              v-else
-              :is="h(PlusTableColumn, { item: column }, slots)"
-            />
-          </template>
-        </slot>
-      </template>
-
-      <template #append>
-        <slot name="append" />
-      </template>
-
-      <template #empty>
-        <slot name="empty" />
-      </template>
-    </el-table>
-    <div
-      v-if="hasFooterContent"
-      class="plus-table-footer flex items-center justify-between py-2"
-    >
-      <slot name="summary" />
-      <slot name="pagination">
-        <plus-table-pagination
-          v-if="paginationEnabled"
-          :current-page="currentPage ?? 1"
-          :page-size="pageSize ?? 10"
-          :total="total ?? 0"
-          :page-sizes="pageSizes"
-          :layout="paginationLayout"
-          @current-change="handlePageChange"
-          @size-change="handleSizeChange"
-        />
-      </slot>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import {
   computed,
@@ -350,11 +263,7 @@ const {
   isRowDirty,
 });
 
-const {
-  confirmEditWithHistory,
-  wrappedUndo,
-  wrappedRedo,
-} = useEditActions({
+const { confirmEditWithHistory, wrappedUndo, wrappedRedo } = useEditActions({
   confirmEdit,
   undo,
   redo,
@@ -599,3 +508,90 @@ defineExpose({
   setScrollLeft: (...args: any[]) => getElTable()?.setScrollLeft(...args),
 });
 </script>
+
+<template>
+  <div ref="wrapperEl" class="plus-table-wrapper" tabindex="0">
+    <div
+      v-if="hasHeaderContent"
+      class="plus-table-header flex items-center justify-between py-2"
+    >
+      <slot name="title" />
+      <div>
+        <slot name="actions" />
+        <plus-table-column-setting v-if="columnSetting" />
+      </div>
+    </div>
+    <el-table
+      v-bind="$attrs"
+      ref="tableRef"
+      :data="displayData"
+      :row-key="rowKey"
+      :stripe="stripe"
+      :border="border"
+      :show-overflow-tooltip="showOverflowTooltip"
+      :max-height="maxHeight ?? adaptiveMaxHeight"
+      :cell-class-name="getCellClassNameBinding"
+      :row-class-name="getRowClassNameBinding"
+      @cell-click="onCellClick"
+      @cell-dblclick="onCellDblClick"
+      @header-dragend="onHeaderDragEnd"
+    >
+      <template #default>
+        <slot>
+          <template
+            v-for="(column, idx) in visibleColumns"
+            :key="(column as any).key ?? column.prop ?? column.type ?? idx"
+          >
+            <component
+              v-if="
+                [SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)
+              "
+              :is="h(ElTableColumn, column, slots)"
+            />
+
+            <component
+              v-else-if="[EXPAND_COLUMN].includes(column.type as any)"
+              :is="
+                h(ElTableColumn, column, {
+                  default: (scope: unknown) =>
+                    slots.expand && slots.expand(scope),
+                })
+              "
+            />
+
+            <component
+              v-else
+              :is="h(PlusTableColumn, { item: column }, slots)"
+            />
+          </template>
+        </slot>
+      </template>
+
+      <template #append>
+        <slot name="append" />
+      </template>
+
+      <template #empty>
+        <slot name="empty" />
+      </template>
+    </el-table>
+    <div
+      v-if="hasFooterContent"
+      class="plus-table-footer flex items-center justify-between py-2"
+    >
+      <slot name="summary" />
+      <slot name="pagination">
+        <plus-table-pagination
+          v-if="paginationEnabled"
+          :current-page="currentPage ?? 1"
+          :page-size="pageSize ?? 10"
+          :total="total ?? 0"
+          :page-sizes="pageSizes"
+          :layout="paginationLayout"
+          @current-change="handlePageChange"
+          @size-change="handleSizeChange"
+        />
+      </slot>
+    </div>
+  </div>
+</template>

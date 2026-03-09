@@ -1,3 +1,3 @@
 export * from './plus-table';
 export { PlusTable } from './plus-table';
-export { VTablePlus } from './vtable';
+export { VisTable } from './vis-table';
