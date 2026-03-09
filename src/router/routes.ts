@@ -12,19 +12,9 @@ const routes = [
     component: () => import('@/views/plus-table/index.vue'),
   },
   {
-    name: 'vistable',
-    path: '/vistable',
-    component: () => import('@/views/vistable/index.vue'),
-  },
-  {
-    name: 'vistable-stage1',
-    path: '/vistable/stage1',
-    component: () => import('@/views/vistable/stage1.vue'),
-  },
-  {
-    name: 'vistable-stage2',
-    path: '/vistable/stage2',
-    component: () => import('@/views/vistable/stage2.vue'),
+    name: 'tanstack-table-demo',
+    path: '/tanstack-table-demo',
+    component: () => import('@/views/tanstack-table-demo/index.vue'),
   },
 ] as RouteRecordRaw[];
 

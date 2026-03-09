@@ -8,6 +8,18 @@ $ARGUMENTS
 
 ---
 
+## Superpowers 技能集成
+
+| 阶段 | 必须 invoke 的技能 |
+|------|--------------------|
+| 2.0 Prompt 增强、需求探索 | `brainstorming` |
+| 2.2 产出规划文档 | `writing-plans` |
+| 3. 执行实施 | `test-driven-development` |
+
+详见 `.cursor/frontend-sop.md`。
+
+---
+
 ## Cursor 工具与工作目录
 
 **工作目录**：
@@ -50,6 +62,8 @@ $ARGUMENTS
 
 #### 2.0 Prompt 增强
 
+**必须**：执行本步骤前 invoke `brainstorming` skill，完成需求探索、方案对比与设计审批后，再进入 2.1。
+
 **Prompt 增强**：分析 $ARGUMENTS 的意图、缺失信息、隐含假设，补全为结构化需求（明确目标、技术约束、范围边界、验收标准）。**用增强结果替代原始 $ARGUMENTS** 用于后续所有阶段。
 
 #### 2.1 上下文检索
@@ -58,9 +72,11 @@ $ARGUMENTS
 
 #### 2.2 产出规划文档
 
+**必须**：本阶段遵循 `writing-plans` skill 的 bite-sized 任务粒度与结构。
+
 由 **Cursor** 在本会话内完成：
 
-- 先产出 **UI/UX 设计方案**（页面结构、组件树、交互流程、响应式与 A11y 要点）
+- 先产出 **UI/UX 设计方案**（页面结构、组件树、交互流程、响应式与 A11y 要点，可参考 `ui-ux-designer` 模板）
 - 再产出 **功能规划文档**（任务清单、依赖关系、关键文件、风险与缓解）
 
 规划文档须包含：
@@ -101,6 +117,8 @@ $ARGUMENTS
 从计划中提取实施步骤与依赖，确定执行顺序。
 
 #### 3.3 按计划实施（开发中）
+
+**必须**：遵循 `test-driven-development` skill（Red → Green → Refactor），先写失败测试，再写实现。
 
 由 **Cursor** 在本会话内按计划逐步执行：
 

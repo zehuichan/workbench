@@ -6,6 +6,17 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 结构化 6 阶段工作流，由 Cursor 在本会话内完成规划与实施。
 
+## Superpowers 技能集成
+
+| 阶段 | 必须 invoke 的技能 |
+|------|--------------------|
+| 2. 方案构思 | `brainstorming` |
+| 3. 详细规划 | `writing-plans` |
+| 4. 实施 | `test-driven-development` |
+| 6. 质量审查 | `verification-before-completion` |
+
+详见 `.cursor/frontend-sop.md`。
+
 ## 使用方法
 
 ```bash
@@ -66,7 +77,7 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 ### 💡 阶段 2：方案构思
 
-`[模式：构思]` - 多角度分析：
+`[模式：构思]` - **必须** invoke `brainstorming` skill，完成需求探索与方案对比。
 
 由 **Cursor** 完成（可选：用 **Task** 的 generalPurpose 做并行「后端 / 前端」视角分析再综合）：
 - 后端视角：技术可行性、架构影响、性能与风险
@@ -76,7 +87,7 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 ### 📋 阶段 3：详细规划
 
-`[模式：计划]` - 产出实施计划：
+`[模式：计划]` - **必须** 遵循 `writing-plans` skill 的结构与粒度。
 
 由 **Cursor** 综合阶段 2 用户所选方案，产出：
 - 组件/模块结构、数据流与接口、关键文件与步骤
@@ -86,7 +97,7 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 ### ⚡ 阶段 4：实施
 
-`[模式：执行]` - 代码开发：
+`[模式：执行]` - **必须** 遵循 `test-driven-development` skill（Red → Green → Refactor）。
 
 - 严格按批准的计划实施
 - 遵循项目现有代码规范
@@ -103,7 +114,7 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 ### ✅ 阶段 6：质量审查
 
-`[模式：评审]` - 最终评估：
+`[模式：评审]` - **必须** 遵循 `verification-before-completion` skill，运行验证命令并确认输出后再声称完成。
 
 - 对照计划检查完成情况
 - 运行测试验证功能

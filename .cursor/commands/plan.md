@@ -8,6 +8,16 @@ $ARGUMENTS
 
 ---
 
+## Superpowers 技能集成
+
+| 阶段 | 必须 invoke 的技能 |
+|------|--------------------|
+| Phase 2 分析与计划合成 | `writing-plans` |
+
+详见 `.cursor/frontend-sop.md`。
+
+---
+
 ## 核心协议
 
 - **语言协议**：与工具交互用**英语**，与用户交互用**中文**
@@ -70,7 +80,7 @@ $ARGUMENTS
 
 ### 💡 Phase 2：分析与计划合成
 
-`[模式：分析]`
+`[模式：分析]` - **必须** 遵循 `writing-plans` skill 的 bite-sized 任务粒度与文档结构。
 
 #### 2.1 多角度分析
 
