@@ -11,6 +11,11 @@ const routes = [
     path: '/plus-table',
     component: () => import('@/views/plus-table/index.vue'),
   },
+  {
+    name: 'vtable',
+    path: '/vtable',
+    component: () => import('@/views/vtable/index.vue'),
+  },
 ] as RouteRecordRaw[];
 
 export { routes };
