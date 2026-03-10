@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
 import { computed, ref, watch } from 'vue';
 
-import { isBoolean } from '@/utils';
+import { isBoolean } from '../utils';
 
 import type { PlusTableColumn, RowData } from '../types';
 import {

@@ -54,7 +54,7 @@ import { type Component, computed, h, inject, nextTick } from 'vue';
 
 import { get } from 'es-toolkit/compat';
 
-import { isString } from '@/utils';
+import { isString } from './utils';
 
 import type { PlusTableColumn, PlusTableContext } from './types';
 import { PLUS_TABLE_INJECTION_KEY } from './constants';
