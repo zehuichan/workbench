@@ -40,16 +40,14 @@ defineEmits<{
   'size-change': [value: number];
 }>();
 
-const computedPageSizes = computed(
-  () => props.pageSizes ?? [10, 20, 50, 100],
-);
+const computedPageSizes = computed(() => props.pageSizes ?? [10, 20, 50, 100]);
 
 const computedLayout = computed(
   () => props.layout ?? 'total, sizes, prev, pager, next, jumper',
 );
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 .plus-table-pagination {
   display: flex;
   justify-content: flex-end;

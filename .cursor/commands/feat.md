@@ -18,6 +18,8 @@ $ARGUMENTS
 
 详见 `.cursor/frontend-sop.md`。
 
+**分层资源**：写计划用 `.cursor/assets/plan-template.md`；改产品代码前 Read `.cursor/references/stack-conventions.md`。
+
 ---
 
 ## Cursor 工具与工作目录
@@ -64,6 +66,8 @@ $ARGUMENTS
 
 **必须**：执行本步骤前 invoke `brainstorming` skill，完成需求探索、方案对比与设计审批后，再进入 2.1。
 
+**门禁（Inversion）**：在用户**确认方案 / 约束**之前：**不得**写出定稿级 `.cursor/plan/*.md`（仅可列问题清单或草案要点）；**不得**修改产品代码。
+
 **Prompt 增强**：分析 $ARGUMENTS 的意图、缺失信息、隐含假设，补全为结构化需求（明确目标、技术约束、范围边界、验收标准）。**用增强结果替代原始 $ARGUMENTS** 用于后续所有阶段。
 
 #### 2.1 上下文检索
@@ -74,18 +78,12 @@ $ARGUMENTS
 
 **必须**：本阶段遵循 `writing-plans` skill 的 bite-sized 任务粒度与结构。
 
-由 **Cursor** 在本会话内完成：
-
-- 先产出 **UI/UX 设计方案**（页面结构、组件树、交互流程、响应式与 A11y 要点，可参考 `ui-ux-designer` 模板）
-- 再产出 **功能规划文档**（任务清单、依赖关系、关键文件、风险与缓解）
-
-规划文档须包含：
-
-- **〇、进度里程碑**：当前阶段、待办任务、完成度（如 7/16），便于开发前定位与开发后更新
-- **任务清单**：每项使用 `- [ ]` / `- [x]` 并带编号（如 4.1.6），便于按编号逐步执行
-- **实现调整**（可选小节）：记录实施过程中的重要实现变更，与计划同步
-
-可参考 `.cursor/agents/ui-ux-designer.md` 的模板与结构，无需调用外部 agent，由 Cursor 直接生成。
+1. **Read** `.cursor/assets/plan-template.md`，以其章节为骨架生成计划正文。
+2. 由 **Cursor** 在本会话内完成：
+   - **UI/UX 设计方案**填入模板「UI/UX 设计要点」：页面结构、组件树、交互流程、响应式与 A11y（可参考 `.cursor/agents/ui-ux-designer.md`）
+   - **功能规划**：任务清单、依赖、关键文件、风险与缓解填入对应章节
+3. **〇、进度里程碑**：须含当前阶段、完成度（如 7/16）、Demo 路由占位
+4. **任务清单**：`- [ ]` / `- [x]` + 编号（如 4.1.6）；**实现调整**在实施过程中更新
 
 #### 2.3 保存计划
 
@@ -120,17 +118,19 @@ $ARGUMENTS
 
 **必须**：遵循 `test-driven-development` skill（Red → Green → Refactor），先写失败测试，再写实现。
 
+**实施前**：**Read** `.cursor/references/stack-conventions.md`；与计划冲突时以**计划 + 用户当轮指令**为准，并在计划「实现调整」中记录。
+
 由 **Cursor** 在本会话内按计划逐步执行：
 
 - 严格按计划中的步骤与关键文件进行代码修改、文件创建/更新
-- 遵循项目现有设计系统、代码规范与目录结构
+- 遵循项目现有设计系统、**及** `stack-conventions.md` 中已填写的约定
 - 确保响应式与可访问性（A11y）
 
 **开发中守则**：
 
-- **开发服务器**：不要执行 `pnpm run dev`，已由用户自行启动
-- **项目规范**：严格遵循 kebab-case 命名、eslint、prettier、commitlint、cspell、单元测试
-- **Demo 同步（可选）**：每阶段完成需在里程碑中填写对应路由（如 `views/stageN/index.vue`）；新增路由时在 `router/routes.ts` 中注册
+- **开发服务器**：不要执行 `pnpm run dev`，已由用户自行启动（除非 `stack-conventions.md` 另有约定）
+- **项目规范**：以 `stack-conventions.md` + 仓库现有配置为准；历史命令中的示例（如 kebab-case、eslint）在引用文件中被覆盖时以引用文件为准
+- **Demo 同步（可选）**：每阶段完成需在里程碑中填写对应路由；路由注册路径以项目为准
 
 不调用外部模型，所有写操作由 Cursor 完成。
 

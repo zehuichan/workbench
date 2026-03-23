@@ -17,6 +17,8 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 详见 `.cursor/frontend-sop.md`。
 
+**分层资源**：阶段 3 写计划前 **Read** `.cursor/assets/plan-template.md`；阶段 4 实施前 **Read** `.cursor/references/stack-conventions.md`；阶段 5–6 可对照 `.cursor/references/review-checklist-fe.md`。
+
 ## 使用方法
 
 ```bash
@@ -79,6 +81,8 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 `[模式：构思]` - **必须** invoke `brainstorming` skill，完成需求探索与方案对比。
 
+**门禁**：用户未选定方案前，**不得**进入阶段 3 写入已定稿计划正文（可仅列对比表与待确认项）。
+
 由 **Cursor** 完成（可选：用 **Task** 的 generalPurpose 做并行「后端 / 前端」视角分析再综合）：
 - 后端视角：技术可行性、架构影响、性能与风险
 - 前端视角：UI 可行性、交互与体验
@@ -89,18 +93,18 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 `[模式：计划]` - **必须** 遵循 `writing-plans` skill 的结构与粒度。
 
-由 **Cursor** 综合阶段 2 用户所选方案，产出：
-- 组件/模块结构、数据流与接口、关键文件与步骤
-- Step-by-step 实施计划（含伪代码与风险缓解）
+1. **Read** `.cursor/assets/plan-template.md`。
+2. 由 **Cursor** 综合阶段 2 用户所选方案，在模板各节填写：组件/模块结构、数据流与接口、关键文件与步骤、Step-by-step 任务清单（含伪代码与风险缓解）。
 
-使用 **AskQuestion** 请求用户批准，批准后将计划保存至 **`.cursor/plan/<任务名>.md`**。
+使用 **AskQuestion** 请求用户批准；批准后将完整计划保存至 **`.cursor/plan/<任务名>.md`**（可在模板「计划批准」勾选处备注已批准）。
 
 ### ⚡ 阶段 4：实施
 
 `[模式：执行]` - **必须** 遵循 `test-driven-development` skill（Red → Green → Refactor）。
 
+- 首次改动产品代码前 **Read** `.cursor/references/stack-conventions.md`
 - 严格按批准的计划实施
-- 遵循项目现有代码规范
+- 遵循项目现有代码规范与 `stack-conventions.md` 中已定义约定
 - 在关键里程碑可请求用户反馈（**AskQuestion**）
 - 所有代码与文件修改由 **Cursor** 在本会话完成
 
@@ -108,7 +112,7 @@ description: '协作开发工作流（研究→构思→计划→执行→优化
 
 `[模式：优化]` - 审查与优化：
 
-由 **Cursor** 对当前变更做审查：
+由 **Cursor** 对当前变更做审查（前端维度优先加载 **`.cursor/references/review-checklist-fe.md`** 作主参考）：
 - 安全性、性能、错误处理（后端）；可访问性、设计一致性（前端）
 - 产出问题列表与修改建议，使用 **AskQuestion** 确认后执行优化
 

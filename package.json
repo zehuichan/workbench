@@ -21,6 +21,7 @@
     "element-plus": "^2.13.5",
     "es-toolkit": "^1.45.1",
     "reka-ui": "^2.9.0",
+    "stk-table-vue": "^0.11.6",
     "vue": "^3.5.30",
     "vue-router": "^5.0.3"
   },

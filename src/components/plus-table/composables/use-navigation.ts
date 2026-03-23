@@ -143,8 +143,8 @@ export function useNavigation(options: UseNavigationOptions) {
    * 激活单元格加 'plus-table-cell--active'
    */
   function getCellClassName({
+    row,
     column,
-    rowIndex,
   }: {
     row: RowData;
     column: any;
@@ -152,8 +152,11 @@ export function useNavigation(options: UseNavigationOptions) {
     columnIndex: number;
   }): string {
     if (!hasActiveCell.value) return '';
+    // el-table 在排序后传入的 rowIndex 是渲染顺序（$index），与 data 下标不一致；用行引用判断
+    const ar = activeRow.value;
     if (
-      rowIndex === activeRowIndex.value &&
+      ar != null &&
+      row === ar &&
       column.property === activeColumn.value?.prop
     ) {
       return 'plus-table-cell--active';
@@ -165,13 +168,9 @@ export function useNavigation(options: UseNavigationOptions) {
    * 供 el-table :row-class-name 使用
    * 激活行加 'plus-table-row--active'
    */
-  function getRowClassName({
-    rowIndex,
-  }: {
-    row: RowData;
-    rowIndex: number;
-  }): string {
-    return rowIndex === activeRowIndex.value ? 'plus-table-row--active' : '';
+  function getRowClassName({ row }: { row: RowData; rowIndex: number }): string {
+    const ar = activeRow.value;
+    return ar != null && row === ar ? 'plus-table-row--active' : '';
   }
 
   return {

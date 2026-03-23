@@ -4,21 +4,35 @@ description: '前端 SOP - .cursor 命令 + Superpowers 技能一体化工作流
 
 # 前端 SOP - 标准作业流程
 
-将 `.cursor/commands/` 与 Superpowers 技能结合的完整前端开发工作流。
+将 `.cursor/commands/` 与 Superpowers 技能结合的完整前端开发工作流；并与 **Agent Skills 式分层**对齐：
+**命令薄、`assets/` / `references/` 厚**（见 [规范](https://agentskills.io/specification)）。
+
+---
+
+## 〇、分层资源（优化后约定）
+
+| 路径                                          | 模式               | 用途                                                  |
+|---------------------------------------------|------------------|-----------------------------------------------------|
+| `.cursor/assets/plan-template.md`           | **Generator**    | 实施计划唯一结构模板；`/plan`、`/feat`、`/workflow` 写计划前加载并按章节填写 |
+| `.cursor/references/stack-conventions.md`   | **Tool Wrapper** | 本仓库工程/栈约定；`/feat` 实施前、改产品代码前加载                      |
+| `.cursor/references/review-checklist-fe.md` | **Reviewer**     | 前端/体验审查清单；`/review` 首推加载并按条扣分分组                     |
+
+**门禁（Inversion + Pipeline）**：需求未澄清或用户未选定方案前，**不得**产出已定稿的 `.cursor/plan/*.md`；计划展示后须 *
+*AskQuestion** 得用户选择（开始实施 / 改计划 / 仅保存）。复杂任务可在计划「阶段确认门」逐段验收。
 
 ---
 
 ## 一、技能与命令映射表
 
-| 阶段 | .cursor 命令 | Superpowers 技能 | 用途 |
-|------|-------------|------------------|------|
-| 需求探索 | `/feat` 2.0、`/workflow` 1-2 | `brainstorming` | 澄清意图、方案对比、设计审批 |
-| 规划 | `/plan`、`/feat` 2.2 | `writing-plans` | 结构化实施计划、任务拆解 |
-| UI 设计 | `/feat` 2.2 | `ui-ux-designer`、`ui-ux-pro-max` | 页面结构、组件拆分、设计系统 |
-| 实施 | `/feat` 3、`/workflow` 4 | `test-driven-development`、`executing-plans` | TDD 开发、按计划逐步执行 |
-| 调试 | `/debug` | `systematic-debugging` | 根因分析、假设验证 |
-| 测试 | `/test` | `test-driven-development` | 测试策略、用例设计 |
-| 审查 | `/review` | `requesting-code-review`、`verification-before-completion` | 前端/体验审查、交付前验证 |
+| 阶段    | .cursor 命令                  | Superpowers 技能                                            | 用途             |
+|-------|-----------------------------|-----------------------------------------------------------|----------------|
+| 需求探索  | `/feat` 2.0、`/workflow` 1-2 | `brainstorming`                                           | 澄清意图、方案对比、设计审批 |
+| 规划    | `/plan`、`/feat` 2.2         | `writing-plans`                                           | 结构化实施计划、任务拆解   |
+| UI 设计 | `/feat` 2.2                 | `ui-ux-designer`、`ui-ux-pro-max`                          | 页面结构、组件拆分、设计系统 |
+| 实施    | `/feat` 3、`/workflow` 4     | `test-driven-development`、`executing-plans`               | TDD 开发、按计划逐步执行 |
+| 调试    | `/debug`                    | `systematic-debugging`                                    | 根因分析、假设验证      |
+| 测试    | `/test`                     | `test-driven-development`                                 | 测试策略、用例设计      |
+| 审查    | `/review`                   | `requesting-code-review`、`verification-before-completion` | 前端/体验审查、交付前验证  |
 
 ---
 
@@ -80,11 +94,14 @@ description: '前端 SOP - .cursor 命令 + Superpowers 技能一体化工作流
 
 ## 三、路径与文档约定
 
-| 文档类型 | 本 SOP 约定 | Superpowers 约定 | 说明 |
-|----------|-------------|------------------|------|
-| 实施计划 | `.cursor/plan/<功能名>.md` | `docs/plans/YYYY-MM-DD-<名>.md` | 统一使用 `.cursor/plan/` |
-| 设计文档 | `.cursor/plan/<功能名>-design.md` 或计划内嵌 | `docs/plans/YYYY-MM-DD-<名>-design.md` | 可内嵌在计划中 |
-| 设计系统 | `design-system/MASTER.md` | ui-ux-pro-max 推荐 | 复杂项目可选 |
+| 文档类型   | 本 SOP 约定                                    | Superpowers 约定                        | 说明                                  |
+|--------|---------------------------------------------|---------------------------------------|-------------------------------------|
+| 计划结构模板 | `.cursor/assets/plan-template.md`           | —                                     | 与 `plan` / `feat` / `workflow` 同步演进 |
+| 工程约定   | `.cursor/references/stack-conventions.md`   | —                                     | 按项目改 `TBD`，避免命令里堆长列表                |
+| 审查清单   | `.cursor/references/review-checklist-fe.md` | —                                     | 与 `/review` 严重程度分级一致                |
+| 实施计划   | `.cursor/plan/<功能名>.md`                     | `docs/plans/YYYY-MM-DD-<名>.md`        | 统一使用 `.cursor/plan/`                |
+| 设计文档   | `.cursor/plan/<功能名>-design.md` 或计划内嵌        | `docs/plans/YYYY-MM-DD-<名>-design.md` | 可内嵌在计划中                             |
+| 设计系统   | `design-system/MASTER.md`                   | ui-ux-pro-max 推荐                      | 复杂项目可选                              |
 
 ---
 
@@ -110,26 +127,8 @@ python3 skills/ui-ux-pro-max/scripts/search.py "<产品类型> <行业> <风格>
 
 ### 4.3 交付前检查（ui-ux-pro-max Pre-Delivery）
 
-**视觉**
-- [ ] 图标用 SVG（Heroicons/Lucide），不用 emoji
-- [ ] Hover 不引起布局跳动
-- [ ] Light/Dark 模式文字对比度 ≥ 4.5:1
-
-**交互**
-- [ ] 可点击元素有 `cursor-pointer`
-- [ ] 过渡 150–300ms
-- [ ] 键盘焦点可见
-
-**布局**
-- [ ] 375 / 768 / 1024 / 1440 断点验证
-- [ ] 无横向滚动
-- [ ] 固定导航不遮挡内容
-
-**无障碍**
-- [ ] 图片有 alt
-- [ ] 表单有 label
-- [ ] 颜色不是唯一指示
-- [ ] `prefers-reduced-motion` 尊重
+**完整逐项清单**已迁至 **`.cursor/references/review-checklist-fe.md`**（含 Critical/Major/Minor 与交付前速查）。本处仅提醒：交付前执行
+`/review` 或对照该文件自检。
 
 ---
 
@@ -137,24 +136,24 @@ python3 skills/ui-ux-pro-max/scripts/search.py "<产品类型> <行业> <风格>
 
 1. **流程技能优先**：brainstorming、systematic-debugging、writing-plans 决定「怎么做」，先于实施技能。
 2. **强制场景**：
-   - 新功能 / 新页面 → 先 `brainstorming` 再 `writing-plans`
-   - Bug / 异常 → 先 `systematic-debugging`，找到根因后再修
-   - 写业务代码 → 遵循 `test-driven-development`（先红后绿）
+    - 新功能 / 新页面 → 先 `brainstorming` 再 `writing-plans`
+    - Bug / 异常 → 先 `systematic-debugging`，找到根因后再修
+    - 写业务代码 → 遵循 `test-driven-development`（先红后绿）
 3. **命令内显式引用**：各命令已包含「本阶段 invoke 某 skill」说明，执行时务必遵守。
 
 ---
 
 ## 六、快速命令速查
 
-| 场景 | 命令 | 主要技能 |
-|------|------|----------|
-| 新功能（规划+实施） | `/feat 描述` | brainstorming → writing-plans → TDD |
-| 只要规划 | `/plan 描述` | writing-plans |
-| 全流程协作 | `/workflow 描述` | brainstorming → writing-plans → TDD → verification |
-| Bug 调试 | `/debug 描述` | systematic-debugging |
-| 补测试 | `/test 路径` | TDD 思路（用例设计） |
-| 代码审查 | `/review 路径或计划` | requesting-code-review |
-| 需求不清晰 | `/enhance 描述` | — |
+| 场景         | 命令              | 主要技能                                               |
+|------------|-----------------|----------------------------------------------------|
+| 新功能（规划+实施） | `/feat 描述`      | brainstorming → writing-plans → TDD                |
+| 只要规划       | `/plan 描述`      | writing-plans                                      |
+| 全流程协作      | `/workflow 描述`  | brainstorming → writing-plans → TDD → verification |
+| Bug 调试     | `/debug 描述`     | systematic-debugging                               |
+| 补测试        | `/test 路径`      | TDD 思路（用例设计）                                       |
+| 代码审查       | `/review 路径或计划` | requesting-code-review                             |
+| 需求不清晰      | `/enhance 描述`   | —                                                  |
 
 ---
 
