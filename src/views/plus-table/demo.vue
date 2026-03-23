@@ -157,7 +157,11 @@ const columns: PlusTableColumn<TaskRow>[] = [
     sortable: true,
     render: (scope: { row: TaskRow }) => {
       const info = statusMap[scope?.row?.status as string] ?? defaultStatus;
-      return h(ElTag, { type: info.type, size: 'small' }, () => info.label);
+      return h(
+        ElTag,
+        { type: info.type, size: 'small', disableTransitions: true },
+        () => info.label,
+      );
     },
   },
   {
@@ -423,14 +427,25 @@ function handleRowEditRemark(rowIndex: number) {
         <template #title>
           <div class="demo-table-heading">
             <span class="demo-table-heading__title">任务管理</span>
-            <el-tag size="small" round type="info" effect="plain">
+            <el-tag
+              size="small"
+              round
+              type="info"
+              effect="plain"
+              :disable-transitions="true"
+            >
               {{ tableData.length }} 条
             </el-tag>
           </div>
         </template>
         <template #actions>
           <el-space>
-            <el-tag v-if="tableRef?.isEditing" type="warning" size="small">
+            <el-tag
+              v-if="tableRef?.isEditing"
+              type="warning"
+              size="small"
+              :disable-transitions="true"
+            >
               编辑中
             </el-tag>
           </el-space>
