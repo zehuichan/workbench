@@ -1,4 +1,4 @@
-import{B as e,C as t,D as n,E as r,I as i,K as a,T as o,at as s,b as c}from"./index-Cl55ixXM.js";import{n as l,t as u}from"./subnav-DUnq9faN.js";var d={class:`plus-table-docs`},f={class:`docs-footer`},p=`<script setup lang="ts">
+import{B as e,C as t,D as n,E as r,I as i,K as a,T as o,at as s,b as c}from"./index-CLoeYx2K.js";import{n as l,t as u}from"./subnav-VOvDG9Yb.js";var d={class:`plus-table-docs`},f={class:`docs-footer`},p=`<script setup lang="ts">
 import { ref } from 'vue';
 import { PlusTable } from '@/components';
 import type { PlusTableColumn } from '@/components/plus-table';
