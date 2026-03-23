@@ -5,4 +5,4 @@
 
 ## PlusTable
 
-增强表格组件说明与 API 见 [src/components/plus-table/README.md](src/components/plus-table/README.md)。演示路由：`/plus-table`。
+增强表格组件说明与 API 见 [src/components/plus-table/README.md](src/components/plus-table/README.md)。路由：<https://localhost:5173/plus-table/docs>（文档）、<https://localhost:5173/plus-table/demo>（交互示例）；根路径 `/` 重定向至文档页。

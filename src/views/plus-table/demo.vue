@@ -11,6 +11,8 @@ import type {
 import type { RuleItem } from 'async-validator';
 import { buildShortUUID } from '@/utils';
 
+import PlusTableSubnav from './subnav.vue';
+
 // ──── 数据类型 ────
 
 interface TaskRow {
@@ -462,78 +464,15 @@ function handleRowEditRemark(rowIndex: number) {
 
 <template>
   <div class="plus-table-demo">
-    <div class="demo-header">
-      <h2 class="title">PlusTable 综合示例</h2>
+    <PlusTableSubnav />
+
+    <header class="demo-header">
+      <h2 class="title">交互示例</h2>
       <p class="desc">
-        基于 el-table
-        的增强表格组件，集成：配置式列、render/formatter、多级表头、selection/index/expand、单元格导航与热键、编辑系统（cell/row/manual）、校验与行操作、列设置、脏数据追踪、单元格联动（dependencies）、分页、自适应高度。完整说明见
-        <code>src/components/plus-table/README.md</code>。
+        使用下方工具栏切换编辑模式、校验与行操作；点击表格区域使容器获得焦点后再试快捷键。API 与约定见
+        <router-link :to="{ name: 'plus-table-docs' }">文档页</router-link>。
       </p>
-    </div>
-
-    <el-alert
-      class="demo-alert"
-      type="info"
-      :closable="false"
-      show-icon
-      title="分页与数据"
-    >
-      <template #default>
-        <p class="alert-p">
-          下方传入 <code>total</code> 以展示底部分页条并触发
-          <code>pagination</code> 事件。本页为<strong>客户端全量数据</strong>演示，表格仍渲染全部行；接入服务端分页时请在回调中请求对应页数据并更新
-          <code>data</code>。
-        </p>
-      </template>
-    </el-alert>
-
-    <el-collapse class="demo-doc" accordion>
-      <el-collapse-item title="内置快捷键（表格需处于焦点：点击表格区域）" name="keys">
-        <ul class="doc-list">
-          <li><kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> 移动激活单元格</li>
-          <li>
-            <kbd>Tab</kbd> / <kbd>Shift+Tab</kbd> 横向移动；编辑中行为随编辑模式变化（行模式在行内循环）
-          </li>
-          <li>
-            <kbd>Enter</kbd> 进入编辑或换行；<kbd>Esc</kbd> 取消编辑
-          </li>
-          <li>
-            <kbd>Home</kbd> / <kbd>End</kbd> 行首或行尾格；<kbd>Ctrl+Home</kbd> /
-            <kbd>Ctrl+End</kbd> 全表首尾
-          </li>
-          <li><kbd>F2</kbd> 进入编辑；<kbd>Delete</kbd> / <kbd>Backspace</kbd> 清空可编辑格（自动触发时）</li>
-          <li>
-            <kbd>Ctrl+Z</kbd> 撤销，<kbd>Ctrl+Shift+Z</kbd> / <kbd>Ctrl+Y</kbd> 重做
-          </li>
-          <li>可打印字符可直接开编（自动触发时）；本示例自定义 <kbd>Ctrl+G</kbd> 见底部状态栏</li>
-        </ul>
-      </el-collapse-item>
-      <el-collapse-item title="插槽与列约定" name="slots">
-        <ul class="doc-list">
-          <li>
-            表头 / 表体：<code>#header-&#123;prop&#125;</code>、<code>#cell-&#123;prop&#125;</code>；编辑器：<code>#editor-&#123;prop&#125;</code>
-          </li>
-          <li>
-            展开行：列 <code>type: 'expand'</code>，内容用 <code>#expand</code>
-          </li>
-          <li>顶栏：<code>#title</code>、<code>#actions</code>；底栏：<code>#summary</code>、<code>#pagination</code>（覆盖默认分页器）</li>
-        </ul>
-      </el-collapse-item>
-      <el-collapse-item title="本示例覆盖的能力" name="features">
-        <ul class="doc-list">
-          <li>
-            列：<code>sortable</code>、<code>render</code> / <code>formatter</code>、<code>renderHeader</code>、多级表头 <code>children</code>
-          </li>
-          <li>
-            联动：<code>dependencies</code>（动态禁用、必填、选项、<code>trigger</code> 清空备注）
-          </li>
-          <li>
-            编辑：<code>editor-remark</code> 自定义编辑器；操作列 <code>focusAndEditByProp</code>
-          </li>
-          <li>列设置、自适应 <code>adaptive</code>、校验、撤销/重做、脏行查询</li>
-        </ul>
-      </el-collapse-item>
-    </el-collapse>
+    </header>
 
     <!-- 工具栏 -->
     <div class="toolbar">
@@ -774,65 +713,13 @@ function handleRowEditRemark(rowIndex: number) {
   }
 }
 
-.demo-alert {
-  margin-bottom: 12px;
+.demo-header .desc a {
+  color: var(--el-color-primary);
+  text-decoration: none;
+  font-weight: 500;
 
-  .alert-p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--el-text-color-regular);
-
-    code {
-      padding: 0 4px;
-      font-size: 12px;
-      background: var(--el-fill-color-light);
-      border-radius: 3px;
-    }
-  }
-}
-
-.demo-doc {
-  margin-bottom: 12px;
-  border: none;
-
-  :deep(.el-collapse-item__header) {
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  :deep(.el-collapse-item__content) {
-    padding-bottom: 12px;
-  }
-}
-
-.doc-list {
-  margin: 0;
-  padding-left: 20px;
-  font-size: 13px;
-  line-height: 1.75;
-  color: var(--el-text-color-regular);
-
-  li {
-    margin-bottom: 4px;
-  }
-
-  code {
-    padding: 0 4px;
-    font-size: 12px;
-    background: var(--el-fill-color-light);
-    border-radius: 3px;
-  }
-
-  kbd {
-    display: inline-block;
-    padding: 1px 6px;
-    font-size: 11px;
-    font-family: inherit;
-    background: var(--el-fill-color);
-    border: 1px solid var(--el-border-color);
-    border-radius: 4px;
-    box-shadow: 0 1px 0 var(--el-border-color);
+  &:hover {
+    text-decoration: underline;
   }
 }
 
