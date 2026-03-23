@@ -7,14 +7,24 @@ const routes = [
     redirect: '/plus-table/docs',
   },
   {
-    name: 'plus-table-demo',
-    path: '/plus-table/demo',
-    component: () => import('@/views/plus-table/demo.vue'),
-  },
-  {
-    name: 'plus-table-docs',
-    path: '/plus-table/docs',
-    component: () => import('@/views/plus-table/docs.vue'),
+    path: '/plus-table',
+    component: () => import('@/layouts/layout.vue'),
+    children: [
+      {
+        path: '',
+        redirect: { name: 'plus-table-docs' },
+      },
+      {
+        name: 'plus-table-docs',
+        path: 'docs',
+        component: () => import('@/views/plus-table/docs.vue'),
+      },
+      {
+        name: 'plus-table-demo',
+        path: 'demo',
+        component: () => import('@/views/plus-table/demo.vue'),
+      },
+    ],
   },
 ] as RouteRecordRaw[];
 

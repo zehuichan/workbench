@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, h, onMounted, ref } from 'vue';
-import { ElMessage, ElProgress, ElTag } from 'element-plus';
+import { ElProgress, ElTag } from 'element-plus';
 
 import { PlusTable } from '@/components';
 import type {
@@ -9,10 +9,6 @@ import type {
   PlusTableColumn,
 } from '@/components/plus-table';
 import type { RuleItem } from 'async-validator';
-import { buildShortUUID } from '@/utils';
-
-import PlusTableSubnav from './subnav.vue';
-
 // ──── 数据类型 ────
 
 interface TaskRow {
@@ -167,11 +163,20 @@ const columns: PlusTableColumn<TaskRow>[] = [
   {
     prop: 'progress',
     label: '进度',
-    render: (scope: { row: TaskRow }) =>
-      h(ElProgress, {
-        percentage: (scope.row as TaskRow).progress,
-        status: (scope.row as TaskRow).progress === 100 ? 'success' : undefined,
-      }),
+    render: (scope: { row: TaskRow }) => {
+      const row = scope.row as TaskRow;
+      const p = row.progress;
+      return h('div', { class: 'demo-progress-cell' }, [
+        h('span', { class: 'demo-progress-cell__pct' }, `${p}%`),
+        h(ElProgress, {
+          percentage: p,
+          strokeWidth: 5,
+          showText: false,
+          status: p === 100 ? 'success' : undefined,
+          style: { width: '76px' },
+        }),
+      ]);
+    },
   },
   {
     prop: 'priority',
@@ -300,14 +305,12 @@ const tableRules: Record<string, RuleItem | RuleItem[]> = {
 
 const tableRef = ref<InstanceType<typeof PlusTable> | null>(null);
 const sortInfo = ref({ prop: '', order: '' });
-const cellActive = ref(true);
-const rowActive = ref(false);
 const hotkeyEnabled = ref(true);
 const validateOnCellExit = ref(true);
+const validateTrigger = ref<'manual' | 'change' | 'blur'>('manual');
 const editableMode = ref<boolean | 'cell' | 'row' | 'manual'>('cell');
 const lastHotkeyLog = ref<string>('—');
 const editLog = ref('—');
-const insertRowCount = ref(1);
 
 function handleSortChange(payload: { prop: string; order: string }) {
   sortInfo.value = { prop: payload.prop ?? '', order: payload.order ?? '' };
@@ -322,16 +325,6 @@ const customHotkeys = [
     preventDefault: true,
   },
 ];
-
-function jumpToFirst() {
-  tableRef.value?.focusCell?.(0, 0);
-}
-
-function jumpToLast() {
-  const rowCount = tableData.value.length;
-  const navCols = columns.filter((c) => !c.type && c.prop !== '_action');
-  tableRef.value?.focusCell?.(rowCount - 1, navCols.length - 1);
-}
 
 function onEditStart(payload: {
   rowIndex: number;
@@ -358,101 +351,6 @@ function onValueChange(payload: {
   editLog.value = `值变更：行 ${payload.rowIndex + 1} / ${payload.column.prop}："${payload.oldValue}" → "${payload.newValue}"`;
 }
 
-async function handleValidate() {
-  const result = await tableRef.value?.validate?.();
-  if (result?.valid) {
-    ElMessage.success('校验通过');
-  } else {
-    ElMessage.warning('校验未通过');
-    tableRef.value?.scrollToFirstError?.();
-  }
-}
-
-function handleClearValidation() {
-  tableRef.value?.clearValidation?.();
-}
-
-function handleInsertRow() {
-  const ri = tableRef.value?.activeRowIndex ?? -1;
-  const count = Math.max(1, insertRowCount.value || 1);
-  tableRef.value?.insertRow?.(
-    ri,
-    { _key: buildShortUUID() } as unknown as TaskRow,
-    count,
-  );
-  ElMessage.success(`已插入 ${count} 行`);
-}
-
-function handleDeleteRow() {
-  const selected = tableRef.value?.getSelectionRows?.() ?? [];
-  if (selected.length > 0) {
-    const indices = selected
-      .map((row) => tableData.value.indexOf(row as TaskRow))
-      .filter((i) => i >= 0);
-    tableRef.value?.deleteRow?.(indices);
-    tableRef.value?.clearSelection?.();
-    ElMessage.success(`已删除 ${selected.length} 行`);
-    return;
-  }
-  const ri = tableRef.value?.activeRowIndex ?? -1;
-  if (ri < 0) {
-    ElMessage.info('请先选中一行');
-    return;
-  }
-  tableRef.value?.deleteRow?.(ri);
-}
-
-function handleDuplicateRow() {
-  const selected = tableRef.value?.getSelectionRows?.() ?? [];
-  if (selected.length > 0) {
-    const indices = selected
-      .map((row) => tableData.value.indexOf(row as TaskRow))
-      .filter((i) => i >= 0);
-    tableRef.value?.duplicateRow?.(indices);
-    tableRef.value?.clearSelection?.();
-    ElMessage.success(`已复制 ${selected.length} 行`);
-    return;
-  }
-  const ri = tableRef.value?.activeRowIndex ?? -1;
-  if (ri < 0) {
-    ElMessage.info('请先选中一行');
-    return;
-  }
-  tableRef.value?.duplicateRow?.(ri);
-}
-
-function handleMoveUp() {
-  const ri = tableRef.value?.activeRowIndex ?? -1;
-  if (ri < 0) {
-    ElMessage.info('请先选中一行');
-    return;
-  }
-  if (ri === 0) {
-    ElMessage.info('已在首行');
-    return;
-  }
-  tableRef.value?.moveRow?.(ri, ri - 1);
-}
-
-function handleMoveDown() {
-  const ri = tableRef.value?.activeRowIndex ?? -1;
-  const rowCount = tableData.value.length;
-  if (ri < 0) {
-    ElMessage.info('请先选中一行');
-    return;
-  }
-  if (ri >= rowCount - 1) {
-    ElMessage.info('已在末行');
-    return;
-  }
-  tableRef.value?.moveRow?.(ri, ri + 1);
-}
-
-function handleGetModified() {
-  const rows = tableRef.value?.getModifiedRows?.() ?? [];
-  ElMessage.info(`已修改 ${rows.length} 行`);
-}
-
 function handleRowEditName(rowIndex: number) {
   tableRef.value?.focusAndEditByProp?.(rowIndex, 'name');
 }
@@ -463,270 +361,222 @@ function handleRowEditRemark(rowIndex: number) {
 </script>
 
 <template>
-  <div class="plus-table-demo">
-    <PlusTableSubnav />
-
-    <header class="demo-header">
-      <h2 class="title">交互示例</h2>
-      <p class="desc">
-        使用下方工具栏切换编辑模式、校验与行操作；点击表格区域使容器获得焦点后再试快捷键。API 与约定见
+  <div class="docs-layout__page">
+    <header class="docs-layout__hero">
+      <h1 class="docs-layout__hero-title">交互示例</h1>
+      <p class="docs-layout__hero-lead">
+        在表格内双击可编辑、使用键盘导航与快捷键（先点击表格区域聚焦）。完整 API
+        与约定见
         <router-link :to="{ name: 'plus-table-docs' }">文档页</router-link>。
       </p>
     </header>
 
-    <!-- 工具栏 -->
-    <div class="toolbar">
-      <el-space wrap :size="12">
-        <el-tag size="small">cellActive</el-tag>
-        <el-switch v-model="cellActive" size="small" />
-        <el-tag size="small">rowActive</el-tag>
-        <el-switch v-model="rowActive" size="small" />
-        <el-tag size="small">hotkeyEnabled</el-tag>
-        <el-switch v-model="hotkeyEnabled" size="small" />
-        <el-divider direction="vertical" />
-        <span class="label">编辑模式：</span>
-        <el-radio-group v-model="editableMode" size="small">
-          <el-radio-button value="cell">cell</el-radio-button>
-          <el-radio-button value="row">row</el-radio-button>
-          <el-radio-button value="manual">manual</el-radio-button>
-        </el-radio-group>
-        <el-divider direction="vertical" />
-        <el-checkbox v-model="validateOnCellExit" size="small"
-          >失焦校验</el-checkbox
-        >
-        <el-button size="small" @click="handleValidate">校验</el-button>
-        <el-button size="small" @click="handleClearValidation"
-          >清除校验</el-button
-        >
-        <el-divider direction="vertical" />
-        <el-input-number
-          v-model="insertRowCount"
-          :min="1"
-          :max="100"
-          size="small"
-          controls-position="right"
-          class="w-20"
-        />
-        <el-button size="small" @click="handleInsertRow">插入行</el-button>
-        <el-button size="small" @click="handleDeleteRow">删除行</el-button>
-        <el-button size="small" @click="handleDuplicateRow">复制行</el-button>
-        <el-button size="small" @click="handleMoveUp">上移</el-button>
-        <el-button size="small" @click="handleMoveDown">下移</el-button>
-        <el-button size="small" @click="handleGetModified"
-          >已修改行数</el-button
-        >
-        <el-divider direction="vertical" />
-        <el-button size="small" @click="jumpToFirst">首格</el-button>
-        <el-button size="small" @click="jumpToLast">末格</el-button>
-        <template v-if="editableMode === 'manual'">
-          <el-divider direction="vertical" />
+    <div class="demo-statusbar" role="status" aria-live="polite">
+      <span class="demo-statusbar__item">
+        <span class="demo-statusbar__k">排序</span>
+        {{ sortInfo.prop ? `${sortInfo.prop} (${sortInfo.order})` : '无' }}
+      </span>
+      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
+      <span class="demo-statusbar__item">
+        <span class="demo-statusbar__k">激活</span>
+        行 {{ (tableRef?.activeRowIndex ?? -1) + 1 }} / 列
+        {{ (tableRef?.activeColIndex ?? -1) + 1 }}
+      </span>
+      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
+      <span class="demo-statusbar__item">
+        <span class="demo-statusbar__k">Ctrl+G</span>
+        {{ lastHotkeyLog }}
+      </span>
+      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
+      <span class="demo-statusbar__item demo-statusbar__item--grow">
+        <span class="demo-statusbar__k">编辑</span>
+        {{ editLog }}
+      </span>
+    </div>
+
+    <el-card class="demo-table-card" shadow="never">
+      <PlusTable
+        ref="tableRef"
+        v-loading="loading"
+        v-model:data="tableData"
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total="total"
+        :columns="columns"
+        :rules="tableRules"
+        :validate-on-cell-exit="validateOnCellExit"
+        :validate-trigger="validateTrigger"
+        :hotkey-enabled="hotkeyEnabled"
+        :hotkeys="customHotkeys"
+        :editable="editableMode"
+        cell-active
+        row-active
+        border
+        row-key="id"
+        column-setting
+        @sort-change="handleSortChange"
+        @pagination="handlePagination"
+        @cell-edit-start="onEditStart"
+        @cell-edit-end="onEditEnd"
+        @cell-value-change="onValueChange"
+      >
+        <template #title>
+          <div class="demo-table-heading">
+            <span class="demo-table-heading__title">任务管理</span>
+            <el-tag size="small" round type="info" effect="plain">
+              {{ tableData.length }} 条
+            </el-tag>
+          </div>
+        </template>
+        <template #actions>
+          <el-space>
+            <el-tag v-if="tableRef?.isEditing" type="warning" size="small">
+              编辑中
+            </el-tag>
+          </el-space>
+        </template>
+
+        <template #cell-assignee="{ row }">
+          <div class="assignee-cell">
+            <el-avatar :size="22" class="avatar">
+              {{ (row as TaskRow)?.assignee?.charAt(0) ?? '' }}
+            </el-avatar>
+            <span>{{ (row as TaskRow)?.assignee ?? '' }}</span>
+          </div>
+        </template>
+
+        <template #header-assignee>
+          <span class="demo-col-head--primary">负责人</span>
+        </template>
+
+        <template #expand="{ row }">
+          <div class="expand-content">
+            <p><strong>任务：</strong>{{ (row as TaskRow)?.name }}</p>
+            <p>
+              <strong>时间：</strong>{{ (row as TaskRow)?.startDate }} ~
+              {{ (row as TaskRow)?.endDate }}
+            </p>
+            <p><strong>备注：</strong>{{ (row as TaskRow)?.remark }}</p>
+          </div>
+        </template>
+
+        <template #editor-remark="scope">
+          <el-input
+            v-bind="scope"
+            placeholder="请输入备注…"
+            class="plus-table-cell-editor"
+            @keydown.esc.stop.prevent
+          />
+        </template>
+
+        <template #cell-_action="{ $index }">
           <el-button
+            link
             type="primary"
             size="small"
-            :disabled="tableRef?.isEditing"
-            @click="tableRef?.startEdit?.()"
+            @click.stop="handleRowEditName($index)"
           >
-            开始编辑
+            编辑名称
           </el-button>
           <el-button
-            type="success"
+            link
+            type="primary"
             size="small"
-            :disabled="!tableRef?.isEditing"
-            @click="tableRef?.confirmEdit?.()"
+            @click.stop="handleRowEditRemark($index)"
           >
-            确认
-          </el-button>
-          <el-button
-            size="small"
-            :disabled="!tableRef?.isEditing"
-            @click="tableRef?.cancelEdit?.()"
-          >
-            取消
+            编辑备注
           </el-button>
         </template>
-        <el-button
-          size="small"
-          :disabled="!tableRef?.canUndo"
-          @click="tableRef?.undo?.()"
-        >
-          撤销
-        </el-button>
-        <el-button
-          size="small"
-          :disabled="!tableRef?.canRedo"
-          @click="tableRef?.redo?.()"
-        >
-          重做
-        </el-button>
-      </el-space>
-    </div>
 
-    <div class="hint">
-      排序：{{
-        sortInfo.prop ? `${sortInfo.prop} (${sortInfo.order})` : '无'
-      }}
-      · 激活：行 {{ (tableRef?.activeRowIndex ?? -1) + 1 }} / 列
-      {{ (tableRef?.activeColIndex ?? -1) + 1 }}
-      · 自定义热键：{{ lastHotkeyLog }} · 编辑事件：{{ editLog }}
-    </div>
-
-    <PlusTable
-      ref="tableRef"
-      v-loading="loading"
-      v-model:data="tableData"
-      v-model:current-page="currentPage"
-      v-model:page-size="pageSize"
-      :total="total"
-      :columns="columns"
-      :rules="tableRules"
-      :validate-on-cell-exit="validateOnCellExit"
-      :cell-active="cellActive"
-      :row-active="rowActive"
-      :hotkey-enabled="hotkeyEnabled"
-      :hotkeys="customHotkeys"
-      :editable="editableMode"
-      adaptive
-      border
-      row-key="id"
-      column-setting
-      @sort-change="handleSortChange"
-      @pagination="handlePagination"
-      @cell-edit-start="onEditStart"
-      @cell-edit-end="onEditEnd"
-      @cell-value-change="onValueChange"
-    >
-      <template #title>
-        <div class="flex items-center gap-2">
-          <span class="text-base font-semibold">任务管理</span>
-          <el-tag size="small" round>{{ tableData.length }} 条</el-tag>
-        </div>
-      </template>
-      <template #actions>
-        <el-space>
-          <el-tag v-if="tableRef?.isEditing" type="warning" size="small">
-            编辑中
-          </el-tag>
-        </el-space>
-      </template>
-
-      <template #cell-assignee="{ row }">
-        <div class="assignee-cell">
-          <el-avatar :size="22" class="avatar">
-            {{ (row as TaskRow)?.assignee?.charAt(0) ?? '' }}
-          </el-avatar>
-          <span>{{ (row as TaskRow)?.assignee ?? '' }}</span>
-        </div>
-      </template>
-
-      <template #header-assignee>
-        <span style="color: var(--el-color-primary); font-weight: 600">
-          👤 负责人
-        </span>
-      </template>
-
-      <template #expand="{ row }">
-        <div class="expand-content">
-          <p><strong>任务：</strong>{{ (row as TaskRow)?.name }}</p>
-          <p>
-            <strong>时间：</strong>{{ (row as TaskRow)?.startDate }} ~
-            {{ (row as TaskRow)?.endDate }}
-          </p>
-          <p><strong>备注：</strong>{{ (row as TaskRow)?.remark }}</p>
-        </div>
-      </template>
-
-      <template #editor-remark="scope">
-        <el-input
-          v-bind="scope"
-          placeholder="请输入备注…"
-          class="plus-table-cell-editor"
-          @keydown.esc.stop.prevent
-        />
-      </template>
-
-      <template #cell-_action="{ $index }">
-        <el-button
-          link
-          type="primary"
-          size="small"
-          @click.stop="handleRowEditName($index)"
-        >
-          编辑名称
-        </el-button>
-        <el-button
-          link
-          type="primary"
-          size="small"
-          @click.stop="handleRowEditRemark($index)"
-        >
-          编辑备注
-        </el-button>
-      </template>
-
-      <template #summary>
-        <span class="text-xs text-gray-400">
-          排序：
-          {{ sortInfo.prop ? `${sortInfo.prop} (${sortInfo.order})` : '无' }}
-        </span>
-      </template>
-    </PlusTable>
+        <template #summary>
+          <span class="demo-table-summary">
+            提示：分页为前端全量数据演示；接入服务端时请按页更新 data。
+          </span>
+        </template>
+      </PlusTable>
+    </el-card>
   </div>
 </template>
 
 <style scoped lang="scss">
-.plus-table-demo {
-  padding: 16px;
-  background: var(--el-bg-color);
-  border-radius: 8px;
-}
-
-.demo-header {
-  margin-bottom: 16px;
-
-  .title {
-    margin: 0 0 8px;
-    font-size: 18px;
-    font-weight: 600;
-  }
-
-  .desc {
-    margin: 0;
-    color: var(--el-text-color-secondary);
-    font-size: 13px;
-    line-height: 1.6;
-  }
-}
-
-.toolbar {
+.demo-statusbar {
   display: flex;
   flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 4px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--el-text-color-secondary);
+  background: var(--el-fill-color-light);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+
+  &__k {
+    margin-right: 4px;
+    font-weight: 600;
+    color: var(--el-text-color-regular);
+  }
+
+  &__sep {
+    margin: 0 6px;
+    color: var(--el-border-color);
+    user-select: none;
+  }
+
+  &__item {
+    min-width: 0;
+
+    &--grow {
+      flex: 1 1 200px;
+    }
+  }
+}
+
+.demo-table-card {
+  border-radius: 8px;
+
+  :deep(.el-card__body) {
+    padding: 12px;
+  }
+}
+
+.demo-table-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  &__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--el-text-color-primary);
+  }
+}
+
+.demo-col-head--primary {
+  color: var(--el-color-primary);
+  font-weight: 600;
+}
+
+.demo-table-summary {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+:deep(.demo-progress-cell) {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
-  background: var(--el-fill-color-light);
-  border-radius: 6px;
-
-  .label {
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
+  min-width: 0;
 }
 
-.demo-header .desc a {
-  color: var(--el-color-primary);
-  text-decoration: none;
-  font-weight: 500;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.hint {
+:deep(.demo-progress-cell__pct) {
+  min-width: 2.75rem;
   font-size: 12px;
-  color: var(--el-text-color-placeholder);
-  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+  color: var(--el-text-color-regular);
 }
 
 .assignee-cell {
@@ -742,12 +592,13 @@ function handleRowEditRemark(rowIndex: number) {
 }
 
 .expand-content {
-  padding: 12px 24px;
+  padding: 12px 16px;
   line-height: 1.8;
   font-size: 13px;
   color: var(--el-text-color-regular);
   background: var(--el-fill-color-lighter);
-  border-radius: 4px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
 
   p {
     margin: 0 0 4px;

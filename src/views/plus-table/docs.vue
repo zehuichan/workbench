@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import PlusTableSubnav from './subnav.vue';
+import { inject } from 'vue';
+
+import { LAYOUT_RIGHT_PANEL } from '@/layouts/injection-keys';
+
+const rightPanelMount = inject(LAYOUT_RIGHT_PANEL);
 
 const propsRows = [
   {
@@ -184,31 +188,79 @@ const typesImport = `import type {
   HotkeyContext,
   AdaptiveConfig,
 } from '@/components/plus-table';`;
+
+/** 与下方各 `el-card` 的 `id` 一致，供右侧目录锚点使用 */
+const tocItems = [
+  { id: 'quick-start', label: '快速开始' },
+  { id: 'props', label: 'Props' },
+  { id: 'events', label: '事件' },
+  { id: 'slots', label: '插槽' },
+  { id: 'column-config', label: '列配置' },
+  { id: 'dependencies', label: '单元格联动' },
+  { id: 'expose', label: '暴露方法' },
+  { id: 'hotkeys', label: '键盘与热键' },
+  { id: 'pagination', label: '分页' },
+  { id: 'style-classes', label: '样式类名' },
+  { id: 'types-export', label: '类型导出' },
+] as const;
+
+/** 与 `.doc-section` 的 `scroll-margin-top` 一致 */
+const DOC_SCROLL_HEADER_OFFSET = 72;
+
+/** Hash 路由下 `href="#id"` 会覆盖 `#/path`，改为在主导航列内滚动 */
+function scrollToDocSection(sectionId: string) {
+  const target = document.getElementById(sectionId);
+  const container = document.querySelector(
+    '.docs-layout__main',
+  ) as HTMLElement | null;
+  if (!target || !container) return;
+  const top =
+    target.getBoundingClientRect().top -
+    container.getBoundingClientRect().top +
+    container.scrollTop -
+    DOC_SCROLL_HEADER_OFFSET;
+  container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+}
 </script>
 
 <template>
-  <div class="plus-table-docs">
-    <PlusTableSubnav />
+  <div class="docs-layout__page">
+    <Teleport v-if="rightPanelMount" :to="rightPanelMount">
+      <nav class="doc-toc" aria-label="本页目录">
+        <div class="doc-toc__title">本页目录</div>
+        <ul class="doc-toc__list">
+          <li v-for="item in tocItems" :key="item.id">
+            <a
+              class="doc-toc__link"
+              href="#"
+              @click.prevent="scrollToDocSection(item.id)"
+            >
+              {{ item.label }}
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </Teleport>
 
-    <header class="docs-hero">
-      <h1 class="title">PlusTable</h1>
-      <p class="lead">
+    <header class="docs-layout__hero">
+      <h1 class="docs-layout__hero-title">PlusTable</h1>
+      <p class="docs-layout__hero-lead">
         基于 Element Plus <code>el-table</code> 的增强表格：配置式列、可编辑单元格、键盘导航与热键、校验、行增删改与撤销重做、列设置持久化、单元格联动（dependencies）、脏数据追踪、分页与自适应高度。
       </p>
-      <p class="source-hint">
+      <p class="docs-layout__hero-hint">
         与仓库内
         <code>src/components/plus-table/README.md</code> 同步维护；需要可拷贝 Markdown 到项目文档站。
       </p>
     </header>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="quick-start" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">快速开始</span>
       </template>
       <pre class="code-block"><code>{{ quickStart }}</code></pre>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="props" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">Props</span>
       </template>
@@ -224,7 +276,7 @@ const typesImport = `import type {
       </el-table>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="events" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">事件</span>
       </template>
@@ -238,7 +290,7 @@ const typesImport = `import type {
       </el-table>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="slots" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">插槽</span>
       </template>
@@ -248,7 +300,7 @@ const typesImport = `import type {
       </el-table>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="column-config" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">列配置 PlusTableColumn</span>
       </template>
@@ -285,7 +337,7 @@ const typesImport = `import type {
       </ul>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="dependencies" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">单元格联动 dependencies</span>
       </template>
@@ -295,7 +347,7 @@ const typesImport = `import type {
       <pre class="code-block"><code>{{ depsExample }}</code></pre>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="expose" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">暴露方法（ref）</span>
       </template>
@@ -310,7 +362,7 @@ const typesImport = `import type {
       </p>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="hotkeys" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">内置键盘行为</span>
       </template>
@@ -339,7 +391,7 @@ const typesImport = `import type {
       </p>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="pagination" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">分页</span>
       </template>
@@ -355,7 +407,7 @@ const typesImport = `import type {
       </el-alert>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="style-classes" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">样式类名</span>
       </template>
@@ -364,7 +416,7 @@ const typesImport = `import type {
       </p>
     </el-card>
 
-    <el-card class="doc-section" shadow="never">
+    <el-card id="types-export" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">类型导出</span>
       </template>
@@ -380,44 +432,9 @@ const typesImport = `import type {
 </template>
 
 <style scoped lang="scss">
-.plus-table-docs {
-  padding: 16px;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.docs-hero {
-  margin-bottom: 20px;
-
-  .title {
-    margin: 0 0 8px;
-    font-size: 22px;
-    font-weight: 600;
-  }
-
-  .lead {
-    margin: 0 0 8px;
-    font-size: 14px;
-    line-height: 1.65;
-    color: var(--el-text-color-regular);
-  }
-
-  .source-hint {
-    margin: 0;
-    font-size: 12px;
-    color: var(--el-text-color-secondary);
-  }
-
-  code {
-    padding: 1px 6px;
-    font-size: 12px;
-    background: var(--el-fill-color-light);
-    border-radius: 4px;
-  }
-}
-
 .doc-section {
   margin-bottom: 16px;
+  scroll-margin-top: 72px;
 
   :deep(.el-card__header) {
     padding: 12px 16px;
@@ -505,6 +522,44 @@ const typesImport = `import type {
 
   &:hover {
     text-decoration: underline;
+  }
+}
+
+.doc-toc {
+  &__title {
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--el-text-color-secondary);
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+
+  &__list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__link {
+    display: block;
+    margin: 2px 0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--el-text-color-regular);
+    text-decoration: none;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      color: var(--el-color-primary);
+      background: var(--el-fill-color-light);
+    }
   }
 }
 </style>

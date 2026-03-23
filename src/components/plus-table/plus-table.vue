@@ -64,7 +64,7 @@ const props = withDefaults(defineProps<PlusTableProps>(), {
   cellActive: true,
   rowActive: true,
   hotkeyEnabled: true,
-  adaptive: true,
+  adaptive: false,
   columnSetting: true,
   validateTrigger: 'manual',
   validateOnCellExit: false,

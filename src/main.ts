@@ -6,7 +6,7 @@ import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 
 // global css
-import './assets/design';
+import './assets/design/index.css';
 
 import { router } from './router';
 
