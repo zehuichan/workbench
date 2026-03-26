@@ -25,6 +25,16 @@ const navGroups = [
       },
     ],
   },
+  {
+    title: 'VTable',
+    items: [
+      {
+        name: 'vtable-element-plus-editor' as const,
+        label: 'Vue + El-Select 编辑器',
+        to: { name: 'vtable-element-plus-editor' as const },
+      },
+    ],
+  },
 ];
 
 const currentName = computed(() => route.name);

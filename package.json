@@ -13,6 +13,9 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@visactor/vtable": "^1.25.0",
+    "@visactor/vtable-editors": "^1.25.0",
+    "@visactor/vue-vtable": "^1.25.0",
     "@vue/shared": "^3.5.30",
     "@vueuse/core": "^14.2.1",
     "ant-design-vue": "^4.2.6",
