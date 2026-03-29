@@ -1,196 +1,144 @@
 <script setup lang="ts">
-import { computed, createApp, h, ref } from 'vue';
+import { computed, createVNode, h, nextTick, onMounted, ref, render } from 'vue';
 
 import { useElementSize } from '@vueuse/core';
-import { ElOption, ElSelect } from 'element-plus';
-import type { EditContext } from '@visactor/vtable-editors';
-import { InputEditor } from '@visactor/vtable-editors';
+import { ElInput, ElPopover, ElTable, ElTableColumn } from 'element-plus';
+import type { EditContext, RectProps } from '@visactor/vtable-editors';
 import { ListTable, register } from '@visactor/vue-vtable';
 
 /**
- * 与官方 Arco 示例（ListTable-editor-arco）同思路：在 IEditor.onStart 里用 createApp + h()
- * 挂载 Vue 组件，实现与 Element Plus 等 UI 库的自定义编辑器集成。
- * @see https://github.com/VisActor/VTable/issues/5061
+ * 与官方 PR 一致：用 Vue 的 render + vnode（h / createVNode）把 Element Plus 挂进编辑器容器，
+ * 单价列使用 ElInput + ElPopover（内嵌 ElTable 展示历史价）。
+ * @see https://github.com/VisActor/VTable/pull/5080
  */
-class ElementPlusSelectEditor {
-  root: ReturnType<typeof createApp> | null = null;
-  element: HTMLElement | null = null;
-  container: HTMLElement | null = null;
-  currentValue: string | null = null;
+const inputValue = ref('');
 
-  onStart(editorContext: EditContext) {
-    const { container, referencePosition, value } = editorContext;
+const HISTORY_COLUMNS = [
+  { prop: 'price', label: '历史单价', width: 80 },
+  { prop: 'date', label: '更新时间', width: 130 },
+] as const;
+
+const HISTORY_DATA = [
+  { price: 2.41, date: '2026-03-27' },
+  { price: 5.67, date: '2026-03-28' },
+];
+
+class PriceInputEditor {
+  private container: HTMLElement | null = null;
+  private editorDom: HTMLElement | null = null;
+
+  async onStart({ container, referencePosition, value }: EditContext<string>) {
     this.container = container;
-    this.createElement(String(value ?? ''));
-    if (value != null && value !== '') this.setValue(String(value));
-    if (referencePosition?.rect) this.adjustPosition(referencePosition.rect);
-  }
+    inputValue.value = value ?? '';
 
-  createElement(defaultValue: string) {
-    const div = document.createElement('div');
-    div.style.position = 'absolute';
-    div.style.width = '100%';
-    div.style.padding = '1px';
-    div.style.boxSizing = 'border-box';
-    this.container?.appendChild(div);
-
-    const app = this.createVueApp(defaultValue);
-    app.mount(div);
-    this.root = app;
-    this.element = div;
-  }
-
-  createVueApp(defaultValue: string) {
-    const self = this;
-    return createApp({
-      data() {
-        return {
-          currentValue: defaultValue,
-          cities: ['北京', '上海', '广州', '深圳'],
-        };
+    const editorVNode = h(
+      'div',
+      {
+        id: 'vtable-elplus-price-editor',
+        style: {
+          position: 'absolute',
+          padding: '4px',
+          width: '100%',
+          boxSizing: 'border-box',
+        },
       },
-      render() {
-        return h('div', { class: 'vtable-el-plus-editor-root' }, [
-          h(
-            ElSelect,
-            {
-              modelValue: this.currentValue,
-              placeholder: '选择城市',
-              style: { width: '100%', height: '32px' },
-              teleported: true,
-              popperClass: 'vtable-el-select-dropdown',
-              'onUpdate:modelValue': (value: string) => {
-                this.currentValue = value;
-                self.setValue(value);
+      h(
+        ElPopover,
+        { placement: 'right', trigger: 'hover', width: 200, teleported: true },
+        {
+          reference: () =>
+            createVNode(ElInput, {
+              modelValue: inputValue.value,
+              'onUpdate:modelValue': (val: string) => {
+                inputValue.value = val;
               },
-            },
-            {
-              default: () =>
-                this.cities.map((city: string) =>
-                  h(ElOption, {
-                    key: city,
-                    label: city,
-                    value: city,
-                    class: 'vtable-el-option',
-                  }),
-                ),
-            },
-          ),
-        ]);
-      },
-    });
+              type: 'number',
+              min: 0,
+              style: { width: '100%' },
+            }),
+          default: () =>
+            h(
+              ElTable,
+              { width: '200px', data: HISTORY_DATA },
+              () => HISTORY_COLUMNS.map((col) => h(ElTableColumn, { ...col })),
+            ),
+        },
+      ),
+    );
+
+    render(editorVNode, container);
+
+    await nextTick();
+    this.editorDom = document.getElementById('vtable-elplus-price-editor');
+    if (referencePosition?.rect && this.editorDom) {
+      this.adjustPosition(referencePosition.rect);
+    }
+  }
+
+  adjustPosition(rect: RectProps) {
+    if (!this.editorDom) return;
+    this.editorDom.style.top = `${rect.top}px`;
+    this.editorDom.style.left = `${rect.left}px`;
+    this.editorDom.style.width = `${rect.width}px`;
+    this.editorDom.style.height = `${rect.height}px`;
   }
 
   getValue() {
-    return this.currentValue;
-  }
-
-  setValue(value: string) {
-    this.currentValue = value;
-  }
-
-  adjustPosition(rect: { top: number; left: number; width: number; height: number }) {
-    if (this.element) {
-      this.element.style.top = `${rect.top}px`;
-      this.element.style.left = `${rect.left}px`;
-      this.element.style.width = `${rect.width}px`;
-      this.element.style.height = `${rect.height}px`;
-    }
+    return inputValue.value?.toString() ?? '';
   }
 
   onEnd() {
-    if (this.root) {
-      this.root.unmount();
-      this.root = null;
+    if (this.container) {
+      render(null, this.container);
     }
-    if (this.element && this.container) {
-      this.container.removeChild(this.element);
-      this.element = null;
-    }
+    this.container = null;
+    this.editorDom = null;
   }
 
   isEditorElement(target: HTMLElement) {
-    return (this.element?.contains(target) ?? false) || this.isClickPopUp(target);
-  }
-
-  isClickPopUp(target: HTMLElement | null) {
+    if (this.editorDom?.contains(target)) return true;
     let el: HTMLElement | null = target;
     while (el) {
-      if (
-        el.classList?.contains('vtable-el-option') ||
-        el.classList?.contains('vtable-el-select-dropdown') ||
-        el.classList?.contains('el-select-dropdown') ||
-        el.classList?.contains('el-popper')
-      ) {
+      if (el.classList?.contains('el-popper') || el.classList?.contains('el-select-dropdown')) {
         return true;
       }
-      el = el.parentNode as HTMLElement | null;
+      el = el.parentElement;
     }
     return false;
   }
 }
 
-const inputEditor = new InputEditor();
-register.editor('input-editor', inputEditor);
-register.editor('el-plus-select-editor', new ElementPlusSelectEditor());
+register.editor('price-editor', new PriceInputEditor());
 
-function generateRandomString(length: number) {
-  let result = '';
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-}
-
-const records = Array.from({ length: 10 }).map((_, i) => {
-  const first = generateRandomString(10);
-  const last = generateRandomString(4);
-  return {
-    id: i + 1,
-    email1: `${first}_${last}@xxx.com`,
-    name: first,
-    lastName: last,
-    address: `No.${i + 100} ${generateRandomString(10)} ${generateRandomString(5)} ${generateRandomString(5)}`,
-    sex: i % 2 === 0 ? 'boy' : 'girl',
-    work: i % 2 === 0 ? 'back-end engineer' : 'front-end engineer',
-    city: 'beijing',
-  };
-});
+const SUPERSTORE_JSON =
+  'https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/VTable/North_American_Superstore_data.json';
 
 const tableOptions = {
   columns: [
-    { field: 'id', title: 'ID', width: 80, sort: true },
+    { field: 'Order ID', title: 'Order ID', width: 'auto' },
+    /** 数据源字段为 Sales；放在左侧避免要横向滚到最右才看得见 */
     {
-      field: 'full name',
-      title: 'Full name',
-      columns: [
-        {
-          field: 'name',
-          title: 'First Name\n(input editor)',
-          width: 140,
-          editor: 'input-editor',
-        },
-        {
-          field: 'lastName',
-          title: 'Last Name\n(input editor)',
-          width: 100,
-          editor: 'input-editor',
-        },
-      ],
+      field: 'Sales',
+      title: '单价（Sales）\n点击编辑',
+      width: 130,
+      minWidth: 110,
+      editor: 'price-editor',
     },
-    {
-      field: 'address',
-      title: 'location\n(el-plus-select)',
-      width: 400,
-      editor: 'el-plus-select-editor',
-    },
+    { field: 'Customer ID', title: 'Customer ID', width: 'auto' },
+    { field: 'Product Name', title: 'Product Name', width: 'auto' },
+    { field: 'Category', title: 'Category', width: 'auto' },
+    { field: 'Sub-Category', title: 'Sub-Category', width: 'auto' },
+    { field: 'Region', title: 'Region', width: 'auto' },
+    { field: 'City', title: 'City', width: 'auto' },
+    { field: 'Order Date', title: 'Order Date', width: 'auto' },
+    { field: 'Quantity', title: 'Quantity', width: 'auto' },
+    { field: 'Profit', title: 'Profit', width: 'auto' },
   ],
   enableLineBreak: true,
   autoWrapText: true,
   limitMaxAutoWidth: 700,
-  heightMode: 'autoHeight',
-  editCellTrigger: 'click',
+  heightMode: 'autoHeight' as const,
+  editCellTrigger: 'click' as const,
   keyboardOptions: {
     copySelected: true,
     pasteValueToCell: true,
@@ -198,7 +146,19 @@ const tableOptions = {
   },
 };
 
-/** 画布需要明确像素宽高：用容器尺寸驱动，随窗口与布局变化自动更新 */
+const records = ref<Record<string, unknown>[]>([]);
+const loadError = ref<string | null>(null);
+
+onMounted(async () => {
+  try {
+    const res = await fetch(SUPERSTORE_JSON);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    records.value = (await res.json()) as Record<string, unknown>[];
+  } catch (e) {
+    loadError.value = e instanceof Error ? e.message : String(e);
+  }
+});
+
 const tableHostRef = ref<HTMLElement | null>(null);
 const { width: hostWidth, height: hostHeight } = useElementSize(tableHostRef);
 const tablePixelSize = computed(() => {
@@ -211,17 +171,17 @@ const tablePixelSize = computed(() => {
 <template>
   <div class="vtable-el-plus-demo">
     <p class="vtable-el-plus-demo__intro">
-      复现
+      对齐
       <a
-        href="https://github.com/VisActor/VTable/issues/5061"
+        href="https://github.com/VisActor/VTable/pull/5080"
         target="_blank"
         rel="noopener noreferrer"
       >
-        VTable #5061
+        VTable PR #5080
       </a>
-      ：用 Vue 虚拟 DOM（<code>createApp</code> + <code>h()</code>）挂载 Element Plus
-      <code>ElSelect</code> 作为自定义单元格编辑器（与官方 Arco Select 示例同模式）。
+      ：使用 <code>render</code> + <code>h</code> / <code>createVNode</code> 在单元格编辑器中渲染 Element Plus。第二列标题为「单价（Sales）」：单击该列任意单元格进入编辑；鼠标悬停在输入框上可展开 Popover 查看示例历史价表。数据为 North American Superstore JSON。
     </p>
+    <p v-if="loadError" class="vtable-el-plus-demo__error">数据加载失败：{{ loadError }}</p>
     <div ref="tableHostRef" class="vtable-el-plus-demo__table-host">
       <ListTable
         v-if="tablePixelSize.w > 0 && tablePixelSize.h > 0"
@@ -261,6 +221,12 @@ const tablePixelSize = computed(() => {
     border-radius: 4px;
     background: var(--el-fill-color-light);
   }
+}
+
+.vtable-el-plus-demo__error {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--el-color-danger);
 }
 
 .vtable-el-plus-demo__table-host {
