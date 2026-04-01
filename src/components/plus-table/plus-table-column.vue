@@ -1,12 +1,44 @@
 <template>
-  <el-table-column v-bind="bindings">
+  <!-- 多级表头：子列作为 el-table-column 直接子组件（非 scoped slot），避免每行重复实例化 -->
+  <el-table-column v-if="hasChildren" v-bind="bindings">
     <template #header="scope">
       <slot
         v-if="$slots[`header-${item.prop}`]"
         :name="`header-${item.prop}`"
         v-bind="scope"
+      />
+      <component
+        v-else-if="item.renderHeader"
+        :is="() => item.renderHeader?.(scope)"
+      />
+      <template v-else>
+        <span v-if="isRequired" class="plus-table-header--required" />
+        {{ item.label }}
+      </template>
+    </template>
+    <plus-table-column-self
+      v-for="(child, cIdx) in item!.children"
+      :key="(child as any).key ?? child.prop ?? child.label ?? cIdx"
+      :item="child"
+    >
+      <template
+        v-for="(_, slotName) in $slots"
+        :key="slotName"
+        #[slotName]="slotScope"
       >
-      </slot>
+        <slot :name="slotName" v-bind="slotScope ?? {}" />
+      </template>
+    </plus-table-column-self>
+  </el-table-column>
+
+  <!-- 叶子列：单元格渲染（编辑/展示）委托给 Cell 组件 -->
+  <el-table-column v-else v-bind="bindings">
+    <template #header="scope">
+      <slot
+        v-if="$slots[`header-${item.prop}`]"
+        :name="`header-${item.prop}`"
+        v-bind="scope"
+      />
       <component
         v-else-if="item.renderHeader"
         :is="() => item.renderHeader?.(scope)"
@@ -17,18 +49,7 @@
       </template>
     </template>
     <template #default="scope">
-      <!-- 多级表头：递归子列 -->
-      <template v-if="item.children && item.children.length">
-        <template
-          v-for="(child, cIdx) in item.children"
-          :key="(child as any).key ?? child.prop ?? child.label ?? cIdx"
-        >
-          <component :is="h(PlusTableColumnSelf, { item: child }, $slots)" />
-        </template>
-      </template>
-
-      <!-- 单元格渲染（编辑/展示）委托给 Cell 组件 -->
-      <plus-table-cell v-else :item="item" :scope="scope">
+      <plus-table-cell :item="item" :scope="scope">
         <template
           v-for="(_, slotName) in $slots"
           :key="slotName"
@@ -42,11 +63,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, h, inject } from 'vue';
+import { computed } from 'vue';
 import type { RuleItem } from 'async-validator';
 import { castArray } from 'es-toolkit/compat';
-import type { PlusTableColumn, PlusTableContext } from './types';
-import { PLUS_TABLE_INJECTION_KEY } from './constants';
+import type { PlusTableColumn } from './types';
 import PlusTableCell from './plus-table-cell.vue';
 import PlusTableColumnSelf from './plus-table-column.vue';
 
@@ -59,7 +79,7 @@ const props = defineProps<{
   item?: PlusTableColumn;
 }>();
 
-const ctx = inject<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, null);
+const hasChildren = computed(() => !!(props.item?.children?.length));
 
 const isRequired = computed(() =>
   normalizedRules.value.some((rule) => rule.required),

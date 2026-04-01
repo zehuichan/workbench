@@ -43,10 +43,7 @@ export function useRowOptions(options: UseRowOptionsOptions) {
 
   function deleteRow(rowIndex?: number | number[]): void {
     const updated = rowIndex == null ? [] : castArray(rowIndex);
-    const indices = updated.filter(
-      (i): i is number =>
-        typeof i === 'number' && i >= 0 && i < data.value.length,
-    );
+    const indices = updated.filter(i => i >= 0 && i < data.value.length);
     if (!indices.length) return;
     const indexSet = new Set(indices);
     const list = data.value.filter((_, i) => !indexSet.has(i));
@@ -83,7 +80,7 @@ export function useRowOptions(options: UseRowOptionsOptions) {
     let offset = 0;
     for (const idx of sorted) {
       const insertAt = idx + 1 + offset;
-      list.splice(insertAt, 0, { ...data.value[idx] });
+      list.splice(insertAt, 0, structuredClone(data.value[idx]));
       offset++;
     }
     onDataChange(list);

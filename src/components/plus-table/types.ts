@@ -39,14 +39,14 @@ export interface PlusTableContext {
   setEditingValue: (colProp: string, value: any) => void;
 
   /** 校验：获取单元格错误信息（供 Cell 红框 + tooltip） */
-  getErrorForCell?: (rowIndex: number, prop: string) => string | undefined;
+  getErrorForCell: (rowIndex: number, prop: string) => string | undefined;
 
   /** 单元格联动：解析依赖状态（供 Cell 消费 disabled/componentProps 等） */
-  resolveDependencyState?: (rowIndex: number, column: PlusTableColumn) => DependencyState;
+  resolveDependencyState: (rowIndex: number, column: PlusTableColumn) => DependencyState;
   /** 单元格联动：字段变更时触发依赖方 trigger 回调 */
-  onFieldChange?: (rowIndex: number, changedProp: string) => void;
+  onFieldChange: (rowIndex: number, changedProp: string) => void;
   /** 脏数据：标记单元格已修改（all 模式 Cell 用） */
-  markDirty?: (rowIndex: number, prop: string) => void;
+  markDirty: (rowIndex: number, prop: string) => void;
 
   /** 列设置（列显隐、排序、列宽、持久化），仅当 columnSetting 为 true 时存在 */
   columnOptions?: {
@@ -220,6 +220,8 @@ export interface PlusTableProps<T = RowData> {
 
   // 列
   columnSetting?: boolean;
+  /** 列设置持久化 key（多实例时需各自不同，否则互相覆盖） */
+  columnSettingKey?: string;
 
   // 热键（含 Tab/Shift+Tab 导航，由 hotkeyEnabled 统一控制）
   hotkeys?: HotkeyBinding[];

@@ -39,6 +39,13 @@ export function useNavigation(options: UseNavigationOptions) {
     flattenColumnsWithProp(visibleColumns.value).filter(isNavigableColumn),
   );
 
+  /** 行对象 → data 索引映射（O(1) 查找，替代 indexOf） */
+  const rowIndexMap = computed(() => {
+    const map = new Map<RowData, number>();
+    data.value.forEach((row, i) => map.set(row, i));
+    return map;
+  });
+
   /** 激活列的列配置（从 navigableColumns 中取） */
   const activeColumn = computed(() =>
     activeColIndex.value >= 0
@@ -126,7 +133,7 @@ export function useNavigation(options: UseNavigationOptions) {
     if (column?.type && isSpecialColumn({ type: column.type } as PlusTableColumn))
       return;
 
-    const rowIndex = data.value.indexOf(row);
+    const rowIndex = rowIndexMap.value.get(row) ?? -1;
     if (rowIndex < 0) return;
 
     const navIdx = navigableColumns.value.findIndex(

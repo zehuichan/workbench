@@ -8,10 +8,6 @@ export function isSpecialColumn(col: PlusTableColumn): boolean {
   return !!type && (SPECIAL_COLUMN_TYPES as readonly string[]).includes(type);
 }
 
-function isExcludedFromColumnSetting(col: PlusTableColumn): boolean {
-  return isSpecialColumn(col);
-}
-
 /**
  * 递归展平列（含 children），仅保留有 prop 的叶子列
  * 用于：导航列索引、热键、列设置面板等多级表头场景
@@ -102,7 +98,7 @@ export function getColumnSettingTree(
   const nodes: ColumnSettingNode[] = [];
 
   for (const col of columns) {
-    if (isExcludedFromColumnSetting(col)) continue;
+    if (isSpecialColumn(col)) continue;
 
     const id = getColumnId(col);
     const label = getColumnDisplayLabel(col);

@@ -168,7 +168,7 @@ export function useValidation(options: UseValidationOptions) {
     for (const rowIndex of rowIndices) {
       for (const column of columns.value) {
         if (column.prop) {
-          nextErrorMap.delete(`${rowIndex}-${column.prop}`);
+          nextErrorMap.delete(`${rowIndex}:${column.prop}`);
         }
       }
     }
@@ -178,7 +178,7 @@ export function useValidation(options: UseValidationOptions) {
       if (Object.keys(rowErrors).length > 0) {
         allErrors[rowIndex] = rowErrors;
         for (const [prop, message] of Object.entries(rowErrors)) {
-          nextErrorMap.set(`${rowIndex}-${prop}`, message);
+          nextErrorMap.set(`${rowIndex}:${prop}`, message);
         }
       }
     }
@@ -204,7 +204,7 @@ export function useValidation(options: UseValidationOptions) {
     if (fieldRules.length === 0) return true;
 
     const validator = new Schema({ [prop]: fieldRules });
-    const key = `${rowIndex}-${prop}`;
+    const key = `${rowIndex}:${prop}`;
     const nextErrors = new Map(errors.value);
 
     try {
@@ -249,7 +249,7 @@ export function useValidation(options: UseValidationOptions) {
       nextErrors.delete(`${rowIndex}-${prop}`);
     } else {
       for (const key of [...nextErrors.keys()]) {
-        if (key.startsWith(`${rowIndex}-`)) {
+        if (key.startsWith(`${rowIndex}:`)) {
           nextErrors.delete(key);
         }
       }
@@ -265,7 +265,7 @@ export function useValidation(options: UseValidationOptions) {
     let minRow = Infinity;
 
     for (const key of errors.value.keys()) {
-      const [rowStr] = key.split('-');
+      const [rowStr] = key.split(':');
       const rowIndex = Number(rowStr);
       if (!Number.isNaN(rowIndex) && rowIndex < minRow) {
         minRow = rowIndex;
@@ -282,7 +282,7 @@ export function useValidation(options: UseValidationOptions) {
   }
 
   function getErrorForCell(rowIndex: number, prop: string): string | undefined {
-    return errors.value.get(`${rowIndex}-${prop}`);
+    return errors.value.get(`${rowIndex}:${prop}`);
   }
 
   return {

@@ -79,7 +79,6 @@
 import { computed, inject, ref, watch } from 'vue';
 import { Setting } from '@element-plus/icons-vue';
 
-import type { PlusTableContext } from './types';
 import { PLUS_TABLE_INJECTION_KEY } from './constants';
 import {
   collectLeafNodes,
@@ -92,11 +91,11 @@ defineOptions({
   name: 'PlusTableColumnSetting',
 });
 
-const ctx = inject<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, null);
+const ctx = inject(PLUS_TABLE_INJECTION_KEY)!;
 
 const show = ref(false);
 
-const columnOptions = computed(() => ctx?.columnOptions ?? null);
+const columnOptions = computed(() => ctx.columnOptions ?? null);
 
 watch(show, (v) => {
   if (v) columnOptions.value?.snapshotColumnState?.();

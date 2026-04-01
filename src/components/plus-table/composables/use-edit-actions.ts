@@ -1,3 +1,5 @@
+import type { Ref } from 'vue'
+
 import type { EditChangeRecord } from './use-editable'
 
 type HistoryEntry = EditChangeRecord[]
@@ -10,7 +12,7 @@ export interface UseEditActionsOptions {
   clearDirty: (rowIndex: number, prop: string) => void
   pushChange: (changes: EditChangeRecord | EditChangeRecord[]) => void
   onFieldChange: (rowIndex: number, prop: string) => void
-  validateOnCellExit: boolean
+  validateOnCellExit: Ref<boolean>
   validateFieldsAffectedByChange: (rowIndex: number, prop: string) => Promise<void>
 }
 
@@ -33,7 +35,7 @@ export function useEditActions(options: UseEditActionsOptions) {
 
   function confirmEditWithHistory(): EditChangeRecord[] | null {
     const changes = confirmEdit()
-    if (changes && validateOnCellExit) {
+    if (changes && validateOnCellExit.value) {
       for (const c of changes) {
         validateFieldsAffectedByChange(c.rowIndex, c.colProp).catch(() => {})
       }

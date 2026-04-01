@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   computed,
-  h,
   nextTick,
   provide,
   ref,
@@ -99,7 +98,7 @@ const hasFooterContent = computed(
 
 const paginationEnabled = computed(() => props.total != null);
 
-const displayData = computed(() => props.data ?? []);
+const displayData = computed(() => props.data);
 
 function handlePageChange(page: number): void {
   emit('update:currentPage', page);
@@ -114,8 +113,8 @@ function handleSizeChange(size: number): void {
 // ──── 列可见性（含列设置：显隐、排序、持久化）────
 
 const columnOptions = useColumnOptions({
-  initialColumns: computed(() => props.columns ?? []),
-  tableKey: props.columnSetting ? 'plus-table-default' : undefined,
+  initialColumns: computed(() => props.columns),
+  tableKey: props.columnSetting ? (props.columnSettingKey ?? 'plus-table-default') : undefined,
   storage: props.columnSetting ? 'local' : false,
 });
 
@@ -160,7 +159,7 @@ const {
 // ──── 行操作（依赖 activeRowIndex，移动行后会同步更新激活行）────
 
 const { insertRow, deleteRow, moveRow, duplicateRow } = useRowOptions({
-  data: computed(() => props.data ?? []),
+  data: displayData,
   onDataChange: (newData) => emit('update:data', newData),
   activeRowIndex,
 });
@@ -177,7 +176,7 @@ const {
   resetTracking,
   getDirtyCells,
 } = useDirtyTracking({
-  data: computed(() => props.data ?? []),
+  data: displayData,
 });
 
 // ──── 单元格联动（useEditable 依赖 isDepDisabled）────
@@ -210,7 +209,7 @@ const {
   navigableColumns,
   activeRowIndex,
   activeColIndex,
-  editable: computed(() => props.editable ?? false),
+  editable: computed(() => props.editable),
   isDepDisabled: (rowIndex, colProp) => {
     const column = navigableColumns.value.find((c) => c.prop === colProp);
     if (!column) return false;
@@ -231,12 +230,12 @@ const {
   scrollToFirstError,
   getErrorForCell: getErrorForCellRaw,
 } = useValidation({
-  data: computed(() => props.data ?? []),
+  data: displayData,
   columns: navigableColumns,
   tableRules: computed(() => props.rules),
   tableEl: wrapperEl,
-  trigger: computed(() => props.validateTrigger ?? 'manual'),
-  validateOnCellExit: computed(() => props.validateOnCellExit ?? false),
+  trigger: computed(() => props.validateTrigger),
+  validateOnCellExit: computed(() => props.validateOnCellExit),
   resolveDeps: resolveDependencyState,
 });
 
@@ -244,7 +243,7 @@ const {
 
 const { canUndo, canRedo, pushChange, undo, redo, clearHistory } =
   useEditHistory({
-    data: computed(() => props.data ?? []),
+    data: displayData,
   });
 
 const {
@@ -271,7 +270,7 @@ const { confirmEditWithHistory, wrappedUndo, wrappedRedo } = useEditActions({
   clearDirty,
   pushChange,
   onFieldChange,
-  validateOnCellExit: props.validateOnCellExit ?? false,
+  validateOnCellExit: computed(() => props.validateOnCellExit),
   validateFieldsAffectedByChange,
 });
 
@@ -360,7 +359,7 @@ function onHeaderDragEnd(
 
 useHotkey({
   wrapperEl,
-  hotkeyEnabled: computed(() => props.hotkeyEnabled ?? true),
+  hotkeyEnabled: computed(() => props.hotkeyEnabled),
   navigate,
   focusCell,
   activeRowIndex,
@@ -387,13 +386,13 @@ useHotkey({
 
 provide<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, {
   tableEl: wrapperEl,
-  tableInstance: computed(() => tableRef.value) as any,
+  tableInstance: tableRef,
   rules: computed(() => props.rules),
-  columns: computed(() => props.columns ?? []),
+  columns: computed(() => props.columns),
   visibleColumns,
   navigableColumns,
-  data: computed(() => props.data ?? []),
-  editable: computed(() => props.editable ?? false),
+  data: displayData,
+  editable: computed(() => props.editable),
   activeRowIndex,
   activeColIndex,
   navigate,
@@ -410,8 +409,7 @@ provide<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, {
   updateEditingValue,
   getEditingValue,
   setEditingValue,
-  getErrorForCell: (localRowIndex: number, prop: string) =>
-    getErrorForCellRaw(localRowIndex, prop),
+  getErrorForCell: getErrorForCellRaw,
   resolveDependencyState,
   onFieldChange,
   markDirty,
@@ -542,27 +540,29 @@ defineExpose({
             v-for="(column, idx) in visibleColumns"
             :key="(column as any).key ?? column.prop ?? column.type ?? idx"
           >
-            <component
-              v-if="
-                [SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)
-              "
-              :is="h(ElTableColumn, column, slots)"
+            <el-table-column
+              v-if="[SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)"
+              v-bind="column"
             />
 
-            <component
-              v-else-if="[EXPAND_COLUMN].includes(column.type as any)"
-              :is="
-                h(ElTableColumn, column, {
-                  default: (scope: unknown) =>
-                    slots.expand && slots.expand(scope),
-                })
-              "
-            />
+            <el-table-column
+              v-else-if="column.type === EXPAND_COLUMN"
+              v-bind="column"
+            >
+              <template #default="scope">
+                <slot name="expand" v-bind="scope" />
+              </template>
+            </el-table-column>
 
-            <component
-              v-else
-              :is="h(PlusTableColumn, { item: column }, slots)"
-            />
+            <plus-table-column v-else :item="column">
+              <template
+                v-for="(_, name) in $slots"
+                :key="name"
+                #[name]="scope"
+              >
+                <slot :name="name" v-bind="scope ?? {}" />
+              </template>
+            </plus-table-column>
           </template>
         </slot>
       </template>

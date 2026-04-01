@@ -91,7 +91,7 @@ export function useEditable(options: UseEditableOptions) {
     if (typeof column.editable === 'function' && !column.editable(row)) return false
     if (isDepDisabled?.(rowIndex, column.prop ?? '')) return false
 
-    return editMode.value !== 'none'
+    return true
   }
 
   function startEdit(rowIndex?: number, colIndex?: number): void {
@@ -166,11 +166,10 @@ export function useEditable(options: UseEditableOptions) {
         row[prop] = newValue
         changes.push({ rowIndex: ri, colProp: prop, oldValue, newValue })
 
-        const column = navigableColumns.value.find((c) => c.prop === prop)
-        if (column) {
-          const colIdx = navigableColumns.value.indexOf(column)
+        const colIdx = navigableColumns.value.findIndex((c) => c.prop === prop)
+        if (colIdx >= 0) {
           onValueChange?.({
-            row, column, oldValue, newValue, value: newValue,
+            row, column: navigableColumns.value[colIdx]!, oldValue, newValue, value: newValue,
             rowIndex: ri, colIndex: colIdx,
           })
         }

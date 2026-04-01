@@ -1,4 +1,4 @@
-import { ref, type Ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 
 import { useEventListener } from '@vueuse/core'
 
@@ -62,6 +62,9 @@ export function useHotkey(options: UseHotkeyOptions) {
   } = options
 
   const hasFocus = ref(false)
+
+  const overrideHotkeys = computed(() => customHotkeys?.value?.filter(h => h.override) ?? [])
+  const normalHotkeys = computed(() => customHotkeys?.value?.filter(h => !h.override) ?? [])
 
   // ── 焦点跟踪 ──
 
@@ -354,7 +357,7 @@ export function useHotkey(options: UseHotkeyOptions) {
     if (isEditing.value) {
       const ctx = buildContext(event)
 
-      for (const binding of customHotkeys?.value?.filter((h) => h.override) ?? []) {
+      for (const binding of overrideHotkeys.value) {
         if (!matchesHotkey(event, binding.key)) continue
         if (binding.when && !binding.when(ctx)) continue
         if (binding.preventDefault !== false) event.preventDefault()
@@ -377,7 +380,7 @@ export function useHotkey(options: UseHotkeyOptions) {
     const ctx = buildContext(event)
 
     // 1. 用户 override 热键
-    for (const binding of customHotkeys?.value?.filter((h) => h.override) ?? []) {
+    for (const binding of overrideHotkeys.value) {
       if (!matchesHotkey(event, binding.key)) continue
       if (binding.when && !binding.when(ctx)) continue
       if (binding.preventDefault !== false) event.preventDefault()
@@ -390,7 +393,7 @@ export function useHotkey(options: UseHotkeyOptions) {
     if (handleBuiltinKey(event)) return
 
     // 3. 用户普通热键
-    for (const binding of customHotkeys?.value?.filter((h) => !h.override) ?? []) {
+    for (const binding of normalHotkeys.value) {
       if (!matchesHotkey(event, binding.key)) continue
       if (binding.when && !binding.when(ctx)) continue
       if (binding.preventDefault !== false) event.preventDefault()

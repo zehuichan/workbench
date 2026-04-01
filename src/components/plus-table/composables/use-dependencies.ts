@@ -7,6 +7,7 @@ import type {
   PlusTableColumn,
   RowData,
 } from '../types';
+import { flattenColumnsWithProp } from '../utils/column-utils';
 
 export interface UseDependenciesOptions {
   columns: Ref<PlusTableColumn[]>;
@@ -20,21 +21,6 @@ export interface TriggerMapEntry {
 }
 
 const DEFAULT_STATE: DependencyState = { disabled: false };
-
-/** 递归展平列（含 children），仅保留有 prop 的列 */
-function flattenColumnsWithProp(
-  columns: PlusTableColumn[],
-): PlusTableColumn[] {
-  const result: PlusTableColumn[] = [];
-  for (const col of columns) {
-    if (col.children?.length) {
-      result.push(...flattenColumnsWithProp(col.children));
-    } else if (col.prop) {
-      result.push(col);
-    }
-  }
-  return result;
-}
 
 function buildTriggerMap(
   columns: PlusTableColumn[],
@@ -98,7 +84,7 @@ export function useDependencies(options: UseDependenciesOptions) {
       required: dep.required ? dep.required(row, api) : undefined,
       rules: dep.rules ? dep.rules(row, api) : undefined,
       componentProps: dep.componentProps
-        ? dep.componentProps.call(null, row, api)
+        ? dep.componentProps(row, api)
         : undefined,
     };
   }

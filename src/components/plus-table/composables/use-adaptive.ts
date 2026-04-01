@@ -74,8 +74,10 @@ export function useAdaptive(options: UseAdaptiveOptions) {
     }
 
     // 3. wrapper 之后的兄弟元素
+    const counted = new Set<Element>()
     let sibling = el.nextElementSibling
     while (sibling) {
+      counted.add(sibling)
       const sibRect = sibling.getBoundingClientRect()
       const sibStyle = getComputedStyle(sibling as HTMLElement)
       reserved += sibRect.height
@@ -84,11 +86,11 @@ export function useAdaptive(options: UseAdaptiveOptions) {
       sibling = sibling.nextElementSibling
     }
 
-    // 4. excludeSelectors 指定的额外元素
+    // 4. excludeSelectors 指定的额外元素（跳过已在步骤 3 计算过的兄弟）
     if (config.value.excludeSelectors?.length && parentEl) {
       for (const selector of config.value.excludeSelectors) {
         const target = parentEl.querySelector(selector)
-        if (target && target !== el) {
+        if (target && target !== el && !counted.has(target)) {
           reserved += target.getBoundingClientRect().height
         }
       }

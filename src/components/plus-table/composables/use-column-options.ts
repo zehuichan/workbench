@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
 import { computed, ref, watch } from 'vue';
 
-import { isBoolean } from '../utils';
+import { useDebounceFn } from '@vueuse/core';
 
 import type { PlusTableColumn, RowData } from '../types';
 import {
@@ -77,7 +77,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     hiddenColumns.value = new Set(columnStateSnapshot.hidden);
     columnWidths.value = { ...columnStateSnapshot.widths };
     columnStateSnapshot = null;
-    saveToStorage();
+    debouncedSaveToStorage();
   }
 
   function loadFromStorage(): void {
@@ -121,6 +121,8 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     }
   }
 
+  const debouncedSaveToStorage = useDebounceFn(saveToStorage, 100);
+
   function saveToStorage(): void {
     if (!storage || !tableKey) return;
     const store = getStorage(storage);
@@ -151,10 +153,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
 
   const isColumnHidden = (column: PlusTableColumn): boolean => {
     if (column.prop && hiddenColumns.value.has(column.prop)) return true;
-    if (isBoolean(column.hidden)) {
-      return column.hidden === true;
-    }
-    return false;
+    return column.hidden === true;
   };
 
   /** 递归过滤树形列：隐藏的叶子移除；若父列下所有子列都被隐藏则移除父列 */
@@ -199,7 +198,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       else next.add(p);
     }
     hiddenColumns.value = next;
-    saveToStorage();
+    debouncedSaveToStorage();
   }
 
   function setColumnOrderByIds(ids: string[]): void {
@@ -207,7 +206,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     const specialSet = new Set(specialIds);
     const configurableIds = ids.filter((id) => !specialSet.has(id));
     columnOrder.value = [...specialIds, ...configurableIds];
-    saveToStorage();
+    debouncedSaveToStorage();
   }
 
   function getColumnSettingTree(): ColumnSettingNode[] {
@@ -231,7 +230,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     if (item == null) return;
     order.splice(toIndex, 0, item);
     columnOrder.value = order;
-    saveToStorage();
+    debouncedSaveToStorage();
   }
 
   /** 将宽值规范为有效数字（用于持久化），无效则返回 undefined */
@@ -252,7 +251,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       delete next[prop];
     }
     columnWidths.value = next;
-    saveToStorage();
+    debouncedSaveToStorage();
   }
 
   function resetColumns(): void {

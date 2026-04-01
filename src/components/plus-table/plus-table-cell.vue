@@ -56,26 +56,20 @@ import { get } from 'es-toolkit/compat';
 
 import { isString } from './utils';
 
-import type { PlusTableColumn, PlusTableContext } from './types';
+import type { PlusTableColumn } from './types';
 import { PLUS_TABLE_INJECTION_KEY } from './constants';
 import { ELEMENT_ADAPTER_MAP } from './adapter';
 
-const ctx = inject<PlusTableContext>(
-  PLUS_TABLE_INJECTION_KEY,
-  undefined as any,
-);
+const ctx = inject(PLUS_TABLE_INJECTION_KEY)!;
 
 /** 当前单元格校验错误（用于红框由父级 cell-class-name 控制，此处用于 tooltip） */
 const cellError = computed(() =>
-  ctx?.getErrorForCell?.(props.scope.$index, props.item.prop ?? ''),
+  ctx.getErrorForCell(props.scope.$index, props.item.prop ?? ''),
 );
 
 /** 单元格联动：依赖解析状态（disabled / componentProps 等） */
-const depState = computed(
-  () =>
-    ctx?.resolveDependencyState?.(props.scope.$index, props.item) ?? {
-      disabled: false,
-    },
+const depState = computed(() =>
+  ctx.resolveDependencyState(props.scope.$index, props.item),
 );
 
 defineOptions({
@@ -92,18 +86,17 @@ const props = defineProps<{
 
 // ──── 编辑态判断与值访问 ────
 
-const isAllMode = computed(() => ctx?.editMode?.value === 'all');
+const isAllMode = computed(() => ctx.editMode.value === 'all');
 
-const showEditor = computed(() => {
-  if (!ctx) return false;
-  return ctx.isEditingCell(props.scope.$index, props.item.prop);
-});
+const showEditor = computed(() =>
+  ctx.isEditingCell(props.scope.$index, props.item.prop),
+);
 
 const cellEditorValue = computed(() => {
   if (isAllMode.value) {
     return props.item.prop ? props.scope.row[props.item.prop] : undefined;
   }
-  return ctx!.getEditingValue(props.item.prop!);
+  return ctx.getEditingValue(props.item.prop!);
 });
 
 function setCellEditorValue(val: any) {
@@ -114,12 +107,12 @@ function setCellEditorValue(val: any) {
     const oldVal = props.scope.row[prop];
     props.scope.row[prop] = val;
     if (oldVal !== val) {
-      ctx?.markDirty?.(props.scope.$index, prop);
-      ctx?.onFieldChange?.(props.scope.$index, prop);
+      ctx.markDirty(props.scope.$index, prop);
+      ctx.onFieldChange(props.scope.$index, prop);
     }
     return;
   }
-  ctx!.setEditingValue(prop, val);
+  ctx.setEditingValue(prop, val);
 }
 
 const editorSlotScope = computed(() => ({
@@ -127,8 +120,8 @@ const editorSlotScope = computed(() => ({
   column: props.item,
   modelValue: cellEditorValue.value,
   'onUpdate:modelValue': setCellEditorValue,
-  confirm: ctx!.confirmEdit,
-  cancel: ctx!.cancelEdit,
+  confirm: ctx.confirmEdit,
+  cancel: ctx.cancelEdit,
 }));
 
 const editorComponent = computed(() => resolveComponent(props.item.component));
@@ -162,9 +155,9 @@ function resolveComponent(component?: string | Component) {
 // ──── 编辑器 Esc ────
 
 function onEditorEsc(): void {
-  ctx?.cancelEdit();
+  ctx.cancelEdit();
   nextTick(() => {
-    ctx?.tableEl?.value?.focus({ preventScroll: true });
+    ctx.tableEl.value?.focus({ preventScroll: true });
   });
 }
 </script>
