@@ -530,6 +530,7 @@ defineExpose({
       :max-height="maxHeight ?? adaptiveMaxHeight"
       :cell-class-name="getCellClassNameBinding"
       :row-class-name="getRowClassNameBinding"
+      highlight-current-row
       @cell-click="onCellClick"
       @cell-dblclick="onCellDblClick"
       @header-dragend="onHeaderDragEnd"

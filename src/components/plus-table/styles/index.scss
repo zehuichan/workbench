@@ -12,8 +12,8 @@
       font-weight: 400;
     }
 
-    // ── 行激活 ──
-    tr.plus-table-row--active {
+    // ── 行激活（td 上色；含 .el-table__body 以保证压过 el-table--striped 的 td 底色）────
+    .el-table__body tr.plus-table-row--active > td.el-table__cell {
       background-color: var(--el-fill-color-light);
     }
 
