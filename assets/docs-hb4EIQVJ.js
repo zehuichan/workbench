@@ -1,4 +1,4 @@
-import{C as e,F as t,Ht as n,L as r,Z as i,_ as a,a as o,d as s,f as c,g as l,ht as u,i as d,p as f,u as p,v as m,z as h}from"./runtime-core.esm-bundler-B0qXRXGQ.js";import{v as g}from"./index-CRW3TN9n.js";import{t as _}from"./injection-keys-JlqIlWpC.js";import{t as v}from"./_plugin-vue_export-helper-S3RvzygF.js";var y={class:`docs-layout__page`},b={class:`doc-toc`,"aria-label":`本页目录`},x={class:`doc-toc__list`},S=[`onClick`],C={class:`docs-footer`},w=`<script setup lang="ts">
+import{C as e,F as t,Ht as n,L as r,Z as i,_ as a,a as o,d as s,f as c,g as l,ht as u,i as d,p as f,u as p,v as m,z as h}from"./runtime-core.esm-bundler-B0qXRXGQ.js";import{v as g}from"./index-CRjbURdT.js";import{t as _}from"./injection-keys-JlqIlWpC.js";import{t as v}from"./_plugin-vue_export-helper-S3RvzygF.js";var y={class:`docs-layout__page`},b={class:`doc-toc`,"aria-label":`本页目录`},x={class:`doc-toc__list`},S=[`onClick`],C={class:`docs-footer`},w=`<script setup lang="ts">
 import { ref } from 'vue';
 import { PlusTable } from '@/components';
 import type { PlusTableColumn } from '@/components/plus-table';
