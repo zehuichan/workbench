@@ -246,7 +246,7 @@ export function useValidation(options: UseValidationOptions) {
     const nextErrors = new Map(errors.value);
 
     if (prop) {
-      nextErrors.delete(`${rowIndex}-${prop}`);
+      nextErrors.delete(`${rowIndex}:${prop}`);
     } else {
       for (const key of [...nextErrors.keys()]) {
         if (key.startsWith(`${rowIndex}:`)) {

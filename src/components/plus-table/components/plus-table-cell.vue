@@ -54,11 +54,11 @@ import { type Component, computed, h, inject, nextTick } from 'vue';
 
 import { get } from 'es-toolkit/compat';
 
-import { isString } from './utils';
+import { isString } from '../utils';
 
-import type { PlusTableColumn } from './types';
-import { PLUS_TABLE_INJECTION_KEY } from './constants';
-import { ELEMENT_ADAPTER_MAP } from './adapter';
+import type { PlusTableColumn } from '../types';
+import { PLUS_TABLE_INJECTION_KEY } from '../constants';
+import { ELEMENT_ADAPTER_MAP } from '../adapters';
 
 const ctx = inject(PLUS_TABLE_INJECTION_KEY)!;
 

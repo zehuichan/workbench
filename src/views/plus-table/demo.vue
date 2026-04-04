@@ -362,6 +362,51 @@ function handleRowEditName(rowIndex: number) {
 function handleRowEditRemark(rowIndex: number) {
   tableRef.value?.focusAndEditByProp?.(rowIndex, 'remark');
 }
+
+// ──── 行操作 ────
+
+function handleInsertRow() {
+  const idx = tableRef.value?.activeRowIndex ?? tableData.value.length;
+  tableRef.value?.insertRow(idx + 1, createRow(tableData.value.length));
+}
+
+function handleDeleteRow() {
+  const idx = tableRef.value?.activeRowIndex ?? -1;
+  if (idx >= 0) tableRef.value?.deleteRow(idx);
+}
+
+function handleDuplicateRow() {
+  const idx = tableRef.value?.activeRowIndex ?? -1;
+  if (idx >= 0) tableRef.value?.duplicateRow(idx);
+}
+
+// ──── 校验 & 脏数据 ────
+
+const validationResult = ref('');
+
+async function handleValidate() {
+  const result = await tableRef.value?.validate();
+  if (result?.valid) {
+    validationResult.value = 'OK';
+  } else {
+    const count = Object.keys(result?.errors ?? {}).length;
+    validationResult.value = `${count} 行有错误`;
+    tableRef.value?.scrollToFirstError();
+  }
+}
+
+function handleResetTracking() {
+  tableRef.value?.resetTracking();
+}
+
+const dirtyCount = computed(() => {
+  const cells = tableRef.value?.getDirtyCells();
+  return cells?.size ?? 0;
+});
+
+const modifiedRowCount = computed(() => {
+  return tableRef.value?.getModifiedRows()?.length ?? 0;
+});
 </script>
 
 <template>
@@ -375,6 +420,61 @@ function handleRowEditRemark(rowIndex: number) {
       </p>
     </header>
 
+    <div class="docs-layout__toolbar">
+      <span class="label">编辑模式</span>
+      <el-radio-group v-model="editableMode" size="small">
+        <el-radio-button :value="false">只读</el-radio-button>
+        <el-radio-button value="cell">cell</el-radio-button>
+        <el-radio-button value="row">row</el-radio-button>
+        <el-radio-button value="manual">manual</el-radio-button>
+        <el-radio-button :value="true">all</el-radio-button>
+      </el-radio-group>
+
+      <el-divider direction="vertical" />
+      <span class="label">校验时机</span>
+      <el-radio-group v-model="validateTrigger" size="small">
+        <el-radio-button value="manual">手动</el-radio-button>
+        <el-radio-button value="change">change</el-radio-button>
+        <el-radio-button value="blur">blur</el-radio-button>
+      </el-radio-group>
+      <el-checkbox v-model="validateOnCellExit" size="small">
+        离格校验
+      </el-checkbox>
+
+      <el-divider direction="vertical" />
+      <el-checkbox v-model="hotkeyEnabled" size="small">热键</el-checkbox>
+
+      <el-divider direction="vertical" />
+      <span class="label">行操作</span>
+      <el-button-group size="small">
+        <el-button @click="handleInsertRow">插入行</el-button>
+        <el-button @click="handleDeleteRow">删除行</el-button>
+        <el-button @click="handleDuplicateRow">复制行</el-button>
+      </el-button-group>
+
+      <el-divider direction="vertical" />
+      <el-button-group size="small">
+        <el-button
+          :disabled="!tableRef?.canUndo"
+          @click="tableRef?.undo()"
+        >
+          撤销
+        </el-button>
+        <el-button
+          :disabled="!tableRef?.canRedo"
+          @click="tableRef?.redo()"
+        >
+          重做
+        </el-button>
+      </el-button-group>
+      <el-button size="small" type="primary" @click="handleValidate">
+        校验
+      </el-button>
+      <el-button size="small" @click="handleResetTracking">
+        重置脏标记
+      </el-button>
+    </div>
+
     <div class="demo-statusbar" role="status" aria-live="polite">
       <span class="demo-statusbar__item">
         <span class="demo-statusbar__k">排序</span>
@@ -385,6 +485,16 @@ function handleRowEditRemark(rowIndex: number) {
         <span class="demo-statusbar__k">激活</span>
         行 {{ (tableRef?.activeRowIndex ?? -1) + 1 }} / 列
         {{ (tableRef?.activeColIndex ?? -1) + 1 }}
+      </span>
+      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
+      <span class="demo-statusbar__item">
+        <span class="demo-statusbar__k">脏数据</span>
+        {{ dirtyCount }} 格 / {{ modifiedRowCount }} 行
+      </span>
+      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
+      <span class="demo-statusbar__item">
+        <span class="demo-statusbar__k">校验</span>
+        {{ validationResult || '—' }}
       </span>
       <span class="demo-statusbar__sep" aria-hidden="true">|</span>
       <span class="demo-statusbar__item">

@@ -1,4 +1,4 @@
-export { default as PlusTable } from './plus-table.vue'
+export { default as PlusTable } from './components/plus-table.vue'
 export type {
   AdaptiveConfig,
   CellContext,

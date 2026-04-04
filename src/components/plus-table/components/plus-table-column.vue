@@ -66,7 +66,7 @@
 import { computed } from 'vue';
 import type { RuleItem } from 'async-validator';
 import { castArray } from 'es-toolkit/compat';
-import type { PlusTableColumn } from './types';
+import type { PlusTableColumn } from '../types';
 import PlusTableCell from './plus-table-cell.vue';
 import PlusTableColumnSelf from './plus-table-column.vue';
 
@@ -76,7 +76,7 @@ defineOptions({
 });
 
 const props = defineProps<{
-  item?: PlusTableColumn;
+  item: PlusTableColumn;
 }>();
 
 const hasChildren = computed(() => !!(props.item?.children?.length));
@@ -104,13 +104,13 @@ const normalizedRules = computed(() => {
 
 /** 过滤掉不应透传给 el-table-column 的扩展属性（含 renderHeader，Element Plus 推荐用 scoped-slot header） */
 const bindings = computed(() => {
-  if (!props.item) return {};
   const {
     hidden: _hidden,
     editable: _editable,
     component: _component,
     componentProps: _componentProps,
     rules: _rules,
+    required: _required,
     render: _render,
     renderHeader: _renderHeader,
     children: _children,

@@ -16,17 +16,17 @@ import type {
   PlusTableContext,
   PlusTableProps,
   RowData,
-} from './types';
+} from '../types';
 import type {
   EditCellPayload,
   EditValueChangePayload,
-} from './composables/use-editable';
+} from '../composables/use-editable';
 import {
   EXPAND_COLUMN,
   INDEX_COLUMN,
   PLUS_TABLE_INJECTION_KEY,
   SELECTION_COLUMN,
-} from './constants';
+} from '../constants';
 import {
   useAdaptive,
   useClassNames,
@@ -40,13 +40,13 @@ import {
   useNavigation,
   useRowOptions,
   useValidation,
-} from './composables';
-import { createEditorFocuser } from './utils';
+} from '../composables';
+import { createEditorFocuser } from '../utils';
 import PlusTableColumn from './plus-table-column.vue';
 import PlusTableColumnSetting from './plus-table-column-setting.vue';
 import PlusTablePagination from './plus-table-pagination.vue';
 
-import './styles/index.scss';
+import '../styles/index.scss';
 
 defineOptions({
   name: 'PlusTable',
@@ -267,7 +267,6 @@ const { confirmEditWithHistory, wrappedUndo, wrappedRedo } = useEditActions({
   undo,
   redo,
   markDirty,
-  clearDirty,
   pushChange,
   onFieldChange,
   validateOnCellExit: computed(() => props.validateOnCellExit),
@@ -290,12 +289,10 @@ function onCellClick(
 
   if (isEditing.value && prevRow >= 0) {
     if (editMode.value === 'row') {
-      // Row 模式：切换到不同行时确认
       if (activeRowIndex.value !== prevRow) {
         confirmEditWithHistory();
       }
     } else {
-      // Cell / manual 模式：切换到不同单元格时确认
       if (
         activeRowIndex.value !== prevRow ||
         activeColIndex.value !== prevCol
@@ -312,19 +309,16 @@ function onCellClick(
 
 const focusActiveEditor = createEditorFocuser(wrapperEl);
 
-/** 进入编辑并随后聚焦编辑器（对外/热键/双击统一走此入口） */
 function startEditWithFocus(rowIndex?: number, colIndex?: number): void {
   startEdit(rowIndex, colIndex);
   if (isEditing.value) focusActiveEditor();
 }
 
-/** 按列 prop 解析为 navigableColumns 中的索引（列重排后仍能正确定位） */
 function getColIndexByProp(colProp: string): number {
   const idx = navigableColumns.value.findIndex((c) => c.prop === colProp);
   return idx >= 0 ? idx : 0;
 }
 
-/** 按 prop 定位到单元格并进入编辑（列移动后仍能命中正确列） */
 function focusAndEditByProp(rowIndex: number, colProp: string): void {
   const colIndex = getColIndexByProp(colProp);
   focusCell(rowIndex, colIndex);
@@ -339,7 +333,6 @@ function onCellDblClick(row: RowData, column: any): void {
   }
 }
 
-/** 表头拖拽结束（调整列宽）：将新列宽写入列配置并持久化。参数为 (newWidth, oldWidth, column)。 */
 function onHeaderDragEnd(
   newWidth: number,
   _oldWidth: number,

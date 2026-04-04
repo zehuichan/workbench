@@ -9,7 +9,6 @@ export interface UseEditActionsOptions {
   undo: () => HistoryEntry | undefined
   redo: () => HistoryEntry | undefined
   markDirty: (rowIndex: number, prop: string) => void
-  clearDirty: (rowIndex: number, prop: string) => void
   pushChange: (changes: EditChangeRecord | EditChangeRecord[]) => void
   onFieldChange: (rowIndex: number, prop: string) => void
   validateOnCellExit: Ref<boolean>
@@ -26,7 +25,6 @@ export function useEditActions(options: UseEditActionsOptions) {
     undo,
     redo,
     markDirty,
-    clearDirty,
     pushChange,
     onFieldChange,
     validateOnCellExit,
@@ -37,7 +35,11 @@ export function useEditActions(options: UseEditActionsOptions) {
     const changes = confirmEdit()
     if (changes && validateOnCellExit.value) {
       for (const c of changes) {
-        validateFieldsAffectedByChange(c.rowIndex, c.colProp).catch(() => {})
+        validateFieldsAffectedByChange(c.rowIndex, c.colProp).catch((e) => {
+          if (import.meta.env.DEV) {
+            console.warn('[PlusTable] validateFieldsAffectedByChange failed:', e)
+          }
+        })
       }
     }
     if (changes) {
@@ -55,7 +57,7 @@ export function useEditActions(options: UseEditActionsOptions) {
   function wrappedUndo(): void {
     const reverted = undo()
     if (reverted) {
-      reverted.forEach((c) => clearDirty(c.rowIndex, c.colProp))
+      reverted.forEach((c) => markDirty(c.rowIndex, c.colProp))
     }
   }
 

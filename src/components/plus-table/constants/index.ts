@@ -1,6 +1,6 @@
 import type { InjectionKey } from 'vue';
 
-import type { PlusTableContext } from './types';
+import type { PlusTableContext } from '../types';
 
 // ──── 特殊列类型 ────
 

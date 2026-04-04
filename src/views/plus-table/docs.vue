@@ -93,8 +93,14 @@ const propsRows = [
   {
     name: 'adaptive',
     type: 'boolean | AdaptiveConfig',
-    def: 'true',
+    def: 'false',
     desc: '视口自适应 maxHeight；AdaptiveConfig：offsetTop、offsetBottom、excludeSelectors',
+  },
+  {
+    name: 'columnSettingKey',
+    type: 'string',
+    def: "'plus-table-default'",
+    desc: '列设置持久化 key；多实例时需各自不同，否则互相覆盖',
   },
 ];
 
@@ -178,16 +184,24 @@ const depsExample = `dependencies: {
   trigger: (values, api) => { api.setFieldValue('remark', ''); },
 }`;
 
-const typesImport = `import type {
+const typesImport = `// 公共 API（从 index.ts 导出）
+import { PlusTable, PLUS_TABLE_INJECTION_KEY } from '@/components/plus-table';
+import type {
   PlusTableColumn,
   PlusTableProps,
-  PlusTableContext,
+  RowData,
+  CellContext,
   DependencyApi,
+  DependencyState,
   ColumnDependencies,
   HotkeyBinding,
   HotkeyContext,
   AdaptiveConfig,
-} from '@/components/plus-table';`;
+  PaginationPayload,
+} from '@/components/plus-table';
+
+// 内部类型（子组件 inject 用）
+import type { PlusTableContext } from '@/components/plus-table/types';`;
 
 /** 与下方各 `el-card` 的 `id` 一致，供右侧目录锚点使用 */
 const tocItems = [
@@ -196,7 +210,9 @@ const tocItems = [
   { id: 'events', label: '事件' },
   { id: 'slots', label: '插槽' },
   { id: 'column-config', label: '列配置' },
+  { id: 'edit-modes', label: '编辑模式' },
   { id: 'dependencies', label: '单元格联动' },
+  { id: 'dirty-tracking', label: '脏数据追踪' },
   { id: 'expose', label: '暴露方法' },
   { id: 'hotkeys', label: '键盘与热键' },
   { id: 'pagination', label: '分页' },
@@ -248,8 +264,9 @@ function scrollToDocSection(sectionId: string) {
         基于 Element Plus <code>el-table</code> 的增强表格：配置式列、可编辑单元格、键盘导航与热键、校验、行增删改与撤销重做、列设置持久化、单元格联动（dependencies）、脏数据追踪、分页与自适应高度。
       </p>
       <p class="docs-layout__hero-hint">
-        与仓库内
-        <code>src/components/plus-table/README.md</code> 同步维护；需要可拷贝 Markdown 到项目文档站。
+        源码位于 <code>src/components/plus-table/</code>，按
+        <code>types/</code>、<code>composables/</code>、<code>components/</code>、<code>utils/</code>、<code>adapters/</code>
+        分模块组织。
       </p>
     </header>
 
@@ -311,7 +328,7 @@ function scrollToDocSection(sectionId: string) {
         </li>
         <li>
           <code>component</code>：编辑组件标识或组件，内置映射见
-          <code>adapter.ts</code>。
+          <code>adapters/index.ts</code>（input、input-number、select、date-picker、switch、time-picker、time-select）。
         </li>
         <li>
           <code>componentProps</code>：编辑组件 props，或
@@ -337,6 +354,35 @@ function scrollToDocSection(sectionId: string) {
       </ul>
     </el-card>
 
+    <el-card id="edit-modes" class="doc-section" shadow="never">
+      <template #header>
+        <span class="card-title">编辑模式</span>
+      </template>
+      <p class="muted">
+        <code>editable</code> prop 决定表格的编辑行为，支持 5 种模式：
+      </p>
+      <ul class="bullet-list">
+        <li>
+          <code>false</code>（默认）：只读模式，不可编辑。
+        </li>
+        <li>
+          <code>'cell'</code>：单元格模式，双击 / F2 / 可打印字符进入编辑，Enter 确认并下移，Esc 取消，Tab 横移并确认。
+        </li>
+        <li>
+          <code>'row'</code>：行模式，同一行所有可编辑列同时进入编辑态；Tab 在行内循环而非确认；切换到其他行时整行确认。
+        </li>
+        <li>
+          <code>'manual'</code>：手动模式，需通过 <code>startEdit(rowIndex, colIndex)</code> 或 <code>focusAndEditByProp(rowIndex, prop)</code> 触发，不响应双击或 F2。
+        </li>
+        <li>
+          <code>true</code>：全量模式（all），所有可编辑单元格始终展示编辑器，无需进入/退出编辑。方向键和 Tab 直接在编辑器间移动焦点。
+        </li>
+      </ul>
+      <p class="muted">
+        编辑支持 <strong>Ctrl+Z / Ctrl+Shift+Z</strong> 撤销重做（最多 50 步），undo/redo 后脏标记自动同步。
+      </p>
+    </el-card>
+
     <el-card id="dependencies" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">单元格联动 dependencies</span>
@@ -347,16 +393,49 @@ function scrollToDocSection(sectionId: string) {
       <pre class="code-block"><code>{{ depsExample }}</code></pre>
     </el-card>
 
+    <el-card id="dirty-tracking" class="doc-section" shadow="never">
+      <template #header>
+        <span class="card-title">脏数据追踪</span>
+      </template>
+      <p class="muted">
+        组件内部自动维护一份基线快照（data 首次非空值的深拷贝），编辑后通过对比判断哪些单元格被修改。脏单元格左上角显示红色三角角标（<code>plus-table-cell--dirty</code>），脏行加 <code>plus-table-row--dirty</code>。
+      </p>
+      <ul class="bullet-list">
+        <li>
+          <code>markDirty(rowIndex, prop)</code>：手动标记（通常由编辑系统自动调用）。
+        </li>
+        <li>
+          <code>clearDirty(rowIndex?, prop?)</code>：清除脏标记；无参清空全部，仅 rowIndex 清该行，rowIndex + prop 清单格。
+        </li>
+        <li>
+          <code>resetTracking()</code>：将当前 data 作为新基线，清空所有脏标记。
+        </li>
+        <li>
+          <code>getModifiedRows()</code>：返回至少有一个脏单元格的行数据数组。
+        </li>
+        <li>
+          <code>getDirtyCells()</code>：返回所有脏单元格 key 集合（格式 <code>rowIndex:prop</code>）。
+        </li>
+        <li>
+          <code>isCellDirty(rowIndex, prop)</code> / <code>isRowDirty(rowIndex)</code>：单格/行级查询。
+        </li>
+      </ul>
+    </el-card>
+
     <el-card id="expose" class="doc-section" shadow="never">
       <template #header>
         <span class="card-title">暴露方法（ref）</span>
       </template>
-      <p class="muted">
-        常用：<code>validate</code>、<code>clearValidation</code>、<code>scrollToFirstError</code>、<code>focusCell</code>、<code>focusAndEditByProp</code>、<code>getColIndexByProp</code>、<code>startEdit</code>、<code>confirmEdit</code>、<code>cancelEdit</code>、<code>insertRow</code>、<code>deleteRow</code>、<code>moveRow</code>、<code>duplicateRow</code>、<code>getModifiedRows</code>、<code>undo</code> /
-        <code>redo</code>、<code>clearSelection</code>、<code>getSelectionRows</code>、<code>getElTable</code>
-        等；完整列表见 <code>plus-table.vue</code> 中
-        <code>defineExpose</code>。
-      </p>
+      <ul class="bullet-list">
+        <li><strong>导航</strong>：<code>navigate</code>、<code>focusCell</code>、<code>getColIndexByProp</code>、<code>focusAndEditByProp</code>、<code>activeRowIndex</code>、<code>activeColIndex</code>、<code>activeRow</code>、<code>activeColumn</code></li>
+        <li><strong>编辑</strong>：<code>startEdit</code>、<code>confirmEdit</code>、<code>cancelEdit</code>、<code>editMode</code>、<code>isEditing</code></li>
+        <li><strong>校验</strong>：<code>validate(rows?)</code>、<code>validateField(rowIndex, prop)</code>、<code>clearValidation(rowIndex?, prop?)</code>、<code>scrollToFirstError()</code></li>
+        <li><strong>行操作</strong>：<code>insertRow(index?, defaultRow?, count?)</code>、<code>deleteRow(index?)</code>、<code>moveRow(from, to)</code>、<code>duplicateRow(index?)</code></li>
+        <li><strong>脏数据</strong>：<code>markDirty</code>、<code>clearDirty</code>、<code>resetTracking</code>、<code>getModifiedRows</code>、<code>getDirtyCells</code>、<code>isCellDirty</code>、<code>isRowDirty</code></li>
+        <li><strong>撤销重做</strong>：<code>undo</code>、<code>redo</code>、<code>canUndo</code>、<code>canRedo</code>、<code>clearHistory</code></li>
+        <li><strong>列操作</strong>：<code>toggleColumn</code>、<code>reorderColumns</code>、<code>setColumnWidth</code>、<code>resetColumns</code></li>
+        <li><strong>el-table 透传</strong>：<code>getElTable</code>、<code>clearSelection</code>、<code>getSelectionRows</code>、<code>toggleRowSelection</code>、<code>toggleAllSelection</code>、<code>doLayout</code>、<code>sort</code>、<code>scrollTo</code> 等</li>
+      </ul>
       <p class="muted">
         行操作下标均为<strong>当前 data 数组下标</strong>（与服务端分页时「仅含当前页数据」一致）。
       </p>

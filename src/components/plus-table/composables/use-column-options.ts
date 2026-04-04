@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 
 import type { PlusTableColumn, RowData } from '../types';
+import type { ColumnSettingNode } from '../utils/column-utils';
 import {
   collectLeafProps,
   flattenColumnsWithProp,
@@ -17,7 +18,6 @@ import {
 function getEffectiveOrder(cols: PlusTableColumn[], order: string[]): string[] {
   return order.length > 0 ? order : getTopLevelIds(cols);
 }
-import type { ColumnSettingNode } from '../utils/column-utils';
 
 export interface UseColumnOptionsOptions {
   /** 列配置来源（通常为 props.columns） */
