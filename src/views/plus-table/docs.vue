@@ -275,7 +275,7 @@ function scrollToDocSection(sectionId: string) {
       </p>
     </header>
 
-    <Card id="quick-start" class="doc-section">
+    <Card id="quick-start" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">快速开始</CardTitle>
       </CardHeader>
@@ -284,7 +284,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="props" class="doc-section">
+    <Card id="props" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">Props</CardTitle>
       </CardHeader>
@@ -302,7 +302,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="events" class="doc-section">
+    <Card id="events" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">事件</CardTitle>
       </CardHeader>
@@ -318,7 +318,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="slots" class="doc-section">
+    <Card id="slots" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">插槽</CardTitle>
       </CardHeader>
@@ -330,7 +330,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="column-config" class="doc-section">
+    <Card id="column-config" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">列配置 PlusTableColumn</CardTitle>
       </CardHeader>
@@ -369,7 +369,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="edit-modes" class="doc-section">
+    <Card id="edit-modes" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">编辑模式</CardTitle>
       </CardHeader>
@@ -400,7 +400,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="dependencies" class="doc-section">
+    <Card id="dependencies" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">单元格联动 dependencies</CardTitle>
       </CardHeader>
@@ -412,7 +412,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="dirty-tracking" class="doc-section">
+    <Card id="dirty-tracking" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">脏数据追踪</CardTitle>
       </CardHeader>
@@ -443,7 +443,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="expose" class="doc-section">
+    <Card id="expose" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">暴露方法（ref）</CardTitle>
       </CardHeader>
@@ -464,7 +464,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="hotkeys" class="doc-section">
+    <Card id="hotkeys" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">内置键盘行为</CardTitle>
       </CardHeader>
@@ -495,7 +495,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="pagination" class="doc-section">
+    <Card id="pagination" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">分页</CardTitle>
       </CardHeader>
@@ -513,7 +513,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="style-classes" class="doc-section">
+    <Card id="style-classes" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">样式类名</CardTitle>
       </CardHeader>
@@ -524,7 +524,7 @@ function scrollToDocSection(sectionId: string) {
       </CardContent>
     </Card>
 
-    <Card id="types-export" class="doc-section">
+    <Card id="types-export" class="doc-section rounded-sm">
       <CardHeader class="doc-section__header border-b">
         <CardTitle class="card-title">类型导出</CardTitle>
       </CardHeader>
@@ -548,7 +548,7 @@ function scrollToDocSection(sectionId: string) {
   overflow: hidden;
   scroll-margin-top: 72px;
   gap: 0;
-  box-shadow: none;
+  border: 1px solid var(--border);
 }
 
 .doc-section__header {
@@ -606,7 +606,7 @@ function scrollToDocSection(sectionId: string) {
   overflow-x: auto;
   color: var(--foreground);
   background: var(--muted);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 
   code {
@@ -658,7 +658,7 @@ function scrollToDocSection(sectionId: string) {
   font-weight: 600;
   color: var(--primary-foreground);
   background: var(--primary);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   text-decoration: none;
   transition:
     opacity 0.2s,
