@@ -1,342 +1,126 @@
 <script setup lang="ts">
 import { computed, provide, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { FlaskConical } from 'lucide-vue-next';
 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import { Separator } from '@/components/ui/separator';
+
+import { navGroups } from './nav-config';
 import { LAYOUT_RIGHT_PANEL } from './injection-keys';
 
 const route = useRoute();
+const rightPanelEl = ref<HTMLElement | null>(null);
+provide(LAYOUT_RIGHT_PANEL, rightPanelEl);
 
-const rightPanelMountEl = ref<HTMLElement | null>(null);
-provide(LAYOUT_RIGHT_PANEL, rightPanelMountEl);
+const activeRoute = computed(() => route.name);
+const hasTocPanel = computed(() => route.name === 'plus-table-docs');
 
-const navGroups = [
-  {
-    title: 'PlusTable',
-    items: [
-      {
-        name: 'plus-table-docs' as const,
-        label: '文档',
-        to: { name: 'plus-table-docs' as const },
-      },
-      {
-        name: 'plus-table-demo' as const,
-        label: '示例',
-        to: { name: 'plus-table-demo' as const },
-      },
-    ],
-  },
-  {
-    title: 'VTable',
-    items: [
-      {
-        name: 'vtable-element-plus-editor' as const,
-        label: 'Vue + El-Select 编辑器',
-        to: { name: 'vtable-element-plus-editor' as const },
-      },
-    ],
-  },
-];
-
-const currentName = computed(() => route.name);
-
-/** 文档页渲染右栏并挂载 TOC；示例页不渲染右栏，主列占满剩余宽度 */
-const showDocTocPanel = computed(() => route.name === 'plus-table-docs');
+const pageTitle = computed(() => {
+  switch (route.name) {
+    case 'plus-table-docs':
+      return 'PlusTable 文档';
+    case 'plus-table-demo':
+      return 'PlusTable 示例';
+    default:
+      return '';
+  }
+});
 </script>
 
 <template>
-  <el-container class="docs-layout">
-    <el-header class="docs-layout__header" height="56px">
-      <div class="docs-layout__brand">
-        <router-link class="docs-layout__logo" :to="{ name: 'plus-table-docs' }">
-          组件实验室
-        </router-link>
-        <span class="docs-layout__tagline">Component Labs</span>
-      </div>
-    </el-header>
-
-    <!-- 文档页右侧 TOC 须在 el-main 之前挂载，保证 Teleport 目标已存在（v-if）。 -->
-    <el-container class="docs-layout__body" direction="horizontal">
-      <el-aside class="docs-layout__aside docs-layout__aside--nav" width="220px">
-        <div class="docs-layout__sticky-pane">
-          <nav class="docs-nav" aria-label="组件文档导航">
-            <section
-              v-for="group in navGroups"
-              :key="group.title"
-              class="docs-nav__group"
+  <SidebarProvider>
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              size="lg"
+              as-child
+              tooltip="组件实验室"
             >
-              <div class="docs-nav__title">{{ group.title }}</div>
-              <ul class="docs-nav__list">
-                <li v-for="item in group.items" :key="item.name">
-                  <router-link
-                    class="docs-nav__link"
-                    :class="{ 'is-active': currentName === item.name }"
-                    :to="item.to"
-                  >
-                    {{ item.label }}
+              <router-link :to="{ name: 'plus-table-docs' }">
+                <div
+                  class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
+                >
+                  <FlaskConical class="size-4" />
+                </div>
+                <div class="grid flex-1 text-left text-sm leading-tight">
+                  <span class="truncate font-semibold">组件实验室</span>
+                  <span class="truncate text-xs text-muted-foreground">
+                    Component Labs
+                  </span>
+                </div>
+              </router-link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup v-for="group in navGroups" :key="group.title">
+          <SidebarGroupLabel>{{ group.title }}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem v-for="item in group.items" :key="item.name">
+                <SidebarMenuButton
+                  as-child
+                  :tooltip="item.label"
+                  :data-active="activeRoute === item.name"
+                >
+                  <router-link :to="item.to">
+                    <component :is="item.icon" />
+                    <span>{{ item.label }}</span>
                   </router-link>
-                </li>
-              </ul>
-            </section>
-          </nav>
-        </div>
-      </el-aside>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-      <el-aside
-        v-if="showDocTocPanel"
-        class="docs-layout__aside docs-layout__aside--right"
-        width="280px"
+      <SidebarRail />
+    </Sidebar>
+
+    <SidebarInset>
+      <header
+        class="flex h-14 shrink-0 items-center gap-2 border-b px-4 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12"
       >
-        <div
-          id="layout-right-panel"
-          ref="rightPanelMountEl"
-          class="docs-layout__sticky-pane docs-layout__sticky-pane--toc"
-          aria-live="polite"
-        />
-      </el-aside>
+        <SidebarTrigger class="-ml-1" />
+        <Separator orientation="vertical" class="mr-2 h-4!" />
+        <span class="text-sm font-medium text-foreground">
+          {{ pageTitle }}
+        </span>
+      </header>
 
-      <el-main class="docs-layout__main">
-        <div
-          class="docs-layout__content"
-          :class="{ 'docs-layout__content--fluid': !showDocTocPanel }"
-        >
+      <div class="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div class="lab__main min-w-0 flex-1 overflow-y-auto p-8">
           <router-view />
         </div>
-      </el-main>
-    </el-container>
-  </el-container>
+
+        <aside
+          v-if="hasTocPanel"
+          class="hidden w-[240px] shrink-0 overflow-y-auto border-l bg-background lg:block"
+        >
+          <div ref="rightPanelEl" class="p-5" />
+        </aside>
+      </div>
+    </SidebarInset>
+  </SidebarProvider>
 </template>
 
-<style scoped lang="scss">
-.docs-layout {
-  --docs-header-h: 56px;
-
-  min-height: 100vh;
-  height: 100vh;
-  background: var(--el-bg-color);
-}
-
-.docs-layout__header {
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  background: var(--el-bg-color);
-}
-
-.docs-layout__brand {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.docs-layout__logo {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  text-decoration: none;
-  letter-spacing: 0.02em;
-
-  &:hover {
-    color: var(--el-color-primary);
-  }
-}
-
-.docs-layout__tagline {
-  font-size: 12px;
-  color: var(--el-text-color-placeholder);
-  user-select: none;
-}
-
-.docs-layout__body {
-  flex: 1;
-  min-height: 0;
-  flex-direction: row;
-  align-items: stretch;
-}
-
-.docs-layout__aside {
-  flex-shrink: 0;
-  border-right: 1px solid var(--el-border-color-lighter);
-  background: var(--el-fill-color-lighter);
-}
-
-.docs-layout__aside--nav {
-  order: 1;
-}
-
-.docs-layout__aside--right {
-  order: 3;
-  border-right: none;
-  border-left: 1px solid var(--el-border-color-lighter);
-}
-
-/** 左栏导航 / 右栏 TOC·工具：在整页滚动或主列超高时仍贴顶，且过长时各自滚动 */
-.docs-layout__sticky-pane {
-  position: sticky;
-  top: 0;
-  box-sizing: border-box;
-  max-height: calc(100vh - var(--docs-header-h));
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.docs-layout__sticky-pane--toc {
-  min-height: 120px;
-  padding: 16px 14px 24px;
-}
-
-.docs-nav {
-  padding: 16px 12px 24px;
-}
-
-.docs-nav__group + .docs-nav__group {
-  margin-top: 20px;
-}
-
-.docs-nav__title {
-  padding: 0 10px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--el-text-color-secondary);
-}
-
-.docs-nav__list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.docs-nav__link {
-  display: block;
-  margin: 2px 0;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--el-text-color-regular);
-  text-decoration: none;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-
-  &:hover {
-    color: var(--el-color-primary);
-    background: var(--el-fill-color-light);
-  }
-
-  &.is-active {
-    color: var(--el-color-primary);
-    background: color-mix(in srgb, var(--el-color-primary) 12%, transparent);
-  }
-}
-
-.docs-layout__main {
-  order: 2;
-  flex: 1;
-  min-width: 0;
-  padding: 0;
-  overflow: auto;
-}
-
-/**
- * 左对齐 + max-width：与 --fluid 示例页共用同一左缘（nav + padding），
- * 避免文档页居中造成侧栏与正文之间大块留白，且与示例切换时标题/表格左对齐。
- */
-.docs-layout__content {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 32px 40px 56px;
-}
-
-/** 无右侧栏时主内容区在相同左缘下向右铺满 main */
-.docs-layout__content--fluid {
-  max-width: none;
-}
-</style>
-
-<!-- 主内容区文档站版式（与 Element Plus 文档站层次接近），仅作用于 layout 中间栏 -->
-<style lang="scss">
-.docs-layout .docs-layout__content {
-  .docs-layout__page {
-    min-width: 0;
-  }
-
-  .docs-layout__hero {
-    margin-bottom: 28px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-
-  .docs-layout__hero-title {
-    margin: 0 0 12px;
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.25;
-    color: var(--el-text-color-primary);
-  }
-
-  .docs-layout__hero-lead {
-    margin: 0 0 10px;
-    font-size: 15px;
-    line-height: 1.7;
-    color: var(--el-text-color-regular);
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    code {
-      padding: 2px 7px;
-      font-size: 12px;
-      background: var(--el-fill-color-light);
-      border-radius: 4px;
-    }
-
-    a {
-      color: var(--el-color-primary);
-      text-decoration: none;
-      font-weight: 500;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-  }
-
-  .docs-layout__hero-hint {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.65;
-    color: var(--el-text-color-secondary);
-
-    code {
-      padding: 2px 6px;
-      font-size: 12px;
-      background: var(--el-fill-color-light);
-      border-radius: 4px;
-    }
-  }
-
-  .docs-layout__toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    padding: 14px 16px;
-    margin-bottom: 16px;
-    background: var(--el-fill-color-lighter);
-    border: 1px solid var(--el-border-color-lighter);
-    border-radius: var(--el-border-radius-base);
-
-    .label {
-      font-size: 12px;
-      color: var(--el-text-color-secondary);
-    }
-  }
-}
-</style>
+<style lang="scss" src="./page-content.scss" />

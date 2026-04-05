@@ -410,17 +410,17 @@ const modifiedRowCount = computed(() => {
 </script>
 
 <template>
-  <div class="docs-layout__page">
-    <header class="docs-layout__hero">
-      <h1 class="docs-layout__hero-title">交互示例</h1>
-      <p class="docs-layout__hero-lead">
+  <div>
+    <header class="page-hero">
+      <h1 class="page-hero__title">交互示例</h1>
+      <p class="page-hero__lead">
         在表格内双击可编辑、使用键盘导航与快捷键（先点击表格区域聚焦）。完整 API
         与约定见
         <router-link :to="{ name: 'plus-table-docs' }">文档页</router-link>。
       </p>
     </header>
 
-    <div class="docs-layout__toolbar">
+    <div class="page-toolbar">
       <span class="label">编辑模式</span>
       <el-radio-group v-model="editableMode" size="small">
         <el-radio-button :value="false">只读</el-radio-button>
@@ -629,15 +629,16 @@ const modifiedRowCount = computed(() => {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 6px 4px;
-  padding: 8px 12px;
-  margin-bottom: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
   font-size: 12px;
   line-height: 1.5;
   color: var(--el-text-color-secondary);
-  background: var(--el-fill-color-light);
+  background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
+  border-radius: 8px;
   font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 
   &__k {
     margin-right: 4px;
@@ -647,7 +648,7 @@ const modifiedRowCount = computed(() => {
 
   &__sep {
     margin: 0 6px;
-    color: var(--el-border-color);
+    color: var(--el-border-color-light);
     user-select: none;
   }
 
@@ -661,10 +662,11 @@ const modifiedRowCount = computed(() => {
 }
 
 .demo-table-card {
-  border-radius: 8px;
+  border-radius: 10px;
+  overflow: hidden;
 
   :deep(.el-card__body) {
-    padding: 12px;
+    padding: 16px;
   }
 }
 

@@ -5,7 +5,9 @@
       "@/*": ["./src/*"],
       "#/*": ["./src/*"]
     },
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "composite": true,
+    "noEmit": false
   },
   "references": [
     { "path": "./tsconfig.app.json" },

@@ -26,21 +26,6 @@ const routes = [
       },
     ],
   },
-  {
-    path: '/vtable',
-    component: () => import('@/layouts/layout.vue'),
-    children: [
-      {
-        path: '',
-        redirect: { name: 'vtable-element-plus-editor' },
-      },
-      {
-        name: 'vtable-element-plus-editor',
-        path: 'element-plus-editor',
-        component: () => import('@/views/vtable/element-plus-editor-demo.vue'),
-      },
-    ],
-  },
 ] as RouteRecordRaw[];
 
 export { routes };
