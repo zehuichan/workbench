@@ -1,1 +1,0 @@
-var e=Symbol(`layoutRightPanel`);export{e as t};
