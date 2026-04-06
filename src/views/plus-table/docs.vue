@@ -276,7 +276,7 @@ function scrollToDocSection(sectionId: string) {
     </header>
 
     <Card id="quick-start" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">快速开始</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -285,7 +285,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="props" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">Props</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -303,7 +303,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="events" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">事件</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -319,7 +319,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="slots" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">插槽</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -331,7 +331,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="column-config" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">列配置 PlusTableColumn</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -370,7 +370,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="edit-modes" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">编辑模式</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -401,7 +401,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="dependencies" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">单元格联动 dependencies</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -413,7 +413,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="dirty-tracking" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">脏数据追踪</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -444,7 +444,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="expose" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">暴露方法（ref）</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -465,7 +465,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="hotkeys" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">内置键盘行为</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -496,7 +496,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="pagination" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">分页</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -514,7 +514,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="style-classes" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">样式类名</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -525,7 +525,7 @@ function scrollToDocSection(sectionId: string) {
     </Card>
 
     <Card id="types-export" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">类型导出</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -548,14 +548,14 @@ function scrollToDocSection(sectionId: string) {
   overflow: hidden;
   scroll-margin-top: 72px;
   gap: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-sm);
 }
 
 .doc-section__header {
   padding: 16px 24px;
   background: var(--muted);
+  border-bottom: 1px solid var(--separator);
 }
 
 .doc-section__body {
@@ -575,8 +575,8 @@ function scrollToDocSection(sectionId: string) {
     height: 14px;
     margin-right: 8px;
     vertical-align: -1px;
-    border-radius: 2px;
-    background: var(--brand);
+    border-radius: 0;
+    background: var(--foreground);
   }
 }
 
@@ -592,7 +592,7 @@ function scrollToDocSection(sectionId: string) {
     font-weight: 500;
     background: var(--muted);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0;
     color: var(--foreground);
   }
 }
@@ -609,8 +609,8 @@ function scrollToDocSection(sectionId: string) {
   overflow-x: auto;
   color: var(--foreground);
   background: var(--muted);
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: 0;
+  border: 1px solid var(--separator);
 
   code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -640,7 +640,7 @@ function scrollToDocSection(sectionId: string) {
     font-weight: 500;
     background: var(--muted);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0;
   }
 }
 
@@ -658,16 +658,17 @@ function scrollToDocSection(sectionId: string) {
   align-items: center;
   gap: 6px;
   padding: 8px 24px;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
   color: var(--primary-foreground);
   background: var(--primary);
-  border-radius: 9999px;
+  border-radius: 0;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   transition:
-    opacity 0.2s,
-    box-shadow 0.2s;
+    opacity 0.2s;
 
   &:hover {
     opacity: 0.9;
@@ -709,8 +710,8 @@ function scrollToDocSection(sectionId: string) {
       border-color 0.2s;
 
     &:hover {
-      color: var(--brand-deep);
-      border-left-color: var(--brand);
+      color: rgba(255, 255, 255, 0.5);
+      border-left-color: rgba(255, 255, 255, 0.2);
     }
   }
 }

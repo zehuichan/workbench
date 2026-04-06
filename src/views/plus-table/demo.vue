@@ -636,9 +636,8 @@ const modifiedRowCount = computed(() => {
   color: var(--muted-foreground);
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 
   &__k {
     margin-right: 4px;
@@ -662,10 +661,9 @@ const modifiedRowCount = computed(() => {
 }
 
 .demo-table-card {
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--border);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 
   :deep(.el-card__body) {
     padding: 16px;
@@ -686,8 +684,8 @@ const modifiedRowCount = computed(() => {
 }
 
 .demo-col-head--primary {
-  color: var(--brand-deep);
-  font-weight: 600;
+  color: var(--foreground);
+  font-weight: 500;
 }
 
 .demo-table-summary {
@@ -715,8 +713,8 @@ const modifiedRowCount = computed(() => {
   gap: 6px;
 
   .avatar {
-    background: var(--brand);
-    color: #0d0d0d;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
     font-size: 12px;
   }
 }
@@ -728,7 +726,7 @@ const modifiedRowCount = computed(() => {
   color: var(--muted-foreground);
   background: var(--muted);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
 
   p {
     margin: 0 0 4px;

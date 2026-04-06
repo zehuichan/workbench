@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, provide, ref } from 'vue';
+import { computed, onMounted, provide, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { FlaskConical } from 'lucide-vue-next';
+import { FlaskConical, Moon, Sun } from 'lucide-vue-next';
 
 import {
   Sidebar,
@@ -43,6 +43,27 @@ const pageTitle = computed(() => {
       return '';
   }
 });
+
+type ThemeMode = 'light' | 'dark';
+const themeMode = ref<ThemeMode>('light');
+
+function applyTheme(theme: ThemeMode) {
+  const root = document.documentElement;
+  root.setAttribute('data-theme', theme);
+  root.classList.toggle('dark', theme === 'dark');
+  localStorage.setItem('theme-mode', theme);
+  themeMode.value = theme;
+}
+
+function toggleTheme() {
+  applyTheme(themeMode.value === 'light' ? 'dark' : 'light');
+}
+
+onMounted(() => {
+  const stored = localStorage.getItem('theme-mode');
+  const initial = stored === 'dark' ? 'dark' : 'light';
+  applyTheme(initial);
+});
 </script>
 
 <template>
@@ -58,12 +79,12 @@ const pageTitle = computed(() => {
             >
               <router-link :to="{ name: 'plus-table-docs' }">
                 <div
-                  class="flex aspect-square size-8 items-center justify-center rounded-lg bg-brand text-white"
+                  class="flex aspect-square size-8 items-center justify-center border border-border bg-transparent text-foreground"
                 >
                   <FlaskConical class="size-4" />
                 </div>
                 <div class="grid flex-1 text-left text-sm leading-tight">
-                  <span class="truncate font-semibold tracking-tight">组件实验室</span>
+                  <span class="truncate font-normal uppercase tracking-[1.2px] font-mono">组件实验室</span>
                   <span class="truncate text-xs text-muted-foreground">
                     Component Labs
                   </span>
@@ -76,7 +97,7 @@ const pageTitle = computed(() => {
 
       <SidebarContent>
         <SidebarGroup v-for="group in navGroups" :key="group.title">
-          <SidebarGroupLabel class="uppercase tracking-wider text-[11px] font-medium">
+          <SidebarGroupLabel class="uppercase tracking-[1px] text-[11px] font-normal font-mono text-muted-foreground">
             {{ group.title }}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -102,6 +123,10 @@ const pageTitle = computed(() => {
     <SidebarInset>
       <header class="layout-header">
         <span class="layout-header__title">{{ pageTitle }}</span>
+        <button class="theme-toggle" type="button" @click="toggleTheme">
+          <component :is="themeMode === 'light' ? Moon : Sun" class="size-3.5" />
+          {{ themeMode === 'light' ? 'Dark' : 'Light' }}
+        </button>
       </header>
 
       <div class="flex min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -111,7 +136,7 @@ const pageTitle = computed(() => {
 
         <aside
           v-if="hasTocPanel"
-          class="hidden w-[240px] shrink-0 overflow-y-auto border-l bg-background lg:block"
+          class="toc-panel hidden w-[240px] shrink-0 overflow-y-auto bg-background lg:block"
         >
           <div ref="rightPanelEl" class="p-5" />
         </aside>
@@ -126,17 +151,43 @@ const pageTitle = computed(() => {
 .layout-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 48px;
   padding: 0 24px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--separator);
   background: var(--background);
-  backdrop-filter: blur(12px);
 
   &__title {
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 400;
     color: var(--foreground);
-    letter-spacing: -0.1px;
+    letter-spacing: 0;
+  }
+}
+
+.toc-panel {
+  border-left: 1px solid var(--separator);
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.6;
   }
 }
 </style>

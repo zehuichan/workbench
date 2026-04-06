@@ -629,10 +629,9 @@ function runValidation() {
 <style scoped lang="scss">
 .demo-section {
   margin-bottom: 24px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--border);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 
   :deep(.el-card__header) {
     padding: 16px 24px;
@@ -693,7 +692,7 @@ function runValidation() {
   max-height: 260px;
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--card);
 
   table {
@@ -799,7 +798,7 @@ function runValidation() {
   overflow-x: auto;
   color: var(--foreground);
   background: var(--muted);
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid var(--border);
 
   code {

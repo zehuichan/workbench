@@ -232,7 +232,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Quick Start -->
     <Card id="quick-start" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">快速开始</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -242,7 +242,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Tree Shaking -->
     <Card id="tree-shaking" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">Tree Shaking</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -253,7 +253,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- High-level API -->
     <Card id="highlevel-api" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">高级 API</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -268,7 +268,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- XLSX API -->
     <Card id="xlsx-api" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">XLSX</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -282,7 +282,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- CSV API -->
     <Card id="csv-api" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">CSV</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -296,7 +296,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Export API -->
     <Card id="export-api" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">导出</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -310,7 +310,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- WriteSheet Config -->
     <Card id="write-sheet" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">WriteSheet 配置</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -330,7 +330,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Builder API -->
     <Card id="builder-api" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">Builder API</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -341,7 +341,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Streaming -->
     <Card id="streaming" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">流式处理</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -352,7 +352,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Round-trip -->
     <Card id="roundtrip" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">往返保存（Round-trip）</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -363,7 +363,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Sheet Operations -->
     <Card id="sheet-ops" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">Sheet 操作</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -376,7 +376,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Utilities -->
     <Card id="utils" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">工具函数</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -389,7 +389,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Schema Validation -->
     <Card id="schema" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">Schema 校验</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -406,7 +406,7 @@ function scrollToDocSection(sectionId: string) {
 
     <!-- Platform Support -->
     <Card id="platform" class="doc-section rounded-sm">
-      <CardHeader class="doc-section__header border-b">
+      <CardHeader class="doc-section__header">
         <CardTitle class="card-title">平台支持</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
@@ -440,14 +440,14 @@ function scrollToDocSection(sectionId: string) {
   overflow: hidden;
   scroll-margin-top: 72px;
   gap: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--separator);
+  border-radius: var(--radius-sm);
 }
 
 .doc-section__header {
   padding: 16px 24px;
   background: var(--muted);
+  border-bottom: 1px solid var(--separator);
 }
 
 .doc-section__body {
@@ -467,8 +467,8 @@ function scrollToDocSection(sectionId: string) {
     height: 14px;
     margin-right: 8px;
     vertical-align: -1px;
-    border-radius: 2px;
-    background: var(--brand);
+    border-radius: 0;
+    background: var(--foreground);
   }
 }
 
@@ -484,7 +484,7 @@ function scrollToDocSection(sectionId: string) {
     font-weight: 500;
     background: var(--muted);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0;
     color: var(--foreground);
   }
 }
@@ -501,8 +501,8 @@ function scrollToDocSection(sectionId: string) {
   overflow-x: auto;
   color: var(--foreground);
   background: var(--muted);
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-radius: 0;
+  border: 1px solid var(--separator);
 
   code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -532,7 +532,7 @@ function scrollToDocSection(sectionId: string) {
     font-weight: 500;
     background: var(--muted);
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: 0;
   }
 }
 
@@ -546,16 +546,17 @@ function scrollToDocSection(sectionId: string) {
   align-items: center;
   gap: 6px;
   padding: 8px 24px;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
   color: var(--primary-foreground);
   background: var(--primary);
-  border-radius: 9999px;
+  border-radius: 0;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   transition:
-    opacity 0.2s,
-    box-shadow 0.2s;
+    opacity 0.2s;
 
   &:hover {
     opacity: 0.9;
@@ -597,8 +598,8 @@ function scrollToDocSection(sectionId: string) {
       border-color 0.2s;
 
     &:hover {
-      color: var(--brand-deep);
-      border-left-color: var(--brand);
+      color: rgba(255, 255, 255, 0.5);
+      border-left-color: rgba(255, 255, 255, 0.2);
     }
   }
 }
