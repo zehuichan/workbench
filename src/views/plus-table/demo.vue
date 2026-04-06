@@ -629,26 +629,26 @@ const modifiedRowCount = computed(() => {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 6px 4px;
-  padding: 10px 14px;
-  margin-bottom: 14px;
-  font-size: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
   line-height: 1.5;
-  color: var(--el-text-color-secondary);
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 8px;
+  color: var(--muted-foreground);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 
   &__k {
     margin-right: 4px;
-    font-weight: 600;
-    color: var(--el-text-color-regular);
+    font-weight: 500;
+    color: var(--foreground);
   }
 
   &__sep {
     margin: 0 6px;
-    color: var(--el-border-color-light);
+    color: var(--border);
     user-select: none;
   }
 
@@ -662,8 +662,10 @@ const modifiedRowCount = computed(() => {
 }
 
 .demo-table-card {
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 
   :deep(.el-card__body) {
     padding: 16px;
@@ -678,18 +680,19 @@ const modifiedRowCount = computed(() => {
   &__title {
     font-size: 16px;
     font-weight: 600;
-    color: var(--el-text-color-primary);
+    letter-spacing: -0.2px;
+    color: var(--foreground);
   }
 }
 
 .demo-col-head--primary {
-  color: var(--el-color-primary);
+  color: var(--brand-deep);
   font-weight: 600;
 }
 
 .demo-table-summary {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
+  font-size: 13px;
+  color: var(--muted-foreground);
 }
 
 :deep(.demo-progress-cell) {
@@ -703,7 +706,7 @@ const modifiedRowCount = computed(() => {
   min-width: 2.75rem;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: var(--el-text-color-regular);
+  color: var(--muted-foreground);
 }
 
 .assignee-cell {
@@ -712,20 +715,20 @@ const modifiedRowCount = computed(() => {
   gap: 6px;
 
   .avatar {
-    background: var(--el-color-primary-light-3);
-    color: #fff;
+    background: var(--brand);
+    color: #0d0d0d;
     font-size: 12px;
   }
 }
 
 .expand-content {
   padding: 12px 16px;
-  line-height: 1.8;
-  font-size: 13px;
-  color: var(--el-text-color-regular);
-  background: var(--el-fill-color-lighter);
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 6px;
+  line-height: 1.75;
+  font-size: 14px;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 
   p {
     margin: 0 0 4px;

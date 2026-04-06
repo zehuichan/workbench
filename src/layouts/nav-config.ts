@@ -1,6 +1,6 @@
 import type { Component } from 'vue';
 import type { RouteLocationRaw } from 'vue-router';
-import { BookOpen, SquareTerminal } from 'lucide-vue-next';
+import { BookOpen, FileSpreadsheet, SquareTerminal } from 'lucide-vue-next';
 
 export interface NavItem {
   name: string;
@@ -29,6 +29,23 @@ export const navGroups: NavGroup[] = [
         label: '示例',
         icon: SquareTerminal,
         to: { name: 'plus-table-demo' },
+      },
+    ],
+  },
+  {
+    title: 'hucre',
+    items: [
+      {
+        name: 'hucre-docs',
+        label: '文档',
+        icon: BookOpen,
+        to: { name: 'hucre-docs' },
+      },
+      {
+        name: 'hucre-demo',
+        label: '示例',
+        icon: FileSpreadsheet,
+        to: { name: 'hucre-demo' },
       },
     ],
   },

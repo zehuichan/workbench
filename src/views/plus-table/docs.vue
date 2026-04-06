@@ -543,27 +543,29 @@ function scrollToDocSection(sectionId: string) {
 
 <style scoped lang="scss">
 .doc-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   padding: 0;
   overflow: hidden;
   scroll-margin-top: 72px;
   gap: 0;
   border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 .doc-section__header {
-  padding: 14px 20px;
+  padding: 16px 24px;
   background: var(--muted);
 }
 
 .doc-section__body {
-  padding: 20px;
+  padding: 24px;
 }
 
 .card-title {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
   color: var(--foreground);
 
   &::before {
@@ -574,22 +576,23 @@ function scrollToDocSection(sectionId: string) {
     margin-right: 8px;
     vertical-align: -1px;
     border-radius: 2px;
-    background: var(--primary);
+    background: var(--brand);
   }
 }
 
 .muted {
-  margin: 0 0 14px;
-  font-size: 13px;
-  line-height: 1.7;
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--muted-foreground);
 
   code {
-    padding: 2px 6px;
+    padding: 2px 7px;
     font-size: 12px;
+    font-weight: 500;
     background: var(--muted);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 4px;
     color: var(--foreground);
   }
 }
@@ -600,13 +603,13 @@ function scrollToDocSection(sectionId: string) {
 
 .code-block {
   margin: 0;
-  padding: 16px 18px;
-  font-size: 12.5px;
+  padding: 16px 20px;
+  font-size: 13px;
   line-height: 1.6;
   overflow-x: auto;
   color: var(--foreground);
   background: var(--muted);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   border: 1px solid var(--border);
 
   code {
@@ -619,8 +622,8 @@ function scrollToDocSection(sectionId: string) {
 .bullet-list {
   margin: 0;
   padding-left: 20px;
-  font-size: 13px;
-  line-height: 1.85;
+  font-size: 14px;
+  line-height: 1.75;
   color: var(--foreground);
 
   li {
@@ -632,11 +635,12 @@ function scrollToDocSection(sectionId: string) {
   }
 
   code {
-    padding: 2px 6px;
+    padding: 2px 7px;
     font-size: 12px;
+    font-weight: 500;
     background: var(--muted);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 4px;
   }
 }
 
@@ -645,7 +649,7 @@ function scrollToDocSection(sectionId: string) {
 }
 
 .docs-footer {
-  padding: 28px 0 12px;
+  padding: 32px 0 16px;
   text-align: center;
 }
 
@@ -653,13 +657,14 @@ function scrollToDocSection(sectionId: string) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 8px 24px;
+  font-size: 15px;
+  font-weight: 500;
   color: var(--primary-foreground);
   background: var(--primary);
-  border-radius: var(--radius-sm);
+  border-radius: 9999px;
   text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
   transition:
     opacity 0.2s,
     box-shadow 0.2s;
@@ -674,8 +679,8 @@ function scrollToDocSection(sectionId: string) {
     margin: 0 0 14px;
     padding-bottom: 10px;
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
+    font-weight: 500;
+    letter-spacing: 0.65px;
     text-transform: uppercase;
     color: var(--muted-foreground);
     border-bottom: 1px solid var(--border);
@@ -691,8 +696,8 @@ function scrollToDocSection(sectionId: string) {
   &__link {
     display: block;
     margin: 0;
-    padding: 4px 10px;
-    font-size: 12.5px;
+    padding: 5px 10px;
+    font-size: 13px;
     line-height: 1.5;
     color: var(--muted-foreground);
     text-decoration: none;
@@ -704,8 +709,8 @@ function scrollToDocSection(sectionId: string) {
       border-color 0.2s;
 
     &:hover {
-      color: var(--foreground);
-      border-left-color: var(--foreground);
+      color: var(--brand-deep);
+      border-left-color: var(--brand);
     }
   }
 }
