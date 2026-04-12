@@ -50,17 +50,17 @@
 </template>
 
 <script setup lang="ts">
-import { type Component, computed, h, inject, nextTick } from 'vue';
+import { type Component, computed, h, nextTick } from 'vue';
 
 import { get } from 'es-toolkit/compat';
 
 import { isString } from '../utils';
 
 import type { PlusTableColumn } from '../types';
-import { PLUS_TABLE_INJECTION_KEY } from '../constants';
 import { ELEMENT_ADAPTER_MAP } from '../adapters';
+import { usePlusTableContext } from '../composables';
 
-const ctx = inject(PLUS_TABLE_INJECTION_KEY)!;
+const ctx = usePlusTableContext();
 
 /** 当前单元格校验错误（用于红框由父级 cell-class-name 控制，此处用于 tooltip） */
 const cellError = computed(() =>

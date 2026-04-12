@@ -1,32 +1,15 @@
 <script setup lang="ts">
-import {
-  computed,
-  nextTick,
-  provide,
-  ref,
-  toRef,
-  useSlots,
-  watch,
-} from 'vue';
+import { computed, nextTick, provide, ref, toRef, useSlots, watch } from 'vue';
 
-import { ElTableColumn } from 'element-plus';
-
-import type {
-  AdaptiveConfig,
-  PlusTableContext,
-  PlusTableProps,
-  RowData,
-} from '../types';
-import type {
-  EditCellPayload,
-  EditValueChangePayload,
-} from '../composables/use-editable';
+import type { AdaptiveConfig, PlusTableContext, PlusTableProps, RowData } from '../types';
+import type { EditCellPayload, EditValueChangePayload } from '../composables';
 import {
   EXPAND_COLUMN,
   INDEX_COLUMN,
   PLUS_TABLE_INJECTION_KEY,
   SELECTION_COLUMN,
 } from '../constants';
+import { createEditorFocuser } from '../utils';
 import {
   useAdaptive,
   useClassNames,
@@ -41,7 +24,6 @@ import {
   useRowOptions,
   useValidation,
 } from '../composables';
-import { createEditorFocuser } from '../utils';
 import PlusTableColumn from './plus-table-column.vue';
 import PlusTableColumnSetting from './plus-table-column-setting.vue';
 import PlusTablePagination from './plus-table-pagination.vue';
@@ -94,11 +76,11 @@ const hasFooterContent = computed(
   () => props.total != null || !!slots.summary || !!slots.pagination,
 );
 
-// ──── 分页（传 total 即启用，仅服务端分页：data 由 parent 按页传入）────
+// ──── Pagination (server-driven: data provided by parent per page) ────
 
 const paginationEnabled = computed(() => props.total != null);
 
-const displayData = computed(() => props.data);
+const displayData = computed(() => props.data ?? []);
 
 function handlePageChange(page: number): void {
   emit('update:currentPage', page);
@@ -110,17 +92,19 @@ function handleSizeChange(size: number): void {
   emit('pagination', { currentPage: props.currentPage ?? 1, pageSize: size });
 }
 
-// ──── 列可见性（含列设置：显隐、排序、持久化）────
+// ──── Column Options ────
 
 const columnOptions = useColumnOptions({
-  initialColumns: computed(() => props.columns),
-  tableKey: props.columnSetting ? (props.columnSettingKey ?? 'plus-table-default') : undefined,
+  initialColumns: computed(() => props.columns ?? []),
+  tableKey: props.columnSetting
+    ? (props.columnSettingKey ?? 'plus-table-default')
+    : undefined,
   storage: props.columnSetting ? 'local' : false,
 });
 
 const visibleColumns = columnOptions.visibleColumns;
 
-// ──── 自适应高度 ────
+// ──── Adaptive Height ────
 
 const adaptiveRef = toRef(() => props.adaptive) as ReturnType<
   typeof toRef<boolean | AdaptiveConfig | undefined>
@@ -137,7 +121,7 @@ watch(adaptiveMaxHeight, () => {
   }
 });
 
-// ──── 单元格导航 ────
+// ──── Navigation ────
 
 const {
   activeRowIndex,
@@ -156,7 +140,7 @@ const {
   tableRef,
 });
 
-// ──── 行操作（依赖 activeRowIndex，移动行后会同步更新激活行）────
+// ──── Row Operations ────
 
 const { insertRow, deleteRow, moveRow, duplicateRow } = useRowOptions({
   data: displayData,
@@ -164,7 +148,7 @@ const { insertRow, deleteRow, moveRow, duplicateRow } = useRowOptions({
   activeRowIndex,
 });
 
-// ──── 脏数据追踪（useDependencies 依赖 markDirty）────
+// ──── Dirty Tracking ────
 
 const {
   dirtyCells,
@@ -179,7 +163,7 @@ const {
   data: displayData,
 });
 
-// ──── 单元格联动（useEditable 依赖 isDepDisabled）────
+// ──── Dependencies ────
 
 const { resolveDependencyState, onFieldChange } = useDependencies({
   columns: visibleColumns,
@@ -187,7 +171,7 @@ const { resolveDependencyState, onFieldChange } = useDependencies({
   markDirty,
 });
 
-// ──── 编辑系统 ────
+// ──── Editable ────
 
 const {
   isEditing,
@@ -209,7 +193,7 @@ const {
   navigableColumns,
   activeRowIndex,
   activeColIndex,
-  editable: computed(() => props.editable),
+  editable: computed(() => props.editable ?? false),
   isDepDisabled: (rowIndex, colProp) => {
     const column = navigableColumns.value.find((c) => c.prop === colProp);
     if (!column) return false;
@@ -220,7 +204,7 @@ const {
   onValueChange: (payload) => emit('cell-value-change', payload),
 });
 
-// ──── 校验 ────
+// ──── Validation ────
 
 const {
   validate,
@@ -234,24 +218,32 @@ const {
   columns: navigableColumns,
   tableRules: computed(() => props.rules),
   tableEl: wrapperEl,
-  trigger: computed(() => props.validateTrigger),
-  validateOnCellExit: computed(() => props.validateOnCellExit),
+  trigger: computed(() => props.validateTrigger ?? 'manual'),
+  validateOnCellExit: computed(() => props.validateOnCellExit ?? false),
   resolveDeps: resolveDependencyState,
 });
 
-// ──── 编辑历史 ────
+// ──── Edit History ────
 
-const { canUndo, canRedo, pushChange, undo: historyUndo, redo: historyRedo, clearHistory } =
-  useEditHistory({
-    data: displayData,
-  });
+const {
+  canUndo,
+  canRedo,
+  pushChange,
+  undo: historyUndo,
+  redo: historyRedo,
+  clearHistory,
+} = useEditHistory({
+  data: displayData,
+});
+
+// ──── Class Names ────
 
 const {
   rowClassNameBinding: getRowClassNameBinding,
   cellClassNameBinding: getCellClassNameBinding,
 } = useClassNames({
-  cellActive: computed(() => props.cellActive),
-  rowActive: computed(() => props.rowActive),
+  cellActive: computed(() => props.cellActive ?? true),
+  rowActive: computed(() => props.rowActive ?? true),
   activeRowIndex,
   activeColIndex,
   dirtyCells,
@@ -262,6 +254,8 @@ const {
   isRowDirty,
 });
 
+// ──── Edit Actions ────
+
 const { commitEdit, undo, redo } = useEditActions({
   confirmEdit,
   undo: historyUndo,
@@ -269,11 +263,18 @@ const { commitEdit, undo, redo } = useEditActions({
   markDirty,
   pushChange,
   onFieldChange,
-  validateOnCellExit: computed(() => props.validateOnCellExit),
+  validateOnCellExit: computed(() => props.validateOnCellExit ?? false),
   validateFieldsAffectedByChange,
 });
 
-// ──── 事件处理 ────
+// ──── Event Handlers ────
+
+const focusActiveEditor = createEditorFocuser(wrapperEl);
+
+function startEditWithFocus(rowIndex?: number, colIndex?: number): void {
+  startEdit(rowIndex, colIndex);
+  if (isEditing.value) focusActiveEditor();
+}
 
 function onCellClick(
   row: RowData,
@@ -305,13 +306,6 @@ function onCellClick(
   if (!clickedInsideEditor) {
     wrapperEl.value?.focus({ preventScroll: true });
   }
-}
-
-const focusActiveEditor = createEditorFocuser(wrapperEl);
-
-function startEditWithFocus(rowIndex?: number, colIndex?: number): void {
-  startEdit(rowIndex, colIndex);
-  if (isEditing.value) focusActiveEditor();
 }
 
 function getColIndexByProp(colProp: string): number {
@@ -348,11 +342,11 @@ function onHeaderDragEnd(
   columnOptions.setColumnWidth(column.property, newWidth);
 }
 
-// ──── 热键引擎 ────
+// ──── Hotkey ────
 
 useHotkey({
   wrapperEl,
-  hotkeyEnabled: computed(() => props.hotkeyEnabled),
+  hotkeyEnabled: computed(() => props.hotkeyEnabled ?? true),
   navigate,
   focusCell,
   activeRowIndex,
@@ -381,11 +375,11 @@ provide<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, {
   tableEl: wrapperEl,
   tableInstance: tableRef,
   rules: computed(() => props.rules),
-  columns: computed(() => props.columns),
+  columns: computed(() => props.columns ?? []),
   visibleColumns,
   navigableColumns,
   data: displayData,
-  editable: computed(() => props.editable),
+  editable: computed(() => props.editable ?? false),
   activeRowIndex,
   activeColIndex,
   navigate,
@@ -431,7 +425,6 @@ const getElTable = () => tableRef.value;
 defineExpose({
   getElTable,
 
-  // 导航
   navigate,
   focusCell,
   getColIndexByProp,
@@ -441,20 +434,17 @@ defineExpose({
   activeRow,
   activeColumn,
 
-  // 编辑
   editMode,
   isEditing,
   startEdit: startEditWithFocus,
   confirmEdit: commitEdit,
   cancelEdit,
 
-  // 校验
   validate,
   validateField,
   clearValidation,
   scrollToFirstError,
 
-  // 行操作（索引即 data 数组下标）
   insertRow,
   deleteRow,
   moveRow,
@@ -467,20 +457,17 @@ defineExpose({
   isCellDirty,
   isRowDirty,
 
-  // 列操作
   toggleColumn: columnOptions.toggleColumn,
   reorderColumns: columnOptions.reorderColumns,
   setColumnWidth: columnOptions.setColumnWidth,
   resetColumns: columnOptions.resetColumns,
 
-  // 编辑历史（undo/redo 执行后同步 dirty 标识）
   undo,
   redo,
   canUndo,
   canRedo,
   clearHistory,
 
-  // el-table 原生方法透传
   clearSelection: () => getElTable()?.clearSelection(),
   getSelectionRows: () => getElTable()?.getSelectionRows(),
   toggleRowSelection: (...args: any[]) =>
@@ -534,7 +521,9 @@ defineExpose({
             :key="(column as any).key ?? column.prop ?? column.type ?? idx"
           >
             <el-table-column
-              v-if="[SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)"
+              v-if="
+                [SELECTION_COLUMN, INDEX_COLUMN].includes(column.type as any)
+              "
               v-bind="column"
             />
 
@@ -548,11 +537,7 @@ defineExpose({
             </el-table-column>
 
             <plus-table-column v-else :item="column">
-              <template
-                v-for="(_, name) in $slots"
-                :key="name"
-                #[name]="scope"
-              >
+              <template v-for="(_, name) in $slots" :key="name" #[name]="scope">
                 <slot :name="name" v-bind="scope ?? {}" />
               </template>
             </plus-table-column>

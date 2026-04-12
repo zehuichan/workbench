@@ -13,3 +13,4 @@ export type {
   RowData,
 } from './types'
 export { PLUS_TABLE_INJECTION_KEY } from './constants'
+export { usePlusTableContext } from './composables'

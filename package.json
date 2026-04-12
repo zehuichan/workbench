@@ -22,7 +22,7 @@
     "dayjs": "^1.11.20",
     "element-plus": "^2.13.6",
     "es-toolkit": "^1.45.1",
-    "hucre": "^0.2.0",
+    "hucre": "^0.3.0",
     "lucide-vue-next": "^1.0.0",
     "reka-ui": "^2.9.2",
     "stk-table-vue": "^0.11.6",

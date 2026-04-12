@@ -76,22 +76,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Setting } from '@element-plus/icons-vue';
 
-import { PLUS_TABLE_INJECTION_KEY } from '../constants';
 import {
   collectLeafNodes,
   collectAllNodes,
   extractTopLevelIds,
 } from '../utils/column-utils';
 import type { ColumnSettingNode } from '../utils/column-utils';
+import { usePlusTableContext } from '../composables';
 
 defineOptions({
   name: 'PlusTableColumnSetting',
 });
 
-const ctx = inject(PLUS_TABLE_INJECTION_KEY)!;
+const ctx = usePlusTableContext();
 
 const show = ref(false);
 
