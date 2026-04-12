@@ -22,8 +22,8 @@ export interface UseEditActionsOptions {
 export function useEditActions(options: UseEditActionsOptions) {
   const {
     confirmEdit,
-    undo,
-    redo,
+    undo: revertHistory,
+    redo: reapplyHistory,
     markDirty,
     pushChange,
     onFieldChange,
@@ -31,10 +31,15 @@ export function useEditActions(options: UseEditActionsOptions) {
     validateFieldsAffectedByChange,
   } = options
 
-  function confirmEditWithHistory(): EditChangeRecord[] | null {
+  function commitEdit(): EditChangeRecord[] | null {
     const changes = confirmEdit()
-    if (changes && validateOnCellExit.value) {
-      for (const c of changes) {
+    if (!changes) return null
+
+    pushChange(changes)
+    for (const c of changes) {
+      markDirty(c.rowIndex, c.colProp)
+      onFieldChange(c.rowIndex, c.colProp)
+      if (validateOnCellExit.value) {
         validateFieldsAffectedByChange(c.rowIndex, c.colProp).catch((e) => {
           if (import.meta.env.DEV) {
             console.warn('[PlusTable] validateFieldsAffectedByChange failed:', e)
@@ -42,35 +47,26 @@ export function useEditActions(options: UseEditActionsOptions) {
         })
       }
     }
-    if (changes) {
-      for (const c of changes) {
-        markDirty(c.rowIndex, c.colProp)
-      }
-      pushChange(changes)
-      for (const c of changes) {
-        onFieldChange(c.rowIndex, c.colProp)
-      }
-    }
     return changes
   }
 
-  function wrappedUndo(): void {
-    const reverted = undo()
+  function undo(): void {
+    const reverted = revertHistory()
     if (reverted) {
       reverted.forEach((c) => markDirty(c.rowIndex, c.colProp))
     }
   }
 
-  function wrappedRedo(): void {
-    const redone = redo()
+  function redo(): void {
+    const redone = reapplyHistory()
     if (redone) {
       redone.forEach((c) => markDirty(c.rowIndex, c.colProp))
     }
   }
 
   return {
-    confirmEditWithHistory,
-    wrappedUndo,
-    wrappedRedo,
+    commitEdit,
+    undo,
+    redo,
   }
 }

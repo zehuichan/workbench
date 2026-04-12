@@ -241,7 +241,7 @@ const {
 
 // ──── 编辑历史 ────
 
-const { canUndo, canRedo, pushChange, undo, redo, clearHistory } =
+const { canUndo, canRedo, pushChange, undo: historyUndo, redo: historyRedo, clearHistory } =
   useEditHistory({
     data: displayData,
   });
@@ -262,10 +262,10 @@ const {
   isRowDirty,
 });
 
-const { confirmEditWithHistory, wrappedUndo, wrappedRedo } = useEditActions({
+const { commitEdit, undo, redo } = useEditActions({
   confirmEdit,
-  undo,
-  redo,
+  undo: historyUndo,
+  redo: historyRedo,
   markDirty,
   pushChange,
   onFieldChange,
@@ -290,14 +290,14 @@ function onCellClick(
   if (isEditing.value && prevRow >= 0) {
     if (editMode.value === 'row') {
       if (activeRowIndex.value !== prevRow) {
-        confirmEditWithHistory();
+        commitEdit();
       }
     } else {
       if (
         activeRowIndex.value !== prevRow ||
         activeColIndex.value !== prevCol
       ) {
-        confirmEditWithHistory();
+        commitEdit();
       }
     }
   }
@@ -365,12 +365,12 @@ useHotkey({
   isEditing,
   editingRowIndex,
   startEdit: startEditWithFocus,
-  confirmEdit: confirmEditWithHistory,
+  confirmEdit: commitEdit,
   cancelEdit,
   updateCellValue: updateEditingValue,
   isCellEditable,
-  undo: wrappedUndo,
-  redo: wrappedRedo,
+  undo,
+  redo,
   canUndo,
   canRedo,
 });
@@ -397,7 +397,7 @@ provide<PlusTableContext>(PLUS_TABLE_INJECTION_KEY, {
   isEditingCell,
   isCellEditable,
   startEdit: startEditWithFocus,
-  confirmEdit: confirmEditWithHistory,
+  confirmEdit: commitEdit,
   cancelEdit,
   updateEditingValue,
   getEditingValue,
@@ -445,7 +445,7 @@ defineExpose({
   editMode,
   isEditing,
   startEdit: startEditWithFocus,
-  confirmEdit: confirmEditWithHistory,
+  confirmEdit: commitEdit,
   cancelEdit,
 
   // 校验
@@ -455,11 +455,10 @@ defineExpose({
   scrollToFirstError,
 
   // 行操作（索引即 data 数组下标）
-  insertRow: (index?: number, defaultRow?: RowData, count?: number) =>
-    insertRow(index, defaultRow, count),
-  deleteRow: (localIndex?: number | number[]) => deleteRow(localIndex),
-  moveRow: (from: number, to: number) => moveRow(from, to),
-  duplicateRow: (localIndex?: number | number[]) => duplicateRow(localIndex),
+  insertRow,
+  deleteRow,
+  moveRow,
+  duplicateRow,
   getModifiedRows,
   markDirty,
   clearDirty,
@@ -474,9 +473,9 @@ defineExpose({
   setColumnWidth: columnOptions.setColumnWidth,
   resetColumns: columnOptions.resetColumns,
 
-  // 编辑历史（undo/redo 已包装：执行后同步 dirty 标识）
-  undo: wrappedUndo,
-  redo: wrappedRedo,
+  // 编辑历史（undo/redo 执行后同步 dirty 标识）
+  undo,
+  redo,
   canUndo,
   canRedo,
   clearHistory,

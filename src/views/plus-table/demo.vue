@@ -105,7 +105,7 @@ const pageSize = ref(10);
 const loading = ref(false);
 const total = computed(() => tableData.value.length);
 
-function fetchPage() {
+function simulateLoading() {
   loading.value = true;
   setTimeout(() => {
     loading.value = false;
@@ -115,11 +115,11 @@ function fetchPage() {
 function handlePagination(payload: { currentPage: number; pageSize: number }) {
   currentPage.value = payload.currentPage;
   pageSize.value = payload.pageSize;
-  fetchPage();
+  simulateLoading();
 }
 
 onMounted(() => {
-  fetchPage();
+  simulateLoading();
 });
 
 // ──── 列配置（含 dependencies）────
@@ -355,12 +355,8 @@ function onValueChange(payload: {
   editLog.value = `值变更：行 ${payload.rowIndex + 1} / ${payload.column.prop}："${payload.oldValue}" → "${payload.newValue}"`;
 }
 
-function handleRowEditName(rowIndex: number) {
-  tableRef.value?.focusAndEditByProp?.(rowIndex, 'name');
-}
-
-function handleRowEditRemark(rowIndex: number) {
-  tableRef.value?.focusAndEditByProp?.(rowIndex, 'remark');
+function editField(rowIndex: number, prop: string) {
+  tableRef.value?.focusAndEditByProp?.(rowIndex, prop);
 }
 
 // ──── 行操作 ────
@@ -599,7 +595,7 @@ const modifiedRowCount = computed(() => {
             link
             type="primary"
             size="small"
-            @click.stop="handleRowEditName($index)"
+            @click.stop="editField($index, 'name')"
           >
             编辑名称
           </el-button>
@@ -607,7 +603,7 @@ const modifiedRowCount = computed(() => {
             link
             type="primary"
             size="small"
-            @click.stop="handleRowEditRemark($index)"
+            @click.stop="editField($index, 'remark')"
           >
             编辑备注
           </el-button>

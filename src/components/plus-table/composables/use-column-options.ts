@@ -151,7 +151,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     }
   }
 
-  const isColumnHidden = (column: PlusTableColumn): boolean => {
+  const shouldHideColumn = (column: PlusTableColumn): boolean => {
     if (column.prop && hiddenColumns.value.has(column.prop)) return true;
     return column.hidden === true;
   };
@@ -178,7 +178,7 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     const cols = initialColumns.value;
     const topLevelOrder = getEffectiveOrder(cols, columnOrder.value);
     const ordered = applyTopLevelOrder(cols, topLevelOrder);
-    const filtered = filterColumnsTree(ordered, (col) => isColumnHidden(col));
+    const filtered = filterColumnsTree(ordered, shouldHideColumn);
     const widths = columnWidths.value;
     return filtered.map((col) => {
       if (!col.prop || widths[col.prop] == null) return col;
@@ -267,26 +267,18 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
   /** 获取所有有 prop 的列（含隐藏、含多级表头子列），按顺序，供列设置面板使用 */
   function getOrderedColumnsWithProp(): PlusTableColumn<RowData>[] {
     const flat = flattenColumnsWithProp(initialColumns.value);
-    const props =
-      columnOrder.value.length > 0
-        ? columnOrder.value
-        : (flat.map((c) => c.prop).filter(Boolean) as string[]);
-    const colMap = new Map<string, PlusTableColumn>();
-    for (const col of flat) {
-      if (col.prop) colMap.set(col.prop, col);
-    }
-    const result: PlusTableColumn<RowData>[] = [];
-    for (const p of props) {
-      const col = colMap.get(p);
+    if (!columnOrder.value.length) return flat;
+
+    const colMap = new Map(flat.filter(c => c.prop).map(c => [c.prop!, c]));
+    const ordered: PlusTableColumn<RowData>[] = [];
+    for (const prop of columnOrder.value) {
+      const col = colMap.get(prop);
       if (col) {
-        result.push(col);
-        colMap.delete(p);
+        ordered.push(col);
+        colMap.delete(prop);
       }
     }
-    for (const col of colMap.values()) {
-      result.push(col);
-    }
-    return result;
+    return [...ordered, ...colMap.values()];
   }
 
   loadFromStorage();

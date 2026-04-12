@@ -42,12 +42,11 @@ export function useRowOptions(options: UseRowOptionsOptions) {
   }
 
   function deleteRow(rowIndex?: number | number[]): void {
-    const updated = rowIndex == null ? [] : castArray(rowIndex);
-    const indices = updated.filter(i => i >= 0 && i < data.value.length);
-    if (!indices.length) return;
-    const indexSet = new Set(indices);
-    const list = data.value.filter((_, i) => !indexSet.has(i));
-    onDataChange(list);
+    const targets = rowIndex == null ? [] : castArray(rowIndex);
+    const valid = targets.filter(i => i >= 0 && i < data.value.length);
+    if (!valid.length) return;
+    const indexSet = new Set(valid);
+    onDataChange(data.value.filter((_, i) => !indexSet.has(i)));
   }
 
   function moveRow(fromIndex: number, toIndex: number): void {
@@ -71,16 +70,15 @@ export function useRowOptions(options: UseRowOptionsOptions) {
   }
 
   function duplicateRow(rowIndex?: number | number[]): void {
-    const updated = rowIndex == null ? [] : castArray(rowIndex);
-    const sorted = [...new Set(updated)]
+    const targets = rowIndex == null ? [] : castArray(rowIndex);
+    const sorted = [...new Set(targets)]
       .filter((i): i is number => i >= 0 && i < (data.value.length ?? 0))
       .sort((a, b) => a - b);
     if (!sorted.length) return;
     const list = [...data.value];
     let offset = 0;
     for (const idx of sorted) {
-      const insertAt = idx + 1 + offset;
-      list.splice(insertAt, 0, structuredClone(data.value[idx]));
+      list.splice(idx + 1 + offset, 0, structuredClone(data.value[idx]));
       offset++;
     }
     onDataChange(list);

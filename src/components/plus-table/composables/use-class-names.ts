@@ -30,7 +30,7 @@ export function useClassNames(options: UseClassNamesOptions) {
     isRowDirty,
   } = options
 
-  function getCellClassNameCombined(payload: {
+  function resolveCellClassName(payload: {
     row: RowData
     column: any
     rowIndex: number
@@ -50,7 +50,7 @@ export function useClassNames(options: UseClassNamesOptions) {
     return classes.join(' ')
   }
 
-  function getRowClassNameCombined(payload: {
+  function resolveRowClassName(payload: {
     row: RowData
     rowIndex: number
   }): string {
@@ -67,11 +67,11 @@ export function useClassNames(options: UseClassNamesOptions) {
   const classNameDeps = computed(() => [activeRowIndex.value, activeColIndex.value, dirtyCells.value])
 
   const rowClassNameBinding = computed(() =>
-    classNameDeps.value && rowActive.value ? getRowClassNameCombined : undefined,
+    classNameDeps.value && rowActive.value ? resolveRowClassName : undefined,
   )
 
   const cellClassNameBinding = computed(() =>
-    classNameDeps.value && cellActive.value ? getCellClassNameCombined : undefined,
+    classNameDeps.value && cellActive.value ? resolveCellClassName : undefined,
   )
 
   return {
