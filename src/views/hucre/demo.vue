@@ -4,9 +4,12 @@ import { ElMessage } from 'element-plus';
 import {
   writeXlsx,
   readXlsx,
+  openXlsx,
+  saveXlsx,
   WorkbookBuilder,
   parseCsv,
   writeCsv,
+  writeTsv,
   toHtml,
   toMarkdown,
   toJson,
@@ -14,10 +17,19 @@ import {
   parseCellRef,
   cellRef,
   colToLetter,
+  letterToCol,
   rangeRef,
+  parseRange,
+  isInRange,
   serialToDate,
   dateToSerial,
+  serialToTime,
+  timeToSerial,
+  parseDate,
   validateWithSchema,
+  fillTemplate,
+  sheetToObjects,
+  sheetToArrays,
 } from 'hucre';
 
 interface Product {
@@ -39,7 +51,7 @@ const sampleProducts: Product[] = [
 ];
 
 const tableData = ref<Product[]>([...sampleProducts]);
-const exportFormat = ref<'xlsx' | 'csv'>('xlsx');
+const exportFormat = ref<'xlsx' | 'csv' | 'tsv'>('xlsx');
 const importMode = ref<'file' | 'csv-text'>('file');
 const csvInput = ref(`Name,Price,Stock\nWidget,9.99,142\nGadget,24.50,87`);
 const exportLog = ref('—');
@@ -291,9 +303,15 @@ async function handleExport() {
         ['名称', '分类', '价格', '库存', '状态', '日期'],
         ...tableData.value.map((p) => [p.name, p.category, p.price, p.stock, p.active, p.date]),
       ];
-      const csv = writeCsv(rows as (string | number | boolean)[][], { bom: true });
-      downloadBlob(new TextEncoder().encode(csv), 'hucre-demo.csv', 'text/csv;charset=utf-8');
-      exportLog.value = `导出 CSV：${tableData.value.length} 行`;
+      if (exportFormat.value === 'tsv') {
+        const tsv = writeTsv(rows as (string | number | boolean)[][], { bom: true });
+        downloadBlob(new TextEncoder().encode(tsv), 'hucre-demo.tsv', 'text/tab-separated-values;charset=utf-8');
+        exportLog.value = `导出 TSV：${tableData.value.length} 行`;
+      } else {
+        const csv = writeCsv(rows as (string | number | boolean)[][], { bom: true });
+        downloadBlob(new TextEncoder().encode(csv), 'hucre-demo.csv', 'text/csv;charset=utf-8');
+        exportLog.value = `导出 CSV：${tableData.value.length} 行`;
+      }
     }
 
     ElMessage.success('导出成功');
@@ -379,13 +397,26 @@ const cellRefInput = ref('C15');
 const cellRefParsed = computed(() => {
   try {
     const r = parseCellRef(cellRefInput.value);
-    return `row: ${r.row}, col: ${r.col}  →  colToLetter: ${colToLetter(r.col)}  →  cellRef: ${cellRef(r.row, r.col)}`;
+    return `row: ${r.row}, col: ${r.col}  →  colToLetter: ${colToLetter(r.col)}  →  letterToCol("${colToLetter(r.col)}"): ${letterToCol(colToLetter(r.col))}  →  cellRef: ${cellRef(r.row, r.col)}`;
   } catch {
     return '无效引用';
   }
 });
 
 const rangeResult = computed(() => rangeRef(0, 0, 9, 3));
+
+const rangeParseInput = ref('B2:E10');
+const rangeParsed = computed(() => {
+  try {
+    const r = parseRange(rangeParseInput.value);
+    const sample = { row: r.startRow, col: r.startCol };
+    const inside = isInRange(sample.row, sample.col, r);
+    const outside = isInRange(r.endRow + 1, r.endCol + 1, r);
+    return `startRow: ${r.startRow}, startCol: ${r.startCol}, endRow: ${r.endRow}, endCol: ${r.endCol}  |  isInRange(${sample.row},${sample.col}): ${inside}  |  isInRange(${r.endRow + 1},${r.endCol + 1}): ${outside}`;
+  } catch {
+    return '无效范围';
+  }
+});
 
 const serialInput = ref(45307);
 const serialDateResult = computed(() => {
@@ -396,6 +427,93 @@ const serialDateResult = computed(() => {
     return '无效序列号';
   }
 });
+
+const timeSerialInput = ref(0.75);
+const timeSerialResult = computed(() => {
+  try {
+    const t = serialToTime(timeSerialInput.value);
+    return `${String(t.hours).padStart(2, '0')}:${String(t.minutes).padStart(2, '0')}:${String(t.seconds).padStart(2, '0')}  (timeToSerial → ${timeToSerial(t.hours, t.minutes, t.seconds)})`;
+  } catch {
+    return '无效时间序列';
+  }
+});
+
+const parseDateInput = ref('2026-04-12');
+const parseDateResult = computed(() => {
+  try {
+    const d = parseDate(parseDateInput.value);
+    return d ? `${d.toISOString().slice(0, 10)}  (dateToSerial → ${dateToSerial(d)})` : '无法解析';
+  } catch {
+    return '解析失败';
+  }
+});
+
+// ── Template Engine ──
+
+const templateData = ref<Record<string, string | number>>({
+  company: 'Acme 科技',
+  date: '2026-04-12',
+  total: 12500,
+});
+
+const templateResult = ref('');
+
+async function runTemplateDemo() {
+  try {
+    const wb = await WorkbookBuilder.create()
+      .addSheet('Report')
+        .columns([
+          { header: '项目', width: 20 },
+          { header: '值', width: 20 },
+        ])
+        .rows([
+          ['公司', '{{company}}'],
+          ['日期', '{{date}}'],
+          ['总额', '{{total}}'],
+        ])
+      .done()
+      .build();
+
+    const rtWb = await openXlsx(wb);
+    const filled = fillTemplate(rtWb, templateData.value);
+
+    const rows = filled.sheets[0].rows;
+    const lines = rows.map((r) => r.map((c) => c ?? '').join(' → '));
+    templateResult.value = lines.join('\n');
+    ElMessage.success('模板填充完成');
+  } catch (e) {
+    templateResult.value = `模板错误：${(e as Error).message}`;
+  }
+}
+
+// ── Sheet Utils ──
+
+const sheetUtilResult = ref('');
+
+function runSheetUtilsDemo() {
+  const sheet = {
+    name: 'Demo',
+    rows: [
+      ['名称', '分类', '价格', '库存'],
+      ['Widget Pro', '配件', 29.99, 142],
+      ['Gadget X', '电子', 89.5, 67],
+      ['Bolt Set', '硬件', 5.25, 530],
+    ] as (string | number)[][],
+  };
+
+  const objects = sheetToObjects<{ 名称: string; 分类: string; 价格: number }>(sheet);
+  const arrays = sheetToArrays(sheet);
+
+  const lines = [
+    'sheetToObjects →',
+    JSON.stringify(objects, null, 2),
+    '',
+    'sheetToArrays →',
+    `headers: ${JSON.stringify(arrays.headers)}`,
+    `data: ${JSON.stringify(arrays.data)}`,
+  ];
+  sheetUtilResult.value = lines.join('\n');
+}
 
 // ── Schema Validation ──
 
@@ -469,13 +587,14 @@ function runValidation() {
     <!-- ── Export ── -->
     <el-card class="demo-section" shadow="never">
       <template #header>
-        <span class="demo-section__title">导出 (writeXlsx / writeCsv)</span>
+        <span class="demo-section__title">导出 (writeXlsx / writeCsv / writeTsv)</span>
       </template>
       <div class="demo-toolbar">
         <span class="label">格式</span>
         <el-radio-group v-model="exportFormat" size="small">
           <el-radio-button value="xlsx">XLSX</el-radio-button>
           <el-radio-button value="csv">CSV</el-radio-button>
+          <el-radio-button value="tsv">TSV</el-radio-button>
         </el-radio-group>
         <el-button size="small" type="primary" @click="handleExport">导出文件</el-button>
         <el-divider direction="vertical" />
@@ -603,6 +722,12 @@ function runValidation() {
         <span class="demo-util-result">→ {{ rangeResult }}</span>
       </div>
 
+      <div class="demo-util-row">
+        <span class="demo-util-label">parseRange</span>
+        <el-input v-model="rangeParseInput" size="small" placeholder="如 B2:E10" class="demo-util-input" style="width: 120px" />
+        <span class="demo-util-result">→ {{ rangeParsed }}</span>
+      </div>
+
       <el-divider />
 
       <div class="demo-util-row">
@@ -610,6 +735,48 @@ function runValidation() {
         <el-input-number v-model="serialInput" size="small" :controls="false" class="demo-util-input" />
         <span class="demo-util-result">→ {{ serialDateResult }}</span>
       </div>
+
+      <div class="demo-util-row">
+        <span class="demo-util-label">serialToTime</span>
+        <el-input-number v-model="timeSerialInput" size="small" :controls="false" :step="0.01" class="demo-util-input" />
+        <span class="demo-util-result">→ {{ timeSerialResult }}</span>
+      </div>
+
+      <div class="demo-util-row">
+        <span class="demo-util-label">parseDate</span>
+        <el-input v-model="parseDateInput" size="small" placeholder="日期字符串" class="demo-util-input" style="width: 160px" />
+        <span class="demo-util-result">→ {{ parseDateResult }}</span>
+      </div>
+    </el-card>
+
+    <!-- ── Template Engine ── -->
+    <el-card class="demo-section" shadow="never">
+      <template #header>
+        <span class="demo-section__title">模板引擎 (fillTemplate)</span>
+      </template>
+      <p class="demo-hint">在 XLSX 单元格中使用 <code v-pre>{{key}}</code> 占位符，用数据填充后导出：</p>
+      <div class="demo-template-fields">
+        <div v-for="(val, key) in templateData" :key="key" class="demo-util-row">
+          <span class="demo-util-label">{{ key }}</span>
+          <el-input v-model="templateData[key]" size="small" class="demo-util-input" />
+        </div>
+      </div>
+      <div class="demo-toolbar" style="margin-top: 12px">
+        <el-button size="small" type="primary" @click="runTemplateDemo">运行模板填充</el-button>
+      </div>
+      <pre v-if="templateResult" class="code-block" style="margin-top: 12px"><code>{{ templateResult }}</code></pre>
+    </el-card>
+
+    <!-- ── Sheet Utils ── -->
+    <el-card class="demo-section" shadow="never">
+      <template #header>
+        <span class="demo-section__title">Sheet 工具 (sheetToObjects / sheetToArrays)</span>
+      </template>
+      <p class="demo-hint">将 Sheet 数据转换为对象数组或带表头的二维数组：</p>
+      <div class="demo-toolbar">
+        <el-button size="small" type="primary" @click="runSheetUtilsDemo">运行转换</el-button>
+      </div>
+      <pre v-if="sheetUtilResult" class="code-block" style="margin-top: 12px"><code>{{ sheetUtilResult }}</code></pre>
     </el-card>
 
     <!-- ── Schema Validation ── -->
@@ -669,6 +836,22 @@ function runValidation() {
     color: var(--muted-foreground);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+}
+
+.demo-hint {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+
+  code {
+    padding: 2px 6px;
+    font-size: 12px;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 0;
+    color: var(--foreground);
   }
 }
 

@@ -25,6 +25,13 @@ const xlsxRows = [
   { name: 'saveXlsx(workbook)', ret: 'Promise<Uint8Array>', desc: '保存往返 Workbook 为 XLSX' },
   { name: 'streamXlsxRows(input, options?)', ret: 'AsyncGenerator<StreamRow>', desc: '逐行流式读取' },
   { name: 'XlsxStreamWriter', ret: 'class', desc: '逐行流式写入' },
+  { name: 'hashSheetPassword(password)', ret: 'number', desc: '生成 Sheet 保护的密码哈希' },
+];
+
+const odsRows = [
+  { name: 'readOds(input, options?)', ret: 'Promise<Workbook>', desc: '解析 ODS（OpenDocument 电子表格）' },
+  { name: 'writeOds(options)', ret: 'Promise<Uint8Array>', desc: '生成 ODS 文件' },
+  { name: 'streamOdsRows(input)', ret: 'AsyncGenerator<OdsStreamRow>', desc: '逐行流式读取 ODS' },
 ];
 
 const csvRows = [
@@ -32,28 +39,40 @@ const csvRows = [
   { name: 'parseCsvObjects(input, options?)', ret: '{ data, headers }', desc: '带表头解析为对象数组' },
   { name: 'writeCsv(rows, options?)', ret: 'string', desc: '二维数组 → CSV 字符串' },
   { name: 'writeCsvObjects(data, options?)', ret: 'string', desc: '对象数组 → CSV' },
+  { name: 'writeTsv(rows, options?)', ret: 'string', desc: '二维数组 → TSV 字符串（Tab 分隔）' },
+  { name: 'writeTsvObjects(data, options?)', ret: 'string', desc: '对象数组 → TSV' },
   { name: 'detectDelimiter(input)', ret: 'string', desc: '自动检测分隔符' },
   { name: 'streamCsvRows(input, options?)', ret: 'Generator', desc: '流式逐行读取 CSV' },
+  { name: 'CsvStreamWriter', ret: 'class', desc: '增量流式写入 CSV' },
   { name: 'fetchCsv(url, options?)', ret: 'Promise', desc: '从 URL 获取并解析 CSV' },
+  { name: 'formatCsvValue(value)', ret: 'string', desc: '将单个值格式化为 CSV 安全字符串' },
+  { name: 'stripBom(input)', ret: 'string', desc: '移除字符串开头的 BOM 标记' },
 ];
 
 const exportRows = [
-  { name: 'toHtml(sheet, options?)', ret: 'string', desc: 'HTML <table>，支持样式和无障碍' },
-  { name: 'toMarkdown(sheet, options?)', ret: 'string', desc: 'Markdown 表格，自动对齐' },
-  { name: 'toJson(sheet, options?)', ret: 'object', desc: 'JSON（objects / arrays / columns 格式）' },
-  { name: 'fromHtml(html, options?)', ret: 'Sheet', desc: '解析 HTML table → Sheet' },
+  { name: 'toHtml(sheet, options?)', ret: 'string', desc: 'HTML <table>，支持样式、无障碍、caption' },
+  { name: 'toMarkdown(sheet, options?)', ret: 'string', desc: 'Markdown 表格，自动对齐，支持截断' },
+  { name: 'toJson(sheet, options?)', ret: 'string', desc: 'JSON（objects / arrays / columns 格式）' },
+  { name: 'fromHtml(html, options?)', ret: 'Sheet', desc: '解析 HTML table → Sheet（支持 colspan/rowspan）' },
 ];
 
 const sheetOpsRows = [
-  { name: 'insertRows(sheet, index, count)', desc: '插入行' },
-  { name: 'deleteRows(sheet, index, count)', desc: '删除行' },
-  { name: 'insertColumns(sheet, index, count)', desc: '插入列' },
-  { name: 'deleteColumns(sheet, index, count)', desc: '删除列' },
-  { name: 'moveRows(sheet, from, count, to)', desc: '移动行' },
-  { name: 'cloneSheet(sheet, name)', desc: '深拷贝 sheet' },
-  { name: 'sortRows(sheet, col, order?)', desc: '按列排序' },
-  { name: 'findCells(sheet, predicate)', desc: '查找单元格' },
-  { name: 'replaceCells(sheet, find, replace)', desc: '查找替换' },
+  { name: 'insertRows(sheet, index, count)', desc: '插入行，自动更新合并、验证、条件规则等' },
+  { name: 'deleteRows(sheet, index, count)', desc: '删除行，调整部分重叠的合并区域' },
+  { name: 'insertColumns(sheet, index, count)', desc: '插入列，自动更新相关引用' },
+  { name: 'deleteColumns(sheet, index, count)', desc: '删除列，自动更新相关引用' },
+  { name: 'moveRows(sheet, from, count, to)', desc: '移动行到指定位置' },
+  { name: 'hideRows(sheet, start, count, hidden?)', desc: '隐藏/取消隐藏行' },
+  { name: 'hideColumns(sheet, start, count, hidden?)', desc: '隐藏/取消隐藏列' },
+  { name: 'groupRows(sheet, start, end, level?)', desc: '设置行大纲级别（分组）' },
+  { name: 'cloneSheet(sheet, name)', desc: '深拷贝 sheet（数据、样式、合并等）' },
+  { name: 'copySheetToWorkbook(sheet, wb, name?)', desc: '复制 sheet 到另一个 workbook' },
+  { name: 'copyRange(sheet, source, target)', desc: '在同一 sheet 内复制单元格范围' },
+  { name: 'moveSheet(wb, from, to)', desc: '调整 sheet 顺序' },
+  { name: 'removeSheet(wb, index)', desc: '从 workbook 移除 sheet' },
+  { name: 'sortRows(sheet, col, order?)', desc: '按列排序（null 排在最后）' },
+  { name: 'findCells(sheet, predicate)', desc: '按值或函数查找单元格' },
+  { name: 'replaceCells(sheet, find, replace)', desc: '查找替换（支持 RegExp）' },
 ];
 
 const utilRows = [
@@ -61,12 +80,32 @@ const utilRows = [
   { name: 'validateWithSchema(rows, schema, options?)', desc: '按 schema 校验和类型转换' },
   { name: 'serialToDate(serial, is1904?)', desc: 'Excel 序列号 → Date (UTC)' },
   { name: 'dateToSerial(date, is1904?)', desc: 'Date → Excel 序列号' },
+  { name: 'serialToTime(serial)', desc: '序列号小数部分 → { hours, minutes, seconds, milliseconds }' },
+  { name: 'timeToSerial(h, m, s?, ms?)', desc: '时间分量 → Excel 序列号小数' },
+  { name: 'parseDate(value)', desc: '解析日期字符串 → Date（支持 ISO 8601 及常见格式）' },
   { name: 'isDateFormat(numFmt)', desc: '判断格式串是否为日期格式' },
   { name: 'formatDate(date, format)', desc: '按 Excel 格式串格式化日期' },
   { name: 'parseCellRef(ref)', desc: '"AA15" → { row: 14, col: 26 }' },
   { name: 'cellRef(row, col)', desc: '(14, 26) → "AA15"' },
   { name: 'colToLetter(col)', desc: '26 → "AA"' },
+  { name: 'letterToCol(letter)', desc: '"AA" → 26（colToLetter 的逆操作）' },
   { name: 'rangeRef(r1, c1, r2, c2)', desc: '(0,0,9,3) → "A1:D10"' },
+  { name: 'parseRange(range)', desc: '"A1:D10" → { startRow, startCol, endRow, endCol }' },
+  { name: 'isInRange(row, col, range)', desc: '判断单元格是否在范围内' },
+  { name: 'r1c1ToA1(formula, row, col)', desc: 'R1C1 引用 → A1 引用' },
+  { name: 'a1ToR1C1(formula, row?, col?)', desc: 'A1 引用 → R1C1 引用' },
+  { name: 'measureValueWidth(value, numFmt?)', desc: '计算单元格值的显示宽度' },
+  { name: 'calculateColumnWidth(values, options?)', desc: '计算最优列宽（字体感知）' },
+  { name: 'calculateRowHeight(values, options?)', desc: '计算最优行高（文本换行感知）' },
+  { name: 'imageFromBase64(base64, type, anchor)', desc: '从 Base64 创建 SheetImage' },
+  { name: 'sheetToObjects(sheet, options?)', desc: 'Sheet → 对象数组（首行为表头）' },
+  { name: 'sheetToArrays(sheet)', desc: 'Sheet → { headers, data }' },
+];
+
+const workerRows = [
+  { name: 'serializeWorkbook(wb)', ret: 'SerializedWorkbook', desc: '序列化 Workbook 以便 postMessage 传输' },
+  { name: 'deserializeWorkbook(data)', ret: 'Workbook', desc: '反序列化还原 Workbook' },
+  { name: 'WORKER_SAFE_FUNCTIONS', ret: 'string[]', desc: '所有可在 Web Worker 中安全调用的函数列表' },
 ];
 
 const writeSheetFields = [
@@ -120,10 +159,10 @@ const treeShaking = `// XLSX only (~14 KB gzipped)
 import { readXlsx, writeXlsx } from 'hucre/xlsx';
 
 // CSV only (~2 KB gzipped)
-import { parseCsv, writeCsv } from 'hucre/csv';
+import { parseCsv, writeCsv, writeTsv } from 'hucre/csv';
 
 // ODS only
-import { readOds, writeOds } from 'hucre/ods';
+import { readOds, writeOds, streamOdsRows } from 'hucre/ods';
 
 // 统一 API（自动检测格式）
 import { read, write, readObjects, writeObjects } from 'hucre';`;
@@ -167,20 +206,66 @@ const workbook = await openXlsx(buffer);
 workbook.sheets[0].rows[0][0] = 'Updated!';
 const output = await saveXlsx(workbook);`;
 
+const templateExample = `import { openXlsx, saveXlsx, fillTemplate } from 'hucre';
+
+// 打开包含 {{占位符}} 的模板
+const workbook = await openXlsx(templateBuffer);
+
+// 用数据填充占位符
+const filled = fillTemplate(workbook, {
+  company: 'Acme 科技',
+  total: 12500,
+  date: new Date('2026-04-12'),
+});
+
+// 保存填充后的文件
+const output = await saveXlsx(filled);`;
+
+const workerExample = `import { serializeWorkbook, deserializeWorkbook } from 'hucre';
+
+// 主线程 → Worker：序列化以便 postMessage 传输
+const serialized = serializeWorkbook(workbook);
+worker.postMessage(serialized);
+
+// Worker → 主线程：反序列化还原
+worker.onmessage = (e) => {
+  const wb = deserializeWorkbook(e.data);
+  console.log(wb.sheets[0].rows);
+};`;
+
+const odsExample = `import { readOds, writeOds, streamOdsRows } from 'hucre/ods';
+
+// 读取 ODS
+const wb = await readOds(buffer);
+console.log(wb.sheets[0].rows);
+
+// 写入 ODS
+const ods = await writeOds({
+  sheets: [{ name: 'Sheet1', rows: [['Hello', 42]] }],
+});
+
+// 流式逐行读取
+for await (const row of streamOdsRows(buffer)) {
+  console.log(row.index, row.values);
+}`;
+
 const tocItems = [
   { id: 'quick-start', label: '快速开始' },
   { id: 'tree-shaking', label: 'Tree Shaking' },
   { id: 'highlevel-api', label: '高级 API' },
   { id: 'xlsx-api', label: 'XLSX' },
+  { id: 'ods-api', label: 'ODS' },
   { id: 'csv-api', label: 'CSV' },
   { id: 'export-api', label: '导出' },
   { id: 'write-sheet', label: 'WriteSheet 配置' },
   { id: 'builder-api', label: 'Builder API' },
+  { id: 'template-api', label: '模板引擎' },
   { id: 'streaming', label: '流式处理' },
   { id: 'roundtrip', label: '往返保存' },
   { id: 'sheet-ops', label: 'Sheet 操作' },
   { id: 'utils', label: '工具函数' },
   { id: 'schema', label: 'Schema 校验' },
+  { id: 'worker-api', label: 'Web Worker' },
   { id: 'platform', label: '平台支持' },
 ] as const;
 
@@ -222,11 +307,11 @@ function scrollToDocSection(sectionId: string) {
     <header class="page-hero">
       <h1 class="page-hero__title">hucre</h1>
       <p class="page-hero__lead">
-        零依赖电子表格引擎。读写 XLSX、CSV、ODS，支持 Schema 校验、流式处理、Tree Shaking。纯 TypeScript，全平台运行。
+        零依赖电子表格引擎。读写 XLSX、CSV、ODS，支持模板引擎、Schema 校验、流式处理、往返保存、Web Worker、Tree Shaking。纯 TypeScript，全平台运行。
       </p>
       <p class="page-hero__hint">
         安装：<code>npm install hucre</code>　|　仓库：<a href="https://github.com/productdevbook/hucre" target="_blank" rel="noopener">github.com/productdevbook/hucre</a>
-        　|　体积：~18 KB gzipped，零依赖
+        　|　体积：~37 KB gzipped，零依赖
       </p>
     </header>
 
@@ -277,6 +362,22 @@ function scrollToDocSection(sectionId: string) {
           <el-table-column prop="ret" label="返回值" width="200" />
           <el-table-column prop="desc" label="说明" min-width="260" />
         </el-table>
+      </CardContent>
+    </Card>
+
+    <!-- ODS API -->
+    <Card id="ods-api" class="doc-section rounded-sm">
+      <CardHeader class="doc-section__header">
+        <CardTitle class="card-title">ODS</CardTitle>
+      </CardHeader>
+      <CardContent class="doc-section__body">
+        <p class="muted">OpenDocument 电子表格格式（LibreOffice / OpenOffice）：</p>
+        <el-table :data="odsRows" border stripe size="small" class="doc-table">
+          <el-table-column prop="name" label="函数" min-width="280" />
+          <el-table-column prop="ret" label="返回值" width="220" />
+          <el-table-column prop="desc" label="说明" min-width="260" />
+        </el-table>
+        <pre class="code-block" style="margin-top: 16px"><code>{{ odsExample }}</code></pre>
       </CardContent>
     </Card>
 
@@ -336,6 +437,20 @@ function scrollToDocSection(sectionId: string) {
       <CardContent class="doc-section__body">
         <p class="muted">链式调用，流畅构建 Workbook：</p>
         <pre class="code-block"><code>{{ builderExample }}</code></pre>
+      </CardContent>
+    </Card>
+
+    <!-- Template Engine -->
+    <Card id="template-api" class="doc-section rounded-sm">
+      <CardHeader class="doc-section__header">
+        <CardTitle class="card-title">模板引擎</CardTitle>
+      </CardHeader>
+      <CardContent class="doc-section__body">
+        <p class="muted">
+          在 XLSX 中使用 <code v-pre>{{key}}</code> 占位符，用 <code>fillTemplate</code> 将数据填入模板。
+          当单元格仅包含单个占位符且替换值为非字符串类型时，保留原始类型：
+        </p>
+        <pre class="code-block"><code>{{ templateExample }}</code></pre>
       </CardContent>
     </Card>
 
@@ -401,6 +516,24 @@ function scrollToDocSection(sectionId: string) {
           <el-table-column prop="type" label="类型" min-width="300" />
           <el-table-column prop="desc" label="说明" min-width="240" />
         </el-table>
+      </CardContent>
+    </Card>
+
+    <!-- Web Worker -->
+    <Card id="worker-api" class="doc-section rounded-sm">
+      <CardHeader class="doc-section__header">
+        <CardTitle class="card-title">Web Worker</CardTitle>
+      </CardHeader>
+      <CardContent class="doc-section__body">
+        <p class="muted">
+          hucre 所有核心函数均可在 Web Worker 中安全运行。序列化辅助函数可用于跨线程传输 Workbook：
+        </p>
+        <el-table :data="workerRows" border stripe size="small" class="doc-table">
+          <el-table-column prop="name" label="函数" min-width="280" />
+          <el-table-column prop="ret" label="返回值" width="200" />
+          <el-table-column prop="desc" label="说明" min-width="280" />
+        </el-table>
+        <pre class="code-block" style="margin-top: 16px"><code>{{ workerExample }}</code></pre>
       </CardContent>
     </Card>
 
