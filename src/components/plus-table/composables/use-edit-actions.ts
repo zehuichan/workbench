@@ -1,6 +1,6 @@
 import type { Ref } from 'vue'
 
-import type { EditChangeRecord } from './use-editable'
+import type { EditChangeRecord } from '.'
 
 type HistoryEntry = EditChangeRecord[]
 

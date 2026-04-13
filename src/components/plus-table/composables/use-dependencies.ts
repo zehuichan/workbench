@@ -7,7 +7,7 @@ import type {
   PlusTableColumn,
   RowData,
 } from '../types';
-import { flattenColumnsWithProp } from '../utils/column-utils';
+import { flattenColumnsWithProp } from '../utils';
 
 export interface UseDependenciesOptions {
   columns: Ref<PlusTableColumn[]>;

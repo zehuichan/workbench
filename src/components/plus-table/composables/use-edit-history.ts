@@ -1,7 +1,7 @@
 import { computed, ref, type Ref } from 'vue'
 
 import type { RowData } from '../types'
-import type { EditChangeRecord } from './use-editable'
+import type { EditChangeRecord } from '.'
 
 /** 一次编辑操作（cell 模式单条，row 模式多条作为原子操作） */
 type HistoryEntry = EditChangeRecord[]

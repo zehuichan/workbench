@@ -4,7 +4,7 @@ import { computed, ref, watch } from 'vue';
 import { useDebounceFn } from '@vueuse/core';
 
 import type { PlusTableColumn, RowData } from '../types';
-import type { ColumnSettingNode } from '../utils/column-utils';
+import type { ColumnSettingNode } from '../utils';
 import {
   collectLeafProps,
   flattenColumnsWithProp,
@@ -13,7 +13,7 @@ import {
   getSpecialColumnIds,
   applyTopLevelOrder,
   getColumnId,
-} from '../utils/column-utils';
+} from '../utils';
 
 function getEffectiveOrder(cols: PlusTableColumn[], order: string[]): string[] {
   return order.length > 0 ? order : getTopLevelIds(cols);

@@ -1,7 +1,7 @@
 import { computed, nextTick, ref, type Ref } from 'vue'
 
 import type { PlusTableColumn, RowData } from '../types'
-import { flattenColumnsWithProp, isSpecialColumn } from '../utils/column-utils'
+import { flattenColumnsWithProp, isSpecialColumn } from '../utils'
 
 export interface UseNavigationOptions {
   data: Ref<RowData[]>

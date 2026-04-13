@@ -3,7 +3,7 @@ import { computed, ref, type Ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
 
 import type { HotkeyBinding, HotkeyContext, PlusTableColumn, RowData } from '../types'
-import type { EditMode } from './use-editable'
+import type { EditMode } from '.'
 import { createEditorFocuser, isPrintableKey, matchesHotkey } from '../utils'
 
 export interface UseHotkeyOptions {

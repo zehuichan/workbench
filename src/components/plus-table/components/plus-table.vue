@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, provide, ref, toRef, useSlots, watch } from 'vue';
 
-import type { AdaptiveConfig, PlusTableContext, PlusTableProps, RowData } from '../types';
-import type { EditCellPayload, EditValueChangePayload } from '../composables';
+import type {
+  AdaptiveConfig,
+  PlusTableContext,
+  PlusTableProps,
+  RowData,
+} from '../types';
 import {
   EXPAND_COLUMN,
   INDEX_COLUMN,
@@ -11,6 +15,8 @@ import {
 } from '../constants';
 import { createEditorFocuser } from '../utils';
 import {
+  type EditCellPayload,
+  type EditValueChangePayload,
   useAdaptive,
   useClassNames,
   useColumnOptions,
@@ -69,7 +75,7 @@ const wrapperEl = ref<HTMLElement | null>(null);
 const tableRef = ref<Record<string, any> | null>(null);
 
 const hasHeaderContent = computed(
-  () => !!props.columnSetting || !!slots.title || !!slots.actions,
+  () => !!slots.title || !!slots.actions,
 );
 
 const hasFooterContent = computed(
@@ -91,6 +97,10 @@ function handleSizeChange(size: number): void {
   emit('update:pageSize', size);
   emit('pagination', { currentPage: props.currentPage ?? 1, pageSize: size });
 }
+
+// ──── Column Setting ────
+
+const columnSettingRef = ref<InstanceType<typeof PlusTableColumnSetting> | null>(null);
 
 // ──── Column Options ────
 
@@ -342,6 +352,12 @@ function onHeaderDragEnd(
   columnOptions.setColumnWidth(column.property, newWidth);
 }
 
+function onHeaderContextmenu(column: any, event: MouseEvent): void {
+  if (!props.columnSetting) return;
+  event.preventDefault();
+  columnSettingRef.value?.openContextMenu(event, column);
+}
+
 // ──── Hotkey ────
 
 useHotkey({
@@ -495,7 +511,6 @@ defineExpose({
       <slot name="title" />
       <div>
         <slot name="actions" />
-        <plus-table-column-setting v-if="columnSetting" />
       </div>
     </div>
     <el-table
@@ -513,6 +528,7 @@ defineExpose({
       @cell-click="onCellClick"
       @cell-dblclick="onCellDblClick"
       @header-dragend="onHeaderDragEnd"
+      @header-contextmenu="onHeaderContextmenu"
     >
       <template #default>
         <slot>
@@ -571,5 +587,6 @@ defineExpose({
         />
       </slot>
     </div>
+    <plus-table-column-setting v-if="columnSetting" ref="columnSettingRef" />
   </div>
 </template>

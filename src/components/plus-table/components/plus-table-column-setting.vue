@@ -1,11 +1,26 @@
 <template>
-  <el-button
-    :icon="Setting"
-    circle
-    title="列设置"
-    class="column-setting-trigger"
-    @click="show = true"
-  />
+  <el-dropdown
+    ref="dropdownRef"
+    :virtual-ref="triggerRef"
+    :show-arrow="false"
+    :popper-options="{
+      modifiers: [{ name: 'offset', options: { offset: [0, 0] } }],
+    }"
+    virtual-triggering
+    trigger="contextmenu"
+    placement="bottom-start"
+    @command="handleDropdownCommand"
+  >
+    <template #dropdown>
+      <el-dropdown-menu style="min-width: 120px">
+        <el-dropdown-item command="setting">设置</el-dropdown-item>
+        <el-dropdown-item command="hide" :disabled="!contextColumn?.property">
+          隐藏
+        </el-dropdown-item>
+      </el-dropdown-menu>
+    </template>
+  </el-dropdown>
+
   <el-drawer
     v-model="show"
     title="列设置"
@@ -77,15 +92,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Setting } from '@element-plus/icons-vue';
 
 import {
   collectLeafNodes,
   collectAllNodes,
   extractTopLevelIds,
-} from '../utils/column-utils';
-import type { ColumnSettingNode } from '../utils/column-utils';
-import { usePlusTableContext } from '../composables';
+} from '../utils';
+import type { ColumnSettingNode } from '../utils';
+import { useDropdownMenu, usePlusTableContext } from '../composables';
 
 defineOptions({
   name: 'PlusTableColumnSetting',
@@ -94,6 +108,8 @@ defineOptions({
 const ctx = usePlusTableContext();
 
 const show = ref(false);
+const contextColumn = ref<any>(null);
+const { dropdownRef, triggerRef, open: openDropdown } = useDropdownMenu();
 
 const columnOptions = computed(() => ctx.columnOptions ?? null);
 
@@ -180,13 +196,25 @@ function handleNodeDrop(): void {
   const ids = extractTopLevelIds(treeData.value);
   columnOptions.value?.setColumnOrderByIds(ids);
 }
+
+function openContextMenu(event: MouseEvent, column: any) {
+  contextColumn.value = column;
+  openDropdown(event);
+}
+
+function handleDropdownCommand(command: string) {
+  if (command === 'setting') {
+    show.value = true;
+  } else if (command === 'hide') {
+    const prop = contextColumn.value?.property;
+    if (prop) columnOptions.value?.toggleColumn(prop, false);
+  }
+}
+
+defineExpose({ openContextMenu });
 </script>
 
 <style lang="scss">
-.column-setting-trigger {
-  cursor: pointer;
-}
-
 .plus-table-column-setting-drawer {
   .el-drawer__header {
     padding: 12px 16px;

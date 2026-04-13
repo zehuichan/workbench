@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
 import type { RuleItem } from 'async-validator';
 
-import type { ColumnSettingNode } from '../utils/column-utils';
+import type { ColumnSettingNode } from '../utils';
 import type {
   DependencyState,
   PlusTableColumn,
