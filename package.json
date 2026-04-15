@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@shikijs/langs": "4.0.2",
+    "@shikijs/themes": "4.0.2",
     "@vue/shared": "^3.5.30",
     "@vueuse/core": "^14.2.1",
     "ant-design-vue": "^4.2.6",
@@ -23,6 +25,7 @@
     "es-toolkit": "^1.45.1",
     "hucre": "^0.3.0",
     "lucide-vue-next": "^1.0.0",
+    "shiki": "^4.0.2",
     "stk-table-vue": "^0.11.6",
     "tailwind-merge": "^3.5.0",
     "vue": "^3.5.30",

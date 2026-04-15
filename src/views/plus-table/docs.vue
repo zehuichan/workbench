@@ -2,6 +2,7 @@
 import { inject } from 'vue';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
+import CodeBlock from '@/components/code-block.vue';
 import { LAYOUT_RIGHT_PANEL } from '@/layouts/injection-keys';
 
 const rightPanelMount = inject(LAYOUT_RIGHT_PANEL);
@@ -266,7 +267,7 @@ function onDocAnchorClick(e: MouseEvent) {
         <CardTitle class="card-title">快速开始</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
-        <pre class="code-block"><code>{{ quickStart }}</code></pre>
+        <CodeBlock :code="quickStart" />
       </CardContent>
     </Card>
 
@@ -420,7 +421,7 @@ function onDocAnchorClick(e: MouseEvent) {
           <code>rowIndex</code
           >、<code>row</code>、<code>column</code>、<code>getFieldValue</code>、<code>setFieldValue</code>。
         </p>
-        <pre class="code-block"><code>{{ depsExample }}</code></pre>
+        <CodeBlock :code="depsExample" />
       </CardContent>
     </Card>
 
@@ -605,7 +606,7 @@ function onDocAnchorClick(e: MouseEvent) {
         <CardTitle class="card-title">类型导出</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
-        <pre class="code-block"><code>{{ typesImport }}</code></pre>
+        <CodeBlock :code="typesImport" />
       </CardContent>
     </Card>
 
@@ -675,25 +676,6 @@ function onDocAnchorClick(e: MouseEvent) {
 
 .doc-table {
   width: 100%;
-}
-
-.code-block {
-  margin: 0;
-  padding: 16px 20px;
-  font-size: 12px;
-  line-height: 1.6;
-  overflow-x: auto;
-  color: var(--foreground);
-  background: var(--muted);
-  border-radius: 0;
-  border: 1px solid var(--separator);
-
-  code {
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-      'Courier New', monospace;
-    white-space: pre;
-  }
 }
 
 .bullet-list {

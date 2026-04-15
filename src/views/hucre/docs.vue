@@ -2,6 +2,7 @@
 import { inject } from 'vue';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
+import CodeBlock from '@/components/code-block.vue';
 import { LAYOUT_RIGHT_PANEL } from '@/layouts/injection-keys';
 
 const rightPanelMount = inject(LAYOUT_RIGHT_PANEL);
@@ -510,7 +511,7 @@ function onDocAnchorClick(e: MouseEvent) {
         <CardTitle class="card-title">快速开始</CardTitle>
       </CardHeader>
       <CardContent class="doc-section__body">
-        <pre class="code-block"><code>{{ quickStart }}</code></pre>
+        <CodeBlock :code="quickStart" />
       </CardContent>
     </Card>
 
@@ -521,7 +522,7 @@ function onDocAnchorClick(e: MouseEvent) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <p class="muted">按需导入，只引入需要的格式模块：</p>
-        <pre class="code-block"><code>{{ treeShaking }}</code></pre>
+        <CodeBlock :code="treeShaking" />
       </CardContent>
     </Card>
 
@@ -574,10 +575,7 @@ function onDocAnchorClick(e: MouseEvent) {
           <el-table-column prop="ret" label="返回值" width="220" />
           <el-table-column prop="desc" label="说明" min-width="260" />
         </el-table>
-        <pre
-          class="code-block"
-          style="margin-top: 16px"
-        ><code>{{ odsExample }}</code></pre>
+        <CodeBlock :code="odsExample" style="margin-top: 16px" />
       </CardContent>
     </Card>
 
@@ -649,7 +647,7 @@ function onDocAnchorClick(e: MouseEvent) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <p class="muted">链式调用，流畅构建 Workbook：</p>
-        <pre class="code-block"><code>{{ builderExample }}</code></pre>
+        <CodeBlock :code="builderExample" />
       </CardContent>
     </Card>
 
@@ -664,7 +662,7 @@ function onDocAnchorClick(e: MouseEvent) {
           <code>fillTemplate</code> 将数据填入模板。
           当单元格仅包含单个占位符且替换值为非字符串类型时，保留原始类型：
         </p>
-        <pre class="code-block"><code>{{ templateExample }}</code></pre>
+        <CodeBlock :code="templateExample" />
       </CardContent>
     </Card>
 
@@ -675,7 +673,7 @@ function onDocAnchorClick(e: MouseEvent) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <p class="muted">逐行处理大文件，无需全量加载到内存：</p>
-        <pre class="code-block"><code>{{ streamExample }}</code></pre>
+        <CodeBlock :code="streamExample" />
       </CardContent>
     </Card>
 
@@ -688,7 +686,7 @@ function onDocAnchorClick(e: MouseEvent) {
         <p class="muted">
           打开 → 修改 → 保存，保留图表、VBA、主题等 hucre 未原生处理的部分：
         </p>
-        <pre class="code-block"><code>{{ roundtripExample }}</code></pre>
+        <CodeBlock :code="roundtripExample" />
       </CardContent>
     </Card>
 
@@ -769,10 +767,7 @@ function onDocAnchorClick(e: MouseEvent) {
           <el-table-column prop="ret" label="返回值" width="200" />
           <el-table-column prop="desc" label="说明" min-width="280" />
         </el-table>
-        <pre
-          class="code-block"
-          style="margin-top: 16px"
-        ><code>{{ workerExample }}</code></pre>
+        <CodeBlock :code="workerExample" style="margin-top: 16px" />
       </CardContent>
     </Card>
 
@@ -864,25 +859,6 @@ function onDocAnchorClick(e: MouseEvent) {
 
 .doc-table {
   width: 100%;
-}
-
-.code-block {
-  margin: 0;
-  padding: 16px 20px;
-  font-size: 12px;
-  line-height: 1.6;
-  overflow-x: auto;
-  color: var(--foreground);
-  background: var(--muted);
-  border-radius: 0;
-  border: 1px solid var(--separator);
-
-  code {
-    font-family:
-      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-      'Courier New', monospace;
-    white-space: pre;
-  }
 }
 
 .bullet-list {
