@@ -1,0 +1,101 @@
+import{B as e,I as t,Q as n,R as r,_ as i,a,d as o,f as s,g as c,ht as l,i as u,p as d,u as f,v as p,w as m,y as h}from"./runtime-core.esm-bundler-DAHneJiJ.js";import{t as g}from"./injection-keys-vtq1A2qT.js";import{t as _}from"./_plugin-vue_export-helper-TcpyXLsZ.js";import{a as v,i as y,n as b,r as x,t as S}from"./code-block--4NcE8rz.js";var C={class:`doc-anchor-wrap`,"aria-label":`本页目录`},w={class:`docs-footer`},T=`import { readXlsx, writeXlsx } from 'hucre';
+
+// 读取 XLSX
+const workbook = await readXlsx(buffer);
+console.log(workbook.sheets[0].rows);
+
+// 写入 XLSX
+const xlsx = await writeXlsx({
+  sheets: [{
+    name: 'Products',
+    columns: [
+      { header: 'Name', key: 'name', width: 25 },
+      { header: 'Price', key: 'price', width: 12, numFmt: '$#,##0.00' },
+      { header: 'Stock', key: 'stock', width: 10 },
+    ],
+    data: [
+      { name: 'Widget', price: 9.99, stock: 142 },
+      { name: 'Gadget', price: 24.50, stock: 87 },
+    ],
+  }],
+});`,E=`// XLSX only (~14 KB gzipped)
+import { readXlsx, writeXlsx } from 'hucre/xlsx';
+
+// CSV only (~2 KB gzipped)
+import { parseCsv, writeCsv, writeTsv } from 'hucre/csv';
+
+// ODS only
+import { readOds, writeOds, streamOdsRows } from 'hucre/ods';
+
+// 统一 API（自动检测格式）
+import { read, write, readObjects, writeObjects } from 'hucre';`,D=`import { WorkbookBuilder } from 'hucre';
+
+const xlsx = await WorkbookBuilder.create()
+  .addSheet('Products')
+    .columns([
+      { header: 'Name', key: 'name', autoWidth: true },
+      { header: 'Price', key: 'price', numFmt: '$#,##0.00' },
+    ])
+    .row(['Widget', 9.99])
+    .row(['Gadget', 24.50])
+    .freeze(1)
+  .done()
+  .build();`,O=`import { streamXlsxRows, XlsxStreamWriter } from 'hucre/xlsx';
+
+// 流式读取 — AsyncGenerator 逐行产出
+for await (const row of streamXlsxRows(buffer)) {
+  console.log(row.index, row.values);
+}
+
+// 流式写入 — 增量添加行
+const writer = new XlsxStreamWriter({
+  name: 'BigData',
+  columns: [{ header: 'ID' }, { header: 'Value' }],
+  freezePane: { rows: 1 },
+});
+for (let i = 0; i < 100_000; i++) {
+  writer.addRow([i + 1, Math.random()]);
+}
+const buffer = await writer.finish();`,k=`import { openXlsx, saveXlsx } from 'hucre/xlsx';
+
+// 打开 → 修改 → 保存，不丢失图表、宏等
+const workbook = await openXlsx(buffer);
+workbook.sheets[0].rows[0][0] = 'Updated!';
+const output = await saveXlsx(workbook);`,A=`import { openXlsx, saveXlsx, fillTemplate } from 'hucre';
+
+// 打开包含 {{占位符}} 的模板
+const workbook = await openXlsx(templateBuffer);
+
+// 用数据填充占位符
+const filled = fillTemplate(workbook, {
+  company: 'Acme 科技',
+  total: 12500,
+  date: new Date('2026-04-12'),
+});
+
+// 保存填充后的文件
+const output = await saveXlsx(filled);`,j=`import { serializeWorkbook, deserializeWorkbook } from 'hucre';
+
+// 主线程 → Worker：序列化以便 postMessage 传输
+const serialized = serializeWorkbook(workbook);
+worker.postMessage(serialized);
+
+// Worker → 主线程：反序列化还原
+worker.onmessage = (e) => {
+  const wb = deserializeWorkbook(e.data);
+  console.log(wb.sheets[0].rows);
+};`,M=`import { readOds, writeOds, streamOdsRows } from 'hucre/ods';
+
+// 读取 ODS
+const wb = await readOds(buffer);
+console.log(wb.sheets[0].rows);
+
+// 写入 ODS
+const ods = await writeOds({
+  sheets: [{ name: 'Sheet1', rows: [['Hello', 42]] }],
+});
+
+// 流式逐行读取
+for await (const row of streamOdsRows(buffer)) {
+  console.log(row.index, row.values);
+}`,N=72,P=_(h({__name:`docs`,setup(h){let _=m(g),P=[{name:`read(input, options?)`,ret:`Promise<Workbook>`,desc:`自动检测格式（XLSX/ODS），返回 Workbook`},{name:`write(options)`,ret:`Promise<Uint8Array>`,desc:`写入 XLSX 或 ODS（通过 format 选项控制）`},{name:`readObjects(input, options?)`,ret:`Promise<T[]>`,desc:`文件 → 对象数组（首行为表头）`},{name:`writeObjects(data, options?)`,ret:`Promise<Uint8Array>`,desc:`对象数组 → XLSX/ODS`}],F=[{name:`readXlsx(input, options?)`,ret:`Promise<Workbook>`,desc:`解析 XLSX（Uint8Array | ArrayBuffer）`},{name:`writeXlsx(options)`,ret:`Promise<Uint8Array>`,desc:`生成 XLSX`},{name:`openXlsx(input, options?)`,ret:`Promise<RoundtripWorkbook>`,desc:`打开以进行往返修改（保留未知部分）`},{name:`saveXlsx(workbook)`,ret:`Promise<Uint8Array>`,desc:`保存往返 Workbook 为 XLSX`},{name:`streamXlsxRows(input, options?)`,ret:`AsyncGenerator<StreamRow>`,desc:`逐行流式读取`},{name:`XlsxStreamWriter`,ret:`class`,desc:`逐行流式写入`},{name:`hashSheetPassword(password)`,ret:`number`,desc:`生成 Sheet 保护的密码哈希`}],I=[{name:`readOds(input, options?)`,ret:`Promise<Workbook>`,desc:`解析 ODS（OpenDocument 电子表格）`},{name:`writeOds(options)`,ret:`Promise<Uint8Array>`,desc:`生成 ODS 文件`},{name:`streamOdsRows(input)`,ret:`AsyncGenerator<OdsStreamRow>`,desc:`逐行流式读取 ODS`}],L=[{name:`parseCsv(input, options?)`,ret:`CellValue[][]`,desc:`解析 CSV 字符串（RFC 4180）`},{name:`parseCsvObjects(input, options?)`,ret:`{ data, headers }`,desc:`带表头解析为对象数组`},{name:`writeCsv(rows, options?)`,ret:`string`,desc:`二维数组 → CSV 字符串`},{name:`writeCsvObjects(data, options?)`,ret:`string`,desc:`对象数组 → CSV`},{name:`writeTsv(rows, options?)`,ret:`string`,desc:`二维数组 → TSV 字符串（Tab 分隔）`},{name:`writeTsvObjects(data, options?)`,ret:`string`,desc:`对象数组 → TSV`},{name:`detectDelimiter(input)`,ret:`string`,desc:`自动检测分隔符`},{name:`streamCsvRows(input, options?)`,ret:`Generator`,desc:`流式逐行读取 CSV`},{name:`CsvStreamWriter`,ret:`class`,desc:`增量流式写入 CSV`},{name:`fetchCsv(url, options?)`,ret:`Promise`,desc:`从 URL 获取并解析 CSV`},{name:`formatCsvValue(value)`,ret:`string`,desc:`将单个值格式化为 CSV 安全字符串`},{name:`stripBom(input)`,ret:`string`,desc:`移除字符串开头的 BOM 标记`}],R=[{name:`toHtml(sheet, options?)`,ret:`string`,desc:`HTML <table>，支持样式、无障碍、caption`},{name:`toMarkdown(sheet, options?)`,ret:`string`,desc:`Markdown 表格，自动对齐，支持截断`},{name:`toJson(sheet, options?)`,ret:`string`,desc:`JSON（objects / arrays / columns 格式）`},{name:`fromHtml(html, options?)`,ret:`Sheet`,desc:`解析 HTML table → Sheet（支持 colspan/rowspan）`}],z=[{name:`insertRows(sheet, index, count)`,desc:`插入行，自动更新合并、验证、条件规则等`},{name:`deleteRows(sheet, index, count)`,desc:`删除行，调整部分重叠的合并区域`},{name:`insertColumns(sheet, index, count)`,desc:`插入列，自动更新相关引用`},{name:`deleteColumns(sheet, index, count)`,desc:`删除列，自动更新相关引用`},{name:`moveRows(sheet, from, count, to)`,desc:`移动行到指定位置`},{name:`hideRows(sheet, start, count, hidden?)`,desc:`隐藏/取消隐藏行`},{name:`hideColumns(sheet, start, count, hidden?)`,desc:`隐藏/取消隐藏列`},{name:`groupRows(sheet, start, end, level?)`,desc:`设置行大纲级别（分组）`},{name:`cloneSheet(sheet, name)`,desc:`深拷贝 sheet（数据、样式、合并等）`},{name:`copySheetToWorkbook(sheet, wb, name?)`,desc:`复制 sheet 到另一个 workbook`},{name:`copyRange(sheet, source, target)`,desc:`在同一 sheet 内复制单元格范围`},{name:`moveSheet(wb, from, to)`,desc:`调整 sheet 顺序`},{name:`removeSheet(wb, index)`,desc:`从 workbook 移除 sheet`},{name:`sortRows(sheet, col, order?)`,desc:`按列排序（null 排在最后）`},{name:`findCells(sheet, predicate)`,desc:`按值或函数查找单元格`},{name:`replaceCells(sheet, find, replace)`,desc:`查找替换（支持 RegExp）`}],B=[{name:`formatValue(value, numFmt, options?)`,desc:`应用 Excel 数字格式（支持 locale）`},{name:`validateWithSchema(rows, schema, options?)`,desc:`按 schema 校验和类型转换`},{name:`serialToDate(serial, is1904?)`,desc:`Excel 序列号 → Date (UTC)`},{name:`dateToSerial(date, is1904?)`,desc:`Date → Excel 序列号`},{name:`serialToTime(serial)`,desc:`序列号小数部分 → { hours, minutes, seconds, milliseconds }`},{name:`timeToSerial(h, m, s?, ms?)`,desc:`时间分量 → Excel 序列号小数`},{name:`parseDate(value)`,desc:`解析日期字符串 → Date（支持 ISO 8601 及常见格式）`},{name:`isDateFormat(numFmt)`,desc:`判断格式串是否为日期格式`},{name:`formatDate(date, format)`,desc:`按 Excel 格式串格式化日期`},{name:`parseCellRef(ref)`,desc:`"AA15" → { row: 14, col: 26 }`},{name:`cellRef(row, col)`,desc:`(14, 26) → "AA15"`},{name:`colToLetter(col)`,desc:`26 → "AA"`},{name:`letterToCol(letter)`,desc:`"AA" → 26（colToLetter 的逆操作）`},{name:`rangeRef(r1, c1, r2, c2)`,desc:`(0,0,9,3) → "A1:D10"`},{name:`parseRange(range)`,desc:`"A1:D10" → { startRow, startCol, endRow, endCol }`},{name:`isInRange(row, col, range)`,desc:`判断单元格是否在范围内`},{name:`r1c1ToA1(formula, row, col)`,desc:`R1C1 引用 → A1 引用`},{name:`a1ToR1C1(formula, row?, col?)`,desc:`A1 引用 → R1C1 引用`},{name:`measureValueWidth(value, numFmt?)`,desc:`计算单元格值的显示宽度`},{name:`calculateColumnWidth(values, options?)`,desc:`计算最优列宽（字体感知）`},{name:`calculateRowHeight(values, options?)`,desc:`计算最优行高（文本换行感知）`},{name:`imageFromBase64(base64, type, anchor)`,desc:`从 Base64 创建 SheetImage`},{name:`sheetToObjects(sheet, options?)`,desc:`Sheet → 对象数组（首行为表头）`},{name:`sheetToArrays(sheet)`,desc:`Sheet → { headers, data }`}],V=[{name:`serializeWorkbook(wb)`,ret:`SerializedWorkbook`,desc:`序列化 Workbook 以便 postMessage 传输`},{name:`deserializeWorkbook(data)`,ret:`Workbook`,desc:`反序列化还原 Workbook`},{name:`WORKER_SAFE_FUNCTIONS`,ret:`string[]`,desc:`所有可在 Web Worker 中安全调用的函数列表`}],H=[{name:`name`,type:`string`,desc:`Sheet 名称`},{name:`columns`,type:`ColumnDef[]`,desc:`列定义（header、key、width、numFmt、autoWidth 等）`},{name:`data`,type:`T[]`,desc:`对象数组数据（配合 columns.key 使用）`},{name:`rows`,type:`CellValue[][]`,desc:`二维数组数据（与 data 二选一）`},{name:`freezePane`,type:`{ rows?, columns? }`,desc:`冻结行/列`},{name:`autoFilter`,type:`{ range }`,desc:`自动筛选范围`},{name:`merges`,type:`MergeRange[]`,desc:`合并单元格`},{name:`dataValidations`,type:`DataValidation[]`,desc:`数据验证规则`},{name:`cells`,type:`Map<string, Cell>`,desc:`单元格级别覆盖（key 为 "row,col"）`},{name:`images`,type:`SheetImage[]`,desc:`插入图片（PNG/JPEG/GIF/SVG/WebP）`},{name:`protection`,type:`SheetProtection`,desc:`Sheet 保护`}],U=[{name:`type`,type:`"string" | "number" | "integer" | "boolean" | "date"`,desc:`目标类型（带自动转换）`},{name:`required`,type:`boolean`,desc:`拒绝 null/空值`},{name:`pattern`,type:`RegExp`,desc:`正则校验（字符串）`},{name:`min / max`,type:`number`,desc:`最小/最大值（数字）或长度（字符串）`},{name:`enum`,type:`unknown[]`,desc:`允许的值列表`},{name:`default`,type:`unknown`,desc:`null/空时的默认值`},{name:`validate`,type:`(v) => boolean | string`,desc:`自定义校验函数`},{name:`transform`,type:`(v) => unknown`,desc:`校验后转换`}],W=[{id:`quick-start`,label:`快速开始`},{id:`tree-shaking`,label:`Tree Shaking`},{id:`highlevel-api`,label:`高级 API`},{id:`xlsx-api`,label:`XLSX`},{id:`ods-api`,label:`ODS`},{id:`csv-api`,label:`CSV`},{id:`export-api`,label:`导出`},{id:`write-sheet`,label:`WriteSheet 配置`},{id:`builder-api`,label:`Builder API`},{id:`template-api`,label:`模板引擎`},{id:`streaming`,label:`流式处理`},{id:`roundtrip`,label:`往返保存`},{id:`sheet-ops`,label:`Sheet 操作`},{id:`utils`,label:`工具函数`},{id:`schema`,label:`Schema 校验`},{id:`worker-api`,label:`Web Worker`},{id:`platform`,label:`平台支持`}];function G(e){e.preventDefault()}return(m,h)=>{let g=e(`el-anchor-link`),K=e(`el-anchor`),q=e(`el-table-column`),J=e(`el-table`),Y=e(`router-link`);return t(),d(`div`,null,[l(_)?(t(),o(a,{key:0,to:l(_)},[f(`nav`,C,[h[0]||=f(`div`,{class:`doc-anchor-wrap__title`},`本页目录`,-1),p(K,{class:`doc-anchor`,container:`.lab__main`,offset:N,marker:!1,onClickCapture:G},{default:n(()=>[(t(),d(u,null,r(W,e=>p(g,{key:e.id,href:`#${e.id}`,title:e.label},null,8,[`href`,`title`])),64))]),_:1})])],8,[`to`])):s(``,!0),h[31]||=c(`<header class="page-hero" data-v-6db48efa><h1 class="page-hero__title" data-v-6db48efa>hucre</h1><p class="page-hero__lead" data-v-6db48efa> 零依赖电子表格引擎。读写 XLSX、CSV、ODS，支持模板引擎、Schema 校验、流式处理、往返保存、Web Worker、Tree Shaking。纯 TypeScript，全平台运行。 </p><p class="page-hero__hint" data-v-6db48efa> 安装：<code data-v-6db48efa>npm install hucre</code>　|　仓库：<a href="https://github.com/productdevbook/hucre" target="_blank" rel="noopener" data-v-6db48efa>github.com/productdevbook/hucre</a> 　|　体积：~37 KB gzipped，零依赖 </p></header>`,1),p(l(v),{id:`quick-start`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[1]||=[i(`快速开始`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[p(S,{code:T})]),_:1})]),_:1}),p(l(v),{id:`tree-shaking`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[2]||=[i(`Tree Shaking`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[3]||=f(`p`,{class:`muted`},`按需导入，只引入需要的格式模块：`,-1),p(S,{code:E})]),_:1})]),_:1}),p(l(v),{id:`highlevel-api`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[4]||=[i(`高级 API`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[5]||=f(`p`,{class:`muted`},`统一入口，自动检测格式：`,-1),p(J,{data:P,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`函数`,"min-width":`240`}),p(q,{prop:`ret`,label:`返回值`,width:`180`}),p(q,{prop:`desc`,label:`说明`,"min-width":`260`})]),_:1})]),_:1})]),_:1}),p(l(v),{id:`xlsx-api`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[6]||=[i(`XLSX`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[p(J,{data:F,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`函数`,"min-width":`280`}),p(q,{prop:`ret`,label:`返回值`,width:`200`}),p(q,{prop:`desc`,label:`说明`,"min-width":`260`})]),_:1})]),_:1})]),_:1}),p(l(v),{id:`ods-api`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[7]||=[i(`ODS`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[8]||=f(`p`,{class:`muted`},` OpenDocument 电子表格格式（LibreOffice / OpenOffice）： `,-1),p(J,{data:I,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`函数`,"min-width":`280`}),p(q,{prop:`ret`,label:`返回值`,width:`220`}),p(q,{prop:`desc`,label:`说明`,"min-width":`260`})]),_:1}),p(S,{code:M,style:{"margin-top":`16px`}})]),_:1})]),_:1}),p(l(v),{id:`csv-api`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[9]||=[i(`CSV`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[p(J,{data:L,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`函数`,"min-width":`280`}),p(q,{prop:`ret`,label:`返回值`,width:`180`}),p(q,{prop:`desc`,label:`说明`,"min-width":`260`})]),_:1})]),_:1})]),_:1}),p(l(v),{id:`export-api`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[10]||=[i(`导出`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[p(J,{data:R,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`函数`,"min-width":`260`}),p(q,{prop:`ret`,label:`返回值`,width:`120`}),p(q,{prop:`desc`,label:`说明`,"min-width":`280`})]),_:1})]),_:1})]),_:1}),p(l(v),{id:`write-sheet`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[11]||=[i(`WriteSheet 配置`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[12]||=f(`p`,{class:`muted`},[f(`code`,null,`writeXlsx`),i(` 的 `),f(`code`,null,`sheets`),i(` 数组每项支持以下字段： `)],-1),p(J,{data:H,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`字段`,width:`180`}),p(q,{prop:`type`,label:`类型`,"min-width":`200`}),p(q,{prop:`desc`,label:`说明`,"min-width":`300`})]),_:1}),h[13]||=f(`p`,{class:`muted`,style:{"margin-top":`14px`}},[i(` 还支持：`),f(`code`,null,`images`),i(`（图片插入）、`),f(`code`,null,`comments`),i(`（批注）、`),f(`code`,null,`conditionalFormatting`),i(`（条件格式）、`),f(`code`,null,`namedRanges`),i(`（命名范围）、`),f(`code`,null,`tables`),i(`（Excel 表格）、`),f(`code`,null,`sparklines`),i(`（迷你图）、`),f(`code`,null,`pageSetup`),i(`（打印设置）等。 `)],-1)]),_:1})]),_:1}),p(l(v),{id:`builder-api`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[14]||=[i(`Builder API`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[15]||=f(`p`,{class:`muted`},`链式调用，流畅构建 Workbook：`,-1),p(S,{code:D})]),_:1})]),_:1}),p(l(v),{id:`template-api`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[16]||=[i(`模板引擎`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[17]||=f(`p`,{class:`muted`},[i(` 在 XLSX 中使用 `),f(`code`,null,`{{ key }}`),i(` 占位符，用 `),f(`code`,null,`fillTemplate`),i(` 将数据填入模板。 当单元格仅包含单个占位符且替换值为非字符串类型时，保留原始类型： `)],-1),p(S,{code:A})]),_:1})]),_:1}),p(l(v),{id:`streaming`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[18]||=[i(`流式处理`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[19]||=f(`p`,{class:`muted`},`逐行处理大文件，无需全量加载到内存：`,-1),p(S,{code:O})]),_:1})]),_:1}),p(l(v),{id:`roundtrip`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[20]||=[i(`往返保存（Round-trip）`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[21]||=f(`p`,{class:`muted`},` 打开 → 修改 → 保存，保留图表、VBA、主题等 hucre 未原生处理的部分： `,-1),p(S,{code:k})]),_:1})]),_:1}),p(l(v),{id:`sheet-ops`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[22]||=[i(`Sheet 操作`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[p(J,{data:z,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`函数`,"min-width":`320`}),p(q,{prop:`desc`,label:`说明`,"min-width":`200`})]),_:1})]),_:1})]),_:1}),p(l(v),{id:`utils`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[23]||=[i(`工具函数`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[p(J,{data:B,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`函数`,"min-width":`320`}),p(q,{prop:`desc`,label:`说明`,"min-width":`280`})]),_:1})]),_:1})]),_:1}),p(l(v),{id:`schema`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[24]||=[i(`Schema 校验`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[25]||=f(`p`,{class:`muted`},[f(`code`,null,`validateWithSchema`),i(` 对导入的二维数组按 schema 进行类型转换、模式匹配和错误收集： `)],-1),p(J,{data:U,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`选项`,width:`160`}),p(q,{prop:`type`,label:`类型`,"min-width":`300`}),p(q,{prop:`desc`,label:`说明`,"min-width":`240`})]),_:1})]),_:1})]),_:1}),p(l(v),{id:`worker-api`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[26]||=[i(`Web Worker`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[h[27]||=f(`p`,{class:`muted`},` hucre 所有核心函数均可在 Web Worker 中安全运行。序列化辅助函数可用于跨线程传输 Workbook： `,-1),p(J,{data:V,border:``,stripe:``,size:`small`,class:`doc-table`},{default:n(()=>[p(q,{prop:`name`,label:`函数`,"min-width":`280`}),p(q,{prop:`ret`,label:`返回值`,width:`200`}),p(q,{prop:`desc`,label:`说明`,"min-width":`280`})]),_:1}),p(S,{code:j,style:{"margin-top":`16px`}})]),_:1})]),_:1}),p(l(v),{id:`platform`,class:`doc-section rounded-sm`},{default:n(()=>[p(l(x),{class:`doc-section__header`},{default:n(()=>[p(l(b),{class:`card-title`},{default:n(()=>[...h[28]||=[i(`平台支持`,-1)]]),_:1})]),_:1}),p(l(y),{class:`doc-section__body`},{default:n(()=>[...h[29]||=[f(`p`,{class:`muted`},` hucre 核心不依赖 Node.js API（fs、crypto、Buffer），全平台运行： `,-1),f(`ul`,{class:`bullet-list`},[f(`li`,null,`Node.js 18+ / Deno / Bun`),f(`li`,null,`现代浏览器（Chrome、Firefox、Safari、Edge）`),f(`li`,null,`Cloudflare Workers / Vercel Edge Functions`),f(`li`,null,`Web Workers`)],-1),f(`p`,{class:`muted`,style:{"margin-top":`14px`}},[i(` ZIP 引擎使用 `),f(`code`,null,`CompressionStream`),i(` / `),f(`code`,null,`DecompressionStream`),i(` Web API，带纯 TS 回退。 `)],-1)]]),_:1})]),_:1}),f(`footer`,w,[p(Y,{class:`cta`,to:{name:`hucre-demo`}},{default:n(()=>[...h[30]||=[i(` 打开交互示例 → `,-1)]]),_:1})])])}}}),[[`__scopeId`,`data-v-6db48efa`]]);export{P as default};
