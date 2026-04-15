@@ -6,8 +6,8 @@
 
 .page-hero__title {
   margin: 0 0 12px;
-  font-size: 30px;
-  font-weight: 400;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0;
   line-height: 1.2;
   color: var(--foreground);
@@ -15,7 +15,7 @@
 
 .page-hero__lead {
   margin: 0 0 10px;
-  font-size: 16px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--muted-foreground);
 
@@ -52,7 +52,7 @@
 
 .page-hero__hint {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.65;
   color: var(--muted-foreground);
 
@@ -82,6 +82,8 @@
     color: var(--muted-foreground);
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family:
+      'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      monospace;
   }
 }

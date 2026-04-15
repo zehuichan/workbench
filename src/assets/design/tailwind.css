@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @layer base {
   :root {
@@ -111,25 +111,69 @@
   --radius-lg: 4px;
   --radius-xl: 4px;
 
+  /* 全站正文字号 12px：统一 Tailwind 字号刻度 */
+  --text-xs: 12px;
+  --text-xs--line-height: calc(1.5 / 1);
+  --text-sm: 12px;
+  --text-sm--line-height: calc(1.5 / 1);
+  --text-base: 12px;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 12px;
+  --text-lg--line-height: calc(1.5 / 1);
+  --text-xl: 12px;
+  --text-xl--line-height: calc(1.5 / 1);
+  --text-2xl: 12px;
+  --text-2xl--line-height: calc(1.5 / 1);
+  --text-3xl: 12px;
+  --text-3xl--line-height: calc(1.5 / 1);
+  --text-4xl: 12px;
+  --text-4xl--line-height: calc(1.5 / 1);
+  --text-5xl: 12px;
+  --text-5xl--line-height: calc(1.5 / 1);
+  --text-6xl: 12px;
+  --text-6xl--line-height: calc(1.5 / 1);
+  --text-7xl: 12px;
+  --text-7xl--line-height: calc(1.5 / 1);
+  --text-8xl: 12px;
+  --text-8xl--line-height: calc(1.5 / 1);
+  --text-9xl: 12px;
+  --text-9xl--line-height: calc(1.5 / 1);
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.2s ease-out;
 
   @keyframes accordion-down {
-    from { height: 0; }
-    to { height: var(--reka-accordion-content-height); }
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--reka-accordion-content-height);
+    }
   }
   @keyframes accordion-up {
-    from { height: var(--reka-accordion-content-height); }
-    to { height: 0; }
+    from {
+      height: var(--reka-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
   }
   @keyframes collapsible-down {
-    from { height: 0; }
-    to { height: var(--reka-collapsible-content-height); }
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--reka-collapsible-content-height);
+    }
   }
   @keyframes collapsible-up {
-    from { height: var(--reka-collapsible-content-height); }
-    to { height: 0; }
+    from {
+      height: var(--reka-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
   }
 }

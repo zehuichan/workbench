@@ -9,7 +9,7 @@
 | 框架 | Vue 3（Composition API）、vue-router（Hash 路由） |
 | 构建 | Vite 8、@vitejs/plugin-vue / vue-jsx |
 | UI 基础 | Element Plus（表格与表单生态） |
-| 文档站壳层 | Tailwind CSS v4、shadcn-vue（Sidebar、Card 等）、lucide-vue-next、reka-ui |
+| 文档站壳层 | Tailwind CSS v4、Element Plus（布局/菜单）、Tailwind Card 文档块、lucide-vue-next |
 | 工具 | VueUse、async-validator、pnpm |
 
 ## PlusTable 能做什么
@@ -62,7 +62,7 @@ src/
   assets/design/     # 全局样式、Tailwind 主题变量
   components/
     plus-table/      # PlusTable 组件与类型导出
-    ui/              # shadcn-vue 风格 UI 片段
+    card/            # 文档用 Card（Tailwind）
   layouts/           # 文档/示例共用布局（侧栏、主内容、TOC 挂载等）
   router/            # 路由定义（Hash history）
   views/plus-table/  # 文档页、示例页

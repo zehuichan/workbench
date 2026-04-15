@@ -627,7 +627,7 @@ const modifiedRowCount = computed(() => {
   gap: 6px 4px;
   padding: 12px 16px;
   margin-bottom: 16px;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--muted-foreground);
   background: var(--card);
@@ -672,7 +672,7 @@ const modifiedRowCount = computed(() => {
   gap: 10px;
 
   &__title {
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: -0.2px;
     color: var(--foreground);
@@ -685,7 +685,7 @@ const modifiedRowCount = computed(() => {
 }
 
 .demo-table-summary {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted-foreground);
 }
 
@@ -718,7 +718,7 @@ const modifiedRowCount = computed(() => {
 .expand-content {
   padding: 12px 16px;
   line-height: 1.75;
-  font-size: 14px;
+  font-size: 12px;
   color: var(--muted-foreground);
   background: var(--muted);
   border: 1px solid var(--border);

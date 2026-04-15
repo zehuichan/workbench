@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue';
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/card';
 import { LAYOUT_RIGHT_PANEL } from '@/layouts/injection-keys';
 
 const rightPanelMount = inject(LAYOUT_RIGHT_PANEL);
@@ -226,52 +221,43 @@ const tocItems = [
   { id: 'types-export', label: '类型导出' },
 ] as const;
 
-/** 与 `.doc-section` 的 `scroll-margin-top` 一致 */
-const DOC_SCROLL_HEADER_OFFSET = 72;
+/** 与 `.doc-section` 的 `scroll-margin-top` 一致，传给 el-anchor 的 offset */
+const DOC_ANCHOR_OFFSET = 72;
 
-/** Hash 路由下 `href="#id"` 会覆盖 `#/path`，改为在主导航列内滚动 */
-function scrollToDocSection(sectionId: string) {
-  const target = document.getElementById(sectionId);
-  const container = document.querySelector('.lab__main') as HTMLElement | null
-    ?? document.querySelector('[data-slot="sidebar-inset"] .lab__main') as HTMLElement | null;
-  if (!target || !container) return;
-  const top =
-    target.getBoundingClientRect().top -
-    container.getBoundingClientRect().top +
-    container.scrollTop -
-    DOC_SCROLL_HEADER_OFFSET;
-  container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+/** Hash 路由下需阻止 `<a href="#id">` 的默认跳转，否则会冲掉 `#/path` */
+function onDocAnchorClick(e: MouseEvent) {
+  e.preventDefault();
 }
 </script>
 
 <template>
   <div>
     <Teleport v-if="rightPanelMount" :to="rightPanelMount">
-      <nav class="doc-toc" aria-label="本页目录">
-        <div class="doc-toc__title">本页目录</div>
-        <ul class="doc-toc__list">
-          <li v-for="item in tocItems" :key="item.id">
-            <a
-              class="doc-toc__link"
-              href="#"
-              @click.prevent="scrollToDocSection(item.id)"
-            >
-              {{ item.label }}
-            </a>
-          </li>
-        </ul>
+      <nav class="doc-anchor-wrap" aria-label="本页目录">
+        <div class="doc-anchor-wrap__title">本页目录</div>
+        <el-anchor
+          class="doc-anchor"
+          container=".lab__main"
+          :offset="DOC_ANCHOR_OFFSET"
+          :marker="false"
+          @click.capture="onDocAnchorClick"
+        >
+          <el-anchor-link
+            v-for="item in tocItems"
+            :key="item.id"
+            :href="`#${item.id}`"
+            :title="item.label"
+          />
+        </el-anchor>
       </nav>
     </Teleport>
 
     <header class="page-hero">
       <h1 class="page-hero__title">PlusTable</h1>
       <p class="page-hero__lead">
-        基于 Element Plus <code>el-table</code> 的增强表格：配置式列、可编辑单元格、键盘导航与热键、校验、行增删改与撤销重做、列设置持久化、单元格联动（dependencies）、脏数据追踪、分页与自适应高度。
-      </p>
-      <p class="page-hero__hint">
-        源码位于 <code>src/components/plus-table/</code>，按
-        <code>types/</code>、<code>composables/</code>、<code>components/</code>、<code>utils/</code>、<code>adapters/</code>
-        分模块组织。
+        基于 Element Plus
+        <code>el-table</code>
+        的增强表格：配置式列、可编辑单元格、键盘导航与热键、校验、行增删改与撤销重做、列设置持久化、单元格联动（dependencies）、脏数据追踪、分页与自适应高度。
       </p>
     </header>
 
@@ -293,7 +279,13 @@ function scrollToDocSection(sectionId: string) {
           未列出的属性通过 <code>v-bind="$attrs"</code> 传给
           <code>el-table</code>（如 <code>sort-change</code>）。
         </p>
-        <el-table :data="propsRows" border stripe size="small" class="doc-table">
+        <el-table
+          :data="propsRows"
+          border
+          stripe
+          size="small"
+          class="doc-table"
+        >
           <el-table-column prop="name" label="属性" width="200" />
           <el-table-column prop="type" label="类型" min-width="220" />
           <el-table-column prop="def" label="默认值" width="120" />
@@ -308,9 +300,16 @@ function scrollToDocSection(sectionId: string) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <p class="muted">
-          <code>el-table</code> 原生事件（如 <code>sort-change</code>）可直接监听。
+          <code>el-table</code> 原生事件（如
+          <code>sort-change</code>）可直接监听。
         </p>
-        <el-table :data="eventRows" border stripe size="small" class="doc-table">
+        <el-table
+          :data="eventRows"
+          border
+          stripe
+          size="small"
+          class="doc-table"
+        >
           <el-table-column prop="name" label="事件" width="200" />
           <el-table-column prop="payload" label="载荷" min-width="200" />
           <el-table-column prop="desc" label="说明" min-width="200" />
@@ -338,11 +337,13 @@ function scrollToDocSection(sectionId: string) {
         <ul class="bullet-list">
           <li><code>hidden</code>：列设置中可隐藏。</li>
           <li>
-            <code>editable</code>：是否可编辑，可为 <code>(row) =&gt; boolean</code>。
+            <code>editable</code>：是否可编辑，可为
+            <code>(row) =&gt; boolean</code>。
           </li>
           <li>
             <code>component</code>：编辑组件标识或组件，内置映射见
-            <code>adapters/index.ts</code>（input、input-number、select、date-picker、switch、time-picker、time-select）。
+            <code>adapters/index.ts</code
+            >（input、input-number、select、date-picker、switch、time-picker、time-select）。
           </li>
           <li>
             <code>componentProps</code>：编辑组件 props，或
@@ -358,12 +359,15 @@ function scrollToDocSection(sectionId: string) {
           </li>
           <li><code>formatter</code>：与 el-table-column 一致。</li>
           <li>
-            <code>renderHeader</code>：自定义表头（无 <code>header-${prop}</code> 插槽时）。
+            <code>renderHeader</code>：自定义表头（无
+            <code>header-${prop}</code> 插槽时）。
           </li>
           <li><code>dependencies</code>：单元格联动（见下节）。</li>
           <li><code>children</code>：多级表头。</li>
           <li>
-            特殊 <code>type</code>：<code>selection</code>、<code>index</code>、<code>expand</code>。
+            特殊
+            <code>type</code
+            >：<code>selection</code>、<code>index</code>、<code>expand</code>。
           </li>
         </ul>
       </CardContent>
@@ -378,24 +382,30 @@ function scrollToDocSection(sectionId: string) {
           <code>editable</code> prop 决定表格的编辑行为，支持 5 种模式：
         </p>
         <ul class="bullet-list">
+          <li><code>false</code>（默认）：只读模式，不可编辑。</li>
           <li>
-            <code>false</code>（默认）：只读模式，不可编辑。
+            <code>'cell'</code>：单元格模式，双击 / F2 /
+            可打印字符进入编辑，Enter 确认并下移，Esc 取消，Tab 横移并确认。
           </li>
           <li>
-            <code>'cell'</code>：单元格模式，双击 / F2 / 可打印字符进入编辑，Enter 确认并下移，Esc 取消，Tab 横移并确认。
+            <code>'row'</code>：行模式，同一行所有可编辑列同时进入编辑态；Tab
+            在行内循环而非确认；切换到其他行时整行确认。
           </li>
           <li>
-            <code>'row'</code>：行模式，同一行所有可编辑列同时进入编辑态；Tab 在行内循环而非确认；切换到其他行时整行确认。
+            <code>'manual'</code>：手动模式，需通过
+            <code>startEdit(rowIndex, colIndex)</code> 或
+            <code>focusAndEditByProp(rowIndex, prop)</code> 触发，不响应双击或
+            F2。
           </li>
           <li>
-            <code>'manual'</code>：手动模式，需通过 <code>startEdit(rowIndex, colIndex)</code> 或 <code>focusAndEditByProp(rowIndex, prop)</code> 触发，不响应双击或 F2。
-          </li>
-          <li>
-            <code>true</code>：全量模式（all），所有可编辑单元格始终展示编辑器，无需进入/退出编辑。方向键和 Tab 直接在编辑器间移动焦点。
+            <code>true</code
+            >：全量模式（all），所有可编辑单元格始终展示编辑器，无需进入/退出编辑。方向键和
+            Tab 直接在编辑器间移动焦点。
           </li>
         </ul>
         <p class="muted">
-          编辑支持 <strong>Ctrl+Z / Ctrl+Shift+Z</strong> 撤销重做（最多 50 步），undo/redo 后脏标记自动同步。
+          编辑支持 <strong>Ctrl+Z / Ctrl+Shift+Z</strong> 撤销重做（最多 50
+          步），undo/redo 后脏标记自动同步。
         </p>
       </CardContent>
     </Card>
@@ -406,7 +416,9 @@ function scrollToDocSection(sectionId: string) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <p class="muted">
-          <code>DependencyApi</code> 提供 <code>rowIndex</code>、<code>row</code>、<code>column</code>、<code>getFieldValue</code>、<code>setFieldValue</code>。
+          <code>DependencyApi</code> 提供
+          <code>rowIndex</code
+          >、<code>row</code>、<code>column</code>、<code>getFieldValue</code>、<code>setFieldValue</code>。
         </p>
         <pre class="code-block"><code>{{ depsExample }}</code></pre>
       </CardContent>
@@ -418,26 +430,34 @@ function scrollToDocSection(sectionId: string) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <p class="muted">
-          组件内部自动维护一份基线快照（data 首次非空值的深拷贝），编辑后通过对比判断哪些单元格被修改。脏单元格左上角显示红色三角角标（<code>plus-table-cell--dirty</code>），脏行加 <code>plus-table-row--dirty</code>。
+          组件内部自动维护一份基线快照（data
+          首次非空值的深拷贝），编辑后通过对比判断哪些单元格被修改。脏单元格左上角显示红色三角角标（<code>plus-table-cell--dirty</code>），脏行加
+          <code>plus-table-row--dirty</code>。
         </p>
         <ul class="bullet-list">
           <li>
-            <code>markDirty(rowIndex, prop)</code>：手动标记（通常由编辑系统自动调用）。
+            <code>markDirty(rowIndex, prop)</code
+            >：手动标记（通常由编辑系统自动调用）。
           </li>
           <li>
-            <code>clearDirty(rowIndex?, prop?)</code>：清除脏标记；无参清空全部，仅 rowIndex 清该行，rowIndex + prop 清单格。
+            <code>clearDirty(rowIndex?, prop?)</code
+            >：清除脏标记；无参清空全部，仅 rowIndex 清该行，rowIndex + prop
+            清单格。
           </li>
           <li>
-            <code>resetTracking()</code>：将当前 data 作为新基线，清空所有脏标记。
+            <code>resetTracking()</code>：将当前 data
+            作为新基线，清空所有脏标记。
           </li>
           <li>
             <code>getModifiedRows()</code>：返回至少有一个脏单元格的行数据数组。
           </li>
           <li>
-            <code>getDirtyCells()</code>：返回所有脏单元格 key 集合（格式 <code>rowIndex:prop</code>）。
+            <code>getDirtyCells()</code>：返回所有脏单元格 key 集合（格式
+            <code>rowIndex:prop</code>）。
           </li>
           <li>
-            <code>isCellDirty(rowIndex, prop)</code> / <code>isRowDirty(rowIndex)</code>：单格/行级查询。
+            <code>isCellDirty(rowIndex, prop)</code> /
+            <code>isRowDirty(rowIndex)</code>：单格/行级查询。
           </li>
         </ul>
       </CardContent>
@@ -449,17 +469,60 @@ function scrollToDocSection(sectionId: string) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <ul class="bullet-list">
-          <li><strong>导航</strong>：<code>navigate</code>、<code>focusCell</code>、<code>getColIndexByProp</code>、<code>focusAndEditByProp</code>、<code>activeRowIndex</code>、<code>activeColIndex</code>、<code>activeRow</code>、<code>activeColumn</code></li>
-          <li><strong>编辑</strong>：<code>startEdit</code>、<code>confirmEdit</code>、<code>cancelEdit</code>、<code>editMode</code>、<code>isEditing</code></li>
-          <li><strong>校验</strong>：<code>validate(rows?)</code>、<code>validateField(rowIndex, prop)</code>、<code>clearValidation(rowIndex?, prop?)</code>、<code>scrollToFirstError()</code></li>
-          <li><strong>行操作</strong>：<code>insertRow(index?, defaultRow?, count?)</code>、<code>deleteRow(index?)</code>、<code>moveRow(from, to)</code>、<code>duplicateRow(index?)</code></li>
-          <li><strong>脏数据</strong>：<code>markDirty</code>、<code>clearDirty</code>、<code>resetTracking</code>、<code>getModifiedRows</code>、<code>getDirtyCells</code>、<code>isCellDirty</code>、<code>isRowDirty</code></li>
-          <li><strong>撤销重做</strong>：<code>undo</code>、<code>redo</code>、<code>canUndo</code>、<code>canRedo</code>、<code>clearHistory</code></li>
-          <li><strong>列操作</strong>：<code>toggleColumn</code>、<code>reorderColumns</code>、<code>setColumnWidth</code>、<code>resetColumns</code></li>
-          <li><strong>el-table 透传</strong>：<code>getElTable</code>、<code>clearSelection</code>、<code>getSelectionRows</code>、<code>toggleRowSelection</code>、<code>toggleAllSelection</code>、<code>doLayout</code>、<code>sort</code>、<code>scrollTo</code> 等</li>
+          <li>
+            <strong>导航</strong
+            >：<code>navigate</code>、<code>focusCell</code>、<code>getColIndexByProp</code>、<code>focusAndEditByProp</code>、<code>activeRowIndex</code>、<code>activeColIndex</code>、<code>activeRow</code>、<code
+              >activeColumn</code
+            >
+          </li>
+          <li>
+            <strong>编辑</strong
+            >：<code>startEdit</code>、<code>confirmEdit</code>、<code>cancelEdit</code>、<code>editMode</code>、<code
+              >isEditing</code
+            >
+          </li>
+          <li>
+            <strong>校验</strong>：<code>validate(rows?)</code>、<code
+              >validateField(rowIndex, prop)</code
+            >、<code>clearValidation(rowIndex?, prop?)</code>、<code
+              >scrollToFirstError()</code
+            >
+          </li>
+          <li>
+            <strong>行操作</strong>：<code
+              >insertRow(index?, defaultRow?, count?)</code
+            >、<code>deleteRow(index?)</code>、<code>moveRow(from, to)</code
+            >、<code>duplicateRow(index?)</code>
+          </li>
+          <li>
+            <strong>脏数据</strong
+            >：<code>markDirty</code>、<code>clearDirty</code>、<code>resetTracking</code>、<code>getModifiedRows</code>、<code>getDirtyCells</code>、<code>isCellDirty</code>、<code
+              >isRowDirty</code
+            >
+          </li>
+          <li>
+            <strong>撤销重做</strong
+            >：<code>undo</code>、<code>redo</code>、<code>canUndo</code>、<code>canRedo</code>、<code
+              >clearHistory</code
+            >
+          </li>
+          <li>
+            <strong>列操作</strong
+            >：<code>toggleColumn</code>、<code>reorderColumns</code>、<code>setColumnWidth</code>、<code
+              >resetColumns</code
+            >
+          </li>
+          <li>
+            <strong>el-table 透传</strong
+            >：<code>getElTable</code>、<code>clearSelection</code>、<code>getSelectionRows</code>、<code>toggleRowSelection</code>、<code>toggleAllSelection</code>、<code>doLayout</code>、<code>sort</code>、<code
+              >scrollTo</code
+            >
+            等
+          </li>
         </ul>
         <p class="muted">
-          行操作下标均为<strong>当前 data 数组下标</strong>（与服务端分页时「仅含当前页数据」一致）。
+          行操作下标均为<strong>当前 data 数组下标</strong
+          >（与服务端分页时「仅含当前页数据」一致）。
         </p>
       </CardContent>
     </Card>
@@ -473,15 +536,19 @@ function scrollToDocSection(sectionId: string) {
         <ul class="bullet-list">
           <li><strong>方向键</strong>：移动激活单元格。</li>
           <li>
-            <strong>Tab / Shift+Tab</strong>：横向移动；编辑中在 row 模式下行内循环。
+            <strong>Tab / Shift+Tab</strong>：横向移动；编辑中在 row
+            模式下行内循环。
+          </li>
+          <li><strong>Enter / Esc</strong>：进入编辑或换行；取消编辑。</li>
+          <li>
+            <strong>Home / End</strong>：行首或行尾格；<strong
+              >Ctrl+Home / Ctrl+End</strong
+            >：全表首尾。
           </li>
           <li>
-            <strong>Enter / Esc</strong>：进入编辑或换行；取消编辑。
+            <strong>F2</strong>、<strong>Delete / Backspace</strong
+            >：进入编辑或清空（自动触发模式）。
           </li>
-          <li>
-            <strong>Home / End</strong>：行首或行尾格；<strong>Ctrl+Home / Ctrl+End</strong>：全表首尾。
-          </li>
-          <li><strong>F2</strong>、<strong>Delete / Backspace</strong>：进入编辑或清空（自动触发模式）。</li>
           <li>
             <strong>Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y</strong>：撤销 / 重做。
           </li>
@@ -501,12 +568,17 @@ function scrollToDocSection(sectionId: string) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <p class="muted">
-          设置 <code>total</code> 后出现分页条。<strong>请将当前页数据通过 data 传入</strong>，组件内部不对数据进行分页切片。<code>pagination</code> 与 <code>update:currentPage</code> / <code>update:pageSize</code> 在变化时触发，用于请求接口。
+          设置 <code>total</code> 后出现分页条。<strong
+            >请将当前页数据通过 data 传入</strong
+          >，组件内部不对数据进行分页切片。<code>pagination</code> 与
+          <code>update:currentPage</code> /
+          <code>update:pageSize</code> 在变化时触发，用于请求接口。
         </p>
         <el-alert type="info" :closable="false" show-icon class="doc-alert">
           <template #title>与「示例」页的关系</template>
           <template #default>
-            示例页为客户端全量数据，仅用于演示分页条 UI 与事件；接入服务端时请按页更新
+            示例页为客户端全量数据，仅用于演示分页条 UI
+            与事件；接入服务端时请按页更新
             <code>data</code>。
           </template>
         </el-alert>
@@ -519,7 +591,11 @@ function scrollToDocSection(sectionId: string) {
       </CardHeader>
       <CardContent class="doc-section__body">
         <p class="muted">
-          <code>plus-table-cell--active</code>、<code>plus-table-row--active</code>、<code>plus-table-cell--error</code>、<code>plus-table-cell--dirty</code>、<code>plus-table-row--dirty</code> 等，可用全局样式覆盖。
+          <code>plus-table-cell--active</code
+          >、<code>plus-table-row--active</code>、<code>plus-table-cell--error</code>、<code>plus-table-cell--dirty</code>、<code
+            >plus-table-row--dirty</code
+          >
+          等，可用全局样式覆盖。
         </p>
       </CardContent>
     </Card>
@@ -563,7 +639,7 @@ function scrollToDocSection(sectionId: string) {
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.2px;
   color: var(--foreground);
@@ -582,7 +658,7 @@ function scrollToDocSection(sectionId: string) {
 
 .muted {
   margin: 0 0 16px;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--muted-foreground);
 
@@ -604,7 +680,7 @@ function scrollToDocSection(sectionId: string) {
 .code-block {
   margin: 0;
   padding: 16px 20px;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
   overflow-x: auto;
   color: var(--foreground);
@@ -613,8 +689,9 @@ function scrollToDocSection(sectionId: string) {
   border: 1px solid var(--separator);
 
   code {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-      'Liberation Mono', 'Courier New', monospace;
+    font-family:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
     white-space: pre;
   }
 }
@@ -622,7 +699,7 @@ function scrollToDocSection(sectionId: string) {
 .bullet-list {
   margin: 0;
   padding-left: 20px;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.75;
   color: var(--foreground);
 
@@ -658,28 +735,29 @@ function scrollToDocSection(sectionId: string) {
   align-items: center;
   gap: 6px;
   padding: 8px 24px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 400;
-  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family:
+    'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    monospace;
   letter-spacing: 1.4px;
   text-transform: uppercase;
   color: var(--primary-foreground);
   background: var(--primary);
   border-radius: 0;
   text-decoration: none;
-  transition:
-    opacity 0.2s;
+  transition: opacity 0.2s;
 
   &:hover {
     opacity: 0.9;
   }
 }
 
-.doc-toc {
+.doc-anchor-wrap {
   &__title {
     margin: 0 0 14px;
     padding-bottom: 10px;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.65px;
     text-transform: uppercase;
@@ -687,19 +765,31 @@ function scrollToDocSection(sectionId: string) {
     border-bottom: 1px solid var(--border);
   }
 
-  &__list {
-    margin: 0;
-    padding: 0 0 0 10px;
-    list-style: none;
+  :deep(.doc-anchor.el-anchor) {
+    --el-anchor-bg-color: transparent;
+    background-color: transparent;
+  }
+
+  :deep(.el-anchor.el-anchor--vertical .el-anchor__list) {
+    display: block;
+    padding-left: 0;
+  }
+
+  :deep(.el-anchor__item) {
+    display: block;
+    padding-left: 10px;
     border-left: 1px solid var(--border);
   }
 
-  &__link {
+  :deep(.el-anchor__link) {
     display: block;
-    margin: 0;
+    box-sizing: border-box;
+    max-width: 100%;
     padding: 5px 10px;
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 12px;
+    line-height: 1.45;
+    white-space: normal;
+    word-break: break-word;
     color: var(--muted-foreground);
     text-decoration: none;
     border-left: 2px solid transparent;
@@ -710,9 +800,14 @@ function scrollToDocSection(sectionId: string) {
       border-color 0.2s;
 
     &:hover {
-      color: rgba(255, 255, 255, 0.5);
-      border-left-color: rgba(255, 255, 255, 0.2);
+      color: var(--foreground);
+      border-left-color: var(--border);
     }
+  }
+
+  :deep(.el-anchor__link.is-active) {
+    color: var(--foreground);
+    border-left-color: var(--foreground);
   }
 }
 </style>

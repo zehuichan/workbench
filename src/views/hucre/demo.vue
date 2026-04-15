@@ -1,35 +1,35 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef } from 'vue';
 import { ElMessage } from 'element-plus';
+import { parseCsv, writeCsv } from 'hucre/csv';
 import {
-  writeXlsx,
-  readXlsx,
-  openXlsx,
-  saveXlsx,
-  WorkbookBuilder,
-  parseCsv,
-  writeCsv,
-  writeTsv,
-  toHtml,
-  toMarkdown,
-  toJson,
-  formatValue,
-  parseCellRef,
   cellRef,
   colToLetter,
-  letterToCol,
+  openXlsx,
+  parseCellRef,
   rangeRef,
-  parseRange,
-  isInRange,
-  serialToDate,
+  readXlsx,
+  writeXlsx,
+} from 'hucre/xlsx';
+import {
+  WorkbookBuilder,
   dateToSerial,
-  serialToTime,
-  timeToSerial,
-  parseDate,
-  validateWithSchema,
   fillTemplate,
-  sheetToObjects,
+  formatValue,
+  isInRange,
+  letterToCol,
+  parseDate,
+  parseRange,
+  serialToDate,
+  serialToTime,
   sheetToArrays,
+  sheetToObjects,
+  timeToSerial,
+  toHtml,
+  toJson,
+  toMarkdown,
+  validateWithSchema,
+  writeTsv,
 } from 'hucre';
 
 interface Product {
@@ -589,18 +589,22 @@ function runValidation() {
       <template #header>
         <span class="demo-section__title">导出 (writeXlsx / writeCsv / writeTsv)</span>
       </template>
-      <div class="demo-toolbar">
-        <span class="label">格式</span>
-        <el-radio-group v-model="exportFormat" size="small">
-          <el-radio-button value="xlsx">XLSX</el-radio-button>
-          <el-radio-button value="csv">CSV</el-radio-button>
-          <el-radio-button value="tsv">TSV</el-radio-button>
-        </el-radio-group>
-        <el-button size="small" type="primary" @click="handleExport">导出文件</el-button>
-        <el-divider direction="vertical" />
-        <el-button size="small" @click="handleBuilderExport">Builder API 导出</el-button>
-        <el-divider direction="vertical" />
-        <span class="demo-log">{{ exportLog }}</span>
+      <div class="demo-field-stack">
+        <div class="demo-field-row">
+          <span class="demo-field-label">格式</span>
+          <div class="demo-field-controls">
+            <el-radio-group v-model="exportFormat" size="small">
+              <el-radio-button value="xlsx">XLSX</el-radio-button>
+              <el-radio-button value="csv">CSV</el-radio-button>
+              <el-radio-button value="tsv">TSV</el-radio-button>
+            </el-radio-group>
+            <el-button size="small" type="primary" @click="handleExport">导出文件</el-button>
+            <el-divider direction="vertical" class="demo-field-divider" />
+            <el-button size="small" @click="handleBuilderExport">Builder API 导出</el-button>
+            <el-divider direction="vertical" class="demo-field-divider" />
+            <span class="demo-log">{{ exportLog }}</span>
+          </div>
+        </div>
       </div>
     </el-card>
 
@@ -609,50 +613,74 @@ function runValidation() {
       <template #header>
         <span class="demo-section__title">导入 (readXlsx / parseCsv)</span>
       </template>
-      <div class="demo-toolbar">
-        <span class="label">方式</span>
-        <el-radio-group v-model="importMode" size="small">
-          <el-radio-button value="file">XLSX 文件</el-radio-button>
-          <el-radio-button value="csv-text">CSV 文本</el-radio-button>
-        </el-radio-group>
-      </div>
-
-      <div v-if="importMode === 'file'" class="demo-import-file">
-        <input ref="fileInputRef" type="file" accept=".xlsx,.xls" hidden @change="handleFileImport">
-        <div class="demo-toolbar">
-          <el-button size="small" type="primary" @click="triggerFileInput">选择 XLSX 文件</el-button>
-          <el-divider direction="vertical" />
-          <span class="label">表头</span>
-          <el-radio-group v-model="headerRowMode" size="small" @change="onHeaderModeChange">
-            <el-radio-button value="auto">自动识别</el-radio-button>
-            <el-radio-button value="manual">指定行</el-radio-button>
-            <el-radio-button value="none">无表头</el-radio-button>
-          </el-radio-group>
-          <el-input-number
-            v-if="headerRowMode === 'manual'"
-            v-model="manualHeaderRow"
-            size="small"
-            :min="1"
-            :max="999"
-            :step="1"
-            :controls="true"
-            style="width: 100px"
-            @change="onHeaderModeChange"
-          />
+      <div class="demo-field-stack">
+        <div class="demo-field-row">
+          <span class="demo-field-label">方式</span>
+          <div class="demo-field-controls">
+            <el-radio-group v-model="importMode" size="small">
+              <el-radio-button value="file">XLSX 文件</el-radio-button>
+              <el-radio-button value="csv-text">CSV 文本</el-radio-button>
+            </el-radio-group>
+          </div>
         </div>
-        <div v-if="importSheetNames.length > 1" class="demo-toolbar" style="margin-top: 8px">
-          <span class="label">工作表</span>
-          <el-radio-group v-model="importSheetIndex" size="small" @change="onSheetChange">
-            <el-radio-button v-for="(name, i) in importSheetNames" :key="i" :value="i">
-              {{ name }}
-            </el-radio-button>
-          </el-radio-group>
-        </div>
-      </div>
 
-      <div v-else class="demo-import-csv">
-        <el-input v-model="csvInput" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" placeholder="输入 CSV 文本…" />
-        <el-button size="small" type="primary" class="demo-import-csv__btn" @click="handleCsvParse">解析</el-button>
+        <template v-if="importMode === 'file'">
+          <input ref="fileInputRef" type="file" accept=".xlsx,.xls" hidden @change="handleFileImport">
+          <div class="demo-field-row">
+            <span class="demo-field-label">文件</span>
+            <div class="demo-field-controls">
+              <el-button size="small" type="primary" @click="triggerFileInput">选择 XLSX 文件</el-button>
+            </div>
+          </div>
+          <div class="demo-field-row">
+            <span class="demo-field-label">表头</span>
+            <div class="demo-field-controls">
+              <el-radio-group v-model="headerRowMode" size="small" @change="onHeaderModeChange">
+                <el-radio-button value="auto">自动识别</el-radio-button>
+                <el-radio-button value="manual">指定行</el-radio-button>
+                <el-radio-button value="none">无表头</el-radio-button>
+              </el-radio-group>
+              <el-input-number
+                v-if="headerRowMode === 'manual'"
+                v-model="manualHeaderRow"
+                size="small"
+                class="demo-input-number-fixed"
+                :min="1"
+                :max="999"
+                :step="1"
+                :controls="true"
+                @change="onHeaderModeChange"
+              />
+            </div>
+          </div>
+          <div v-if="importSheetNames.length > 1" class="demo-field-row">
+            <span class="demo-field-label">工作表</span>
+            <div class="demo-field-controls">
+              <el-radio-group v-model="importSheetIndex" size="small" @change="onSheetChange">
+                <el-radio-button v-for="(name, i) in importSheetNames" :key="i" :value="i">
+                  {{ name }}
+                </el-radio-button>
+              </el-radio-group>
+            </div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="demo-field-row demo-field-row--block">
+            <span class="demo-field-label">文本</span>
+            <div class="demo-field-controls demo-field-controls--column">
+              <el-input
+                v-model="csvInput"
+                type="textarea"
+                :autosize="{ minRows: 3, maxRows: 8 }"
+                placeholder="输入 CSV 文本…"
+              />
+              <el-button size="small" type="primary" class="demo-field-row__action" @click="handleCsvParse">
+                解析
+              </el-button>
+            </div>
+          </div>
+        </template>
       </div>
 
       <template v-if="importedData.length">
@@ -685,15 +713,20 @@ function runValidation() {
       <template #header>
         <span class="demo-section__title">导出预览 (toHtml / toMarkdown / toJson)</span>
       </template>
-      <div class="demo-toolbar">
-        <el-radio-group v-model="previewMode" size="small">
-          <el-radio-button value="html">HTML</el-radio-button>
-          <el-radio-button value="markdown">Markdown</el-radio-button>
-          <el-radio-button value="json">JSON</el-radio-button>
-        </el-radio-group>
+      <div class="demo-field-stack">
+        <div class="demo-field-row">
+          <span class="demo-field-label">视图</span>
+          <div class="demo-field-controls">
+            <el-radio-group v-model="previewMode" size="small">
+              <el-radio-button value="html">HTML</el-radio-button>
+              <el-radio-button value="markdown">Markdown</el-radio-button>
+              <el-radio-button value="json">JSON</el-radio-button>
+            </el-radio-group>
+          </div>
+        </div>
       </div>
-      <div v-if="previewMode === 'html'" class="demo-preview-html" v-html="previewContent" />
-      <pre v-else class="code-block"><code>{{ previewContent }}</code></pre>
+      <div v-if="previewMode === 'html'" class="demo-preview-html demo-preview-body" v-html="previewContent" />
+      <pre v-else class="code-block demo-preview-body"><code>{{ previewContent }}</code></pre>
     </el-card>
 
     <!-- ── Utility Playground ── -->
@@ -761,8 +794,13 @@ function runValidation() {
           <el-input v-model="templateData[key]" size="small" class="demo-util-input" />
         </div>
       </div>
-      <div class="demo-toolbar" style="margin-top: 12px">
-        <el-button size="small" type="primary" @click="runTemplateDemo">运行模板填充</el-button>
+      <div class="demo-field-stack demo-field-stack--follow">
+        <div class="demo-field-row">
+          <span class="demo-field-label">操作</span>
+          <div class="demo-field-controls">
+            <el-button size="small" type="primary" @click="runTemplateDemo">运行模板填充</el-button>
+          </div>
+        </div>
       </div>
       <pre v-if="templateResult" class="code-block" style="margin-top: 12px"><code>{{ templateResult }}</code></pre>
     </el-card>
@@ -773,8 +811,13 @@ function runValidation() {
         <span class="demo-section__title">Sheet 工具 (sheetToObjects / sheetToArrays)</span>
       </template>
       <p class="demo-hint">将 Sheet 数据转换为对象数组或带表头的二维数组：</p>
-      <div class="demo-toolbar">
-        <el-button size="small" type="primary" @click="runSheetUtilsDemo">运行转换</el-button>
+      <div class="demo-field-stack demo-field-stack--follow">
+        <div class="demo-field-row">
+          <span class="demo-field-label">操作</span>
+          <div class="demo-field-controls">
+            <el-button size="small" type="primary" @click="runSheetUtilsDemo">运行转换</el-button>
+          </div>
+        </div>
       </div>
       <pre v-if="sheetUtilResult" class="code-block" style="margin-top: 12px"><code>{{ sheetUtilResult }}</code></pre>
     </el-card>
@@ -785,8 +828,13 @@ function runValidation() {
         <span class="demo-section__title">Schema 校验 (validateWithSchema)</span>
       </template>
       <el-input v-model="validationCsv" type="textarea" :autosize="{ minRows: 3, maxRows: 8 }" placeholder="输入含表头的 CSV" />
-      <div class="demo-toolbar" style="margin-top: 12px">
-        <el-button size="small" type="primary" @click="runValidation">运行校验</el-button>
+      <div class="demo-field-stack demo-field-stack--follow">
+        <div class="demo-field-row">
+          <span class="demo-field-label">操作</span>
+          <div class="demo-field-controls">
+            <el-button size="small" type="primary" @click="runValidation">运行校验</el-button>
+          </div>
+        </div>
       </div>
       <pre v-if="validationResult" class="code-block" style="margin-top: 12px"><code>{{ validationResult }}</code></pre>
     </el-card>
@@ -818,30 +866,86 @@ function runValidation() {
 }
 
 .demo-section__title {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: -0.2px;
   color: var(--foreground);
 }
 
-.demo-toolbar {
+.demo-field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.demo-field-stack--follow {
+  margin-top: 14px;
+}
+
+.demo-field-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 16px;
+}
+
+.demo-field-row--block {
+  align-items: start;
+
+  .demo-field-label {
+    padding-top: 6px;
+  }
+}
+
+.demo-field-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  line-height: 1.35;
+  text-align: right;
+}
+
+.demo-field-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  min-height: 30px;
 
-  .label {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted-foreground);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  :deep(.el-radio-group),
+  :deep(.el-button),
+  :deep(.el-input-number) {
+    vertical-align: middle;
   }
+}
+
+.demo-field-controls--column {
+  flex-direction: column;
+  align-items: stretch;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+  gap: 10px;
+}
+
+.demo-field-row__action {
+  align-self: flex-start;
+}
+
+.demo-field-divider {
+  flex-shrink: 0;
+  align-self: center;
+  height: 26px;
+  margin: 0 4px;
+}
+
+.demo-input-number-fixed {
+  width: 100px;
 }
 
 .demo-hint {
   margin: 0 0 14px;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--muted-foreground);
 
@@ -856,17 +960,13 @@ function runValidation() {
 }
 
 .demo-log {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
 
 .demo-table {
   width: 100%;
-  margin-top: 12px;
-}
-
-.demo-import-file {
   margin-top: 12px;
 }
 
@@ -883,7 +983,7 @@ function runValidation() {
     min-width: 100%;
     border-collapse: collapse;
     table-layout: auto;
-    font-size: 13px;
+    font-size: 12px;
     line-height: 1.5;
   }
 
@@ -909,22 +1009,17 @@ function runValidation() {
   }
 }
 
-.demo-import-csv {
-  margin-top: 12px;
-
-  &__btn {
-    margin-top: 8px;
-  }
+.demo-preview-body {
+  margin-top: 14px;
 }
 
 .demo-preview-html {
-  margin-top: 12px;
   overflow-x: auto;
 
   :deep(table) {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 12px;
 
     th, td {
       padding: 8px 12px;
@@ -957,7 +1052,7 @@ function runValidation() {
 
 .demo-util-label {
   min-width: 140px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color: var(--foreground);
@@ -968,7 +1063,7 @@ function runValidation() {
 }
 
 .demo-util-result {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--muted-foreground);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
@@ -976,7 +1071,7 @@ function runValidation() {
 .code-block {
   margin: 0;
   padding: 16px 20px;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
   overflow-x: auto;
   color: var(--foreground);
