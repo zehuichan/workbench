@@ -1,4 +1,4 @@
-import{B as e,I as t,Q as n,R as r,_ as i,a,d as o,f as s,g as c,ht as l,i as u,p as d,u as f,v as p,w as m,y as h}from"./runtime-core.esm-bundler-DAHneJiJ.js";import{t as g}from"./injection-keys-vtq1A2qT.js";import{t as _}from"./_plugin-vue_export-helper-TcpyXLsZ.js";import{a as v,i as y,n as b,r as x,t as S}from"./code-block--4NcE8rz.js";var C={class:`doc-anchor-wrap`,"aria-label":`本页目录`},w={class:`docs-footer`},T=`import { readXlsx, writeXlsx } from 'hucre';
+import{B as e,I as t,Q as n,R as r,_ as i,a,d as o,f as s,g as c,ht as l,i as u,p as d,u as f,v as p,w as m,y as h}from"./runtime-core.esm-bundler-DAHneJiJ.js";import{t as g}from"./injection-keys-vtq1A2qT.js";import{t as _}from"./_plugin-vue_export-helper-TcpyXLsZ.js";import{a as v,i as y,n as b,r as x,t as S}from"./code-block-CmA2DAcR.js";var C={class:`doc-anchor-wrap`,"aria-label":`本页目录`},w={class:`docs-footer`},T=`import { readXlsx, writeXlsx } from 'hucre';
 
 // 读取 XLSX
 const workbook = await readXlsx(buffer);

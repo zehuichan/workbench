@@ -1,4 +1,4 @@
-import{B as e,I as t,Q as n,R as r,_ as i,a,d as o,f as s,ht as c,i as l,p as u,u as d,v as f,w as p,y as m}from"./runtime-core.esm-bundler-DAHneJiJ.js";import{t as h}from"./injection-keys-vtq1A2qT.js";import{t as g}from"./_plugin-vue_export-helper-TcpyXLsZ.js";import{a as _,i as v,n as y,r as b,t as x}from"./code-block--4NcE8rz.js";var S={class:`doc-anchor-wrap`,"aria-label":`本页目录`},C={class:`docs-footer`},w=`<script setup lang="ts">
+import{B as e,I as t,Q as n,R as r,_ as i,a,d as o,f as s,ht as c,i as l,p as u,u as d,v as f,w as p,y as m}from"./runtime-core.esm-bundler-DAHneJiJ.js";import{t as h}from"./injection-keys-vtq1A2qT.js";import{t as g}from"./_plugin-vue_export-helper-TcpyXLsZ.js";import{a as _,i as v,n as y,r as b,t as x}from"./code-block-CmA2DAcR.js";var S={class:`doc-anchor-wrap`,"aria-label":`本页目录`},C={class:`docs-footer`},w=`<script setup lang="ts">
 import { ref } from 'vue';
 import { PlusTable } from '@/components';
 import type { PlusTableColumn } from '@/components/plus-table';
