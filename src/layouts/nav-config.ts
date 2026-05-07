@@ -1,6 +1,6 @@
 import type { Component } from 'vue';
 import type { RouteLocationRaw } from 'vue-router';
-import { BookOpen, FileSpreadsheet, SquareTerminal } from 'lucide-vue-next';
+import { BookOpen, FileSpreadsheet, Layers, SquareTerminal } from 'lucide-vue-next';
 
 export interface NavItem {
   name: string;
@@ -46,6 +46,23 @@ export const navGroups: NavGroup[] = [
         label: '示例',
         icon: FileSpreadsheet,
         to: { name: 'hucre-demo' },
+      },
+    ],
+  },
+  {
+    title: 'immer',
+    items: [
+      {
+        name: 'immer-docs',
+        label: '文档',
+        icon: BookOpen,
+        to: { name: 'immer-docs' },
+      },
+      {
+        name: 'immer-demo',
+        label: '示例',
+        icon: Layers,
+        to: { name: 'immer-demo' },
       },
     ],
   },

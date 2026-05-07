@@ -46,6 +46,26 @@ const routes = [
       },
     ],
   },
+  {
+    path: '/immer',
+    component: () => import('@/layouts/layout.vue'),
+    children: [
+      {
+        path: '',
+        redirect: { name: 'immer-docs' },
+      },
+      {
+        name: 'immer-docs',
+        path: 'docs',
+        component: () => import('@/views/immer/docs.vue'),
+      },
+      {
+        name: 'immer-demo',
+        path: 'demo',
+        component: () => import('@/views/immer/demo.vue'),
+      },
+    ],
+  },
 ] as RouteRecordRaw[];
 
 export { routes };

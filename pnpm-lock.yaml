@@ -44,6 +44,9 @@ importers:
       hucre:
         specifier: ^0.3.0
         version: 0.3.0
+      immer:
+        specifier: ^11.1.7
+        version: 11.1.7
       lucide-vue-next:
         specifier: ^1.0.0
         version: 1.0.0(vue@3.5.32(typescript@5.9.3))
@@ -982,6 +985,9 @@ packages:
   hucre@0.3.0:
     resolution: {integrity: sha512-gXLYQGcZY/7WwS2We6dV7fsO8SGbKBuiGGntTfOQKh2cbZGg4+aMiCQPsFACngb7/ezoTf+GazxoWISDbv098g==}
     hasBin: true
+
+  immer@11.1.7:
+    resolution: {integrity: sha512-LFVFtAROHcDy1er5UI6nodRFnZ2SgdCXhfNSI+DpObO8N7Pur/muBGsjzH5wpnFHCYhYVQxZskCkV4koQ//3/Q==}
 
   immutable@5.1.5:
     resolution: {integrity: sha512-t7xcm2siw+hlUM68I+UEOK+z84RzmN59as9DZ7P1l0994DKUWV7UXBMQZVxaoMSRQ+PBZbHCOoBt7a2wxOMt+A==}
@@ -2473,6 +2479,8 @@ snapshots:
   html-void-elements@3.0.0: {}
 
   hucre@0.3.0: {}
+
+  immer@11.1.7: {}
 
   immutable@5.1.5: {}
 

@@ -15,7 +15,9 @@ const menuActive = computed(() =>
 );
 
 const hasTocPanel = computed(() =>
-  route.name === 'plus-table-docs' || route.name === 'hucre-docs',
+  route.name === 'plus-table-docs'
+  || route.name === 'hucre-docs'
+  || route.name === 'immer-docs',
 );
 
 const pageTitle = computed(() => {
@@ -28,6 +30,10 @@ const pageTitle = computed(() => {
       return 'hucre 文档';
     case 'hucre-demo':
       return 'hucre 示例';
+    case 'immer-docs':
+      return 'immer 文档';
+    case 'immer-demo':
+      return 'immer 示例';
     default:
       return '';
   }
