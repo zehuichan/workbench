@@ -12,9 +12,15 @@ dist
 dist-ssr
 *.local
 
-# TypeScript build artifacts in src
-src/**/*.d.ts
-src/**/*.js
+# Turborepo
+.turbo
+
+# VitePress
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# TypeScript build info
+*.tsbuildinfo
 
 # Editor directories and files
 .vscode/*

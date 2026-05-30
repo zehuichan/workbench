@@ -1,0 +1,38 @@
+{
+  "name": "@labs/plus-table",
+  "version": "0.0.0",
+  "private": true,
+  "description": "基于 Element Plus el-table 的增强表格组件 PlusTable",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles": "./src/styles/index.scss",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": [
+    "*.scss",
+    "*.css"
+  ],
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "element-plus": "^2.0.0",
+    "vue": "^3.4.0"
+  },
+  "dependencies": {
+    "@vue/shared": "catalog:",
+    "@vueuse/core": "catalog:",
+    "async-validator": "catalog:",
+    "es-toolkit": "catalog:"
+  },
+  "devDependencies": {
+    "element-plus": "catalog:",
+    "typescript": "catalog:",
+    "vue": "catalog:",
+    "vue-tsc": "catalog:"
+  }
+}
