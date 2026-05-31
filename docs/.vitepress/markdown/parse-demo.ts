@@ -37,7 +37,7 @@ const FENCE_PLACEHOLDER_RE = new RegExp(
   'g',
 );
 
-function maskFencedBlocks(src: string): {
+export function maskFencedBlocks(src: string): {
   masked: string;
   unmask: (s: string) => string;
 } {

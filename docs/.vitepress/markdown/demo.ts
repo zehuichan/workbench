@@ -1,6 +1,10 @@
 import type { MarkdownRenderer } from 'vitepress';
 
-import { buildDemoImports, transformMarkdownDemos } from './parse-demo';
+import {
+  buildDemoImports,
+  maskFencedBlocks,
+  transformMarkdownDemos,
+} from './parse-demo';
 
 /**
  * 文档 `<demo src="...">标题</demo>` 写法的 markdown-it 插件。
@@ -26,22 +30,29 @@ export function labDemoPlugin(md: MarkdownRenderer): void {
   });
 }
 
-/** 把 import 语句合并进既有 `<script setup>` 或新建一个脚本块。 */
+/**
+ * 把 import 语句合并进既有 `<script setup>` 或新建一个脚本块。
+ *
+ * 先屏蔽围栏代码块，避免把 import 注入到文档里举例用的 ```vue` 代码块中
+ * （那会让页面拿不到真正的 `<script setup>`，demo 组件与源码均无法解析）。
+ */
 function injectDemoImports(source: string, imports: string): string {
   if (!imports) return source;
 
+  const { masked, unmask } = maskFencedBlocks(source);
+
   const setupRe = /<script\b([^>]*\bsetup\b[^>]*)>([\s\S]*?)<\/script>/;
-  const match = source.match(setupRe);
+  const match = masked.match(setupRe);
   if (match) {
     const [full, attrs, body] = match;
     const merged = `<script${attrs}>\n${imports}\n${body}</script>`;
-    return source.replace(full, merged);
+    return unmask(masked.replace(full, merged));
   }
 
   const block = `<script setup lang="ts">\n${imports}\n</script>\n\n`;
   const fmRe = /^---\n[\s\S]*?\n---\n/;
-  if (fmRe.test(source)) {
-    return source.replace(fmRe, (m) => `${m}\n${block}`);
+  if (fmRe.test(masked)) {
+    return unmask(masked.replace(fmRe, (m) => `${m}\n${block}`));
   }
-  return `${block}${source}`;
+  return unmask(`${block}${masked}`);
 }
