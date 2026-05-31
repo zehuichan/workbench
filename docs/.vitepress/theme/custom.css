@@ -85,3 +85,27 @@ samp {
 .VPDoc.has-aside .content-container {
   max-width: none !important;
 }
+
+/* VitePress 会给 .vp-doc 里的 markdown 表格注入 margin、斑马纹、边框与字号，
+   这些样式会泄漏进 demo 内嵌的 Element Plus 表格：table 的 margin:20px 导致
+   表头/表体上下出现空白条，tr 斑马纹与 border 也会污染行底色。
+   demo 预览区放的是真实组件而非 markdown 表格，故在此重置，交还组件自身样式。 */
+.vp-doc .demo-block__preview table {
+  display: table;
+  margin: 0;
+  overflow: visible;
+}
+
+.vp-doc .demo-block__preview tr {
+  background-color: transparent;
+  border-top: none;
+}
+
+.vp-doc .demo-block__preview tr:nth-child(2n) {
+  background-color: transparent;
+}
+
+.vp-doc .demo-block__preview th,
+.vp-doc .demo-block__preview td {
+  font-size: inherit;
+}
