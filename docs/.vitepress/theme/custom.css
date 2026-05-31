@@ -75,11 +75,13 @@ samp {
     Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
 
-/* 让正文区与示例（含宽表格）有更充裕的横向空间 */
+/* 让文档正文区铺满可用宽度。
+   VitePress 默认把 .content-container 限制在 688px，且其作用域样式带
+   [data-v-*] 属性选择器、特异性更高，故需 !important 才能压过。 */
 :root {
-  --vp-layout-max-width: 1440px;
+  --vp-layout-max-width: 100%;
 }
 
 .VPDoc.has-aside .content-container {
-  max-width: 1024px;
+  max-width: none !important;
 }
