@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["VITE_PORT", "VITE_BASE"],
+  "globalEnv": ["VITE_PORT", "VITE_BASE", "DOCS_BASE"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
