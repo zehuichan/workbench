@@ -1,0 +1,1 @@
+import{t as e}from"./java.CoatchVV.js";export{e as default};
