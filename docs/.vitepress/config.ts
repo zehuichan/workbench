@@ -40,7 +40,10 @@ export default defineConfig({
       '/components/': [
         {
           text: '组件',
-          items: [{ text: 'PlusTable', link: '/components/plus-table' }],
+          items: [
+            { text: 'PlusTable', link: '/components/plus-table' },
+            { text: 'AntTable', link: '/components/ant-table' },
+          ],
         },
       ],
       '/libraries/': [
@@ -64,11 +67,12 @@ export default defineConfig({
       alias: {
         // 文档直接引用 workspace 包源码，无需先构建。
         '@labs/plus-table': join(repoRoot, 'packages/plus-table/src/index.ts'),
+        '@labs/ant-table': join(repoRoot, 'packages/ant-table/src/index.ts'),
       },
     },
     // 这些库在 SSR 下需内联打包，避免 CJS/ESM 互操作报错。
     ssr: {
-      noExternal: ['element-plus', 'hucre'],
+      noExternal: ['element-plus', 'hucre', 'ant-design-vue'],
     },
   },
 });

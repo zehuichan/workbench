@@ -5,7 +5,9 @@
     "baseUrl": ".",
     "paths": {
       "@labs/plus-table": ["packages/plus-table/src/index.ts"],
-      "@labs/plus-table/*": ["packages/plus-table/src/*"]
+      "@labs/plus-table/*": ["packages/plus-table/src/*"],
+      "@labs/ant-table": ["packages/ant-table/src/index.ts"],
+      "@labs/ant-table/*": ["packages/ant-table/src/*"]
     }
   }
 }
