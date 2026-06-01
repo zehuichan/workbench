@@ -54,6 +54,7 @@ const props = withDefaults(defineProps<AntTableProps>(), {
   rowActive: true,
   hotkeyEnabled: true,
   adaptive: false,
+  resizable: false,
   columnSetting: true,
   validateTrigger: 'manual',
   validateOnCellExit: false,
@@ -300,13 +301,13 @@ function onHeaderContextmenu(col: AntTableColumn, event: MouseEvent): void {
   columnSettingRef.value?.openContextMenu(event, { key: getColumnId(col) });
 }
 
+// 原生 a-table 列宽拖拽（resizable 列）回调：width 为新宽度，column 为原始列对象
 function onResizeColumn(
   width: number,
   column: { key?: string | number },
 ): void {
   const key = column?.key;
-  if (!props.columnSetting || typeof key !== 'string' || typeof width !== 'number')
-    return;
+  if (typeof key !== 'string' || typeof width !== 'number') return;
   columnOptions.setColumnWidth(key, width);
 }
 
@@ -333,6 +334,16 @@ function isColRequired(col: AntTableColumn): boolean {
       ? [col.rules]
       : [];
   return rules.some((r) => (r as { required?: boolean }).required);
+}
+
+/**
+ * 解析叶子列是否可拖拽：列级 `resizable`（boolean）优先，否则回退到表级 `props.resizable`。
+ * 表级默认仅对设置了 number 宽度的列生效（原生拖拽要求 width 为 number）。
+ */
+function resolveResizable(col: AntTableColumn): boolean {
+  if (typeof col.resizable === 'boolean') return col.resizable;
+  if (!props.resizable) return false;
+  return typeof col.width === 'number';
 }
 
 function toAntColumn(col: AntTableColumn): Record<string, any> {
@@ -372,6 +383,7 @@ function toAntColumn(col: AntTableColumn): Record<string, any> {
   return {
     ...rest,
     key: id,
+    resizable: resolveResizable(col),
     customRender: (params: { record: RowData; index: number }) =>
       h(AntTableCell, {
         column: col,

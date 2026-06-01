@@ -73,13 +73,14 @@ const columns: AntTableColumn<Row>[] = [
     width: 50,
     align: 'center',
     fixed: 'left',
+    // 列级 resizable 优先于表级：序号列单独关闭拖拽
+    resizable: false,
     customRender: ({ index }) => index + 1,
   },
   {
     title: '名称',
     dataIndex: 'name',
     width: 150,
-    resizable: true,
     editable: true,
     component: 'input',
     required: true,
@@ -122,6 +123,7 @@ const columns: AntTableColumn<Row>[] = [
     dataIndex: 'price',
     width: 110,
     align: 'right',
+    minWidth: 90,
     editable: true,
     component: 'input-number',
     componentProps: { min: 0, step: 100, style: { width: '100%' } },
@@ -221,6 +223,7 @@ const editableProp = computed<boolean | 'cell' | 'row' | 'manual'>(() => {
 const validateTrigger = ref<'manual' | 'change' | 'blur'>('change');
 const hotkeyEnabled = ref(true);
 const adaptive = ref(false);
+const resizable = ref(true);
 const lastHotkey = ref('—');
 
 const customHotkeys = [
@@ -331,6 +334,7 @@ function showModified(): void {
       <a-divider type="vertical" />
       <a-checkbox v-model:checked="hotkeyEnabled">热键</a-checkbox>
       <a-checkbox v-model:checked="adaptive">自适应高度</a-checkbox>
+      <a-checkbox v-model:checked="resizable">列宽拖拽</a-checkbox>
     </div>
 
     <div class="atbl-demo__status">
@@ -353,6 +357,7 @@ function showModified(): void {
       :hotkey-enabled="hotkeyEnabled"
       :hotkeys="customHotkeys"
       :adaptive="adaptive"
+      :resizable="resizable"
       :scroll-x="1080"
       :row-selection="rowSelection"
       row-key="id"
@@ -369,7 +374,7 @@ function showModified(): void {
     <p class="atbl-demo__hint">
       点击单元格聚焦后：方向键移动 · 双击 / F2 进入编辑 · Enter 确认并下移 · Tab
       右移 · Delete 清空 · Ctrl+Z / Ctrl+Shift+Z 撤销重做 · Ctrl+G 自定义热键 ·
-      右键表头可隐藏列或打开列设置。
+      右键表头可隐藏列或打开列设置 · 开启「列宽拖拽」后所有带宽度的列（含分组表头子列）表头右缘均可拖拽调整列宽（序号列已用列级 resizable: false 单独关闭）。
     </p>
   </div>
 </template>

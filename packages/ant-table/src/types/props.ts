@@ -53,6 +53,12 @@ export interface AntTableProps<T = RowData> {
   /** 列设置持久化 key（多实例时需各自不同，否则互相覆盖） */
   columnSettingKey?: string;
 
+  /**
+   * 表级列宽拖拽开关：开启后所有叶子列默认可拖拽调整列宽（需为列设 number 类型 width）。
+   * 单列可通过列配置 `resizable: false` 单独关闭、`resizable: true` 单独开启（列级优先）。
+   */
+  resizable?: boolean;
+
   // 热键（含 Tab/Shift+Tab 导航，由 hotkeyEnabled 统一控制）
   hotkeys?: HotkeyBinding[];
   hotkeyEnabled?: boolean;

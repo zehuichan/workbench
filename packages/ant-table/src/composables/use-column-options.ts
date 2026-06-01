@@ -94,13 +94,16 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       const idToCol = new Map(cols.map((c) => [getColumnId(c), c]));
 
       for (const config of configs.sort((a, b) => a.order - b.order)) {
-        order.push(config.id);
-        if (config.hidden) {
-          const col = idToCol.get(config.id);
-          if (col?.children?.length) {
-            collectLeafIds(col).forEach((id) => hidden.add(id));
-          } else {
-            hidden.add(config.id);
+        // 顶层列才参与排序 / 显隐；子列（多级表头）条目仅承载列宽
+        if (idToCol.has(config.id)) {
+          order.push(config.id);
+          if (config.hidden) {
+            const col = idToCol.get(config.id);
+            if (col?.children?.length) {
+              collectLeafIds(col).forEach((id) => hidden.add(id));
+            } else {
+              hidden.add(config.id);
+            }
           }
         }
         if (config.width != null && config.width > 0) {
@@ -139,6 +142,14 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
       configs.push(item);
     });
 
+    // 追加多级表头子列的列宽（仅 width，不参与排序 / 显隐）
+    const topLevelIds = new Set(topLevelOrder);
+    for (const [id, width] of Object.entries(widths)) {
+      if (width > 0 && !topLevelIds.has(id)) {
+        configs.push({ id, hidden: false, order: configs.length, width });
+      }
+    }
+
     try {
       store.setItem(getStorageKey(tableKey), JSON.stringify(configs));
     } catch (e) {
@@ -171,17 +182,27 @@ export function useColumnOptions(options: UseColumnOptionsOptions) {
     return result;
   }
 
+  /** 递归套用列宽覆盖：分组父列下钻到子列，叶子列写入 width */
+  function applyWidths(
+    cols: AntTableColumn[],
+    widths: Record<string, number>,
+  ): AntTableColumn[] {
+    return cols.map((col) => {
+      if (col.children?.length) {
+        return { ...col, children: applyWidths(col.children, widths) };
+      }
+      const id = getColumnId(col);
+      if (widths[id] == null) return col;
+      return { ...col, width: widths[id] };
+    });
+  }
+
   const visibleColumns = computed(() => {
     const cols = initialColumns.value;
     const topLevelOrder = getEffectiveOrder(cols, columnOrder.value);
     const ordered = applyTopLevelOrder(cols, topLevelOrder);
     const filtered = filterColumnsTree(ordered, shouldHideColumn);
-    const widths = columnWidths.value;
-    return filtered.map((col) => {
-      const id = getColumnId(col);
-      if (widths[id] == null) return col;
-      return { ...col, width: widths[id] };
-    });
+    return applyWidths(filtered, columnWidths.value);
   });
 
   function toggleColumn(id: string, visible: boolean): void {

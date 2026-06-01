@@ -68,6 +68,12 @@
     margin-right: 4px;
     font-family: SimSun, sans-serif;
   }
+
+  // ── 列宽拖拽：隐藏原生手柄的蓝色指示线（仍保留拖拽热区与 col-resize 光标）──
+  // 选择器嵌套到 handle 下提高优先级，稳压 antd 的 display:block
+  .ant-table-resize-handle .ant-table-resize-handle-line {
+    display: none;
+  }
 }
 
 // ── 头部 / 底部布局 ──
