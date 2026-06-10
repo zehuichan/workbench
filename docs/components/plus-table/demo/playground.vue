@@ -1,51 +1,29 @@
 <script setup lang="ts">
-import { computed, h, onMounted, ref } from 'vue';
-import { ElProgress, ElTag } from 'element-plus';
+import { computed, h, reactive, ref } from 'vue';
+import { ElButton, ElTag } from 'element-plus';
 
 import { PlusTable } from '@labs/plus-table';
 import type {
-  DependencyApi,
-  HotkeyContext,
+  CellChangePayload,
+  EditMode,
   PlusTableColumn,
+  ValidateOn,
 } from '@labs/plus-table';
-import type { RuleItem } from 'async-validator';
-// ──── 数据类型 ────
+
+// ──── 数据 ────
 
 interface TaskRow {
   id: number;
   name: string;
   status: 'pending' | 'active' | 'done';
   priority: 'low' | 'medium' | 'high';
-  progress: number;
   amount: number;
-  assignee: string;
   department: string;
+  assignee: string;
   team: string;
-  startDate: string;
-  endDate: string;
   remark: string;
   [key: string]: unknown;
 }
-
-// ──── 映射与选项 ────
-
-const statusMap: Record<
-  string,
-  { label: string; type: 'info' | 'warning' | 'success' }
-> = {
-  pending: { label: '待开始', type: 'info' },
-  active: { label: '进行中', type: 'warning' },
-  done: { label: '已完成', type: 'success' },
-};
-
-const priorityMap: Record<string, { label: string; color: string }> = {
-  high: { label: '高', color: '#F56C6C' },
-  medium: { label: '中', color: '#E6A23C' },
-  low: { label: '低', color: '#909399' },
-};
-
-const defaultStatus = { label: '未知', type: 'info' as const };
-const defaultPriority = { label: '未知', color: '#909399' };
 
 const departments = ['技术部', '产品部', '设计部', '市场部'];
 const departmentAssignees: Record<string, string[]> = {
@@ -54,574 +32,324 @@ const departmentAssignees: Record<string, string[]> = {
   设计部: ['陈七', '周八'],
   市场部: ['周八', '陈七'],
 };
-const teams = ['前端组', '后端组', 'UI组', '运营组', '增长组'];
+const teams = ['前端组', '后端组', 'UI组', '运营组'];
 
 const statusOptions = [
   { label: '待开始', value: 'pending' },
   { label: '进行中', value: 'active' },
   { label: '已完成', value: 'done' },
 ];
-
 const priorityOptions = [
   { label: '高', value: 'high' },
   { label: '中', value: 'medium' },
   { label: '低', value: 'low' },
 ];
 
-function createRow(i: number): TaskRow {
+const statusMap: Record<string, { label: string; type: 'info' | 'warning' | 'success' }> = {
+  pending: { label: '待开始', type: 'info' },
+  active: { label: '进行中', type: 'warning' },
+  done: { label: '已完成', type: 'success' },
+};
+
+let nextId = 1;
+
+function createRow(seed: number): TaskRow {
   const statuses: TaskRow['status'][] = ['pending', 'active', 'done'];
   const priorities: TaskRow['priority'][] = ['low', 'medium', 'high'];
-  const status = statuses[i % 3]!;
-  const dept = departments[i % departments.length]!;
-  const assigneesForDept = departmentAssignees[dept] ?? [];
-  const a0 = assigneesForDept[0];
-  const assignee =
-    assigneesForDept[i % Math.max(1, assigneesForDept.length)] ?? a0 ?? '';
+  const dept = departments[seed % departments.length]!;
+  const candidates = departmentAssignees[dept]!;
   return {
-    id: i + 1,
-    name: `任务 ${i + 1} — ${['需求评审', '接口开发', '联调测试', 'UI 走查', '性能优化'][i % 5]}`,
-    status,
-    priority: priorities[i % 3]!,
-    progress:
-      status === 'done' ? 100 : status === 'active' ? 20 + (i % 6) * 15 : 0,
-    amount: 1000 + (i % 20) * 500,
+    id: nextId++,
+    name: `任务 ${seed + 1} — ${['需求评审', '接口开发', '联调测试', 'UI 走查', '性能优化'][seed % 5]}`,
+    status: statuses[seed % 3]!,
+    priority: priorities[seed % 3]!,
+    amount: 1000 + (seed % 20) * 500,
     department: dept,
-    assignee,
-    team: teams[i % teams.length]!,
-    startDate: `2025-0${(i % 9) + 1}-${String((i % 28) + 1).padStart(2, '0')}`,
-    endDate: `2025-0${(i % 9) + 1}-${String((i % 28) + 15).padStart(2, '0')}`,
-    remark: `备注 ${i + 1}`,
+    assignee: candidates[seed % candidates.length]!,
+    team: teams[seed % teams.length]!,
+    remark: `备注 ${seed + 1}`,
   };
 }
 
-const tableData = ref<TaskRow[]>(
-  Array.from({ length: 30 }, (_, i) => createRow(i)),
-);
+const allData = ref<TaskRow[]>(Array.from({ length: 30 }, (_, i) => createRow(i)));
 
-// ──── 分页 ────
+// ──── 分页（服务端驱动模拟：父级切片，组件不切片）────
 
-const currentPage = ref(1);
+const page = ref(1);
 const pageSize = ref(10);
-const loading = ref(false);
-const total = computed(() => tableData.value.length);
+const total = computed(() => allData.value.length);
 
-function simulateLoading() {
-  loading.value = true;
-  setTimeout(() => {
-    loading.value = false;
-  }, 200);
-}
-
-function handlePagination(payload: { currentPage: number; pageSize: number }) {
-  currentPage.value = payload.currentPage;
-  pageSize.value = payload.pageSize;
-  simulateLoading();
-}
-
-onMounted(() => {
-  simulateLoading();
+const pagedData = computed<TaskRow[]>({
+  get: () => {
+    const start = (page.value - 1) * pageSize.value;
+    return allData.value.slice(start, start + pageSize.value);
+  },
+  // 行结构变更（增删移复制）回传当前页数组，这里合并回全量数据
+  set: (rows) => {
+    const start = (page.value - 1) * pageSize.value;
+    const currentLen = Math.min(
+      pageSize.value,
+      Math.max(allData.value.length - start, 0),
+    );
+    const next = [...allData.value];
+    next.splice(start, currentLen, ...rows);
+    allData.value = next;
+  },
 });
 
-// ──── 列配置（含 dependencies）────
+// ──── 控制状态 ────
 
-const columns: PlusTableColumn<TaskRow>[] = [
-  { type: 'expand', width: 55 },
-  { type: 'selection', width: 55 },
-  { type: 'index', label: '#', width: 55, fixed: 'left' },
-  {
-    prop: 'id',
-    label: 'ID',
-    editable: false,
-    sortable: true,
-  },
-  {
-    prop: 'name',
-    label: '任务名称',
-    editable: true,
-    component: 'input',
-    sortable: true,
-    rules: [
-      { required: true, message: '请输入任务名称' },
-      { min: 2, max: 100, message: '长度 2–100' },
-    ],
-  },
-  {
-    prop: 'status',
-    label: '状态',
-    editable: true,
-    component: 'select',
-    componentProps: {
-      clearable: true,
-      options: statusOptions,
-    },
-    sortable: true,
-    render: (scope: { row: TaskRow }) => {
-      const info = statusMap[scope?.row?.status as string] ?? defaultStatus;
-      return h(
-        ElTag,
-        { type: info.type, size: 'small', disableTransitions: true },
-        () => info.label,
-      );
-    },
-  },
-  {
-    prop: 'progress',
-    label: '进度',
-    render: (scope: { row: TaskRow }) => {
-      const row = scope.row as TaskRow;
-      const p = row.progress;
-      return h('div', { class: 'demo-progress-cell' }, [
-        h('span', { class: 'demo-progress-cell__pct' }, `${p}%`),
-        h(ElProgress, {
-          percentage: p,
-          strokeWidth: 5,
-          showText: false,
-          status: p === 100 ? 'success' : undefined,
-          style: { width: '76px' },
-        }),
-      ]);
-    },
-  },
-  {
-    prop: 'priority',
-    label: '优先级',
-    editable: true,
-    component: 'select',
-    componentProps: {
-      clearable: true,
-      options: priorityOptions,
-    },
-    dependencies: {
-      triggerFields: ['status'],
-      disabled(values: TaskRow) {
-        return values.status === 'done';
-      },
-    },
-    render: (scope: { row: TaskRow }) => {
-      const priority =
-        priorityMap[scope?.row?.priority as string] ?? defaultPriority;
-      return h(
-        'span',
-        { style: { color: priority.color, fontWeight: 600 } },
-        priority.label,
-      );
-    },
-  },
-  {
-    prop: 'amount',
-    label: '金额',
-    align: 'right',
-    editable: true,
-    component: 'input-number',
-    componentProps: {
-      min: 0,
-      step: 100,
-      controls: false,
-    },
-    formatter: (row: TaskRow) =>
-      `¥ ${(row.amount ?? 0).toLocaleString('zh-CN')}`,
-    rules: [
-      { required: true, message: '请输入金额' },
-      { type: 'number', min: 0, message: '金额不能为负' },
-    ],
-  },
-  {
-    prop: 'assignee',
-    label: '负责人',
-    editable: true,
-    component: 'select',
-    componentProps: {
-      options: ['张三', '李四', '王五', '赵六', '陈七', '周八'].map((a) => ({
-        label: a,
-        value: a,
-      })),
-    },
-    dependencies: {
-      triggerFields: ['department'],
-      required(values: TaskRow) {
-        return values.status === 'active';
-      },
-      componentProps(values: TaskRow) {
-        const dept = values.department;
-        const list = dept ? (departmentAssignees[dept] ?? []) : [];
-        return {
-          options: list.map((a) => ({ label: a, value: a })),
-        };
-      },
-    },
-  },
-  {
-    label: '组织信息',
-    children: [
-      {
-        prop: 'department',
-        label: '部门',
-        editable: (row) => row.status !== 'done',
-        component: 'select',
-        componentProps: {
-          options: departments.map((d) => ({ label: d, value: d })),
-        },
-      },
-      { prop: 'team', label: '团队' },
-    ],
-  },
-  {
-    prop: 'startDate',
-    label: '开始日期',
-    sortable: true,
-  },
-  {
-    prop: 'endDate',
-    label: '截止日期',
-    sortable: true,
-    renderHeader: ({ column }) =>
-      h(
-        'span',
-        { style: 'color: var(--el-color-danger); font-weight: 600' },
-        `⏰ ${column.label}`,
-      ),
-  },
-  {
-    prop: 'remark',
-    label: '备注',
-    editable: true,
-    showOverflowTooltip: true,
-    dependencies: {
-      triggerFields: ['name'],
-      trigger(_values, api: DependencyApi<TaskRow>) {
-        api.setFieldValue('remark', '');
-      },
-    },
-  },
-  {
-    prop: '_action',
-    label: '操作',
-    editable: false,
-    fixed: 'right',
-  },
-];
+const tableRef = ref<InstanceType<typeof PlusTable>>();
+const editMode = ref<EditMode>('cell');
+const validateOn = ref<ValidateOn>('change');
+const changeLog = ref('—');
+const validationResult = ref('—');
+/** row 模式下处于编辑态的行 id（仅供操作列 UI 切换按钮） */
+const editingIds = reactive(new Set<number>());
 
-const tableRules: Record<string, RuleItem | RuleItem[]> = {
-  name: [{ required: true, message: '任务名称必填' }],
-};
-
-// ──── 状态与控制 ────
-
-const tableRef = ref<InstanceType<typeof PlusTable> | null>(null);
-const sortInfo = ref({ prop: '', order: '' });
-const hotkeyEnabled = ref(true);
-const validateOnCellExit = ref(true);
-const validateTrigger = ref<'manual' | 'change' | 'blur'>('manual');
-const editableMode = ref<boolean | 'cell' | 'row' | 'manual'>('cell');
-const lastHotkeyLog = ref<string>('—');
-const editLog = ref('—');
-
-function handleSortChange(payload: { prop: string; order: string }) {
-  sortInfo.value = { prop: payload.prop ?? '', order: payload.order ?? '' };
+function onCellChange(payload: CellChangePayload) {
+  changeLog.value = `行 ${payload.rowIndex + 1} / ${payload.field}：${JSON.stringify(payload.oldValue)} → ${JSON.stringify(payload.value)}`;
 }
-
-const customHotkeys = [
-  {
-    key: 'ctrl+g',
-    handler: (ctx: HotkeyContext) => {
-      lastHotkeyLog.value = `Ctrl+G → 行 ${ctx.activeRowIndex + 1} / 列 ${ctx.activeColIndex + 1}`;
-    },
-    preventDefault: true,
-  },
-];
-
-function onEditStart(payload: {
-  rowIndex: number;
-  column: { prop?: string };
-  value: unknown;
-}) {
-  editLog.value = `开始编辑：行 ${payload.rowIndex + 1} / ${payload.column.prop} = "${payload.value}"`;
-}
-
-function onEditEnd(payload: {
-  rowIndex: number;
-  column: { prop?: string };
-  value: unknown;
-}) {
-  editLog.value = `结束编辑：行 ${payload.rowIndex + 1} / ${payload.column.prop} = "${payload.value}"`;
-}
-
-function onValueChange(payload: {
-  rowIndex: number;
-  column: { prop?: string };
-  oldValue: unknown;
-  newValue: unknown;
-}) {
-  editLog.value = `值变更：行 ${payload.rowIndex + 1} / ${payload.column.prop}："${payload.oldValue}" → "${payload.newValue}"`;
-}
-
-function editField(rowIndex: number, prop: string) {
-  tableRef.value?.focusAndEditByProp?.(rowIndex, prop);
-}
-
-// ──── 行操作 ────
-
-function handleInsertRow() {
-  const idx = tableRef.value?.activeRowIndex ?? tableData.value.length;
-  tableRef.value?.insertRow(idx + 1, createRow(tableData.value.length));
-}
-
-function handleDeleteRow() {
-  const idx = tableRef.value?.activeRowIndex ?? -1;
-  if (idx >= 0) tableRef.value?.deleteRow(idx);
-}
-
-function handleDuplicateRow() {
-  const idx = tableRef.value?.activeRowIndex ?? -1;
-  if (idx >= 0) tableRef.value?.duplicateRow(idx);
-}
-
-// ──── 校验 & 脏数据 ────
-
-const validationResult = ref('');
 
 async function handleValidate() {
   const result = await tableRef.value?.validate();
-  if (result?.valid) {
-    validationResult.value = 'OK';
-  } else {
-    const count = Object.keys(result?.errors ?? {}).length;
-    validationResult.value = `${count} 行有错误`;
-    tableRef.value?.scrollToFirstError();
-  }
+  validationResult.value = result?.valid ? 'OK' : `${result?.errors.length} 个错误`;
 }
 
-function handleResetTracking() {
-  tableRef.value?.resetTracking();
+function handleClearValidate() {
+  tableRef.value?.clearValidate();
+  validationResult.value = '—';
 }
 
-const dirtyCount = computed(() => {
-  const cells = tableRef.value?.getDirtyCells();
-  return cells?.size ?? 0;
-});
+function handleInsertRow() {
+  tableRef.value?.insertRow(createRow(allData.value.length));
+}
 
-const modifiedRowCount = computed(() => {
-  return tableRef.value?.getModifiedRows()?.length ?? 0;
-});
+// ──── row 模式行编辑 ────
+
+async function saveRow(row: TaskRow, rowIndex: number) {
+  const ok = await tableRef.value?.commitRowEdit(rowIndex);
+  if (ok) editingIds.delete(row.id);
+}
+
+function editRow(row: TaskRow, rowIndex: number) {
+  tableRef.value?.startRowEdit(rowIndex);
+  editingIds.add(row.id);
+}
+
+function cancelRow(row: TaskRow, rowIndex: number) {
+  tableRef.value?.cancelRowEdit(rowIndex);
+  editingIds.delete(row.id);
+}
+
+// ──── 列配置 ────
+
+const columns: PlusTableColumn[] = [
+  { field: 'id', title: 'ID', width: 70, fixed: 'left', settingDisabled: true },
+  {
+    field: 'name',
+    title: '任务名称',
+    minWidth: 200,
+    editable: true,
+    editor: 'input',
+    required: true,
+    rules: [{ min: 2, max: 50, message: '长度 2–50' }],
+  },
+  {
+    field: 'status',
+    title: '状态',
+    width: 110,
+    editable: true,
+    editor: { type: 'select', options: statusOptions },
+    render: ({ value }) => {
+      const info = statusMap[String(value)] ?? { label: '未知', type: 'info' as const };
+      return h(ElTag, { type: info.type, size: 'small', disableTransitions: true }, () => info.label);
+    },
+  },
+  {
+    field: 'priority',
+    title: '优先级',
+    width: 110,
+    editable: true,
+    editor: { type: 'select', options: priorityOptions },
+    formatter: (value) =>
+      ({ high: '高', medium: '中', low: '低' })[String(value)] ?? '',
+    dependencies: {
+      triggerFields: ['status'],
+      // 已完成的任务不允许再改优先级
+      disabled: (row) => row.status === 'done',
+    },
+  },
+  {
+    field: 'amount',
+    title: '金额',
+    align: 'right',
+    width: 130,
+    editable: true,
+    editor: { type: 'number', props: { min: 0, step: 100, controls: false } },
+    formatter: (value) => `¥ ${(Number(value) || 0).toLocaleString('zh-CN')}`,
+    rules: [{ type: 'number', min: 0, message: '金额不能为负' }],
+  },
+  {
+    title: '组织信息',
+    children: [
+      {
+        field: 'department',
+        title: '部门',
+        width: 120,
+        editable: true,
+        editor: {
+          type: 'select',
+          options: departments.map((d) => ({ label: d, value: d })),
+        },
+      },
+      {
+        field: 'assignee',
+        title: '负责人',
+        width: 130,
+        editable: true,
+        editor: { type: 'select' },
+        dependencies: {
+          triggerFields: ['department'],
+          // 进行中的任务必须有负责人
+          required: (row) => row.status === 'active',
+          // 候选人随部门联动
+          componentProps: (row) => ({
+            options: (departmentAssignees[row.department as string] ?? []).map(
+              (name) => ({ label: name, value: name }),
+            ),
+          }),
+          // 换部门后清空负责人
+          trigger: (row, api) => {
+            const candidates = departmentAssignees[row.department as string] ?? [];
+            if (!candidates.includes(row.assignee as string)) {
+              api.setValue('assignee', undefined);
+            }
+          },
+        },
+      },
+      { field: 'team', title: '团队', width: 110 },
+    ],
+  },
+  {
+    field: 'remark',
+    title: '备注',
+    minWidth: 140,
+    editable: true,
+  },
+  {
+    title: '操作',
+    width: 190,
+    fixed: 'right',
+    align: 'center',
+    settingDisabled: true,
+    render: ({ row, rowIndex }) => {
+      const task = row as TaskRow;
+      const buttons = [];
+      if (editMode.value === 'row') {
+        if (editingIds.has(task.id)) {
+          buttons.push(
+            h(ElButton, { link: true, type: 'primary', size: 'small', onClick: () => saveRow(task, rowIndex) }, () => '保存'),
+            h(ElButton, { link: true, size: 'small', onClick: () => cancelRow(task, rowIndex) }, () => '取消'),
+          );
+        } else {
+          buttons.push(
+            h(ElButton, { link: true, type: 'primary', size: 'small', onClick: () => editRow(task, rowIndex) }, () => '编辑'),
+          );
+        }
+      }
+      buttons.push(
+        h(ElButton, { link: true, size: 'small', onClick: () => tableRef.value?.duplicateRow(rowIndex, { id: nextId++ }) }, () => '复制'),
+        h(ElButton, { link: true, type: 'danger', size: 'small', onClick: () => tableRef.value?.removeRow(rowIndex) }, () => '删除'),
+      );
+      return h('span', buttons);
+    },
+  },
+];
 </script>
 
 <template>
   <div>
-    <div class="page-toolbar">
+    <div class="demo-toolbar">
       <span class="label">编辑模式</span>
-      <el-radio-group v-model="editableMode" size="small">
-        <el-radio-button :value="false">只读</el-radio-button>
+      <el-radio-group v-model="editMode" size="small">
+        <el-radio-button value="none">none</el-radio-button>
         <el-radio-button value="cell">cell</el-radio-button>
         <el-radio-button value="row">row</el-radio-button>
-        <el-radio-button value="manual">manual</el-radio-button>
-        <el-radio-button :value="true">all</el-radio-button>
+        <el-radio-button value="table">table</el-radio-button>
       </el-radio-group>
 
       <el-divider direction="vertical" />
       <span class="label">校验时机</span>
-      <el-radio-group v-model="validateTrigger" size="small">
-        <el-radio-button value="manual">手动</el-radio-button>
+      <el-radio-group v-model="validateOn" size="small">
         <el-radio-button value="change">change</el-radio-button>
         <el-radio-button value="blur">blur</el-radio-button>
+        <el-radio-button value="manual">manual</el-radio-button>
       </el-radio-group>
-      <el-checkbox v-model="validateOnCellExit" size="small">
-        离格校验
-      </el-checkbox>
 
       <el-divider direction="vertical" />
-      <el-checkbox v-model="hotkeyEnabled" size="small">热键</el-checkbox>
-
-      <el-divider direction="vertical" />
-      <span class="label">行操作</span>
-      <el-button-group size="small">
-        <el-button @click="handleInsertRow">插入行</el-button>
-        <el-button @click="handleDeleteRow">删除行</el-button>
-        <el-button @click="handleDuplicateRow">复制行</el-button>
-      </el-button-group>
-
-      <el-divider direction="vertical" />
-      <el-button-group size="small">
-        <el-button
-          :disabled="!tableRef?.canUndo"
-          @click="tableRef?.undo()"
-        >
-          撤销
-        </el-button>
-        <el-button
-          :disabled="!tableRef?.canRedo"
-          @click="tableRef?.redo()"
-        >
-          重做
-        </el-button>
-      </el-button-group>
-      <el-button size="small" type="primary" @click="handleValidate">
-        校验
-      </el-button>
-      <el-button size="small" @click="handleResetTracking">
-        重置脏标记
-      </el-button>
+      <el-button size="small" type="primary" @click="handleValidate">校验</el-button>
+      <el-button size="small" @click="handleClearValidate">清除校验</el-button>
+      <el-button size="small" @click="handleInsertRow">插入行</el-button>
     </div>
 
-    <div class="demo-statusbar" role="status" aria-live="polite">
+    <div class="demo-statusbar">
       <span class="demo-statusbar__item">
-        <span class="demo-statusbar__k">排序</span>
-        {{ sortInfo.prop ? `${sortInfo.prop} (${sortInfo.order})` : '无' }}
+        <span class="demo-statusbar__k">校验</span>{{ validationResult }}
       </span>
-      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
-      <span class="demo-statusbar__item">
-        <span class="demo-statusbar__k">激活</span>
-        行 {{ (tableRef?.activeRowIndex ?? -1) + 1 }} / 列
-        {{ (tableRef?.activeColIndex ?? -1) + 1 }}
-      </span>
-      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
-      <span class="demo-statusbar__item">
-        <span class="demo-statusbar__k">脏数据</span>
-        {{ dirtyCount }} 格 / {{ modifiedRowCount }} 行
-      </span>
-      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
-      <span class="demo-statusbar__item">
-        <span class="demo-statusbar__k">校验</span>
-        {{ validationResult || '—' }}
-      </span>
-      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
-      <span class="demo-statusbar__item">
-        <span class="demo-statusbar__k">Ctrl+G</span>
-        {{ lastHotkeyLog }}
-      </span>
-      <span class="demo-statusbar__sep" aria-hidden="true">|</span>
+      <span class="demo-statusbar__sep">|</span>
       <span class="demo-statusbar__item demo-statusbar__item--grow">
-        <span class="demo-statusbar__k">编辑</span>
-        {{ editLog }}
+        <span class="demo-statusbar__k">cell-change</span>{{ changeLog }}
       </span>
     </div>
 
-    <el-card class="demo-table-card" shadow="never">
-      <PlusTable
-        ref="tableRef"
-        v-loading="loading"
-        v-model:data="tableData"
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="total"
-        :columns="columns"
-        :rules="tableRules"
-        :validate-on-cell-exit="validateOnCellExit"
-        :validate-trigger="validateTrigger"
-        :hotkey-enabled="hotkeyEnabled"
-        :hotkeys="customHotkeys"
-        :editable="editableMode"
-        cell-active
-        row-active
-        border
-        row-key="id"
-        column-setting
-        @sort-change="handleSortChange"
-        @pagination="handlePagination"
-        @cell-edit-start="onEditStart"
-        @cell-edit-end="onEditEnd"
-        @cell-value-change="onValueChange"
-      >
-        <template #title>
-          <div class="demo-table-heading">
-            <span class="demo-table-heading__title">任务管理</span>
-            <el-tag
-              size="small"
-              round
-              type="info"
-              effect="plain"
-              :disable-transitions="true"
-            >
-              {{ tableData.length }} 条
-            </el-tag>
-          </div>
-        </template>
-        <template #actions>
-          <el-space>
-            <el-tag
-              v-if="tableRef?.isEditing"
-              type="warning"
-              size="small"
-              :disable-transitions="true"
-            >
-              编辑中
-            </el-tag>
-          </el-space>
-        </template>
+    <PlusTable
+      ref="tableRef"
+      v-model:data="pagedData"
+      v-model:page="page"
+      v-model:page-size="pageSize"
+      :columns="columns"
+      :total="total"
+      :edit-mode="editMode"
+      :validate-on="validateOn"
+      row-key="id"
+      column-setting
+      settings-key="docs-playground"
+      border
+      @cell-change="onCellChange"
+    >
+      <template #toolbar>
+        <span class="demo-table-title">任务管理（{{ total }} 条）</span>
+      </template>
 
-        <template #cell-assignee="{ row }">
-          <div class="assignee-cell">
-            <el-avatar :size="22" class="avatar">
-              {{ (row as TaskRow)?.assignee?.charAt(0) ?? '' }}
-            </el-avatar>
-            <span>{{ (row as TaskRow)?.assignee ?? '' }}</span>
-          </div>
-        </template>
+      <template #header-name>
+        <span style="color: var(--el-color-primary)">任务名称</span>
+      </template>
 
-        <template #header-assignee>
-          <span class="demo-col-head--primary">负责人</span>
-        </template>
-
-        <template #expand="{ row }">
-          <div class="expand-content">
-            <p><strong>任务：</strong>{{ (row as TaskRow)?.name }}</p>
-            <p>
-              <strong>时间：</strong>{{ (row as TaskRow)?.startDate }} ~
-              {{ (row as TaskRow)?.endDate }}
-            </p>
-            <p><strong>备注：</strong>{{ (row as TaskRow)?.remark }}</p>
-          </div>
-        </template>
-
-        <template #editor-remark="scope">
-          <el-input
-            v-bind="scope"
-            placeholder="请输入备注…"
-            class="plus-table-cell-editor"
-            @keydown.esc.stop.prevent
-          />
-        </template>
-
-        <template #cell-_action="{ $index }">
-          <el-button
-            link
-            type="primary"
-            size="small"
-            @click.stop="editField($index, 'name')"
-          >
-            编辑名称
-          </el-button>
-          <el-button
-            link
-            type="primary"
-            size="small"
-            @click.stop="editField($index, 'remark')"
-          >
-            编辑备注
-          </el-button>
-        </template>
-
-        <template #summary>
-          <span class="demo-table-summary">
-            提示：分页为前端全量数据演示；接入服务端时请按页更新 data。
-          </span>
-        </template>
-      </PlusTable>
-    </el-card>
+      <template #editor-remark="{ value, setValue }">
+        <el-input
+          :model-value="(value as string)"
+          placeholder="自定义编辑器插槽…"
+          size="small"
+          @update:model-value="setValue"
+        />
+      </template>
+    </PlusTable>
   </div>
 </template>
 
 <style scoped lang="scss">
-.page-toolbar {
+.demo-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 
   .label {
     font-size: 12px;
     font-weight: 500;
-    color: var(--muted-foreground);
+    color: var(--vp-c-text-2, #666);
   }
 }
 
@@ -629,108 +357,33 @@ const modifiedRowCount = computed(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 6px 4px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
+  gap: 4px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
   font-size: 12px;
-  line-height: 1.5;
-  color: var(--muted-foreground);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
   font-variant-numeric: tabular-nums;
 
   &__k {
     margin-right: 4px;
-    font-weight: 500;
-    color: var(--foreground);
+    font-weight: 600;
   }
 
   &__sep {
-    margin: 0 6px;
-    color: var(--border);
-    user-select: none;
+    margin: 0 8px;
+    color: var(--el-border-color);
   }
 
-  &__item {
+  &__item--grow {
+    flex: 1 1 200px;
     min-width: 0;
-
-    &--grow {
-      flex: 1 1 200px;
-    }
   }
 }
 
-.demo-table-card {
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  border: 1px solid var(--border);
-
-  :deep(.el-card__body) {
-    padding: 16px;
-  }
-}
-
-.demo-table-heading {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-
-  &__title {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: -0.2px;
-    color: var(--foreground);
-  }
-}
-
-.demo-col-head--primary {
-  color: var(--foreground);
-  font-weight: 500;
-}
-
-.demo-table-summary {
-  font-size: 12px;
-  color: var(--muted-foreground);
-}
-
-:deep(.demo-progress-cell) {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-:deep(.demo-progress-cell__pct) {
-  min-width: 2.75rem;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
-}
-
-.assignee-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  .avatar {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    font-size: 12px;
-  }
-}
-
-.expand-content {
-  padding: 12px 16px;
-  line-height: 1.75;
-  font-size: 12px;
-  color: var(--muted-foreground);
-  background: var(--muted);
-  border: 1px solid var(--border);
-  border-radius: 0;
-
-  p {
-    margin: 0 0 4px;
-  }
+.demo-table-title {
+  margin-right: auto;
+  font-size: 13px;
+  font-weight: 600;
 }
 </style>
