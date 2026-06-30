@@ -10,9 +10,7 @@
     "typecheck": "vue-tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@labs/ant-table": "workspace:*",
     "@labs/plus-table": "workspace:*",
-    "ant-design-vue": "catalog:",
     "async-validator": "catalog:",
     "element-plus": "catalog:",
     "hucre": "catalog:",

@@ -1,6 +1,6 @@
 # PlusTable 产品大纲
 
-> 包：`@labs/plus-table` ｜ 底层：Element Plus `el-table` ｜ 姊妹组件：[AntTable](../ant-table/OUTLINE.md)
+> 包：`@labs/plus-table` ｜ 底层：Element Plus `el-table`
 >
 > 本文是**产品定位 + 技术架构**层面的纲要，不替代 API 参考。完整 API 见 `docs/components/plus-table/index.md`。
 
@@ -43,7 +43,6 @@
 - **类 Excel 键盘流**：方向键 / Tab / Enter / F2 / Home·End / Ctrl+Home·End 全覆盖，录入不离手。
 - **能力成套且自洽**：编辑→脏标记→历史→联动→校验是一条编排好的流水线（见 §2.5），而非零件拼装。
 - **对 `el-table` 友好透传**：未识别属性 / 事件 `v-bind="$attrs"` 直达，`ref` 暴露 `getElTable` 及常用方法，不阻断原生能力。
-- **与 AntTable 能力对齐**：同一套交互模型在 Element Plus / Ant Design Vue 两套 UI 库上保持一致，便于跨技术栈复用心智。
 
 ### 1.5 能力范围（已实现）
 
@@ -68,26 +67,9 @@
 - **不做数据层**：不负责请求、分页切片、排序 / 筛选算法；服务端分页时数据由父组件按页传入。
 - **不重写 `el-table`**：渲染与布局仍由 `el-table` 承担，PlusTable 只增强交互层。
 - **不内置虚拟滚动**：超大数据量的虚拟化沿用 `el-table` 自身能力，不额外封装。
-- **不做跨 UI 库抽象层**：与 AntTable 是「能力对齐的两份实现」，刻意不抽公共内核，避免过度抽象（详见 §3）。
 - **非通用电子表格**：不支持合并区域选区、公式、跨表引用等 Excel 高级特性。
 
-### 1.7 与 AntTable 的关系
-
-二者**能力对齐、实现各自独立**，区别只在底层 UI 库与 API 风格：
-
-| 维度 | PlusTable | AntTable |
-| --- | --- | --- |
-| 底层库 | Element Plus `el-table` | Ant Design Vue `a-table` |
-| 列 API | `el-table-column` 风格（`prop`/`label`） | antd `columns` 数组（`dataIndex`/`title`/`customRender`） |
-| 数据 v-model | `v-model:data` | `v-model:dataSource` |
-| 分页字段 | `currentPage` | `current` |
-| 渲染机制 | 模板 + 插槽（`cell-${prop}`/`header-${prop}`/`editor-${prop}`） | 列配置驱动（`customRender`/`component`），无逐列插槽 |
-| 单元格样式 | 表级 `cell-class-name`/`row-class-name` 回调 | 逐单元格组件内打类名 |
-| 特殊列 | `type: selection/index/expand` | antd `row-selection` 等透传 |
-
-> 选型建议：项目已用 Element Plus → PlusTable；已用 Ant Design Vue → AntTable。
-
-### 1.8 演进方向（候选，非承诺）
+### 1.7 演进方向（候选，非承诺）
 
 当前为实验性内部包（`version 0.0.0`、`private`、以**源码形式**被消费）。结合现状可考虑：
 
