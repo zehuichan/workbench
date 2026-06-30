@@ -1,1 +1,0 @@
-import{t as e}from"./shellscript.D5hXNL8S.js";export{e as default};
