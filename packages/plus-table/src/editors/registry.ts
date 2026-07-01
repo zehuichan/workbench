@@ -8,7 +8,6 @@ import {
   ElTimePicker,
 } from 'element-plus';
 import type { Component } from 'vue';
-import type { BuiltinEditorType } from '../types';
 
 export interface EditorAdapter {
   component: Component;
@@ -17,7 +16,7 @@ export interface EditorAdapter {
   trigger: 'blur' | 'change';
 }
 
-export const EDITOR_REGISTRY: Record<BuiltinEditorType, EditorAdapter> = {
+export const EDITOR_REGISTRY = {
   input: { component: ElInput, trigger: 'blur' },
   textarea: {
     component: ElInput,
@@ -30,7 +29,13 @@ export const EDITOR_REGISTRY: Record<BuiltinEditorType, EditorAdapter> = {
   'time-picker': { component: ElTimePicker, trigger: 'change' },
   switch: { component: ElSwitch, trigger: 'change' },
   checkbox: { component: ElCheckbox, trigger: 'change' },
-};
+} satisfies Record<string, EditorAdapter>;
+
+/** 内置编辑器标识，由 EDITOR_REGISTRY 的键推导——新增编辑器只需扩展注册表 */
+export type BuiltinEditorType = keyof typeof EDITOR_REGISTRY;
+
+/** satisfies 会保留每个条目各自的窄类型（如无 componentProps），这里收敛成统一形状供查表用 */
+const TYPED_REGISTRY: Record<BuiltinEditorType, EditorAdapter> = EDITOR_REGISTRY;
 
 export interface ResolvedEditor {
   component: Component;
@@ -55,7 +60,7 @@ export function resolveEditor(component?: BuiltinEditorType | Component): Resolv
     return { component, componentProps: {}, trigger: 'blur', modelProp: 'modelValue' };
   }
 
-  const adapter = EDITOR_REGISTRY[component as BuiltinEditorType] ?? EDITOR_REGISTRY.input;
+  const adapter = TYPED_REGISTRY[component as BuiltinEditorType] ?? TYPED_REGISTRY.input;
   return {
     component: adapter.component,
     componentProps: { ...adapter.componentProps },

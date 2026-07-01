@@ -275,11 +275,11 @@ const columns: PlusTableColumn[] = [
     editable: true,
   },
   {
+    type: 'operation',
     label: '操作',
     width: 190,
     fixed: 'right',
     align: 'center',
-    settingDisabled: true,
     render: ({ row, rowIndex }) => {
       const task = row as TaskRow;
       const buttons = [];

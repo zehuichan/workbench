@@ -1,6 +1,6 @@
 import { defineComponent, h, inject } from 'vue';
 import { ElTableColumn } from 'element-plus';
-import { isSpecialColumn, PLUS_TABLE_INJECTION_KEY } from '../constants';
+import { isNativeRenderColumn, PLUS_TABLE_INJECTION_KEY } from '../constants';
 import TableCell from './table-cell';
 import type { PropType, VNodeChild } from 'vue';
 import type { ColumnNode, PlusTableColumn, RowData } from '../types';
@@ -24,7 +24,10 @@ function nativeProps(column: PlusTableColumn): Record<string, unknown> {
   return rest;
 }
 
-/** 递归渲染列（多级表头 children），叶子列承载 PlusTableCell；特殊列（selection/index/expand）交给 el-table 原生渲染 */
+/**
+ * 递归渲染列（多级表头 children），叶子列承载 PlusTableCell；
+ * 原生特殊列（selection/index/expand）交给 el-table 原生渲染；operation（操作列）仍走 PlusTableCell（见 isSpecialColumn）。
+ */
 export default defineComponent({
   name: 'PlusTableColumnNode',
   props: {
@@ -63,8 +66,8 @@ export default defineComponent({
         );
       }
 
-      // 特殊列（selection/index/expand）：不接管 default/header slot，原生勾选框/序号/展开图标由 el-table 自行渲染
-      if (isSpecialColumn(column)) {
+      // 原生特殊列（selection/index/expand）：不接管 default/header slot，勾选框/序号/展开图标由 el-table 自行渲染
+      if (isNativeRenderColumn(column)) {
         return h(ElTableColumn, {
           key: `${index}:${node.id}`,
           columnKey: node.id,

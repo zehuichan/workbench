@@ -57,7 +57,7 @@ function flattenLeaves(nodes: ColumnNode[], into: ColumnNode[] = []): ColumnNode
   return into;
 }
 
-/** 可参与数据操作的叶子列：排除特殊列（selection/index/expand 无 prop，由 el-table 原生渲染） */
+/** 可参与数据操作的叶子列：排除特殊列（selection/index/expand 由 el-table 原生渲染；operation 操作列无 prop，不可编辑/校验） */
 function flattenDataLeaves(nodes: ColumnNode[]): ColumnNode[] {
   return flattenLeaves(nodes).filter((node) => !isSpecialColumn(node.column));
 }
@@ -129,7 +129,7 @@ export function createColumns(props: PlusTableProps) {
   }
 
   /**
-   * 按 orderMap 重排同级列；特殊列（selection/index/expand）不参与排序，锚定在原始下标位置——
+   * 按 orderMap 重排同级列；特殊列（selection/index/expand/operation）不参与排序，锚定在原始下标位置——
    * 声明在最前面的 type: 'index' 列，无论其余列怎么拖拽，永远留在最前面。
    */
   function applyOrder(nodes: ColumnNode[], parentId: string): ColumnNode[] {
@@ -184,10 +184,10 @@ export function createColumns(props: PlusTableProps) {
     return sortBy(visibleTree.value, [(node) => fixedRank(node.column)]);
   });
 
-  /** 可导航/可编辑叶子列（视觉顺序，排除特殊列），供键盘导航、选区边界、列宽持久化使用 */
+  /** 可导航/可编辑叶子列（视觉顺序，排除特殊列，含 operation 操作列），供键盘导航、选区边界、列宽持久化使用 */
   const leafNodes = computed(() => flattenDataLeaves(displayTree.value));
 
-  /** 全部叶子列（含列设置隐藏的列，排除特殊列），供校验 / 联动遍历使用 */
+  /** 全部叶子列（含列设置隐藏的列，排除特殊列，含 operation 操作列），供校验 / 联动遍历使用 */
   const allLeafNodes = computed(() => flattenDataLeaves(normalizedTree.value));
 
   const leafIndexById = computed(() => {
@@ -197,7 +197,7 @@ export function createColumns(props: PlusTableProps) {
   });
 
   /**
-   * leafNodes 下标 → 该列在 <tr> 中的真实 <td> 下标。特殊列（selection/index/expand）
+   * leafNodes 下标 → 该列在 <tr> 中的真实 <td> 下标。特殊列（selection/index/expand/operation）
    * 不进 leafNodes，但仍作为真实 <td> 渲染，两者下标会因此错位——DOM 定位（聚焦编辑器 /
    * scrollIntoView）必须走这份映射，不能直接拿 leafNodes 下标当 td 下标用。
    */
@@ -220,7 +220,7 @@ export function createColumns(props: PlusTableProps) {
     return null;
   }
 
-  /** 列设置面板条目：跳过特殊列（selection/index/expand 不可配置） */
+  /** 列设置面板条目：跳过特殊列（selection/index/expand/operation 不可配置） */
   const settingItems = computed<SettingItem[]>(() => {
     const items: SettingItem[] = [];
     const walk = (nodes: ColumnNode[], parentId: string, level: number) => {

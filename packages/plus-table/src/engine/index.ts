@@ -174,7 +174,7 @@ export function createTableEngine(options: TableEngineOptions) {
 
   /**
    * 用 el-table 回传的 column.columnKey（渲染时已设为 node.id）在 leafIndexById 里查找列下标，
-   * 而不是 DOM cell.cellIndex——特殊列（selection/index/expand）作为真实 <td> 渲染但不进 leafNodes，
+   * 而不是 DOM cell.cellIndex——特殊列（selection/index/expand/operation）作为真实 <td> 渲染但不进 leafNodes，
    * 会导致 DOM 下标与 leafNodes 下标错位；按 columnKey 匹配则天然与渲染方式无关，特殊列直接查不到（-1）。
    */
   function resolveCellPosition(row: RowData, column: { columnKey?: string }) {

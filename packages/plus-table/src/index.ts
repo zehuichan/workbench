@@ -15,10 +15,9 @@ export type {
   HistoryApi,
   DirtyApi,
 } from './engine';
-export type { EditorAdapter, ResolvedEditor } from './editors/registry';
+export type { BuiltinEditorType, EditorAdapter, ResolvedEditor } from './editors/registry';
 export type {
   AdaptiveConfig,
-  BuiltinEditorType,
   CellChangePayload,
   CellError,
   CellRenderParams,

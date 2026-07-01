@@ -94,6 +94,7 @@ interface PlusTableColumn extends Partial<TableColumnCtx> {
 
 - `formatter` 为 `el-table-column` 原生签名 `(row, column, cellValue, index) => VNode | string`；`render` 优先级更高，二者都缺省时展示原始值。
 - `type: 'index' | 'selection' | 'expand'` 特殊列由 `el-table` 原生渲染（序号 / 勾选框 / 展开图标），不进列设置面板、不参与键盘导航，拖拽排序时始终留在声明时的位置（如首列 `{ type: 'index', label: '#' }` 拖别的列也不会挪动）。
+- `type: 'operation'` 为 PlusTable 扩展的操作列（如 `{ type: 'operation', label: '操作', fixed: 'right', render: ... }`）：渲染方式不变（仍用 `render` 自定义按钮），但同样归入特殊列——不进列设置面板、不参与键盘导航（不会被激活态高亮/方向键选中）、拖拽排序时锚定原位、始终可见。
 
 ## 编辑器 component
 
@@ -208,7 +209,7 @@ dependencies: {
 - 面板内勾选显隐（组节点联动子列、半选态），**拖拽行**调整列顺序（仅限同级之间），「重置」恢复默认。
 - **列宽**：拖拽表头边框调整（`el-table` 原生行为，需 `border`），调整结果自动记录。
 - 传 `settingsKey` 后，显隐 / 顺序 / 列宽均持久化到 localStorage。
-- `settingDisabled: true` 的列在面板中不可勾选、不可拖拽。
+- `settingDisabled: true` 的列在面板中不可勾选、不可拖拽（但仍显示在列表里）；`type: 'selection' | 'index' | 'expand' | 'operation'` 特殊列则完全不出现在面板中。
 
 ## 分页
 

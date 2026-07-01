@@ -49,7 +49,7 @@
 
 | 能力域 | 内容 |
 | --- | --- |
-| 列模型 | 配置式 `columns`（继承 el-table-column 原生 `prop`/`label`/`type` 等），多级表头 `children`，`formatter`/`render`；`header-${prop}` / `cell-${prop}` / `editor-${prop}` 插槽局部接管；特殊列 `type: 'index'\|'selection'\|'expand'` 原生直通（不进列设置、不参与键盘导航与拖拽排序） |
+| 列模型 | 配置式 `columns`（继承 el-table-column 原生 `prop`/`label`/`type` 等），多级表头 `children`，`formatter`/`render`；`header-${prop}` / `cell-${prop}` / `editor-${prop}` 插槽局部接管；特殊列 `type: 'index'\|'selection'\|'expand'` 原生直通，`type: 'operation'`（操作列，业务自定义 render）渲染方式不变——两者均不进列设置、不参与键盘导航与拖拽排序 |
 | 编辑模式 | `none` / `cell` / `row` / `table` 四种；文本类编辑器统一「草稿缓冲、失焦提交」，离散类（select/switch/date 等）变更即提交 |
 | 编辑器 | 内置 `input`/`textarea`/`input-number`/`select`（`ElSelectV2`）/`date-picker`/`time-picker`/`switch`/`checkbox`，或任意自定义组件，`editor-${prop}` 插槽 |
 | 键盘导航 | 方向键、Tab/Shift+Tab、Enter/Esc、F2、Home/End、Ctrl+Home/End、可打印字符自动进编；Tab/Esc 任何编辑模式下都由网格统一拦截；row/table 模式下方向键移动会同步真实 DOM 焦点到目标格输入框 |
@@ -149,7 +149,7 @@ packages/plus-table/src/
 | 模块 | 职责 |
 | --- | --- |
 | `index.ts`（`createTableEngine`） | 编排入口：组装各模块依赖、`writeCell` 写值管线、按 `column.columnKey` 而非 DOM `cellIndex` 解析点击的行列坐标（特殊列天然查不到，等同跳过）、开发环境 `rowKey` 重复/缺失检测、行结构变化后清理 history/dirty/validation 残留 |
-| `columns.ts` | 列归一化（`columns` → `ColumnNode` 树）、显隐/拖拽排序/列宽 + localStorage 持久化（`try/catch` 兜底 SSR/隐私模式）、可见列 `leafNodes` 与全部列 `allLeafNodes` 两套叶子节点（均排除 `type` 特殊列）；特殊列排序时锚定在原始下标 |
+| `columns.ts` | 列归一化（`columns` → `ColumnNode` 树）、显隐/拖拽排序/列宽 + localStorage 持久化（`try/catch` 兜底 SSR/隐私模式）、可见列 `leafNodes` 与全部列 `allLeafNodes` 两套叶子节点（均排除 `type` 特殊列，含 `operation` 操作列）；特殊列排序时锚定在原始下标 |
 | `selection.ts` | 活动格状态、方向键/Tab/Home/End 移动、`focusActiveCellEditor`（row/table 模式同步真实 DOM 焦点）、`getCellEl` |
 | `editing.ts` | 编辑状态机（cell/row/table 三种模式）；cell 模式单槽 draft；row/table 模式按 `` `${rowKey}:${prop}` `` 的 live draft 缓冲（文本类失焦提交）；行编辑快照与 `cancelRowEdit` 回滚 |
 | `keyboard.ts` | 键盘事件分发：自定义 `hotkeys`（override）→ cell 编辑态按键流 → 全局 Tab/Esc → 内置导航与撤销重做 → 自定义 `hotkeys`（非 override） |
@@ -181,7 +181,7 @@ writeCell(row, rowIndex, prop, value)
 
 ### 2.6 渲染机制
 
-- 主组件按 `columns.displayTree` 渲染 `TableColumnNode`（`table-column.ts`，递归处理多级表头与叶子列）；叶子列的展示态 / 编辑态交给 `table-cell.ts` 渲染函数；特殊列（`type: 'index'\|'selection'\|'expand'`）不挂载 `table-cell.ts`，交给 `el-table` 原生渲染。
+- 主组件按 `columns.displayTree` 渲染 `TableColumnNode`（`table-column.ts`，递归处理多级表头与叶子列）；叶子列的展示态 / 编辑态交给 `table-cell.ts` 渲染函数；原生特殊列（`type: 'index'\|'selection'\|'expand'`）不挂载 `table-cell.ts`，交给 `el-table` 原生渲染。`type: 'operation'` 操作列仍挂载 `table-cell.ts`（走 `render` 渲染按钮），只是在列设置/键盘导航/拖拽排序维度上与其余特殊列同等对待。
 - 展示态：`render` / `formatter` / `cell-${prop}` 插槽；编辑态：`component` 解析出的内置或自定义组件，或 `editor-${prop}` 插槽（优先于 `component` 配置）。
 - 单元格状态类名（`active`/`editing`/`error`/`required`/`dirty` 等）直接读 `engine` 内部响应式状态计算得出，不依赖 `el-table` 自身 `cell-class-name` 的重算时机。
 

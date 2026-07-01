@@ -1,6 +1,7 @@
 import type { Component, VNodeChild } from 'vue';
 import type { RuleItem } from 'async-validator';
 import type { TableColumnCtx } from 'element-plus';
+import type { BuiltinEditorType } from './editors/registry';
 
 export type RowData = Record<string, any>;
 
@@ -47,16 +48,6 @@ export interface ColumnDependencies {
   trigger?: (row: RowData, api: DependencyApi) => void;
 }
 
-export type BuiltinEditorType =
-  | 'input'
-  | 'textarea'
-  | 'input-number'
-  | 'select'
-  | 'date-picker'
-  | 'time-picker'
-  | 'switch'
-  | 'checkbox';
-
 export interface CellRenderParams {
   row: RowData;
   rowIndex: number;
@@ -66,7 +57,9 @@ export interface CellRenderParams {
 
 /**
  * 列配置：继承 el-table-column 的 TableColumnCtx，prop/label/type/width/align/formatter 等原生属性
- * 直接可用（含 type: 'index' | 'selection' | 'expand' 特殊列原生直通），此处仅声明 PlusTable 扩展项。
+ * 直接可用（含 type: 'index' | 'selection' | 'expand' 特殊列原生直通）。此处仅声明 PlusTable 扩展项，
+ * 其中 type 额外支持 'operation'：业务自定义的操作列（配合 render 渲染按钮），渲染方式不变，
+ * 但同样归入特殊列——不进列设置面板、不参与键盘导航与拖拽排序、始终可见。
  */
 export interface PlusTableColumn extends Partial<Omit<TableColumnCtx<RowData>, 'children'>> {
   /** 多级表头，组节点只需 label */

@@ -11,7 +11,7 @@ export interface SelectionOptions {
   gridRef: Ref<HTMLElement | undefined>;
   rowCount: () => number;
   colCount: () => number;
-  /** leafNodes 下标 → 真实 <td> 下标（特殊列会占位但不进 leafNodes，两者下标会错位） */
+  /** leafNodes 下标 → 真实 <td> 下标（特殊列/操作列会占位但不进 leafNodes，两者下标会错位） */
   colDomIndex: (colIndex: number) => number;
 }
 
