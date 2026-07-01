@@ -3,6 +3,12 @@
   flex-direction: column;
   min-width: 0;
 
+  // container 模式：交给外部 flex 父级撑满高度（卡片 / 弹窗 / 分栏等自身高度受限的容器）
+  &--adaptive-container {
+    height: 100%;
+    min-height: 0;
+  }
+
   &__toolbar {
     display: flex;
     align-items: center;
@@ -19,7 +25,6 @@
   &__pagination {
     display: flex;
     justify-content: flex-end;
-    padding-top: 12px;
   }
 
   .el-table {
@@ -31,6 +36,15 @@
     th.el-table__cell {
       color: var(--el-text-color-primary);
       font-weight: 400;
+    }
+
+    // 固定列（左/右）是靠 position: sticky 实现的，body 格子的底色靠 `background: inherit` 从
+    // <tr> 继承。宿主页面一旦重置了 tr 的 background-color（如本文档站清除 markdown 表格斑马纹、
+    // 或 Tailwind preflight 之类的全局 reset），继承链断裂，固定列就会变透明——横向滚动时能看穿
+    // 到底下滚走的单元格文字，叠出"重影"。这里直接给固定列本体兜底一份不透明底色，不依赖继承。
+    td.el-table-fixed-column--left,
+    td.el-table-fixed-column--right {
+      background-color: var(--el-table-tr-bg-color);
     }
 
     // 行激活 / 行编辑中：整行浅色底（含 .el-table__body 以压过斑马纹 td 底色）
@@ -45,14 +59,21 @@
     }
   }
 
-  // 交出单元格内边距，由 .ptbl-cell 接管，以便整格绘制状态底色与边框
-  .el-table td.el-table__cell {
+  // 交出单元格内边距，由 .ptbl-cell 接管，以便整格绘制状态底色与边框；
+  // 仅对渲染了 .ptbl-cell 的格子生效——原生特殊列（index/selection/expand）不经过
+  // TableCell，没有 .ptbl-cell 接管内边距，若一并清零会导致序号/勾选框贴边、错位。
+  .el-table td.el-table__cell:has(.ptbl-cell) {
     padding: 0;
 
     > .cell {
       padding: 0;
     }
   }
+}
+
+// container 模式：网格区域撑满剩余空间，交给 el-table 自身的固定表头 + 内部滚动
+.plus-table--adaptive-container > .plus-table__grid {
+  flex: 1;
 }
 
 .ptbl-cell {
@@ -66,6 +87,11 @@
 
   &--editable {
     cursor: cell;
+
+    // 未激活时也给一点可发现性提示：不然用户不 hover 到根本看不出哪些格子能编辑
+    &:hover {
+      background-color: var(--el-fill-color-light);
+    }
   }
 
   &--active {
@@ -115,6 +141,19 @@
     &.ptbl-cell--editing-quiet:focus-within {
       box-shadow: inset 0 0 0 1.5px var(--el-color-danger);
     }
+  }
+
+  // 脏格：右上角小圆点（表头星号已能表达 required，圆点样式让给脏格复用）
+  &--dirty::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--el-color-warning);
+    pointer-events: none;
   }
 
   &__editor {

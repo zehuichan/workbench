@@ -1,5 +1,6 @@
 import type { Component, VNodeChild } from 'vue';
 import type { RuleItem } from 'async-validator';
+import type { TableColumnCtx } from 'element-plus';
 
 export type RowData = Record<string, any>;
 
@@ -16,7 +17,7 @@ export type CellRule = RuleItem;
 export interface CellError {
   rowKey: string;
   rowIndex: number;
-  field: string;
+  prop: string;
   message: string;
 }
 
@@ -25,9 +26,9 @@ export interface DependencyApi {
   row: RowData;
   rowIndex: number;
   /** 声明该 dependencies 的列字段 */
-  field: string;
+  prop: string;
   /** 写本行其他字段（会继续触发联动与校验流水线） */
-  setValue: (field: string, value: unknown) => void;
+  setValue: (prop: string, value: unknown) => void;
 }
 
 /** vben form 风格的字段联动配置（values 换成当前行数据） */
@@ -49,32 +50,12 @@ export interface ColumnDependencies {
 export type BuiltinEditorType =
   | 'input'
   | 'textarea'
-  | 'number'
+  | 'input-number'
   | 'select'
   | 'date-picker'
   | 'time-picker'
   | 'switch'
   | 'checkbox';
-
-export interface EditorOption {
-  label: string;
-  value: any;
-  disabled?: boolean;
-}
-
-export interface ColumnEditorConfig {
-  type?: BuiltinEditorType;
-  /** 自定义编辑器组件，优先于 type */
-  component?: Component;
-  /** 透传给编辑器的 props（联动 componentProps 会覆盖同名项） */
-  props?: Record<string, unknown>;
-  /** select 类编辑器的选项 */
-  options?: EditorOption[] | ((row: RowData, rowIndex: number) => EditorOption[]);
-  /** 自定义组件的 v-model prop 名，默认 modelValue */
-  modelProp?: string;
-}
-
-export type ColumnEditor = BuiltinEditorType | ColumnEditorConfig | Component;
 
 export interface CellRenderParams {
   row: RowData;
@@ -83,27 +64,27 @@ export interface CellRenderParams {
   value: unknown;
 }
 
-export interface PlusTableColumn {
-  /** 字段名；可编辑 / 校验 / 联动列必须提供 */
-  field?: string;
-  title?: string;
-  /** 多级表头，组节点只需 title */
+/**
+ * 列配置：继承 el-table-column 的 TableColumnCtx，prop/label/type/width/align/formatter 等原生属性
+ * 直接可用（含 type: 'index' | 'selection' | 'expand' 特殊列原生直通），此处仅声明 PlusTable 扩展项。
+ */
+export interface PlusTableColumn extends Partial<Omit<TableColumnCtx<RowData>, 'children'>> {
+  /** 多级表头，组节点只需 label */
   children?: PlusTableColumn[];
-  width?: number | string;
-  minWidth?: number | string;
-  align?: 'left' | 'center' | 'right';
-  fixed?: 'left' | 'right';
-  /** 透传 el-table-column 的其他属性 */
-  columnProps?: Record<string, unknown>;
+  /** 单元格是否可编辑 */
   editable?: boolean | ((row: RowData, rowIndex: number) => boolean);
   /** 编辑器；editable 且未配置时默认 input */
-  editor?: ColumnEditor;
+  component?: BuiltinEditorType | Component;
+  /** 透传给编辑器的 props（联动 dependencies.componentProps 会覆盖同名项） */
+  componentProps?:
+    | Record<string, unknown>
+    | ((row: RowData, column: PlusTableColumn) => Record<string, unknown>);
+  /** 自定义组件的 v-model prop 名，默认 modelValue */
+  modelProp?: string;
   required?: boolean;
   rules?: CellRule[];
   dependencies?: ColumnDependencies;
-  /** 展示态格式化，优先级低于 render */
-  formatter?: (value: unknown, row: RowData, rowIndex: number) => string;
-  /** 展示态自定义渲染 */
+  /** 展示态自定义渲染，优先级高于 formatter */
   render?: (params: CellRenderParams) => VNodeChild;
   /** 初始是否可见（列设置） */
   visible?: boolean;
@@ -112,16 +93,52 @@ export interface PlusTableColumn {
 }
 
 export interface AdaptiveConfig {
-  /** 表格底部到视口底部预留的间距，默认 16 */
+  /** 'viewport'：按视口高度计算（默认，行为不变）；'container'：交给 CSS flex 父级撑满，适合卡片/弹窗等自身高度受限的容器 */
+  mode?: 'viewport' | 'container';
+  /** 表格底部到视口底部预留的间距，默认 16；仅 viewport 模式生效 */
   offsetBottom?: number;
-  /** 计算出的最小高度，默认 200 */
+  /** 计算出的最小高度，默认 200；仅 viewport 模式生效 */
   minHeight?: number;
+}
+
+/** 自定义热键的回调上下文，贴合 PlusTable 现有概念（row/rowIndex/prop/column） */
+export interface HotkeyContext {
+  event: KeyboardEvent;
+  rowIndex: number;
+  colIndex: number;
+  row: RowData | null;
+  prop: string | undefined;
+  column: PlusTableColumn | null;
+  data: RowData[];
+  /** 移动活动格（不改变编辑态） */
+  navigate: (rowDelta: number, colDelta: number) => void;
+  /** 对活动格进编；仅 cell 模式有效 */
+  startEdit: () => void;
+  cancelEdit: () => void;
+  /** 写活动格的值，经完整 writeCell 流水线（联动/校验/脏追踪/历史） */
+  setValue: (value: unknown) => void;
+  undo: () => void;
+  redo: () => void;
+}
+
+export interface HotkeyBinding {
+  /** 'Ctrl+Shift+Z' 风格组合键字符串，大小写不敏感 */
+  key: string;
+  /** 返回 false 表示不处理，继续走后续逻辑（其余绑定 / 内置热键） */
+  handler: (ctx: HotkeyContext) => void | boolean;
+  /** 命中 key 后的附加判定条件 */
+  when?: (ctx: HotkeyContext) => boolean;
+  /** 默认 true */
+  preventDefault?: boolean;
+  stopPropagation?: boolean;
+  /** true：先于内置热键判定，可完全替换内置行为；false（默认）：内置热键优先，未处理时才轮到 */
+  override?: boolean;
 }
 
 export interface CellChangePayload {
   row: RowData;
   rowIndex: number;
-  field: string;
+  prop: string;
   value: unknown;
   oldValue: unknown;
 }
@@ -152,6 +169,16 @@ export interface PlusTableProps {
   page?: number;
   pageSize?: number;
   pageSizes?: number[];
+  /** 撤销重做，默认 false */
+  history?: boolean;
+  /** 撤销栈上限，默认 50 */
+  historyLimit?: number;
+  /** 脏行/脏格追踪，默认 false */
+  dirtyTracking?: boolean;
+  /** 自定义热键绑定 */
+  hotkeys?: HotkeyBinding[];
+  /** 自定义热键总开关（不影响内置键盘导航），默认 true */
+  hotkeyEnabled?: boolean;
 }
 
 export interface PlusTableEmits {

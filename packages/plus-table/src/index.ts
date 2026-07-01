@@ -6,7 +6,15 @@ export { PLUS_TABLE_INJECTION_KEY } from './constants';
 export { EDITOR_REGISTRY, resolveEditor } from './editors/registry';
 export { createTableEngine } from './engine';
 
-export type { TableEngine, TableEngineOptions, SettingItem, CellPosition, DependencyState } from './engine';
+export type {
+  TableEngine,
+  TableEngineOptions,
+  SettingItem,
+  CellPosition,
+  DependencyState,
+  HistoryApi,
+  DirtyApi,
+} from './engine';
 export type { EditorAdapter, ResolvedEditor } from './editors/registry';
 export type {
   AdaptiveConfig,
@@ -16,12 +24,11 @@ export type {
   CellRenderParams,
   CellRule,
   ColumnDependencies,
-  ColumnEditor,
-  ColumnEditorConfig,
   ColumnNode,
   DependencyApi,
   EditMode,
-  EditorOption,
+  HotkeyBinding,
+  HotkeyContext,
   PageChangePayload,
   PlusTableColumn,
   PlusTableEmits,

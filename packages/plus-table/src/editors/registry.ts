@@ -3,18 +3,12 @@ import {
   ElDatePicker,
   ElInput,
   ElInputNumber,
-  ElSelect,
+  ElSelectV2,
   ElSwitch,
   ElTimePicker,
 } from 'element-plus';
 import type { Component } from 'vue';
-import type {
-  BuiltinEditorType,
-  ColumnEditor,
-  ColumnEditorConfig,
-  EditorOption,
-  RowData,
-} from '../types';
+import type { BuiltinEditorType } from '../types';
 
 export interface EditorAdapter {
   component: Component;
@@ -30,8 +24,8 @@ export const EDITOR_REGISTRY: Record<BuiltinEditorType, EditorAdapter> = {
     componentProps: { type: 'textarea', autosize: true },
     trigger: 'blur',
   },
-  number: { component: ElInputNumber, trigger: 'blur' },
-  select: { component: ElSelect, trigger: 'change' },
+  'input-number': { component: ElInputNumber, trigger: 'blur' },
+  select: { component: ElSelectV2, trigger: 'change' },
   'date-picker': { component: ElDatePicker, trigger: 'change' },
   'time-picker': { component: ElTimePicker, trigger: 'change' },
   switch: { component: ElSwitch, trigger: 'change' },
@@ -40,12 +34,10 @@ export const EDITOR_REGISTRY: Record<BuiltinEditorType, EditorAdapter> = {
 
 export interface ResolvedEditor {
   component: Component;
-  props: Record<string, unknown>;
+  /** 内置编辑器的默认 props（textarea 的 autosize 等），静态/联动 componentProps 在调用处覆盖同名项 */
+  componentProps: Record<string, unknown>;
   trigger: 'blur' | 'change';
-  /** options 渲染为 el-option 子节点（编辑器是 ElSelect 时） */
-  withOptions: boolean;
   modelProp: string;
-  options?: EditorOption[] | ((row: RowData, rowIndex: number) => EditorOption[]);
 }
 
 function isComponentLike(value: unknown): value is Component {
@@ -57,49 +49,18 @@ function isComponentLike(value: unknown): value is Component {
   );
 }
 
-/** 把列上的 editor 配置归一化为可直接渲染的描述 */
-export function resolveEditor(editor?: ColumnEditor): ResolvedEditor {
-  if (typeof editor === 'string') {
-    const adapter = EDITOR_REGISTRY[editor] ?? EDITOR_REGISTRY.input;
-    return {
-      component: adapter.component,
-      props: { ...adapter.componentProps },
-      trigger: adapter.trigger,
-      withOptions: adapter.component === ElSelect,
-      modelProp: 'modelValue',
-    };
+/** 把列上的 component 配置归一化为可直接渲染的描述 */
+export function resolveEditor(component?: BuiltinEditorType | Component): ResolvedEditor {
+  if (component && isComponentLike(component)) {
+    return { component, componentProps: {}, trigger: 'blur', modelProp: 'modelValue' };
   }
 
-  if (editor && isComponentLike(editor)) {
-    return {
-      component: editor,
-      props: {},
-      trigger: 'blur',
-      withOptions: editor === ElSelect,
-      modelProp: 'modelValue',
-    };
-  }
-
-  const config = (editor ?? {}) as ColumnEditorConfig;
-  if (config.component) {
-    return {
-      component: config.component,
-      props: { ...config.props },
-      trigger: 'blur',
-      withOptions: config.component === ElSelect,
-      modelProp: config.modelProp ?? 'modelValue',
-      options: config.options,
-    };
-  }
-
-  const adapter = EDITOR_REGISTRY[config.type ?? 'input'] ?? EDITOR_REGISTRY.input;
+  const adapter = EDITOR_REGISTRY[component as BuiltinEditorType] ?? EDITOR_REGISTRY.input;
   return {
     component: adapter.component,
-    props: { ...adapter.componentProps, ...config.props },
+    componentProps: { ...adapter.componentProps },
     trigger: adapter.trigger,
-    withOptions: adapter.component === ElSelect,
-    modelProp: config.modelProp ?? 'modelValue',
-    options: config.options,
+    modelProp: 'modelValue',
   };
 }
 
@@ -107,10 +68,13 @@ export function resolveEditor(editor?: ColumnEditor): ResolvedEditor {
  * 「选中即输入」时把首个可打印字符转换为编辑器草稿。
  * 返回 undefined 表示该编辑器不种入字符，仅进入编辑态。
  */
-export function typedCharToDraft(editor: ColumnEditor | undefined, char: string): unknown {
-  const component = resolveEditor(editor).component;
-  if (component === ElInput) return char;
-  if (component === ElInputNumber) {
+export function typedCharToDraft(
+  component: BuiltinEditorType | Component | undefined,
+  char: string,
+): unknown {
+  const resolved = resolveEditor(component).component;
+  if (resolved === ElInput) return char;
+  if (resolved === ElInputNumber) {
     return /^[0-9]$/.test(char) ? Number(char) : undefined;
   }
   return undefined;

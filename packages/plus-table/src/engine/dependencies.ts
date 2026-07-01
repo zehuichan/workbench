@@ -32,13 +32,13 @@ export interface DependenciesOptions {
 export function createDependencies(options: DependenciesOptions) {
   const { allLeafNodes, getRowKeyStr, getWriteCell } = options;
 
-  function makeApi(row: RowData, rowIndex: number, field: string): DependencyApi {
+  function makeApi(row: RowData, rowIndex: number, prop: string): DependencyApi {
     return {
       row,
       rowIndex,
-      field,
-      setValue: (targetField, value) => {
-        getWriteCell()(row, rowIndex, targetField, value);
+      prop,
+      setValue: (targetProp, value) => {
+        getWriteCell()(row, rowIndex, targetProp, value);
       },
     };
   }
@@ -51,21 +51,21 @@ export function createDependencies(options: DependenciesOptions) {
   ): DependencyState {
     const dep = column.dependencies;
     if (!dep) return EMPTY_STATE;
-    const api = makeApi(row, rowIndex, column.field ?? '');
+    const api = makeApi(row, rowIndex, column.prop ?? '');
     return {
-      disabled: dep.disabled ? !!dep.disabled(row, api) : false,
-      required: dep.required ? !!dep.required(row, api) : false,
-      rules: dep.rules ? (dep.rules(row, api) ?? null) : null,
-      componentProps: dep.componentProps ? dep.componentProps(row, api) : {},
+      disabled: !!dep.disabled?.(row, api),
+      required: !!dep.required?.(row, api),
+      rules: dep.rules?.(row, api) ?? null,
+      componentProps: dep.componentProps?.(row, api) ?? {},
     };
   }
 
-  /** 当前同步触发链中已处理的 `${rowKey}:${field}`，防止 trigger 互相 setValue 造成死循环 */
+  /** 当前同步触发链中已处理的 `${rowKey}:${prop}`，防止 trigger 互相 setValue 造成死循环 */
   let chain: Set<string> | null = null;
 
   /** 字段提交后广播给依赖方，执行 trigger 副作用 */
-  function notifyFieldChange(row: RowData, rowIndex: number, changedField: string) {
-    const chainKey = `${getRowKeyStr(row)}:${changedField}`;
+  function notifyFieldChange(row: RowData, rowIndex: number, changedProp: string) {
+    const chainKey = `${getRowKeyStr(row)}:${changedProp}`;
     const isRoot = chain === null;
     if (isRoot) chain = new Set();
     if (chain!.has(chainKey)) return;
@@ -73,8 +73,8 @@ export function createDependencies(options: DependenciesOptions) {
     try {
       for (const node of allLeafNodes.value) {
         const dep = node.column.dependencies;
-        if (!dep?.trigger || !dep.triggerFields.includes(changedField)) continue;
-        dep.trigger(row, makeApi(row, rowIndex, node.column.field ?? ''));
+        if (!dep?.trigger || !dep.triggerFields.includes(changedProp)) continue;
+        dep.trigger(row, makeApi(row, rowIndex, node.column.prop ?? ''));
       }
     } finally {
       if (isRoot) chain = null;

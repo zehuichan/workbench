@@ -1,4 +1,4 @@
-import { cloneDeep } from 'es-toolkit';
+import { clamp, cloneDeep } from 'es-toolkit';
 import type { PlusTableEmits, RowData } from '../types';
 
 export interface RowsOptions {
@@ -12,7 +12,7 @@ export function createRows(options: RowsOptions) {
 
   function insertRow(row: RowData = {}, index?: number): RowData {
     const list = [...data()];
-    const at = index === undefined ? list.length : Math.min(Math.max(index, 0), list.length);
+    const at = index === undefined ? list.length : clamp(index, 0, list.length);
     list.splice(at, 0, row);
     emit('update:data', list);
     return row;

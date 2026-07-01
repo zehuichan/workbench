@@ -22,8 +22,8 @@ catalogs:
       specifier: ^4.2.5
       version: 4.2.5
     element-plus:
-      specifier: ^2.13.6
-      version: 2.14.1
+      specifier: ^2.14.2
+      version: 2.14.2
     es-toolkit:
       specifier: ^1.45.1
       version: 1.47.0
@@ -85,7 +85,7 @@ importers:
         version: 4.2.5
       element-plus:
         specifier: 'catalog:'
-        version: 2.14.1(vue@3.5.35(typescript@5.9.3))
+        version: 2.14.2(vue@3.5.35(typescript@5.9.3))
       hucre:
         specifier: 'catalog:'
         version: 0.3.0
@@ -132,7 +132,7 @@ importers:
     devDependencies:
       element-plus:
         specifier: 'catalog:'
-        version: 2.14.1(vue@3.5.35(typescript@5.9.3))
+        version: 2.14.2(vue@3.5.35(typescript@5.9.3))
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -150,7 +150,7 @@ importers:
         version: link:../packages/plus-table
       element-plus:
         specifier: 'catalog:'
-        version: 2.14.1(vue@3.5.35(typescript@5.9.3))
+        version: 2.14.2(vue@3.5.35(typescript@5.9.3))
       vue:
         specifier: 'catalog:'
         version: 3.5.35(typescript@5.9.3)
@@ -833,8 +833,8 @@ packages:
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
 
-  element-plus@2.14.1:
-    resolution: {integrity: sha512-UFnm1+BckNi+azkKJ7L32q1uXs9ekr99Z9pWTQPeDR05jqEWUwQq51ro4kZMVrANbjknX3Z7ukCZwTi2T6Tr9A==}
+  element-plus@2.14.2:
+    resolution: {integrity: sha512-eNH9uP3wQoNqieEIHXiNvIVv+zO5sZDU0CAZq5b0zqSN06DD0/V9xIq1R/qm3rw5k3nBTM1JvpxhCfRbaFLzDQ==}
     peerDependencies:
       vue: ^3.3.7
 
@@ -1750,7 +1750,7 @@ snapshots:
     dependencies:
       dequal: 2.0.3
 
-  element-plus@2.14.1(vue@3.5.35(typescript@5.9.3)):
+  element-plus@2.14.2(vue@3.5.35(typescript@5.9.3)):
     dependencies:
       '@ctrl/tinycolor': 4.2.0
       '@element-plus/icons-vue': 2.3.2(vue@3.5.35(typescript@5.9.3))

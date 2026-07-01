@@ -16,10 +16,10 @@ const data = ref<Row[]>([
   { id: 3, name: '联调测试', amount: 800 },
 ]);
 
-const columns: PlusTableColumn<Row>[] = [
+const columns: PlusTableColumn[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'id', label: 'ID', width: 80 },
-  { prop: 'name', label: '名称', editable: true, component: 'input' },
+  { prop: 'name', label: '名称', editable: true, component: 'input', required: true },
   {
     prop: 'amount',
     label: '金额',
@@ -40,7 +40,7 @@ const columns: PlusTableColumn<Row>[] = [
       :columns="columns"
       row-key="id"
       border
-      editable="cell"
+      edit-mode="cell"
     />
   </main>
 </template>

@@ -6,6 +6,7 @@ import { PLUS_TABLE_INJECTION_KEY } from '../constants';
 import { createTableEngine } from '../engine';
 import ColumnSettings from './column-settings.vue';
 import TableColumnNode from './table-column';
+import type { TableInstance } from 'element-plus';
 import type { PlusTableEmits, PlusTableProps } from '../types';
 
 defineOptions({ name: 'PlusTable', inheritAttrs: false });
@@ -18,6 +19,9 @@ const props = withDefaults(defineProps<PlusTableProps>(), {
   page: 1,
   pageSize: 20,
   pageSizes: () => [10, 20, 50, 100],
+  history: false,
+  dirtyTracking: false,
+  hotkeyEnabled: true,
 });
 
 const emit = defineEmits<PlusTableEmits>();
@@ -25,13 +29,14 @@ const slots = useSlots();
 
 const gridRef = ref<HTMLElement>();
 const paginationRef = ref<HTMLElement>();
-const tableRef = ref<InstanceType<typeof ElTable>>();
+const tableRef = ref<TableInstance>();
 
 const engine = createTableEngine({ props, emit, slots, gridRef, paginationRef });
 provide(PLUS_TABLE_INJECTION_KEY, engine);
 
 const displayTree = engine.columns.displayTree;
 const tableHeight = engine.adaptive.tableHeight;
+const isAdaptiveContainer = engine.adaptive.isContainerMode;
 const onKeydown = engine.keyboard.onKeydown;
 
 // el-table 的 row-key 类型签名比本组件窄，做一次适配
@@ -62,6 +67,7 @@ defineExpose({
   /** 全表校验 */
   validate: engine.validation.validate,
   clearValidate: engine.validation.clearValidate,
+  getErrors: engine.validation.getErrors,
   /** 行操作 */
   insertRow: engine.rows.insertRow,
   removeRow: engine.rows.removeRow,
@@ -78,13 +84,26 @@ defineExpose({
   /** 列设置 */
   resetColumnSettings: engine.columns.resetSettings,
   setColumnWidth: engine.columns.setColumnWidth,
+  /** 撤销重做（history prop 关闭时栈恒为空，undo/redo 为安全空操作） */
+  undo: engine.undo,
+  redo: engine.redo,
+  canUndo: engine.history.canUndo,
+  canRedo: engine.history.canRedo,
+  clearHistory: engine.history.clearHistory,
+  /** 脏行 / 脏格追踪（dirtyTracking prop 关闭时恒无脏格） */
+  getModifiedRows: engine.dirty.getModifiedRows,
+  getDirtyCells: engine.dirty.getDirtyCells,
+  isCellDirty: engine.dirty.isCellDirty,
+  isRowDirty: engine.dirty.isRowDirty,
+  resetTracking: engine.dirty.resetTracking,
+  clearDirty: engine.dirty.clearDirty,
   /** el-table 实例直通 */
   getElTable: () => tableRef.value,
 });
 </script>
 
 <template>
-  <div class="plus-table">
+  <div class="plus-table" :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }">
     <div v-if="columnSetting || $slots.toolbar" class="plus-table__toolbar">
       <slot name="toolbar" />
       <ColumnSettings v-if="columnSetting" />

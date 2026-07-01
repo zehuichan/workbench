@@ -19,17 +19,22 @@ export function createAdaptive(options: AdaptiveOptions) {
   const config = computed<Required<AdaptiveConfig>>(() => {
     const overrides = typeof props.adaptive === 'object' ? props.adaptive : {};
     return {
+      mode: overrides.mode ?? 'viewport',
       offsetBottom: overrides.offsetBottom ?? DEFAULT_OFFSET_BOTTOM,
       minHeight: overrides.minHeight ?? DEFAULT_MIN_HEIGHT,
     };
   });
 
+  /** container 模式：表格放进卡片/弹窗/分栏等自身高度受限的容器，视口像素运算天然算错 */
+  const isContainerMode = computed(() => !!props.adaptive && config.value.mode === 'container');
+
   const { top: gridTop } = useElementBounding(gridRef);
   const { height: paginationHeight } = useElementBounding(paginationRef);
   const { height: windowHeight } = useWindowSize();
 
-  const tableHeight = computed<number | undefined>(() => {
+  const tableHeight = computed<number | string | undefined>(() => {
     if (!props.adaptive) return undefined;
+    if (isContainerMode.value) return '100%';
     const available =
       windowHeight.value -
       gridTop.value -
@@ -38,7 +43,7 @@ export function createAdaptive(options: AdaptiveOptions) {
     return Math.max(available, config.value.minHeight);
   });
 
-  return { tableHeight };
+  return { tableHeight, isContainerMode };
 }
 
 export type AdaptiveApi = ReturnType<typeof createAdaptive>;
