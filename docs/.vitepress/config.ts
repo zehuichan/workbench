@@ -39,8 +39,12 @@ export default defineConfig({
     sidebar: {
       '/components/': [
         {
-          text: '组件',
-          items: [{ text: 'PlusTable', link: '/components/plus-table' }],
+          text: 'PlusTable',
+          items: [
+            { text: 'API', link: '/components/plus-table/' },
+            { text: '基础用法', link: '/components/plus-table/basic' },
+            { text: '综合示例', link: '/components/plus-table/playground' },
+          ],
         },
       ],
       '/libraries/': [

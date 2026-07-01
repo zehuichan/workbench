@@ -18,38 +18,43 @@ const data = ref<Row[]>([
 ]);
 
 const columns: PlusTableColumn[] = [
-  { field: 'id', title: 'ID', width: 80 },
+  { type: 'selection', width: 55 },
+  { type: 'index', label: '#', width: 55 },
+  { prop: 'id', label: 'ID', width: 80 },
   {
-    field: 'name',
-    title: '名称',
+    prop: 'name',
+    label: '名称',
     editable: true,
-    editor: 'input',
+    component: 'input',
     required: true,
   },
   {
-    field: 'amount',
-    title: '金额',
+    prop: 'amount',
+    label: '金额',
     align: 'right',
     width: 140,
     editable: true,
-    editor: { type: 'number', props: { min: 0, step: 100, controls: false } },
-    formatter: (value) => `¥ ${(Number(value) || 0).toLocaleString('zh-CN')}`,
+    component: 'input-number',
+    componentProps: { min: 0, step: 100, controls: false },
+    formatter: (row) => `¥ ${(row.amount ?? 0).toLocaleString('zh-CN')}`,
   },
   {
-    field: 'status',
-    title: '状态',
+    prop: 'status',
+    label: '状态',
     width: 140,
     editable: true,
-    editor: {
-      type: 'select',
+    component: 'select',
+    componentProps: {
       options: [
         { label: '待开始', value: 'pending' },
         { label: '进行中', value: 'active' },
         { label: '已完成', value: 'done' },
       ],
     },
-    formatter: (value) =>
-      ({ pending: '待开始', active: '进行中', done: '已完成' })[String(value)] ?? '',
+    formatter: (row) =>
+      ({ pending: '待开始', active: '进行中', done: '已完成' } as Record<string, string>)[
+        row.status
+      ] ?? '',
   },
 ];
 </script>

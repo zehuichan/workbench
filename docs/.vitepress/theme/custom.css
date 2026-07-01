@@ -108,4 +108,9 @@ samp {
 .vp-doc .demo-block__preview th,
 .vp-doc .demo-block__preview td {
   font-size: inherit;
+  /* vp-doc 给 th/td 直接注入了四边 border，El Table 自己只覆盖 bottom/right，
+     残留的 top/left 会跟相邻格子的 bottom/right 叠在一起，表头下沿看起来变成两条线粘一起的粗边。
+     只清 top/left，避免连带压过 El Table 自己声明的 bottom/right（同优先级时后者在层叠顺序里更靠前）。 */
+  border-top: none;
+  border-left: none;
 }

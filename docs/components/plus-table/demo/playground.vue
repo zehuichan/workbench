@@ -6,6 +6,7 @@ import { PlusTable } from '@labs/plus-table';
 import type {
   CellChangePayload,
   EditMode,
+  HotkeyBinding,
   PlusTableColumn,
   ValidateOn,
 } from '@labs/plus-table';
@@ -107,8 +108,42 @@ const validationResult = ref('—');
 /** row 模式下处于编辑态的行 id（仅供操作列 UI 切换按钮） */
 const editingIds = reactive(new Set<number>());
 
+// ──── 撤销重做 / 脏追踪 / 自适应模式 ────
+
+const historyEnabled = ref(true);
+const dirtyEnabled = ref(true);
+const adaptiveMode = ref<'none' | 'viewport' | 'container'>('none');
+
+const adaptiveProp = computed(() => {
+  if (adaptiveMode.value === 'none') return false;
+  if (adaptiveMode.value === 'container') return { mode: 'container' as const };
+  return true;
+});
+
+const dirtyCount = computed(() => tableRef.value?.getModifiedRows().length ?? 0);
+
+// ──── 自定义热键：Ctrl+S 触发校验、Ctrl+D 复制当前行 ────
+
+const hotkeys: HotkeyBinding[] = [
+  {
+    key: 'Ctrl+S',
+    override: true,
+    handler: () => {
+      void handleValidate();
+    },
+  },
+  {
+    key: 'Ctrl+D',
+    override: true,
+    when: (ctx) => ctx.rowIndex >= 0,
+    handler: (ctx) => {
+      tableRef.value?.duplicateRow(ctx.rowIndex, { id: nextId++ });
+    },
+  },
+];
+
 function onCellChange(payload: CellChangePayload) {
-  changeLog.value = `行 ${payload.rowIndex + 1} / ${payload.field}：${JSON.stringify(payload.oldValue)} → ${JSON.stringify(payload.value)}`;
+  changeLog.value = `行 ${payload.rowIndex + 1} / ${payload.prop}：${JSON.stringify(payload.oldValue)} → ${JSON.stringify(payload.value)}`;
 }
 
 async function handleValidate() {
@@ -145,35 +180,38 @@ function cancelRow(row: TaskRow, rowIndex: number) {
 // ──── 列配置 ────
 
 const columns: PlusTableColumn[] = [
-  { field: 'id', title: 'ID', width: 70, fixed: 'left', settingDisabled: true },
+  { type: 'index', label: '#', width: 50, fixed: 'left' },
+  { prop: 'id', label: 'ID', width: 70, fixed: 'left', settingDisabled: true },
   {
-    field: 'name',
-    title: '任务名称',
+    prop: 'name',
+    label: '任务名称',
     minWidth: 200,
     editable: true,
-    editor: 'input',
+    component: 'input',
     required: true,
     rules: [{ min: 2, max: 50, message: '长度 2–50' }],
   },
   {
-    field: 'status',
-    title: '状态',
+    prop: 'status',
+    label: '状态',
     width: 110,
     editable: true,
-    editor: { type: 'select', options: statusOptions },
+    component: 'select',
+    componentProps: { options: statusOptions },
     render: ({ value }) => {
       const info = statusMap[String(value)] ?? { label: '未知', type: 'info' as const };
       return h(ElTag, { type: info.type, size: 'small', disableTransitions: true }, () => info.label);
     },
   },
   {
-    field: 'priority',
-    title: '优先级',
+    prop: 'priority',
+    label: '优先级',
     width: 110,
     editable: true,
-    editor: { type: 'select', options: priorityOptions },
-    formatter: (value) =>
-      ({ high: '高', medium: '中', low: '低' })[String(value)] ?? '',
+    component: 'select',
+    componentProps: { options: priorityOptions },
+    formatter: (row) =>
+      ({ high: '高', medium: '中', low: '低' } as Record<string, string>)[row.priority] ?? '',
     dependencies: {
       triggerFields: ['status'],
       // 已完成的任务不允许再改优先级
@@ -181,34 +219,33 @@ const columns: PlusTableColumn[] = [
     },
   },
   {
-    field: 'amount',
-    title: '金额',
+    prop: 'amount',
+    label: '金额',
     align: 'right',
     width: 130,
     editable: true,
-    editor: { type: 'number', props: { min: 0, step: 100, controls: false } },
-    formatter: (value) => `¥ ${(Number(value) || 0).toLocaleString('zh-CN')}`,
+    component: 'input-number',
+    componentProps: { min: 0, step: 100, controls: false },
+    formatter: (row) => `¥ ${(row.amount ?? 0).toLocaleString('zh-CN')}`,
     rules: [{ type: 'number', min: 0, message: '金额不能为负' }],
   },
   {
-    title: '组织信息',
+    label: '组织信息',
     children: [
       {
-        field: 'department',
-        title: '部门',
+        prop: 'department',
+        label: '部门',
         width: 120,
         editable: true,
-        editor: {
-          type: 'select',
-          options: departments.map((d) => ({ label: d, value: d })),
-        },
+        component: 'select',
+        componentProps: { options: departments.map((d) => ({ label: d, value: d })) },
       },
       {
-        field: 'assignee',
-        title: '负责人',
+        prop: 'assignee',
+        label: '负责人',
         width: 130,
         editable: true,
-        editor: { type: 'select' },
+        component: 'select',
         dependencies: {
           triggerFields: ['department'],
           // 进行中的任务必须有负责人
@@ -228,17 +265,17 @@ const columns: PlusTableColumn[] = [
           },
         },
       },
-      { field: 'team', title: '团队', width: 110 },
+      { prop: 'team', label: '团队', width: 110 },
     ],
   },
   {
-    field: 'remark',
-    title: '备注',
+    prop: 'remark',
+    label: '备注',
     minWidth: 140,
     editable: true,
   },
   {
-    title: '操作',
+    label: '操作',
     width: 190,
     fixed: 'right',
     align: 'center',
@@ -293,9 +330,37 @@ const columns: PlusTableColumn[] = [
       <el-button size="small" @click="handleInsertRow">插入行</el-button>
     </div>
 
+    <div class="demo-toolbar">
+      <el-button size="small" :disabled="!tableRef?.canUndo" @click="tableRef?.undo()">
+        撤销 Ctrl+Z
+      </el-button>
+      <el-button size="small" :disabled="!tableRef?.canRedo" @click="tableRef?.redo()">
+        重做 Ctrl+Shift+Z
+      </el-button>
+      <el-checkbox v-model="historyEnabled" size="small">启用撤销重做</el-checkbox>
+
+      <el-divider direction="vertical" />
+      <el-checkbox v-model="dirtyEnabled" size="small">启用脏数据追踪</el-checkbox>
+      <el-button size="small" :disabled="!dirtyEnabled" @click="tableRef?.resetTracking()">
+        重置脏标记
+      </el-button>
+
+      <el-divider direction="vertical" />
+      <span class="label">自适应高度</span>
+      <el-radio-group v-model="adaptiveMode" size="small">
+        <el-radio-button value="none">关闭</el-radio-button>
+        <el-radio-button value="viewport">viewport</el-radio-button>
+        <el-radio-button value="container">container</el-radio-button>
+      </el-radio-group>
+    </div>
+
     <div class="demo-statusbar">
       <span class="demo-statusbar__item">
         <span class="demo-statusbar__k">校验</span>{{ validationResult }}
+      </span>
+      <span class="demo-statusbar__sep">|</span>
+      <span class="demo-statusbar__item">
+        <span class="demo-statusbar__k">脏行数</span>{{ dirtyCount }}
       </span>
       <span class="demo-statusbar__sep">|</span>
       <span class="demo-statusbar__item demo-statusbar__item--grow">
@@ -303,38 +368,50 @@ const columns: PlusTableColumn[] = [
       </span>
     </div>
 
-    <PlusTable
-      ref="tableRef"
-      v-model:data="pagedData"
-      v-model:page="page"
-      v-model:page-size="pageSize"
-      :columns="columns"
-      :total="total"
-      :edit-mode="editMode"
-      :validate-on="validateOn"
-      row-key="id"
-      column-setting
-      settings-key="docs-playground"
-      border
-      @cell-change="onCellChange"
-    >
-      <template #toolbar>
-        <span class="demo-table-title">任务管理（{{ total }} 条）</span>
-      </template>
+    <div :class="{ 'demo-container-box': adaptiveMode === 'container' }">
+      <PlusTable
+        ref="tableRef"
+        v-model:data="pagedData"
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :columns="columns"
+        :total="total"
+        :edit-mode="editMode"
+        :validate-on="validateOn"
+        :adaptive="adaptiveProp"
+        :history="historyEnabled"
+        :history-limit="50"
+        :dirty-tracking="dirtyEnabled"
+        :hotkeys="hotkeys"
+        row-key="id"
+        column-setting
+        settings-key="docs-playground"
+        border
+        @cell-change="onCellChange"
+      >
+        <template #toolbar>
+          <span class="demo-table-title">任务管理（{{ total }} 条）</span>
+        </template>
 
-      <template #header-name>
-        <span style="color: var(--el-color-primary)">任务名称</span>
-      </template>
+        <template #header-name>
+          <span style="color: var(--el-color-primary)">任务名称</span>
+        </template>
 
-      <template #editor-remark="{ value, setValue }">
-        <el-input
-          :model-value="(value as string)"
-          placeholder="自定义编辑器插槽…"
-          size="small"
-          @update:model-value="setValue"
-        />
-      </template>
-    </PlusTable>
+        <template #editor-remark="{ value, setValue }">
+          <el-input
+            :model-value="(value as string)"
+            placeholder="自定义编辑器插槽…"
+            size="small"
+            @update:model-value="setValue"
+          />
+        </template>
+      </PlusTable>
+    </div>
+
+    <p class="demo-hint">
+      提示：在列设置里隐藏「任务名称」（必填列）后点击「校验」，仍会报出该列的必填错误——校验不因列被隐藏而失效。
+      <code>Ctrl+S</code> 触发校验、<code>Ctrl+D</code> 复制当前行为自定义热键（<code>hotkeys</code> prop）示例。
+    </p>
   </div>
 </template>
 
@@ -385,5 +462,23 @@ const columns: PlusTableColumn[] = [
   margin-right: auto;
   font-size: 13px;
   font-weight: 600;
+}
+
+.demo-container-box {
+  height: 320px;
+  padding: 8px;
+  margin-bottom: 12px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 4px;
+}
+
+.demo-hint {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--vp-c-text-2, #666);
+
+  code {
+    padding: 0 4px;
+  }
 }
 </style>
