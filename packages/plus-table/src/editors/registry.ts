@@ -8,7 +8,8 @@ import {
   ElTimePicker,
 } from 'element-plus';
 import type { Component } from 'vue';
-import type { ColumnEditor, EditorConfig, RowContext, RowData } from '../types';
+import type { RowContext, RowData } from '../table/defaults';
+import type { ColumnEditor, EditorConfig } from '../table-column/defaults';
 
 export interface EditorAdapter {
   component: Component;

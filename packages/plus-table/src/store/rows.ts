@@ -1,22 +1,16 @@
 import { clamp, cloneDeep } from 'es-toolkit';
-import type { PlusTableEmits, RowData } from '../types';
-
-export interface RowsOptions<T extends RowData = RowData> {
-  data: () => T[];
-  emit: PlusTableEmits<T>;
-}
+import type { PlusTable } from '../tokens';
+import type { RowData } from '../table/defaults';
 
 /** 行结构操作：全部以新数组经 update:data 回传，父级是唯一数据源 */
-export function createRows<T extends RowData = RowData>(
-  options: RowsOptions<T>,
-) {
-  const { data, emit } = options;
+export function useRows<T extends RowData = RowData>(table: PlusTable<T>) {
+  const data = () => table.store.states.data.value;
 
   function insertRow(row: T = {} as T, index?: number): T {
     const list = [...data()];
     const at = index === undefined ? list.length : clamp(index, 0, list.length);
     list.splice(at, 0, row);
-    emit('update:data', list);
+    table.emit('update:data', list);
     return row;
   }
 
@@ -24,7 +18,7 @@ export function createRows<T extends RowData = RowData>(
     const list = [...data()];
     if (index < 0 || index >= list.length) return undefined;
     const [removed] = list.splice(index, 1);
-    emit('update:data', list);
+    table.emit('update:data', list);
     return removed;
   }
 
@@ -41,7 +35,7 @@ export function createRows<T extends RowData = RowData>(
     }
     const [moved] = list.splice(from, 1);
     list.splice(to, 0, moved!);
-    emit('update:data', list);
+    table.emit('update:data', list);
     return true;
   }
 
@@ -56,9 +50,11 @@ export function createRows<T extends RowData = RowData>(
     return insertRow(clone, index + 1);
   }
 
-  return { insertRow, removeRow, moveRow, duplicateRow };
+  return {
+    insertRow,
+    removeRow,
+    moveRow,
+    duplicateRow,
+    states: {},
+  };
 }
-
-export type RowsApi<T extends RowData = RowData> = ReturnType<
-  typeof createRows<T>
->;

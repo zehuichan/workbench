@@ -1,12 +1,9 @@
 import { computed, ref, watch } from 'vue';
 import { isPlainObject, sortBy } from 'es-toolkit';
-import { isSpecialColumn, SETTINGS_STORAGE_PREFIX } from '../constants';
-import type {
-  ColumnNode,
-  PlusTableColumn,
-  PlusTableProps,
-  RowData,
-} from '../types';
+import { isSpecialColumn, SETTINGS_STORAGE_PREFIX } from '../util';
+import type { PlusTable } from '../tokens';
+import type { RowData } from '../table/defaults';
+import type { ColumnNode, PlusTableColumn } from '../table-column/defaults';
 
 const ROOT_ID = '__root';
 
@@ -83,20 +80,27 @@ function fixedRank<T extends RowData>(column: PlusTableColumn<T>): number {
   return 1;
 }
 
-export function createColumns<T extends RowData = RowData>(
-  props: PlusTableProps<T>,
-) {
-  const normalizedTree = computed<ColumnNode<T>[]>(() =>
-    normalize((props.columns ?? []) as PlusTableColumn<T>[]),
-  );
+export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
+  const states = {
+    _columns: computed<ColumnNode<T>[]>(() =>
+      normalize((table.props.columns ?? []) as PlusTableColumn<T>[]),
+    ),
+    hiddenIds: ref<Set<string>>(new Set()),
+    orderMap: ref<Record<string, string[]>>({}),
+    /** 表头拖拽调宽后的覆盖宽度（叶子列 id → px） */
+    widthMap: ref<Record<string, number>>({}),
+  };
 
-  const settingStorageKey =
-    typeof props.columnSetting === 'object'
-      ? props.columnSetting.storageKey
-      : undefined;
-  const storageKey = settingStorageKey
-    ? `${SETTINGS_STORAGE_PREFIX}${settingStorageKey}`
-    : null;
+  const settingStorageKey = computed(() =>
+    typeof table.props.columnSetting === 'object'
+      ? table.props.columnSetting.storageKey
+      : undefined,
+  );
+  const storageKey = computed(() =>
+    settingStorageKey.value
+      ? `${SETTINGS_STORAGE_PREFIX}${settingStorageKey.value}`
+      : null,
+  );
 
   function defaultHiddenIds(): Set<string> {
     const hidden = new Set<string>();
@@ -108,14 +112,14 @@ export function createColumns<T extends RowData = RowData>(
         if (node.children?.length) walk(node.children);
       }
     };
-    walk(normalizedTree.value);
+    walk(states._columns.value);
     return hidden;
   }
 
   function loadPersisted(): PersistedSettings | null {
-    if (!storageKey) return null;
+    if (!storageKey.value) return null;
     try {
-      const raw = localStorage.getItem(storageKey);
+      const raw = localStorage.getItem(storageKey.value);
       if (!raw) return null;
       const parsed = JSON.parse(raw) as Partial<PersistedSettings>;
       return {
@@ -128,28 +132,32 @@ export function createColumns<T extends RowData = RowData>(
     }
   }
 
-  const persisted = loadPersisted();
-  const hiddenIds = ref<Set<string>>(
-    persisted ? new Set(persisted.hidden) : defaultHiddenIds(),
+  watch(
+    storageKey,
+    () => {
+      const persisted = loadPersisted();
+      states.hiddenIds.value = persisted
+        ? new Set(persisted.hidden)
+        : defaultHiddenIds();
+      states.orderMap.value = persisted?.order ?? {};
+      states.widthMap.value = persisted?.widths ?? {};
+    },
+    { immediate: true },
   );
-  const orderMap = ref<Record<string, string[]>>(persisted?.order ?? {});
-  /** 表头拖拽调宽后的覆盖宽度（叶子列 id → px） */
-  const widthMap = ref<Record<string, number>>(persisted?.widths ?? {});
 
-  if (storageKey) {
-    watch([hiddenIds, orderMap, widthMap], () => {
-      try {
-        const payload: PersistedSettings = {
-          hidden: [...hiddenIds.value],
-          order: orderMap.value,
-          widths: widthMap.value,
-        };
-        localStorage.setItem(storageKey, JSON.stringify(payload));
-      } catch {
-        // localStorage 不可用（SSR / 隐私模式）时静默降级
-      }
-    });
-  }
+  watch([states.hiddenIds, states.orderMap, states.widthMap], () => {
+    if (!storageKey.value) return;
+    try {
+      const payload: PersistedSettings = {
+        hidden: [...states.hiddenIds.value],
+        order: states.orderMap.value,
+        widths: states.widthMap.value,
+      };
+      localStorage.setItem(storageKey.value, JSON.stringify(payload));
+    } catch {
+      // localStorage 不可用（SSR / 隐私模式）时静默降级
+    }
+  });
 
   /**
    * 按 orderMap 重排同级列；特殊列（selection/index/expand/operation）不参与排序，锚定在原始下标位置——
@@ -159,7 +167,7 @@ export function createColumns<T extends RowData = RowData>(
     nodes: ColumnNode<T>[],
     parentId: string,
   ): ColumnNode<T>[] {
-    const order = orderMap.value[parentId];
+    const order = states.orderMap.value[parentId];
     let list = nodes;
     if (order?.length) {
       const orderableIndexes: number[] = [];
@@ -195,7 +203,7 @@ export function createColumns<T extends RowData = RowData>(
         if (children.length) out.push({ ...node, children });
       } else if (
         isSpecialColumn(node.column) ||
-        !hiddenIds.value.has(node.id)
+        !states.hiddenIds.value.has(node.id)
       ) {
         out.push(node);
       }
@@ -203,29 +211,22 @@ export function createColumns<T extends RowData = RowData>(
     return out;
   }
 
-  /** 顺序与显隐设置后的列树（未做 fixed 排序） */
-  const orderedTree = computed(() => applyOrder(normalizedTree.value, ROOT_ID));
+  const orderedTree = computed(() => applyOrder(states._columns.value, ROOT_ID));
   const visibleTree = computed(() => filterHidden(orderedTree.value));
 
   /**
    * 渲染用列树。el-table 内部会把 fixed 列重排为 [左固定, 普通, 右固定]，
-   * 这里在顶层做相同排序，保证视觉顺序与 leafNodes 下标一致，键盘导航才能按下标定位单元格。
+   * 这里在顶层做相同排序，保证视觉顺序与 columns 下标一致，键盘导航才能按下标定位单元格。
    */
-  const displayTree = computed(() =>
+  const originColumns = computed(() =>
     sortBy(visibleTree.value, [(node) => fixedRank(node.column)]),
   );
+  const columns = computed(() => flattenDataLeaves(originColumns.value));
+  const allColumns = computed(() => flattenDataLeaves(states._columns.value));
 
-  /** 可导航/可编辑叶子列（视觉顺序，排除特殊列，含 operation 操作列），供键盘导航、选区边界、列宽持久化使用 */
-  const leafNodes = computed(() => flattenDataLeaves(displayTree.value));
-
-  /** 全部叶子列（含列设置隐藏的列，排除特殊列，含 operation 操作列），供校验 / 联动遍历使用 */
-  const allLeafNodes = computed(() => flattenDataLeaves(normalizedTree.value));
-
-  const leafIndexById = computed(() => {
-    const map = new Map<string, number>();
-    leafNodes.value.forEach((node, index) => map.set(node.id, index));
-    return map;
-  });
+  function getColumnIndex(columnKey: string): number {
+    return columns.value.findIndex((node) => node.id === columnKey);
+  }
 
   function findNode(nodes: ColumnNode<T>[], id: string): ColumnNode<T> | null {
     for (const node of nodes) {
@@ -246,7 +247,7 @@ export function createColumns<T extends RowData = RowData>(
         if (isSpecialColumn(node.column)) return;
         const leafIds = collectLeafIds(node);
         const visibleCount = leafIds.filter(
-          (id) => !hiddenIds.value.has(id),
+          (id) => !states.hiddenIds.value.has(id),
         ).length;
         items.push({
           id: node.id,
@@ -264,19 +265,19 @@ export function createColumns<T extends RowData = RowData>(
     return items;
   });
 
-  function toggleVisible(id: string, visible: boolean) {
-    const node = findNode(normalizedTree.value, id);
+  function toggleColumnVisible(id: string, visible: boolean) {
+    const node = findNode(states._columns.value, id);
     if (!node) return;
-    const next = new Set(hiddenIds.value);
+    const next = new Set(states.hiddenIds.value);
     for (const leafId of collectLeafIds(node)) {
       if (visible) next.delete(leafId);
       else next.add(leafId);
     }
-    hiddenIds.value = next;
+    states.hiddenIds.value = next;
   }
 
   /** 列设置拖拽排序：把 dragId 放到同级 targetId 的前 / 后（跨级拖拽不生效） */
-  function reorderNode(
+  function updateColumnOrder(
     dragId: string,
     targetId: string,
     position: 'before' | 'after',
@@ -292,21 +293,21 @@ export function createColumns<T extends RowData = RowData>(
     const ids = siblings.map((node) => node.id).filter((id) => id !== dragId);
     const index = ids.indexOf(targetId) + (position === 'after' ? 1 : 0);
     ids.splice(index, 0, dragId);
-    orderMap.value = { ...orderMap.value, [drag.parentId]: ids };
+    states.orderMap.value = { ...states.orderMap.value, [drag.parentId]: ids };
   }
 
   /** 记录表头拖拽调宽后的列宽（持久化） */
   function setColumnWidth(id: string, width: number) {
-    widthMap.value = { ...widthMap.value, [id]: Math.round(width) };
+    states.widthMap.value = { ...states.widthMap.value, [id]: Math.round(width) };
   }
 
   function resetSettings() {
-    hiddenIds.value = defaultHiddenIds();
-    orderMap.value = {};
-    widthMap.value = {};
-    if (storageKey) {
+    states.hiddenIds.value = defaultHiddenIds();
+    states.orderMap.value = {};
+    states.widthMap.value = {};
+    if (storageKey.value) {
       try {
-        localStorage.removeItem(storageKey);
+        localStorage.removeItem(storageKey.value);
       } catch {
         // ignore
       }
@@ -314,19 +315,17 @@ export function createColumns<T extends RowData = RowData>(
   }
 
   return {
-    displayTree,
-    leafNodes,
-    allLeafNodes,
-    leafIndexById,
-    widthMap,
+    getColumnIndex,
     settingItems,
-    toggleVisible,
-    reorderNode,
+    toggleColumnVisible,
+    updateColumnOrder,
     setColumnWidth,
     resetSettings,
+    states: {
+      ...states,
+      originColumns,
+      columns,
+      allColumns,
+    },
   };
 }
-
-export type ColumnsApi<T extends RowData = RowData> = ReturnType<
-  typeof createColumns<T>
->;

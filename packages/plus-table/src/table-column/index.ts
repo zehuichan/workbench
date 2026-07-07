@@ -1,9 +1,11 @@
 import { defineComponent, h, inject } from 'vue';
 import { ElTableColumn } from 'element-plus';
-import { isNativeRenderColumn, PLUS_TABLE_INJECTION_KEY } from '../constants';
-import PlusTableCell from './plus-table-cell';
+import { PLUS_TABLE_INJECTION_KEY } from '../tokens';
+import { isNativeRenderColumn } from '../util';
+import PlusTableCell from '../table-cell';
 import type { PropType, VNodeChild } from 'vue';
-import type { ColumnNode, PlusTableColumn, RowData } from '../types';
+import type { RowData } from '../table/defaults';
+import type { ColumnNode, PlusTableColumn } from './defaults';
 
 /** 过滤掉不透传给 el-table-column 的 PlusTable 扩展属性，其余原生 TableColumnCtx 属性直接透传 */
 function nativeProps(column: PlusTableColumn): Record<string, unknown> {
@@ -23,17 +25,16 @@ function nativeProps(column: PlusTableColumn): Record<string, unknown> {
 
 /**
  * 递归渲染列（多级表头 children），叶子列承载 PlusTableCell；
- * 原生特殊列（selection/index/expand）交给 el-table 原生渲染；operation（操作列）仍走 PlusTableCell（见 isSpecialColumn）。
+ * 原生特殊列（selection/index/expand）交给 el-table 原生渲染；operation（操作列）仍走 PlusTableCell。
  */
 export default defineComponent({
   name: 'PlusTableColumnNode',
   props: {
-    // plus-table.vue 持有 ColumnNode<T>，本组件按注入引擎的口径统一收作 any（见 PLUS_TABLE_INJECTION_KEY 注释）
     node: { type: Object as PropType<ColumnNode<any>>, required: true },
   },
   setup(props) {
-    const engine = inject(PLUS_TABLE_INJECTION_KEY);
-    if (!engine) {
+    const table = inject(PLUS_TABLE_INJECTION_KEY);
+    if (!table) {
       throw new Error(
         '[PlusTable] PlusTableColumnNode 必须在 PlusTable 内部使用',
       );
@@ -41,7 +42,7 @@ export default defineComponent({
 
     function renderHeader(column: PlusTableColumn): VNodeChild {
       const headerSlot = column.prop
-        ? engine!.slots[`header-${column.prop}`]
+        ? table!.slots[`header-${column.prop}`]
         : undefined;
       return h(
         'span',
@@ -57,6 +58,17 @@ export default defineComponent({
       );
     }
 
+    /**
+     * 子树叶子 id 指纹。分组列的 default slot 在 el-table-column 内部的渲染器里执行，
+     * 闭包捕获的 children 是普通数组，slot 执行时不读任何响应式源——子列显隐/排序后
+     * slot 不会重新渲染。把指纹编进 key，子树变化时强制重挂载整组来同步 el-table 列注册。
+     */
+    function subtreeKey(node: ColumnNode): string {
+      return node.children?.length
+        ? node.children.map(subtreeKey).join(',')
+        : node.id;
+    }
+
     function renderNode(node: ColumnNode, index: number): VNodeChild {
       const column = node.column;
 
@@ -65,7 +77,7 @@ export default defineComponent({
           ElTableColumn,
           {
             // index 进 key：顺序变化时强制重挂载，确保 el-table store 的列序与渲染一致
-            key: `${index}:${node.id}`,
+            key: `${index}:${node.id}:${subtreeKey(node)}`,
             ...nativeProps(column),
           },
           {
@@ -92,7 +104,7 @@ export default defineComponent({
           // header-dragend 调宽时用 columnKey 找回叶子列
           columnKey: node.id,
           ...nativeProps(column),
-          width: engine!.columns.widthMap.value[node.id] ?? column.width,
+          width: table!.store.states.widthMap.value[node.id] ?? column.width,
         },
         {
           header: () => renderHeader(column),

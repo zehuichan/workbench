@@ -1,14 +1,19 @@
 <script setup lang="ts" generic="T extends RowData = RowData">
-import { computed, provide, ref, useSlots } from 'vue';
+import { computed, provide, ref, useSlots, watch } from 'vue';
 import { ElPagination, ElTable } from 'element-plus';
-import '../styles/index.scss';
-import { PLUS_TABLE_INJECTION_KEY } from '../constants';
-import { createTableEngine } from '../engine';
-import PlusTableColumnSettings from './plus-table-column-settings.vue';
-import PlusTableColumnNode from './plus-table-column';
+import './styles/index.scss';
+import { PLUS_TABLE_INJECTION_KEY } from './tokens';
+import { createStore } from './store/helper';
+import { useEvents } from './table/events-helper';
+import { useKeyboard } from './table/keyboard-helper';
+import { useStyle } from './table/style-helper';
+import PlusTableColumnSettings from './column-settings/index.vue';
+import PlusTableColumnNode from './table-column';
 import type { TableInstance } from 'element-plus';
-import type { EditorSlotProps, HeaderSlotProps } from '../engine';
-import type { PlusTableEmits, PlusTableProps, RowData } from '../types';
+import type { PlusTable } from './tokens';
+import type { Store } from './store';
+import type { EditorSlotProps, HeaderSlotProps } from './table-cell/render-helper';
+import type { PlusTableEmits, PlusTableProps, RowData } from './table/defaults';
 
 defineOptions({ name: 'PlusTable', inheritAttrs: false });
 
@@ -29,8 +34,7 @@ const slots = useSlots();
 
 /**
  * header-${prop} / editor-${prop} 是按列 prop 动态生成的插槽名，模板里不会字面出现，
- * 只能靠显式声明让消费方在使用处获得类型提示（否则 vue-tsc 按模板实际用到的插槽推断类型，
- * 这两类动态插槽会被判定为不存在）。
+ * 只能靠显式声明让消费方在使用处获得类型提示。
  */
 defineSlots<{
   toolbar?: () => unknown;
@@ -43,19 +47,34 @@ const gridRef = ref<HTMLElement>();
 const paginationRef = ref<HTMLElement>();
 const tableRef = ref<TableInstance>();
 
-const engine = createTableEngine<T>({
+const table: PlusTable<T> = {
   props,
   emit,
   slots,
   gridRef,
   paginationRef,
-});
-provide(PLUS_TABLE_INJECTION_KEY, engine);
+  store: null as unknown as Store<T>,
+};
+const store = createStore<T>(table, props);
+table.store = store;
+provide(PLUS_TABLE_INJECTION_KEY, table);
 
-const displayTree = engine.columns.displayTree;
-const tableHeight = engine.adaptive.tableHeight;
-const isAdaptiveContainer = engine.adaptive.isContainerMode;
-const onKeydown = engine.keyboard.onKeydown;
+const style = useStyle(table);
+const events = useEvents(table);
+const keyboard = useKeyboard(table);
+
+watch(
+  () => props.data,
+  (data) => {
+    store.commit('setData', data ?? []);
+  },
+  { immediate: true },
+);
+
+const displayTree = store.states.originColumns;
+const tableData = store.states.data;
+const tableHeight = style.tableHeight;
+const isAdaptiveContainer = style.isContainerMode;
 
 // el-table 的 row-key 类型签名比本组件窄（函数变体只接受返回 string），做一次适配
 const rowKeyProp = computed(
@@ -64,60 +83,45 @@ const rowKeyProp = computed(
 
 const paginationEnabled = computed(() => props.total !== undefined);
 
-function handlePageChange(page: number) {
-  emit('update:page', page);
-  emit('page-change', { page, pageSize: props.pageSize! });
-}
-
-function handlePageSizeChange(pageSize: number) {
-  emit('update:pageSize', pageSize);
-  emit('page-change', { page: props.page!, pageSize });
-}
-
-/** 表头拖拽调宽（el-table 需 border 才出现拖拽柄），记录并持久化 */
-function handleHeaderDragend(
-  newWidth: number,
-  _oldWidth: number,
-  column: { columnKey?: string },
-) {
-  if (column.columnKey)
-    engine.columns.setColumnWidth(column.columnKey, newWidth);
+function setColumnWidth(id: string, width: number) {
+  store.commit('setColumnWidth', id, width);
 }
 
 defineExpose({
   /** 全表校验 */
-  validate: engine.validation.validate,
-  clearValidate: engine.validation.clearValidate,
-  getErrors: engine.validation.getErrors,
+  validate: store.validate,
+  clearValidate: store.clearValidate,
+  getErrors: store.getErrors,
   /** 行操作 */
-  insertRow: engine.rows.insertRow,
-  removeRow: engine.rows.removeRow,
-  moveRow: engine.rows.moveRow,
-  duplicateRow: engine.rows.duplicateRow,
+  insertRow: store.insertRow,
+  removeRow: store.removeRow,
+  moveRow: store.moveRow,
+  duplicateRow: store.duplicateRow,
   /** row 模式行编辑 */
-  startRowEdit: engine.editing.startRowEdit,
-  commitRowEdit: engine.editing.commitRowEdit,
-  cancelRowEdit: engine.editing.cancelRowEdit,
+  startRowEdit: store.startRowEdit,
+  commitRowEdit: store.commitRowEdit,
+  cancelRowEdit: store.cancelRowEdit,
   /** cell 模式单元格编辑 */
-  startEdit: engine.editing.startEdit,
-  cancelEdit: engine.editing.cancelEdit,
-  setActiveCell: engine.selection.setActiveCell,
+  startEdit: store.startEdit,
+  cancelEdit: store.cancelEdit,
+  // 内部按 E-P 命名为 setCurrentCell；公开 API 继续保留 setActiveCell。
+  setActiveCell: store.setCurrentCell,
   /** 列设置 */
-  resetColumnSettings: engine.columns.resetSettings,
-  setColumnWidth: engine.columns.setColumnWidth,
+  resetColumnSettings: store.resetSettings,
+  setColumnWidth,
   /** 撤销重做（history prop 关闭时栈恒为空，undo/redo 为安全空操作） */
-  undo: engine.undo,
-  redo: engine.redo,
-  canUndo: engine.history.canUndo,
-  canRedo: engine.history.canRedo,
-  clearHistory: engine.history.clearHistory,
+  undo: store.undo,
+  redo: store.redo,
+  canUndo: store.canUndo,
+  canRedo: store.canRedo,
+  clearHistory: store.clearHistory,
   /** 脏行 / 脏格追踪（dirtyTracking prop 关闭时恒无脏格） */
-  getModifiedRows: engine.dirty.getModifiedRows,
-  getDirtyCells: engine.dirty.getDirtyCells,
-  isCellDirty: engine.dirty.isCellDirty,
-  isRowDirty: engine.dirty.isRowDirty,
-  resetTracking: engine.dirty.resetTracking,
-  clearDirty: engine.dirty.clearDirty,
+  getModifiedRows: store.getModifiedRows,
+  getDirtyCells: store.getDirtyCells,
+  isCellDirty: store.isCellDirty,
+  isRowDirty: store.isRowDirty,
+  resetTracking: store.resetTracking,
+  clearDirty: store.clearDirty,
   /** el-table 实例直通 */
   getElTable: () => tableRef.value,
 });
@@ -137,17 +141,17 @@ defineExpose({
       ref="gridRef"
       class="plus-table__grid"
       tabindex="0"
-      @keydown="onKeydown"
+      @keydown="keyboard.handleKeydown"
     >
       <el-table
         ref="tableRef"
-        :data="data"
+        :data="tableData"
         :row-key="rowKeyProp"
         :height="tableHeight"
         v-bind="$attrs"
-        @cell-click="engine.handleCellClick"
-        @cell-dblclick="engine.handleCellDblclick"
-        @header-dragend="handleHeaderDragend"
+        @cell-click="events.handleCellClick"
+        @cell-dblclick="events.handleCellDblclick"
+        @header-dragend="events.handleHeaderDragend"
       >
         <PlusTableColumnNode
           v-for="(node, index) in displayTree"
@@ -172,8 +176,8 @@ defineExpose({
         :current-page="page"
         :page-size="pageSize"
         :page-sizes="pageSizes"
-        @update:current-page="handlePageChange"
-        @update:page-size="handlePageSizeChange"
+        @update:current-page="events.handlePageChange"
+        @update:page-size="events.handlePageSizeChange"
       />
     </div>
   </div>

@@ -1,31 +1,7 @@
 import { partition } from 'es-toolkit';
-import type { WriteCellFn } from './commit';
-import type { EditingApi } from './editing';
-import type { SelectionApi } from './selection';
-import type {
-  HotkeyBinding,
-  HotkeyContext,
-  PlusTableColumn,
-  PlusTableProps,
-  RowData,
-} from '../types';
-
-export interface KeyboardOptions<T extends RowData = RowData> {
-  props: PlusTableProps<T>;
-  data: () => T[];
-  selection: SelectionApi;
-  editing: EditingApi<T>;
-  writeCell: WriteCellFn<T>;
-  /** 清空活动格的值（Delete/Backspace） */
-  clearCell: (rowIndex: number, colIndex: number) => void;
-  /** 「选中即输入」：把首个字符转换为该列编辑器的草稿；undefined 表示仅进编不种入 */
-  typedCharToDraft: (colIndex: number, char: string) => unknown;
-  getColumnAt: (colIndex: number) => PlusTableColumn<T> | null;
-  undo: () => void;
-  redo: () => void;
-  canUndo: () => boolean;
-  canRedo: () => boolean;
-}
+import { typedCharToDraft } from '../editors/registry';
+import type { PlusTable } from '../tokens';
+import type { HotkeyBinding, HotkeyContext, RowData } from './defaults';
 
 function isFromEditorElement(event: KeyboardEvent): boolean {
   const target = event.target as HTMLElement | null;
@@ -61,30 +37,14 @@ function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
  * 仿 Excel 键盘流。监听挂在表格外层容器（tabindex=0），
  * 编辑器内的按键经冒泡到达这里，按编辑态分流处理。
  */
-export function createKeyboard<T extends RowData = RowData>(
-  options: KeyboardOptions<T>,
-) {
-  const {
-    props,
-    data,
-    selection,
-    editing,
-    writeCell,
-    clearCell,
-    typedCharToDraft,
-    getColumnAt,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-  } = options;
-
+export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
   function buildContext(event: KeyboardEvent): HotkeyContext<T> {
-    const active = selection.activeCell.value;
-    const rowIndex = active?.rowIndex ?? -1;
-    const colIndex = active?.colIndex ?? -1;
-    const row = rowIndex >= 0 ? (data()[rowIndex] ?? null) : null;
-    const column = colIndex >= 0 ? getColumnAt(colIndex) : null;
+    const current = table.store.states.currentCell.value;
+    const rowIndex = current?.rowIndex ?? -1;
+    const colIndex = current?.colIndex ?? -1;
+    const row = rowIndex >= 0 ? (table.store.states.data.value[rowIndex] ?? null) : null;
+    const column =
+      colIndex >= 0 ? (table.store.states.columns.value[colIndex]?.column ?? null) : null;
     return {
       event,
       rowIndex,
@@ -92,24 +52,24 @@ export function createKeyboard<T extends RowData = RowData>(
       row,
       prop: column?.prop,
       column,
-      data: data(),
+      data: table.store.states.data.value,
       navigate: (rowDelta, colDelta) =>
-        selection.moveActive(rowDelta, colDelta),
+        table.store.moveCurrent(rowDelta, colDelta),
       startEdit: () => {
-        if (active) editing.startEdit(active.rowIndex, active.colIndex);
+        if (current) table.store.startEdit(current.rowIndex, current.colIndex);
       },
-      cancelEdit: () => editing.cancelEdit(),
+      cancelEdit: () => table.store.cancelEdit(),
       setValue: (value) => {
         if (!row || !column?.prop) return;
-        writeCell(row, rowIndex, column.prop, value);
+        table.store.commit('setCellValue', row, rowIndex, column.prop, value);
       },
-      undo,
-      redo,
+      undo: table.store.undo,
+      redo: table.store.redo,
     };
   }
 
   function getCustomHotkeys(): HotkeyBinding<T>[] {
-    return props.hotkeys ?? [];
+    return table.props.hotkeys ?? [];
   }
 
   function runHotkeyBindings(
@@ -129,11 +89,11 @@ export function createKeyboard<T extends RowData = RowData>(
   }
 
   /** cell 模式编辑器打开期间的按键 */
-  function onEditingKeydown(event: KeyboardEvent) {
+  function handleEditingKeydown(event: KeyboardEvent) {
     switch (event.key) {
       case 'Escape': {
-        editing.cancelEdit();
-        selection.focusGrid();
+        table.store.cancelEdit();
+        table.store.focusGrid();
         event.preventDefault();
         event.stopPropagation();
         break;
@@ -148,45 +108,46 @@ export function createKeyboard<T extends RowData = RowData>(
         ) {
           return;
         }
-        editing.commitEdit();
-        selection.moveActive(1, 0);
-        selection.focusGrid();
+        table.store.commitEdit();
+        table.store.moveCurrent(1, 0);
+        table.store.focusGrid();
         event.preventDefault();
         break;
       }
       case 'Tab': {
-        editing.commitEdit();
-        selection.moveSequential(event.shiftKey ? -1 : 1);
-        selection.focusGrid();
+        table.store.commitEdit();
+        table.store.moveSequential(event.shiftKey ? -1 : 1);
+        table.store.focusGrid();
         event.preventDefault();
         break;
       }
       default:
-        // 其余按键（含方向键）留给编辑器自身
         break;
     }
   }
 
   /** Tab / Esc：任何编辑模式、任何焦点位置都由网格统一拦截，不因焦点落在输入框内而被放过 */
   function handleGlobalKey(event: KeyboardEvent): boolean {
-    const mode = props.editMode ?? 'cell';
+    const mode = table.store.states.editMode.value ?? 'cell';
 
     if (event.key === 'Escape') {
-      const active = selection.activeCell.value;
+      const current = table.store.states.currentCell.value;
       const row =
-        mode === 'row' && active ? data()[active.rowIndex] : undefined;
-      if (mode === 'row' && active && row && editing.isRowEditing(row)) {
-        editing.cancelRowEdit(active.rowIndex);
+        mode === 'row' && current
+          ? table.store.states.data.value[current.rowIndex]
+          : undefined;
+      if (mode === 'row' && current && row && table.store.isRowEditing(row)) {
+        table.store.cancelRowEdit(current.rowIndex);
       }
-      selection.focusGrid();
+      table.store.focusGrid();
       event.preventDefault();
       return true;
     }
 
     if (event.key === 'Tab') {
-      selection.moveSequential(event.shiftKey ? -1 : 1);
-      if (mode === 'cell') selection.focusGrid();
-      else selection.focusActiveCellEditor();
+      table.store.moveSequential(event.shiftKey ? -1 : 1);
+      if (mode === 'cell') table.store.focusGrid();
+      else table.store.focusCurrentCellEditor();
       event.preventDefault();
       return true;
     }
@@ -194,11 +155,11 @@ export function createKeyboard<T extends RowData = RowData>(
     return false;
   }
 
-  /** 非编辑态的导航 / 进编 / 撤销重做按键；焦点在编辑器控件内部时不接管（交还方向键/字符输入等原生行为） */
-  function onBuiltinNavigation(event: KeyboardEvent): boolean {
-    const mode = props.editMode ?? 'cell';
+  /** 非编辑态的导航 / 进编 / 撤销重做按键；焦点在编辑器控件内部时不接管 */
+  function handleBuiltinNavigation(event: KeyboardEvent): boolean {
+    const mode = table.store.states.editMode.value ?? 'cell';
     const ctrl = event.ctrlKey || event.metaKey;
-    const active = selection.activeCell.value;
+    const current = table.store.states.currentCell.value;
 
     const handled = (): true => {
       event.preventDefault();
@@ -206,75 +167,74 @@ export function createKeyboard<T extends RowData = RowData>(
     };
     /** row/table 模式下编辑器随格常驻，移动高亮态后需把真实 DOM 焦点同步过去 */
     const syncFocus = () => {
-      if (mode !== 'cell') selection.focusActiveCellEditor();
+      if (mode !== 'cell') table.store.focusCurrentCellEditor();
     };
 
     const key = event.key.toLowerCase();
     if (ctrl && !event.shiftKey && key === 'z') {
-      if (!canUndo()) return false;
-      undo();
+      if (!table.store.canUndo.value) return false;
+      table.store.undo();
       return handled();
     }
     if (
       ctrl &&
       ((event.shiftKey && key === 'z') || (!event.shiftKey && key === 'y'))
     ) {
-      if (!canRedo()) return false;
-      redo();
+      if (!table.store.canRedo.value) return false;
+      table.store.redo();
       return handled();
     }
 
     switch (event.key) {
       case 'ArrowUp':
-        selection.moveActive(-1, 0);
+        table.store.moveCurrent(-1, 0);
         syncFocus();
         return handled();
       case 'ArrowDown':
-        selection.moveActive(1, 0);
+        table.store.moveCurrent(1, 0);
         syncFocus();
         return handled();
       case 'ArrowLeft':
-        selection.moveActive(0, -1);
+        table.store.moveCurrent(0, -1);
         syncFocus();
         return handled();
       case 'ArrowRight':
-        selection.moveActive(0, 1);
+        table.store.moveCurrent(0, 1);
         syncFocus();
         return handled();
       case 'Home':
-        if (ctrl) selection.moveToTableCorner(false);
-        else selection.moveToRowEdge(false);
+        if (ctrl) table.store.moveToTableCorner(false);
+        else table.store.moveToRowEdge(false);
         syncFocus();
         return handled();
       case 'End':
-        if (ctrl) selection.moveToTableCorner(true);
-        else selection.moveToRowEdge(true);
+        if (ctrl) table.store.moveToTableCorner(true);
+        else table.store.moveToRowEdge(true);
         syncFocus();
         return handled();
       case 'Enter': {
-        if (event.isComposing || !active) return false;
+        if (event.isComposing || !current) return false;
         if (
           mode === 'cell' &&
-          editing.canEditCell(active.rowIndex, active.colIndex)
+          table.store.canEditCell(current.rowIndex, current.colIndex)
         ) {
-          editing.startEdit(active.rowIndex, active.colIndex);
+          table.store.startEdit(current.rowIndex, current.colIndex);
         } else {
-          selection.moveActive(1, 0);
+          table.store.moveCurrent(1, 0);
           syncFocus();
         }
         return handled();
       }
       case 'F2': {
-        if (!active) return false;
-        if (mode === 'cell')
-          editing.startEdit(active.rowIndex, active.colIndex);
+        if (!current) return false;
+        if (mode === 'cell') table.store.startEdit(current.rowIndex, current.colIndex);
         return handled();
       }
       case 'Delete':
       case 'Backspace': {
-        if (!active) return false;
-        if (editing.canEditCell(active.rowIndex, active.colIndex)) {
-          clearCell(active.rowIndex, active.colIndex);
+        if (!current) return false;
+        if (table.store.canEditCell(current.rowIndex, current.colIndex)) {
+          table.store.clearCell(current.rowIndex, current.colIndex);
         }
         return handled();
       }
@@ -283,15 +243,16 @@ export function createKeyboard<T extends RowData = RowData>(
         // 文本/数字编辑器以该字符为草稿覆盖原值，其余编辑器仅进入编辑态
         if (
           mode === 'cell' &&
-          active &&
+          current &&
           isPrintableKey(event) &&
-          editing.canEditCell(active.rowIndex, active.colIndex)
+          table.store.canEditCell(current.rowIndex, current.colIndex)
         ) {
-          const draft = typedCharToDraft(active.colIndex, event.key);
+          const column = table.store.states.columns.value[current.colIndex]?.column;
+          const draft = typedCharToDraft(column?.editor, event.key);
           if (draft === undefined) {
-            editing.startEdit(active.rowIndex, active.colIndex);
+            table.store.startEdit(current.rowIndex, current.colIndex);
           } else {
-            editing.startEdit(active.rowIndex, active.colIndex, {
+            table.store.startEdit(current.rowIndex, current.colIndex, {
               defaultValue: draft,
             });
           }
@@ -302,7 +263,7 @@ export function createKeyboard<T extends RowData = RowData>(
     }
   }
 
-  function onKeydown(event: KeyboardEvent) {
+  function handleKeydown(event: KeyboardEvent) {
     const [overrides, normals] = partition(
       getCustomHotkeys(),
       (h) => !!h.override,
@@ -312,8 +273,8 @@ export function createKeyboard<T extends RowData = RowData>(
     if (runHotkeyBindings(overrides, event)) return;
 
     // 2. cell 模式编辑器打开中：走独立的编辑态按键流（Tab/Enter/Esc 语义不同）
-    if (editing.editingCell.value) {
-      onEditingKeydown(event);
+    if (table.store.states.editingCell.value) {
+      handleEditingKeydown(event);
       return;
     }
 
@@ -321,15 +282,11 @@ export function createKeyboard<T extends RowData = RowData>(
     if (handleGlobalKey(event)) return;
 
     // 4. 焦点在编辑器控件内部时，方向键/字符输入等交还控件自身，不拦截
-    if (!isFromEditorElement(event) && onBuiltinNavigation(event)) return;
+    if (!isFromEditorElement(event) && handleBuiltinNavigation(event)) return;
 
     // 5. 内置没处理时，才轮到用户普通热键
     runHotkeyBindings(normals, event);
   }
 
-  return { onKeydown };
+  return { handleKeydown };
 }
-
-export type KeyboardApi<T extends RowData = RowData> = ReturnType<
-  typeof createKeyboard<T>
->;

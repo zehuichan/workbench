@@ -1,25 +1,23 @@
 <script setup lang="ts">
 import { computed, inject, ref } from 'vue';
 import { ElButton, ElCheckbox, ElPopover } from 'element-plus';
-import { PLUS_TABLE_INJECTION_KEY } from '../constants';
-import type { SettingItem } from '../core';
+import { PLUS_TABLE_INJECTION_KEY } from '../tokens';
+import type { SettingItem } from '../store/columns';
 
 defineOptions({ name: 'PlusTableColumnSettings' });
 
-const engine = inject(PLUS_TABLE_INJECTION_KEY);
-if (!engine) {
+const table = inject(PLUS_TABLE_INJECTION_KEY);
+if (!table) {
   throw new Error(
     '[PlusTable] PlusTableColumnSettings 必须在 PlusTable 内部使用',
   );
 }
 
-const items = computed(() => engine!.columns.settingItems.value);
+const items = computed(() => table!.store.settingItems.value);
 
 function handleToggle(id: string, checked: boolean | string | number) {
-  engine!.columns.toggleVisible(id, !!checked);
+  table!.store.commit('toggleColumnVisible', id, !!checked);
 }
-
-// ──── 拖拽排序（仅限同级节点之间） ────
 
 const dragItem = ref<SettingItem | null>(null);
 const dropTargetId = ref<string | null>(null);
@@ -33,7 +31,7 @@ function canDropOn(item: SettingItem): boolean {
   );
 }
 
-function onDragStart(event: DragEvent, item: SettingItem) {
+function handleDragStart(event: DragEvent, item: SettingItem) {
   dragItem.value = item;
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
@@ -42,7 +40,7 @@ function onDragStart(event: DragEvent, item: SettingItem) {
   }
 }
 
-function onDragOver(event: DragEvent, item: SettingItem) {
+function handleDragOver(event: DragEvent, item: SettingItem) {
   if (!canDropOn(item)) return;
   event.preventDefault();
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
@@ -52,14 +50,19 @@ function onDragOver(event: DragEvent, item: SettingItem) {
   dropTargetId.value = item.id;
 }
 
-function onDrop(event: DragEvent, item: SettingItem) {
+function handleDrop(event: DragEvent, item: SettingItem) {
   if (!canDropOn(item)) return;
   event.preventDefault();
-  engine!.columns.reorderNode(dragItem.value!.id, item.id, dropPosition.value);
-  onDragEnd();
+  table!.store.commit(
+    'updateColumnOrder',
+    dragItem.value!.id,
+    item.id,
+    dropPosition.value,
+  );
+  handleDragEnd();
 }
 
-function onDragEnd() {
+function handleDragEnd() {
   dragItem.value = null;
   dropTargetId.value = null;
 }
@@ -85,10 +88,10 @@ function onDragEnd() {
           }"
           :style="{ paddingLeft: `${item.level * 16}px` }"
           draggable="true"
-          @dragstart="onDragStart($event, item)"
-          @dragover="onDragOver($event, item)"
-          @drop="onDrop($event, item)"
-          @dragend="onDragEnd"
+          @dragstart="handleDragStart($event, item)"
+          @dragover="handleDragOver($event, item)"
+          @drop="handleDrop($event, item)"
+          @dragend="handleDragEnd"
         >
           <span class="ptbl-column-settings__handle" aria-hidden="true">
             ⠿
@@ -103,7 +106,7 @@ function onDragEnd() {
         </li>
       </ul>
       <div class="ptbl-column-settings__actions">
-        <el-button text size="small" @click="engine!.columns.resetSettings()">
+        <el-button text size="small" @click="table!.store.resetSettings()">
           重置
         </el-button>
       </div>

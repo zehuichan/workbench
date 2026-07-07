@@ -1,25 +1,22 @@
 import { shallowRef, triggerRef } from 'vue';
 import { cloneDeep, isEqual } from 'es-toolkit';
-import type { TableContext } from '../core/context';
-import type { RowData } from '../types';
-
-export interface DirtyOptions<T extends RowData = RowData> {
-  enabled: () => boolean;
-  context: TableContext<T>;
-}
+import { cellKey } from '../util';
+import type { PlusTable } from '../tokens';
+import type { RowData } from '../table/defaults';
 
 /**
  * 脏行/脏格追踪。以 rowKey 寻址、以 rowKey 存基线快照（不是数组下标），
  * 原因与 history 一致：插入/删除/移动行或换页都会让下标错位。
- * Map/Set 用 shallowRef + triggerRef 手动触发，避免 reactive() 包裹嵌套集合的隐性开销与边界情况。
  */
-export function createDirty<T extends RowData = RowData>(
-  options: DirtyOptions<T>,
-) {
-  const { enabled, context } = options;
-
-  const dirtyCells = shallowRef(new Map<string, Set<string>>());
+export function useDirty<T extends RowData = RowData>(table: PlusTable<T>) {
+  const states = {
+    dirtyCells: shallowRef(new Map<string, Set<string>>()),
+  };
   const baseline = new Map<string, T>();
+
+  function enabled(): boolean {
+    return !!table.store.states.dirtyTracking.value;
+  }
 
   function ensureBaseline(row: T, rowKey: string): T {
     let snapshot = baseline.get(rowKey);
@@ -30,8 +27,7 @@ export function createDirty<T extends RowData = RowData>(
     return snapshot;
   }
 
-  /** 在字段写值之前调用：行首次被写时，用其（尚未修改的）当前状态建立基线快照；已有基线时是安全的空操作。
-   * 必须在 `row[prop] = value` 之前调用，否则基线会把这次修改后的值当成「原始值」，导致本次编辑永远测不出脏。 */
+  /** 在字段写值之前调用：行首次被写时，用其（尚未修改的）当前状态建立基线快照。 */
   function touchRow(row: T, rowKey: string): void {
     if (!enabled()) return;
     ensureBaseline(row, rowKey);
@@ -39,11 +35,11 @@ export function createDirty<T extends RowData = RowData>(
 
   function markDirty(rowKey: string, prop: string): void {
     if (!enabled()) return;
-    const row = context.findByKey(rowKey)?.row;
+    const row = table.store.states.keysMap.value.get(rowKey)?.row;
     if (!row) return;
     const snapshot = ensureBaseline(row, rowKey);
     const isDirty = !isEqual(snapshot[prop], row[prop]);
-    const map = dirtyCells.value;
+    const map = states.dirtyCells.value;
     const set = map.get(rowKey);
     if (isDirty) {
       if (set) {
@@ -58,36 +54,38 @@ export function createDirty<T extends RowData = RowData>(
     } else {
       return;
     }
-    triggerRef(dirtyCells);
+    triggerRef(states.dirtyCells);
   }
 
   function isCellDirty(rowKey: string, prop: string): boolean {
-    return dirtyCells.value.get(rowKey)?.has(prop) ?? false;
+    return states.dirtyCells.value.get(rowKey)?.has(prop) ?? false;
   }
 
   function isRowDirty(rowKey: string): boolean {
-    return dirtyCells.value.has(rowKey);
+    return states.dirtyCells.value.has(rowKey);
   }
 
   /** 返回 `${rowKey}:${prop}` 形式的脏格集合 */
   function getDirtyCells(): Set<string> {
     const result = new Set<string>();
-    for (const [rowKey, props] of dirtyCells.value) {
-      for (const prop of props) result.add(`${rowKey}:${prop}`);
+    for (const [rowKey, props] of states.dirtyCells.value) {
+      for (const prop of props) result.add(cellKey(rowKey, prop));
     }
     return result;
   }
 
   function getModifiedRows(): T[] {
-    const map = dirtyCells.value;
-    return context.data().filter((row) => map.has(context.getRowKeyStr(row)));
+    const map = states.dirtyCells.value;
+    return table.store.states.data.value.filter((row: T) =>
+      map.has(table.store.getRowKey(row)),
+    );
   }
 
   function clearDirty(rowKey?: string, prop?: string): void {
-    const map = dirtyCells.value;
+    const map = states.dirtyCells.value;
     if (rowKey === undefined) {
       if (map.size === 0) return;
-      dirtyCells.value = new Map();
+      states.dirtyCells.value = new Map();
       return;
     }
     if (prop === undefined) {
@@ -97,32 +95,36 @@ export function createDirty<T extends RowData = RowData>(
       if (!set?.delete(prop)) return;
       if (set.size === 0) map.delete(rowKey);
     }
-    triggerRef(dirtyCells);
+    triggerRef(states.dirtyCells);
   }
 
   /** 把当前 data 视为新基线：清空脏标记，重建每行的基线快照 */
   function resetTracking(): void {
     baseline.clear();
-    for (const row of context.data()) {
-      baseline.set(context.getRowKeyStr(row), cloneDeep(row));
+    for (const row of table.store.states.data.value) {
+      baseline.set(table.store.getRowKey(row), cloneDeep(row));
     }
-    dirtyCells.value = new Map();
+    states.dirtyCells.value = new Map();
   }
 
-  /** 行被结构性移除后调用：清掉该行的脏标记与基线快照，避免长会话下无限增长 */
-  function pruneRowKeys(removedRowKeys: Set<string>): void {
-    if (removedRowKeys.size === 0) return;
+  /** 行失效后调用：清掉该行的脏标记与基线快照，避免长会话下无限增长 */
+  function cleanDirty(): void {
     let changed = false;
-    const map = dirtyCells.value;
-    for (const rowKey of removedRowKeys) {
-      if (map.delete(rowKey)) changed = true;
-      baseline.delete(rowKey);
+    const keysMap = table.store.states.keysMap.value;
+    const map = states.dirtyCells.value;
+    for (const rowKey of [...baseline.keys()]) {
+      if (!keysMap.has(rowKey)) baseline.delete(rowKey);
     }
-    if (changed) triggerRef(dirtyCells);
+    for (const rowKey of [...map.keys()]) {
+      if (!keysMap.has(rowKey)) {
+        map.delete(rowKey);
+        changed = true;
+      }
+    }
+    if (changed) triggerRef(states.dirtyCells);
   }
 
   return {
-    dirtyCells,
     touchRow,
     markDirty,
     isCellDirty,
@@ -131,10 +133,11 @@ export function createDirty<T extends RowData = RowData>(
     getModifiedRows,
     clearDirty,
     resetTracking,
-    pruneRowKeys,
+    cleanDirty,
+    states,
   };
 }
 
 export type DirtyApi<T extends RowData = RowData> = ReturnType<
-  typeof createDirty<T>
+  typeof useDirty<T>
 >;
