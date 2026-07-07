@@ -11,12 +11,17 @@ export interface SelectionOptions {
   gridRef: Ref<HTMLElement | undefined>;
   rowCount: () => number;
   colCount: () => number;
-  /** leafNodes 下标 → 真实 <td> 下标（特殊列/操作列会占位但不进 leafNodes，两者下标会错位） */
-  colDomIndex: (colIndex: number) => number;
+  /** leafNodes 下标 -> 该列的稳定 id（即 columnKey），用于按 data-ptbl-col 属性在行内定位单元格 */
+  getColumnIdAt: (colIndex: number) => string | undefined;
+}
+
+/** 转成可安全嵌入 `[attr="..."]` CSS 属性选择器的字符串（列 id 来自开发者配置，理论上不会有特殊字符，仍做防御性转义） */
+function escapeAttrValue(value: string): string {
+  return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
 }
 
 export function createSelection(options: SelectionOptions) {
-  const { gridRef, rowCount, colCount, colDomIndex } = options;
+  const { gridRef, rowCount, colCount, getColumnIdAt } = options;
 
   const activeCell = shallowRef<CellPosition | null>(null);
 
@@ -25,18 +30,35 @@ export function createSelection(options: SelectionOptions) {
     return clamp(value, 0, Math.max(max - 1, 0));
   }
 
-  function getCellEl(rowIndex: number, colIndex: number): HTMLTableCellElement | null {
+  function getRowEl(rowIndex: number): HTMLTableRowElement | null {
     const grid = gridRef.value;
     if (!grid) return null;
     const rows = grid.querySelectorAll<HTMLTableRowElement>(
       '.el-table__body-wrapper tbody tr.el-table__row',
     );
-    const tr = rows.item(rowIndex);
-    return tr?.cells.item(colDomIndex(colIndex)) ?? null;
+    return rows.item(rowIndex);
+  }
+
+  /**
+   * 按 rowIndex 结构定位真实 <tr>（行顺序始终与 data() 一致，不受列显隐影响），
+   * 再按列 id 在行内查找带 data-ptbl-col 标记的单元格——不依赖任何 DOM 下标换算，
+   * 特殊列/隐藏列天然不参与（它们不渲染该标记）。
+   */
+  function getCellEl(rowIndex: number, colIndex: number): HTMLElement | null {
+    const tr = getRowEl(rowIndex);
+    if (!tr) return null;
+    const columnId = getColumnIdAt(colIndex);
+    if (!columnId) return null;
+    return tr.querySelector<HTMLElement>(
+      `[data-ptbl-col="${escapeAttrValue(columnId)}"]`,
+    );
   }
 
   function scrollCellIntoView(rowIndex: number, colIndex: number) {
-    getCellEl(rowIndex, colIndex)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    getCellEl(rowIndex, colIndex)?.scrollIntoView({
+      block: 'nearest',
+      inline: 'nearest',
+    });
   }
 
   function setActiveCell(rowIndex: number, colIndex: number, scroll = true) {
@@ -49,7 +71,10 @@ export function createSelection(options: SelectionOptions) {
       colIndex: clampIndex(colIndex, colCount()),
     };
     const current = activeCell.value;
-    if (current?.rowIndex !== next.rowIndex || current?.colIndex !== next.colIndex) {
+    if (
+      current?.rowIndex !== next.rowIndex ||
+      current?.colIndex !== next.colIndex
+    ) {
       activeCell.value = next;
     }
     if (scroll) scrollCellIntoView(next.rowIndex, next.colIndex);
@@ -115,8 +140,8 @@ export function createSelection(options: SelectionOptions) {
     if (!current) return;
     void nextTick(() => {
       if (activeCell.value !== current) return; // 期间又移动了，交给下一次调用处理
-      const td = getCellEl(current.rowIndex, current.colIndex);
-      const input = td?.querySelector<HTMLElement>(
+      const cellEl = getCellEl(current.rowIndex, current.colIndex);
+      const input = cellEl?.querySelector<HTMLElement>(
         'input, textarea, [tabindex]:not([tabindex="-1"])',
       );
       if (!input) {
@@ -125,7 +150,10 @@ export function createSelection(options: SelectionOptions) {
       }
       if (document.activeElement === input) return;
       input.focus({ preventScroll: true });
-      if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+      if (
+        input instanceof HTMLInputElement ||
+        input instanceof HTMLTextAreaElement
+      ) {
         try {
           input.select();
         } catch {

@@ -3,35 +3,35 @@ import { compact } from 'es-toolkit';
 import Schema from 'async-validator';
 import type { ComputedRef } from 'vue';
 import type { ValidateError } from 'async-validator';
+import type { TableContext } from '../core/context';
 import type {
   CellError,
   CellRule,
   ColumnNode,
   PlusTableColumn,
-  PlusTableProps,
   RowData,
   ValidateResult,
 } from '../types';
 import type { DependencyState } from './dependencies';
 
-export interface ValidationOptions {
-  props: PlusTableProps;
-  data: () => RowData[];
+export interface ValidationOptions<T extends RowData = RowData> {
+  context: TableContext<T>;
   /** 可见叶子列，仅用于「首个错误格」的滚动定位（对应 DOM td 序） */
-  leafNodes: ComputedRef<ColumnNode[]>;
+  leafNodes: ComputedRef<ColumnNode<T>[]>;
   /** 全部叶子列（含列设置隐藏的列），校验必须遍历这份而不是可见列，否则隐藏必填列永远不会被校验到 */
-  allLeafNodes: ComputedRef<ColumnNode[]>;
-  getRowKeyStr: (row: RowData) => string;
+  allLeafNodes: ComputedRef<ColumnNode<T>[]>;
   getDependencyState: (
-    row: RowData,
+    row: T,
     rowIndex: number,
-    column: PlusTableColumn,
+    column: PlusTableColumn<T>,
   ) => DependencyState;
   scrollToCell: (rowIndex: number, colIndex: number) => void;
 }
 
-export function createValidation(options: ValidationOptions) {
-  const { data, leafNodes, allLeafNodes, getRowKeyStr, getDependencyState, scrollToCell } =
+export function createValidation<T extends RowData = RowData>(
+  options: ValidationOptions<T>,
+) {
+  const { context, leafNodes, allLeafNodes, getDependencyState, scrollToCell } =
     options;
 
   /** key 为 `${rowKey}:${prop}` */
@@ -52,14 +52,18 @@ export function createValidation(options: ValidationOptions) {
     return next;
   }
 
-  function isLatestVersion(rowKey: string, prop: string, version: number): boolean {
+  function isLatestVersion(
+    rowKey: string,
+    prop: string,
+    version: number,
+  ): boolean {
     return versions.get(rowKey)?.get(prop) === version;
   }
 
   const errorKey = (rowKey: string, prop: string) => `${rowKey}:${prop}`;
 
-  function getCellError(row: RowData, prop: string): CellError | undefined {
-    return errors.get(errorKey(getRowKeyStr(row), prop));
+  function getCellError(row: T, prop: string): CellError | undefined {
+    return errors.get(errorKey(context.getRowKeyStr(row), prop));
   }
 
   /** 只读访问器：供业务侧渲染自定义错误汇总面板 */
@@ -67,7 +71,11 @@ export function createValidation(options: ValidationOptions) {
     return [...errors.values()];
   }
 
-  function buildRules(row: RowData, rowIndex: number, node: ColumnNode): CellRule[] {
+  function buildRules(
+    row: T,
+    rowIndex: number,
+    node: ColumnNode<T>,
+  ): CellRule[] {
     const column = node.column;
     const depState = getDependencyState(row, rowIndex, column);
     const rules: CellRule[] = [];
@@ -83,13 +91,13 @@ export function createValidation(options: ValidationOptions) {
   }
 
   async function validateCellNode(
-    row: RowData,
+    row: T,
     rowIndex: number,
-    node: ColumnNode,
+    node: ColumnNode<T>,
   ): Promise<CellError | null> {
     const prop = node.column.prop;
     if (!prop) return null;
-    const rowKey = getRowKeyStr(row);
+    const rowKey = context.getRowKeyStr(row);
     const key = errorKey(rowKey, prop);
     const version = bumpVersion(rowKey, prop);
     const rules = buildRules(row, rowIndex, node);
@@ -97,8 +105,8 @@ export function createValidation(options: ValidationOptions) {
     /** 非最新版本（被后一次输入触发的校验抢先）或该行已被移除时，结果作废；否则返回校验时行的最新下标 */
     const resolveCurrentRowIndex = (): number | null => {
       if (!isLatestVersion(rowKey, prop, version)) return null;
-      const currentIndex = data().indexOf(row);
-      return currentIndex >= 0 ? currentIndex : null;
+      const location = context.findByKey(rowKey);
+      return location ? location.rowIndex : null;
     };
 
     if (!rules.length) {
@@ -121,14 +129,19 @@ export function createValidation(options: ValidationOptions) {
       if (currentIndex === null) return null;
       const validateErrors = (err as { errors?: ValidateError[] })?.errors;
       const message = validateErrors?.[0]?.message ?? '校验失败';
-      const cellError: CellError = { rowKey, rowIndex: currentIndex, prop, message };
+      const cellError: CellError = {
+        rowKey,
+        rowIndex: currentIndex,
+        prop,
+        message,
+      };
       errors.set(key, cellError);
       return cellError;
     }
   }
 
   async function validateCellByField(
-    row: RowData,
+    row: T,
     rowIndex: number,
     prop: string,
   ): Promise<CellError | null> {
@@ -138,7 +151,7 @@ export function createValidation(options: ValidationOptions) {
   }
 
   async function validateRow(rowIndex: number): Promise<CellError[]> {
-    const row = data()[rowIndex];
+    const row = context.data()[rowIndex];
     if (!row) return [];
     const results = await Promise.all(
       allLeafNodes.value.map((node) => validateCellNode(row, rowIndex, node)),
@@ -148,13 +161,13 @@ export function createValidation(options: ValidationOptions) {
 
   /** 全表校验；默认滚动并激活到首个错误格（错误列被列设置隐藏时找不到 colIndex，跳过滚动） */
   async function validate(scrollToFirstError = true): Promise<ValidateResult> {
-    const rows = data();
+    const rows = context.data();
     const collected: CellError[] = [];
     for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
       collected.push(...(await validateRow(rowIndex)));
     }
     if (scrollToFirstError && collected.length) {
-      const first = collected[0];
+      const first = collected[0]!;
       const colIndex = leafNodes.value.findIndex(
         (node) => node.column.prop === first.prop,
       );
@@ -167,8 +180,8 @@ export function createValidation(options: ValidationOptions) {
     errors.clear();
   }
 
-  function clearRowValidate(row: RowData) {
-    const prefix = `${getRowKeyStr(row)}:`;
+  function clearRowValidate(row: T) {
+    const prefix = `${context.getRowKeyStr(row)}:`;
     for (const key of [...errors.keys()]) {
       if (key.startsWith(prefix)) errors.delete(key);
     }
@@ -198,4 +211,6 @@ export function createValidation(options: ValidationOptions) {
   };
 }
 
-export type ValidationApi = ReturnType<typeof createValidation>;
+export type ValidationApi<T extends RowData = RowData> = ReturnType<
+  typeof createValidation<T>
+>;

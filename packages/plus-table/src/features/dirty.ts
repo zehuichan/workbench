@@ -1,11 +1,11 @@
 import { shallowRef, triggerRef } from 'vue';
 import { cloneDeep, isEqual } from 'es-toolkit';
+import type { TableContext } from '../core/context';
 import type { RowData } from '../types';
 
-export interface DirtyOptions {
+export interface DirtyOptions<T extends RowData = RowData> {
   enabled: () => boolean;
-  data: () => RowData[];
-  getRowKeyStr: (row: RowData) => string;
+  context: TableContext<T>;
 }
 
 /**
@@ -13,13 +13,15 @@ export interface DirtyOptions {
  * 原因与 history 一致：插入/删除/移动行或换页都会让下标错位。
  * Map/Set 用 shallowRef + triggerRef 手动触发，避免 reactive() 包裹嵌套集合的隐性开销与边界情况。
  */
-export function createDirty(options: DirtyOptions) {
-  const { enabled, data, getRowKeyStr } = options;
+export function createDirty<T extends RowData = RowData>(
+  options: DirtyOptions<T>,
+) {
+  const { enabled, context } = options;
 
   const dirtyCells = shallowRef(new Map<string, Set<string>>());
-  const baseline = new Map<string, RowData>();
+  const baseline = new Map<string, T>();
 
-  function ensureBaseline(row: RowData, rowKey: string): RowData {
+  function ensureBaseline(row: T, rowKey: string): T {
     let snapshot = baseline.get(rowKey);
     if (!snapshot) {
       snapshot = cloneDeep(row);
@@ -30,14 +32,14 @@ export function createDirty(options: DirtyOptions) {
 
   /** 在字段写值之前调用：行首次被写时，用其（尚未修改的）当前状态建立基线快照；已有基线时是安全的空操作。
    * 必须在 `row[prop] = value` 之前调用，否则基线会把这次修改后的值当成「原始值」，导致本次编辑永远测不出脏。 */
-  function touchRow(row: RowData, rowKey: string): void {
+  function touchRow(row: T, rowKey: string): void {
     if (!enabled()) return;
     ensureBaseline(row, rowKey);
   }
 
   function markDirty(rowKey: string, prop: string): void {
     if (!enabled()) return;
-    const row = data().find((r) => getRowKeyStr(r) === rowKey);
+    const row = context.findByKey(rowKey)?.row;
     if (!row) return;
     const snapshot = ensureBaseline(row, rowKey);
     const isDirty = !isEqual(snapshot[prop], row[prop]);
@@ -76,9 +78,9 @@ export function createDirty(options: DirtyOptions) {
     return result;
   }
 
-  function getModifiedRows(): RowData[] {
+  function getModifiedRows(): T[] {
     const map = dirtyCells.value;
-    return data().filter((row) => map.has(getRowKeyStr(row)));
+    return context.data().filter((row) => map.has(context.getRowKeyStr(row)));
   }
 
   function clearDirty(rowKey?: string, prop?: string): void {
@@ -101,8 +103,8 @@ export function createDirty(options: DirtyOptions) {
   /** 把当前 data 视为新基线：清空脏标记，重建每行的基线快照 */
   function resetTracking(): void {
     baseline.clear();
-    for (const row of data()) {
-      baseline.set(getRowKeyStr(row), cloneDeep(row));
+    for (const row of context.data()) {
+      baseline.set(context.getRowKeyStr(row), cloneDeep(row));
     }
     dirtyCells.value = new Map();
   }
@@ -133,4 +135,6 @@ export function createDirty(options: DirtyOptions) {
   };
 }
 
-export type DirtyApi = ReturnType<typeof createDirty>;
+export type DirtyApi<T extends RowData = RowData> = ReturnType<
+  typeof createDirty<T>
+>;

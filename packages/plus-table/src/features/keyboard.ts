@@ -1,19 +1,26 @@
 import { partition } from 'es-toolkit';
-import type { HotkeyBinding, HotkeyContext, PlusTableColumn, PlusTableProps, RowData } from '../types';
-import type { EditingApi, WriteCellFn } from './editing';
+import type { WriteCellFn } from './commit';
+import type { EditingApi } from './editing';
 import type { SelectionApi } from './selection';
+import type {
+  HotkeyBinding,
+  HotkeyContext,
+  PlusTableColumn,
+  PlusTableProps,
+  RowData,
+} from '../types';
 
-export interface KeyboardOptions {
-  props: PlusTableProps;
-  data: () => RowData[];
+export interface KeyboardOptions<T extends RowData = RowData> {
+  props: PlusTableProps<T>;
+  data: () => T[];
   selection: SelectionApi;
-  editing: EditingApi;
-  writeCell: WriteCellFn;
+  editing: EditingApi<T>;
+  writeCell: WriteCellFn<T>;
   /** 清空活动格的值（Delete/Backspace） */
   clearCell: (rowIndex: number, colIndex: number) => void;
   /** 「选中即输入」：把首个字符转换为该列编辑器的草稿；undefined 表示仅进编不种入 */
   typedCharToDraft: (colIndex: number, char: string) => unknown;
-  getColumnAt: (colIndex: number) => PlusTableColumn | null;
+  getColumnAt: (colIndex: number) => PlusTableColumn<T> | null;
   undo: () => void;
   redo: () => void;
   canUndo: () => boolean;
@@ -26,7 +33,9 @@ function isFromEditorElement(event: KeyboardEvent): boolean {
 }
 
 function isPrintableKey(event: KeyboardEvent): boolean {
-  return event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey;
+  return (
+    event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey
+  );
 }
 
 /** 'Ctrl+Shift+Z' 风格组合键字符串与 KeyboardEvent 比对，大小写不敏感 */
@@ -35,7 +44,9 @@ function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
     .toLowerCase()
     .split('+')
     .map((s) => s.trim());
-  const mainKey = parts.find((p) => !['ctrl', 'shift', 'alt', 'meta'].includes(p));
+  const mainKey = parts.find(
+    (p) => !['ctrl', 'shift', 'alt', 'meta'].includes(p),
+  );
   if (!mainKey) return false;
   return (
     event.ctrlKey === parts.includes('ctrl') &&
@@ -50,7 +61,9 @@ function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
  * 仿 Excel 键盘流。监听挂在表格外层容器（tabindex=0），
  * 编辑器内的按键经冒泡到达这里，按编辑态分流处理。
  */
-export function createKeyboard(options: KeyboardOptions) {
+export function createKeyboard<T extends RowData = RowData>(
+  options: KeyboardOptions<T>,
+) {
   const {
     props,
     data,
@@ -66,7 +79,7 @@ export function createKeyboard(options: KeyboardOptions) {
     canRedo,
   } = options;
 
-  function buildContext(event: KeyboardEvent): HotkeyContext {
+  function buildContext(event: KeyboardEvent): HotkeyContext<T> {
     const active = selection.activeCell.value;
     const rowIndex = active?.rowIndex ?? -1;
     const colIndex = active?.colIndex ?? -1;
@@ -80,7 +93,8 @@ export function createKeyboard(options: KeyboardOptions) {
       prop: column?.prop,
       column,
       data: data(),
-      navigate: (rowDelta, colDelta) => selection.moveActive(rowDelta, colDelta),
+      navigate: (rowDelta, colDelta) =>
+        selection.moveActive(rowDelta, colDelta),
       startEdit: () => {
         if (active) editing.startEdit(active.rowIndex, active.colIndex);
       },
@@ -94,13 +108,14 @@ export function createKeyboard(options: KeyboardOptions) {
     };
   }
 
-  /** 未显式设 hotkeyEnabled: false 时默认启用；只管自定义 hotkeys 分发，不影响内置导航 */
-  function getCustomHotkeys(): HotkeyBinding[] {
-    if (props.hotkeyEnabled === false) return [];
+  function getCustomHotkeys(): HotkeyBinding<T>[] {
     return props.hotkeys ?? [];
   }
 
-  function runHotkeyBindings(bindings: HotkeyBinding[], event: KeyboardEvent): boolean {
+  function runHotkeyBindings(
+    bindings: HotkeyBinding<T>[],
+    event: KeyboardEvent,
+  ): boolean {
     for (const binding of bindings) {
       if (!matchesHotkey(event, binding.key)) continue;
       const ctx = buildContext(event);
@@ -127,7 +142,10 @@ export function createKeyboard(options: KeyboardOptions) {
         if (event.isComposing) return;
         const target = event.target as HTMLElement | null;
         // 仿 Excel：textarea 中 Alt/Shift+Enter 换行，Enter 提交
-        if (target instanceof HTMLTextAreaElement && (event.shiftKey || event.altKey)) {
+        if (
+          target instanceof HTMLTextAreaElement &&
+          (event.shiftKey || event.altKey)
+        ) {
           return;
         }
         editing.commitEdit();
@@ -155,7 +173,8 @@ export function createKeyboard(options: KeyboardOptions) {
 
     if (event.key === 'Escape') {
       const active = selection.activeCell.value;
-      const row = mode === 'row' && active ? data()[active.rowIndex] : undefined;
+      const row =
+        mode === 'row' && active ? data()[active.rowIndex] : undefined;
       if (mode === 'row' && active && row && editing.isRowEditing(row)) {
         editing.cancelRowEdit(active.rowIndex);
       }
@@ -196,7 +215,10 @@ export function createKeyboard(options: KeyboardOptions) {
       undo();
       return handled();
     }
-    if (ctrl && ((event.shiftKey && key === 'z') || (!event.shiftKey && key === 'y'))) {
+    if (
+      ctrl &&
+      ((event.shiftKey && key === 'z') || (!event.shiftKey && key === 'y'))
+    ) {
       if (!canRedo()) return false;
       redo();
       return handled();
@@ -231,7 +253,10 @@ export function createKeyboard(options: KeyboardOptions) {
         return handled();
       case 'Enter': {
         if (event.isComposing || !active) return false;
-        if (mode === 'cell' && editing.canEditCell(active.rowIndex, active.colIndex)) {
+        if (
+          mode === 'cell' &&
+          editing.canEditCell(active.rowIndex, active.colIndex)
+        ) {
           editing.startEdit(active.rowIndex, active.colIndex);
         } else {
           selection.moveActive(1, 0);
@@ -241,7 +266,8 @@ export function createKeyboard(options: KeyboardOptions) {
       }
       case 'F2': {
         if (!active) return false;
-        if (mode === 'cell') editing.startEdit(active.rowIndex, active.colIndex);
+        if (mode === 'cell')
+          editing.startEdit(active.rowIndex, active.colIndex);
         return handled();
       }
       case 'Delete':
@@ -277,7 +303,10 @@ export function createKeyboard(options: KeyboardOptions) {
   }
 
   function onKeydown(event: KeyboardEvent) {
-    const [overrides, normals] = partition(getCustomHotkeys(), (h) => !!h.override);
+    const [overrides, normals] = partition(
+      getCustomHotkeys(),
+      (h) => !!h.override,
+    );
 
     // 1. 用户 override 热键：先于任何内置行为判定，任何编辑态 / 焦点位置都生效
     if (runHotkeyBindings(overrides, event)) return;
@@ -301,4 +330,6 @@ export function createKeyboard(options: KeyboardOptions) {
   return { onKeydown };
 }
 
-export type KeyboardApi = ReturnType<typeof createKeyboard>;
+export type KeyboardApi<T extends RowData = RowData> = ReturnType<
+  typeof createKeyboard<T>
+>;

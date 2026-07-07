@@ -1,4 +1,5 @@
 import type { ComputedRef } from 'vue';
+import type { WriteCellFn } from './commit';
 import type {
   CellRule,
   ColumnNode,
@@ -6,7 +7,6 @@ import type {
   PlusTableColumn,
   RowData,
 } from '../types';
-import type { WriteCellFn } from './editing';
 
 export interface DependencyState {
   disabled: boolean;
@@ -22,32 +22,40 @@ const EMPTY_STATE: DependencyState = {
   componentProps: {},
 };
 
-export interface DependenciesOptions {
-  allLeafNodes: ComputedRef<ColumnNode[]>;
-  getRowKeyStr: (row: RowData) => string;
-  /** 晚绑定：writeCell 流水线在 engine 装配阶段才就绪 */
-  getWriteCell: () => WriteCellFn;
+export interface DependenciesOptions<T extends RowData = RowData> {
+  allLeafNodes: ComputedRef<ColumnNode<T>[]>;
+  getRowKeyStr: (row: T) => string;
+  /**
+   * 写值流水线：级联联动语义要求 trigger 内的 api.setValue 回到同一条完整流水线（历史/脏追踪/
+   * 校验/再次联动），而流水线本身又要在提交后调用 notifyFieldChange 触发这里的 trigger——
+   * 两者互相需要对方，是真实存在的双向调用，不是疏漏。engine 装配时用一个稳定的转发函数
+   * 打破构造顺序（先转发、后接上真正的 writeCell），因此这里只需接收一个普通的 writeCell 值，
+   * 不必是 getter，转发关系不泄漏到本模块的公共选项里。
+   */
+  writeCell: WriteCellFn<T>;
 }
 
-export function createDependencies(options: DependenciesOptions) {
-  const { allLeafNodes, getRowKeyStr, getWriteCell } = options;
+export function createDependencies<T extends RowData = RowData>(
+  options: DependenciesOptions<T>,
+) {
+  const { allLeafNodes, getRowKeyStr, writeCell } = options;
 
-  function makeApi(row: RowData, rowIndex: number, prop: string): DependencyApi {
+  function makeApi(row: T, rowIndex: number, prop: string): DependencyApi<T> {
     return {
       row,
       rowIndex,
       prop,
       setValue: (targetProp, value) => {
-        getWriteCell()(row, rowIndex, targetProp, value);
+        writeCell(row, rowIndex, targetProp, value);
       },
     };
   }
 
   /** 渲染 / 校验时取当前联动状态（声明式键随行数据响应式重算） */
   function getState(
-    row: RowData,
+    row: T,
     rowIndex: number,
-    column: PlusTableColumn,
+    column: PlusTableColumn<T>,
   ): DependencyState {
     const dep = column.dependencies;
     if (!dep) return EMPTY_STATE;
@@ -64,7 +72,7 @@ export function createDependencies(options: DependenciesOptions) {
   let chain: Set<string> | null = null;
 
   /** 字段提交后广播给依赖方，执行 trigger 副作用 */
-  function notifyFieldChange(row: RowData, rowIndex: number, changedProp: string) {
+  function notifyFieldChange(row: T, rowIndex: number, changedProp: string) {
     const chainKey = `${getRowKeyStr(row)}:${changedProp}`;
     const isRoot = chain === null;
     if (isRoot) chain = new Set();
@@ -84,4 +92,6 @@ export function createDependencies(options: DependenciesOptions) {
   return { getState, notifyFieldChange };
 }
 
-export type DependenciesApi = ReturnType<typeof createDependencies>;
+export type DependenciesApi<T extends RowData = RowData> = ReturnType<
+  typeof createDependencies<T>
+>;

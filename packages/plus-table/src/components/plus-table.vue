@@ -1,17 +1,18 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends RowData = RowData">
 import { computed, provide, ref, useSlots } from 'vue';
 import { ElPagination, ElTable } from 'element-plus';
 import '../styles/index.scss';
 import { PLUS_TABLE_INJECTION_KEY } from '../constants';
 import { createTableEngine } from '../engine';
-import ColumnSettings from './column-settings.vue';
-import TableColumnNode from './table-column';
+import PlusTableColumnSettings from './plus-table-column-settings.vue';
+import PlusTableColumnNode from './plus-table-column';
 import type { TableInstance } from 'element-plus';
-import type { PlusTableEmits, PlusTableProps } from '../types';
+import type { EditorSlotProps, HeaderSlotProps } from '../engine';
+import type { PlusTableEmits, PlusTableProps, RowData } from '../types';
 
 defineOptions({ name: 'PlusTable', inheritAttrs: false });
 
-const props = withDefaults(defineProps<PlusTableProps>(), {
+const props = withDefaults(defineProps<PlusTableProps<T>>(), {
   editMode: 'cell',
   validateOn: 'change',
   columnSetting: false,
@@ -21,17 +22,34 @@ const props = withDefaults(defineProps<PlusTableProps>(), {
   pageSizes: () => [10, 20, 50, 100],
   history: false,
   dirtyTracking: false,
-  hotkeyEnabled: true,
 });
 
-const emit = defineEmits<PlusTableEmits>();
+const emit = defineEmits<PlusTableEmits<T>>();
 const slots = useSlots();
+
+/**
+ * header-${prop} / editor-${prop} 是按列 prop 动态生成的插槽名，模板里不会字面出现，
+ * 只能靠显式声明让消费方在使用处获得类型提示（否则 vue-tsc 按模板实际用到的插槽推断类型，
+ * 这两类动态插槽会被判定为不存在）。
+ */
+defineSlots<{
+  toolbar?: () => unknown;
+  empty?: () => unknown;
+  [key: `header-${string}`]: (props: HeaderSlotProps<T>) => unknown;
+  [key: `editor-${string}`]: (props: EditorSlotProps<T>) => unknown;
+}>();
 
 const gridRef = ref<HTMLElement>();
 const paginationRef = ref<HTMLElement>();
 const tableRef = ref<TableInstance>();
 
-const engine = createTableEngine({ props, emit, slots, gridRef, paginationRef });
+const engine = createTableEngine<T>({
+  props,
+  emit,
+  slots,
+  gridRef,
+  paginationRef,
+});
 provide(PLUS_TABLE_INJECTION_KEY, engine);
 
 const displayTree = engine.columns.displayTree;
@@ -39,19 +57,21 @@ const tableHeight = engine.adaptive.tableHeight;
 const isAdaptiveContainer = engine.adaptive.isContainerMode;
 const onKeydown = engine.keyboard.onKeydown;
 
-// el-table 的 row-key 类型签名比本组件窄，做一次适配
-const rowKeyProp = computed(() => props.rowKey as string | ((row: Record<string, any>) => string));
+// el-table 的 row-key 类型签名比本组件窄（函数变体只接受返回 string），做一次适配
+const rowKeyProp = computed(
+  () => props.rowKey as string | ((row: T) => string),
+);
 
 const paginationEnabled = computed(() => props.total !== undefined);
 
 function handlePageChange(page: number) {
   emit('update:page', page);
-  emit('page-change', { page, pageSize: props.pageSize });
+  emit('page-change', { page, pageSize: props.pageSize! });
 }
 
 function handlePageSizeChange(pageSize: number) {
   emit('update:pageSize', pageSize);
-  emit('page-change', { page: props.page, pageSize });
+  emit('page-change', { page: props.page!, pageSize });
 }
 
 /** 表头拖拽调宽（el-table 需 border 才出现拖拽柄），记录并持久化 */
@@ -60,7 +80,8 @@ function handleHeaderDragend(
   _oldWidth: number,
   column: { columnKey?: string },
 ) {
-  if (column.columnKey) engine.columns.setColumnWidth(column.columnKey, newWidth);
+  if (column.columnKey)
+    engine.columns.setColumnWidth(column.columnKey, newWidth);
 }
 
 defineExpose({
@@ -103,13 +124,21 @@ defineExpose({
 </script>
 
 <template>
-  <div class="plus-table" :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }">
+  <div
+    class="plus-table"
+    :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }"
+  >
     <div v-if="columnSetting || $slots.toolbar" class="plus-table__toolbar">
       <slot name="toolbar" />
-      <ColumnSettings v-if="columnSetting" />
+      <PlusTableColumnSettings v-if="columnSetting" />
     </div>
 
-    <div ref="gridRef" class="plus-table__grid" tabindex="0" @keydown="onKeydown">
+    <div
+      ref="gridRef"
+      class="plus-table__grid"
+      tabindex="0"
+      @keydown="onKeydown"
+    >
       <el-table
         ref="tableRef"
         :data="data"
@@ -120,7 +149,7 @@ defineExpose({
         @cell-dblclick="engine.handleCellDblclick"
         @header-dragend="handleHeaderDragend"
       >
-        <TableColumnNode
+        <PlusTableColumnNode
           v-for="(node, index) in displayTree"
           :key="`${index}:${node.id}`"
           :node="node"
@@ -131,7 +160,11 @@ defineExpose({
       </el-table>
     </div>
 
-    <div v-if="paginationEnabled" ref="paginationRef" class="plus-table__pagination">
+    <div
+      v-if="paginationEnabled"
+      ref="paginationRef"
+      class="plus-table__pagination"
+    >
       <el-pagination
         background
         layout="total, sizes, prev, pager, next, jumper"

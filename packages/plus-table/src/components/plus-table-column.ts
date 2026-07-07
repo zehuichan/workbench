@@ -1,23 +1,20 @@
 import { defineComponent, h, inject } from 'vue';
 import { ElTableColumn } from 'element-plus';
 import { isNativeRenderColumn, PLUS_TABLE_INJECTION_KEY } from '../constants';
-import TableCell from './table-cell';
+import PlusTableCell from './plus-table-cell';
 import type { PropType, VNodeChild } from 'vue';
 import type { ColumnNode, PlusTableColumn, RowData } from '../types';
 
 /** 过滤掉不透传给 el-table-column 的 PlusTable 扩展属性，其余原生 TableColumnCtx 属性直接透传 */
 function nativeProps(column: PlusTableColumn): Record<string, unknown> {
   const {
-    component: _component,
-    componentProps: _componentProps,
-    modelProp: _modelProp,
+    editor: _editor,
     editable: _editable,
     rules: _rules,
     required: _required,
     dependencies: _dependencies,
     render: _render,
     visible: _visible,
-    settingDisabled: _settingDisabled,
     children: _children,
     ...rest
   } = column;
@@ -31,20 +28,32 @@ function nativeProps(column: PlusTableColumn): Record<string, unknown> {
 export default defineComponent({
   name: 'PlusTableColumnNode',
   props: {
-    node: { type: Object as PropType<ColumnNode>, required: true },
+    // plus-table.vue 持有 ColumnNode<T>，本组件按注入引擎的口径统一收作 any（见 PLUS_TABLE_INJECTION_KEY 注释）
+    node: { type: Object as PropType<ColumnNode<any>>, required: true },
   },
   setup(props) {
     const engine = inject(PLUS_TABLE_INJECTION_KEY);
     if (!engine) {
-      throw new Error('[PlusTable] PlusTableColumnNode 必须在 PlusTable 内部使用');
+      throw new Error(
+        '[PlusTable] PlusTableColumnNode 必须在 PlusTable 内部使用',
+      );
     }
 
     function renderHeader(column: PlusTableColumn): VNodeChild {
-      const headerSlot = column.prop ? engine!.slots[`header-${column.prop}`] : undefined;
+      const headerSlot = column.prop
+        ? engine!.slots[`header-${column.prop}`]
+        : undefined;
       return h(
         'span',
-        { class: ['ptbl-header-cell', { 'ptbl-header-cell--required': column.required }] },
-        headerSlot ? headerSlot({ column }) : (column.label ?? column.prop ?? ''),
+        {
+          class: [
+            'ptbl-header-cell',
+            { 'ptbl-header-cell--required': column.required },
+          ],
+        },
+        headerSlot
+          ? headerSlot({ column })
+          : (column.label ?? column.prop ?? ''),
       );
     }
 
@@ -61,7 +70,8 @@ export default defineComponent({
           },
           {
             header: () => renderHeader(column),
-            default: () => node.children!.map((child, i) => renderNode(child, i)),
+            default: () =>
+              node.children!.map((child, i) => renderNode(child, i)),
           },
         );
       }
@@ -88,7 +98,11 @@ export default defineComponent({
           header: () => renderHeader(column),
           default: (scope: { row: RowData; $index: number }) =>
             scope.$index >= 0
-              ? h(TableCell, { row: scope.row, rowIndex: scope.$index, node })
+              ? h(PlusTableCell, {
+                  row: scope.row,
+                  rowIndex: scope.$index,
+                  node,
+                })
               : null,
         },
       );

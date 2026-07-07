@@ -5,7 +5,9 @@ import type { BuiltinEditorType } from './editors/registry';
 
 export type RowData = Record<string, any>;
 
-export type RowKey = string | ((row: RowData) => string | number);
+export type RowKey<T extends RowData = RowData> =
+  | (keyof T & string)
+  | ((row: T) => string | number);
 
 /** 编辑模式：不可编辑 / 单元格 / 整行 / 全表常驻 */
 export type EditMode = 'none' | 'cell' | 'row' | 'table';
@@ -22,9 +24,23 @@ export interface CellError {
   message: string;
 }
 
+/** 行级上下文：editable / dependencies.componentProps 等回调的最小参数集 */
+export interface RowContext<T extends RowData = RowData> {
+  row: T;
+  rowIndex: number;
+}
+
+/** 单元格级上下文：render 回调参数，在行上下文基础上附带列与当前值 */
+export interface CellContext<
+  T extends RowData = RowData,
+> extends RowContext<T> {
+  column: PlusTableColumn<T>;
+  value: unknown;
+}
+
 /** 联动回调的行级上下文 */
-export interface DependencyApi {
-  row: RowData;
+export interface DependencyApi<T extends RowData = RowData> {
+  row: T;
   rowIndex: number;
   /** 声明该 dependencies 的列字段 */
   prop: string;
@@ -33,56 +49,83 @@ export interface DependencyApi {
 }
 
 /** vben form 风格的字段联动配置（values 换成当前行数据） */
-export interface ColumnDependencies {
+export interface ColumnDependencies<T extends RowData = RowData> {
   /** 仅这些字段变动时触发 trigger 副作用 */
   triggerFields: string[];
   /** 动态禁用本格编辑 */
-  disabled?: (row: RowData, api: DependencyApi) => boolean;
+  disabled?: (row: T, api: DependencyApi<T>) => boolean;
   /** 动态必填 */
-  required?: (row: RowData, api: DependencyApi) => boolean;
+  required?: (row: T, api: DependencyApi<T>) => boolean;
   /** 动态校验规则（与列静态 rules 合并） */
-  rules?: (row: RowData, api: DependencyApi) => CellRule[] | null | undefined;
+  rules?: (row: T, api: DependencyApi<T>) => CellRule[] | null | undefined;
   /** 动态编辑器参数（如下拉选项） */
-  componentProps?: (row: RowData, api: DependencyApi) => Record<string, unknown>;
+  componentProps?: (row: T, api: DependencyApi<T>) => Record<string, unknown>;
   /** 依赖字段变更时的副作用，经 api.setValue 改本行其他字段 */
-  trigger?: (row: RowData, api: DependencyApi) => void;
+  trigger?: (row: T, api: DependencyApi<T>) => void;
 }
 
-export interface CellRenderParams {
-  row: RowData;
-  rowIndex: number;
-  column: PlusTableColumn;
-  value: unknown;
+/** 编辑器配置：内置类型标识 / 自定义组件 / 详细配置对象，三者选一 */
+export interface EditorConfig<T extends RowData = RowData> {
+  /** 内置编辑器标识；与 component 二选一 */
+  type?: BuiltinEditorType;
+  /** 自定义组件；与 type 二选一 */
+  component?: Component;
+  /** 透传给编辑器的 props（联动 dependencies.componentProps 会覆盖同名项） */
+  props?:
+    | Record<string, unknown>
+    | ((ctx: RowContext<T>) => Record<string, unknown>);
+  /** 自定义组件的 v-model prop 名，默认 modelValue */
+  modelProp?: string;
+}
+
+/** 列上的 editor 配置：内置类型标识 / 自定义组件 / 详细配置对象 */
+export type ColumnEditor<T extends RowData = RowData> =
+  | BuiltinEditorType
+  | Component
+  | EditorConfig<T>;
+
+/**
+ * 列配置：继承 el-table-column 的 TableColumnCtx，width/align/fixed/sortable/formatter 等原生属性
+ * 直接可用（含 type: 'index' | 'selection' | 'expand' 特殊列原生直通）。此处仅收窄 prop/type，
+ * 并声明 PlusTable 扩展项；type 额外支持 'operation'：业务自定义的操作列（配合 render 渲染按钮），
+ * 渲染方式不变，但同样归入特殊列——不进列设置面板、不参与键盘导航与拖拽排序、始终可见。
+ */
+export interface PlusTableColumn<T extends RowData = RowData> extends Partial<
+  Omit<TableColumnCtx<T>, 'children' | 'prop' | 'type'>
+> {
+  prop?: keyof T & string;
+  type?: 'index' | 'selection' | 'expand' | 'operation';
+  /** 多级表头，组节点只需 label */
+  children?: PlusTableColumn<T>[];
+  /** 单元格是否可编辑 */
+  editable?: boolean | ((ctx: RowContext<T>) => boolean);
+  /** 编辑器；editable 且未配置时默认 input */
+  editor?: ColumnEditor<T>;
+  required?: boolean;
+  rules?: CellRule[];
+  dependencies?: ColumnDependencies<T>;
+  /** 展示态自定义渲染，优先级高于 formatter */
+  render?: (ctx: CellContext<T>) => VNodeChild;
+  /** 初始是否可见（列设置） */
+  visible?: boolean;
 }
 
 /**
- * 列配置：继承 el-table-column 的 TableColumnCtx，prop/label/type/width/align/formatter 等原生属性
- * 直接可用（含 type: 'index' | 'selection' | 'expand' 特殊列原生直通）。此处仅声明 PlusTable 扩展项，
- * 其中 type 额外支持 'operation'：业务自定义的操作列（配合 render 渲染按钮），渲染方式不变，
- * 但同样归入特殊列——不进列设置面板、不参与键盘导航与拖拽排序、始终可见。
+ * 开发侧列配置：字面量数组直接传入即可，无需显式标注 PlusTableColumn<T>[]。
+ * 运行时由 createColumns 归一化；类型上保持宽松以匹配日常 object 字面量写法。
  */
-export interface PlusTableColumn extends Partial<Omit<TableColumnCtx<RowData>, 'children'>> {
-  /** 多级表头，组节点只需 label */
-  children?: PlusTableColumn[];
-  /** 单元格是否可编辑 */
-  editable?: boolean | ((row: RowData, rowIndex: number) => boolean);
-  /** 编辑器；editable 且未配置时默认 input */
-  component?: BuiltinEditorType | Component;
-  /** 透传给编辑器的 props（联动 dependencies.componentProps 会覆盖同名项） */
-  componentProps?:
-    | Record<string, unknown>
-    | ((row: RowData, column: PlusTableColumn) => Record<string, unknown>);
-  /** 自定义组件的 v-model prop 名，默认 modelValue */
-  modelProp?: string;
-  required?: boolean;
-  rules?: CellRule[];
-  dependencies?: ColumnDependencies;
-  /** 展示态自定义渲染，优先级高于 formatter */
-  render?: (params: CellRenderParams) => VNodeChild;
-  /** 初始是否可见（列设置） */
-  visible?: boolean;
-  /** 列设置面板中不可操作（始终显示） */
-  settingDisabled?: boolean;
+export type PlusTableColumnDef = Record<string, any> & {
+  children?: PlusTableColumnDef[];
+};
+
+export interface ColumnSettingConfig {
+  /** 显隐 / 顺序 / 列宽持久化到 localStorage 的 key；不传则不持久化 */
+  storageKey?: string;
+}
+
+export interface HistoryConfig {
+  /** 撤销栈上限，默认 50 */
+  limit?: number;
 }
 
 export interface AdaptiveConfig {
@@ -95,14 +138,14 @@ export interface AdaptiveConfig {
 }
 
 /** 自定义热键的回调上下文，贴合 PlusTable 现有概念（row/rowIndex/prop/column） */
-export interface HotkeyContext {
+export interface HotkeyContext<T extends RowData = RowData> {
   event: KeyboardEvent;
   rowIndex: number;
   colIndex: number;
-  row: RowData | null;
+  row: T | null;
   prop: string | undefined;
-  column: PlusTableColumn | null;
-  data: RowData[];
+  column: PlusTableColumn<T> | null;
+  data: T[];
   /** 移动活动格（不改变编辑态） */
   navigate: (rowDelta: number, colDelta: number) => void;
   /** 对活动格进编；仅 cell 模式有效 */
@@ -114,13 +157,13 @@ export interface HotkeyContext {
   redo: () => void;
 }
 
-export interface HotkeyBinding {
+export interface HotkeyBinding<T extends RowData = RowData> {
   /** 'Ctrl+Shift+Z' 风格组合键字符串，大小写不敏感 */
   key: string;
   /** 返回 false 表示不处理，继续走后续逻辑（其余绑定 / 内置热键） */
-  handler: (ctx: HotkeyContext) => void | boolean;
+  handler: (ctx: HotkeyContext<T>) => void | boolean;
   /** 命中 key 后的附加判定条件 */
-  when?: (ctx: HotkeyContext) => boolean;
+  when?: (ctx: HotkeyContext<T>) => boolean;
   /** 默认 true */
   preventDefault?: boolean;
   stopPropagation?: boolean;
@@ -128,8 +171,8 @@ export interface HotkeyBinding {
   override?: boolean;
 }
 
-export interface CellChangePayload {
-  row: RowData;
+export interface CellChangePayload<T extends RowData = RowData> {
+  row: T;
   rowIndex: number;
   prop: string;
   value: unknown;
@@ -146,45 +189,39 @@ export interface ValidateResult {
   errors: CellError[];
 }
 
-export interface PlusTableProps {
-  data: RowData[];
-  columns: PlusTableColumn[];
-  rowKey: RowKey;
-  editMode?: EditMode;
-  validateOn?: ValidateOn;
-  /** 是否显示列设置入口 */
-  columnSetting?: boolean;
-  /** 列设置 localStorage 持久化 key；不传则不持久化 */
-  settingsKey?: string;
+export interface PlusTableProps<T extends RowData = RowData> {
+  data: T[];
+  columns: PlusTableColumnDef[];
+  rowKey: RowKey<T>;
+  editMode?: EditMode | string;
+  validateOn?: ValidateOn | string;
+  /** 是否显示列设置入口；传对象可配置 localStorage 持久化 key */
+  columnSetting?: boolean | ColumnSettingConfig;
   adaptive?: boolean | AdaptiveConfig;
   /** 传入即启用分页（服务端驱动，组件不切片） */
   total?: number;
   page?: number;
   pageSize?: number;
   pageSizes?: number[];
-  /** 撤销重做，默认 false */
-  history?: boolean;
-  /** 撤销栈上限，默认 50 */
-  historyLimit?: number;
+  /** 撤销重做；传对象可配置撤销栈上限，默认 false */
+  history?: boolean | HistoryConfig;
   /** 脏行/脏格追踪，默认 false */
   dirtyTracking?: boolean;
   /** 自定义热键绑定 */
-  hotkeys?: HotkeyBinding[];
-  /** 自定义热键总开关（不影响内置键盘导航），默认 true */
-  hotkeyEnabled?: boolean;
+  hotkeys?: HotkeyBinding<T>[];
 }
 
-export interface PlusTableEmits {
-  (e: 'update:data', data: RowData[]): void;
-  (e: 'cell-change', payload: CellChangePayload): void;
+export interface PlusTableEmits<T extends RowData = RowData> {
+  (e: 'update:data', data: T[]): void;
+  (e: 'cell-change', payload: CellChangePayload<T>): void;
   (e: 'update:page', page: number): void;
   (e: 'update:pageSize', pageSize: number): void;
   (e: 'page-change', payload: PageChangePayload): void;
 }
 
 /** 归一化后的列节点（列设置 / 渲染共用） */
-export interface ColumnNode {
+export interface ColumnNode<T extends RowData = RowData> {
   id: string;
-  column: PlusTableColumn;
-  children?: ColumnNode[];
+  column: PlusTableColumn<T>;
+  children?: ColumnNode<T>[];
 }

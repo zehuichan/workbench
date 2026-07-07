@@ -1,29 +1,29 @@
-import { computed, nextTick, reactive, ref, shallowRef } from 'vue';
+import { computed, nextTick, reactive, shallowRef } from 'vue';
 import { cloneDeep } from 'es-toolkit';
-import type { ColumnNode, PlusTableProps, RowData } from '../types';
-import type { CellPosition, SelectionApi } from './selection';
 import type { ComputedRef } from 'vue';
+import type { WriteCellFn } from './commit';
+import type { CellPosition, SelectionApi } from './selection';
+import type { ColumnNode, PlusTableProps, RowData } from '../types';
 
-export type WriteCellFn = (
-  row: RowData,
-  rowIndex: number,
-  prop: string,
-  value: unknown,
-) => void;
-
-export interface EditingOptions {
-  props: PlusTableProps;
-  data: () => RowData[];
-  leafNodes: ComputedRef<ColumnNode[]>;
-  getRowKeyStr: (row: RowData) => string;
-  isDependencyDisabled: (row: RowData, rowIndex: number, node: ColumnNode) => boolean;
-  writeCell: WriteCellFn;
+export interface EditingOptions<T extends RowData = RowData> {
+  props: PlusTableProps<T>;
+  data: () => T[];
+  leafNodes: ComputedRef<ColumnNode<T>[]>;
+  getRowKeyStr: (row: T) => string;
+  isDependencyDisabled: (
+    row: T,
+    rowIndex: number,
+    node: ColumnNode<T>,
+  ) => boolean;
+  writeCell: WriteCellFn<T>;
   validateRow: (rowIndex: number) => Promise<unknown[]>;
-  clearRowValidate: (row: RowData) => void;
+  clearRowValidate: (row: T) => void;
   selection: SelectionApi;
 }
 
-function isTextLikeInput(el: Element): el is HTMLInputElement | HTMLTextAreaElement {
+function isTextLikeInput(
+  el: Element,
+): el is HTMLInputElement | HTMLTextAreaElement {
   if (el instanceof HTMLTextAreaElement) return true;
   if (el instanceof HTMLInputElement) {
     return !['checkbox', 'radio', 'button', 'range'].includes(el.type);
@@ -31,7 +31,15 @@ function isTextLikeInput(el: Element): el is HTMLInputElement | HTMLTextAreaElem
   return false;
 }
 
-export function createEditing(options: EditingOptions) {
+/**
+ * 编辑状态机 + 统一草稿仓。cell / row / table 三种模式共用同一份 `drafts`（key 为
+ * `${rowKey}:${prop}`）：cell 模式下只会有 editingCell 对应的这一个条目；row/table 模式下
+ * 文本类（失焦提交）编辑器各自按字段占一个条目。草稿只是「尚未写回 row 的临时值」，
+ * 提交时机（commitEdit / flushDraft）才真正经 writeCell 落到行对象上。
+ */
+export function createEditing<T extends RowData = RowData>(
+  options: EditingOptions<T>,
+) {
   const {
     props,
     data,
@@ -48,48 +56,53 @@ export function createEditing(options: EditingOptions) {
 
   /** cell 模式：当前编辑格 */
   const editingCell = shallowRef<CellPosition | null>(null);
-  /** cell 模式：编辑草稿，Esc 时直接丢弃 */
-  const draft = ref<unknown>();
   /** row 模式：处于编辑态的行 key */
   const editingRowKeys = reactive(new Set<string>());
   /** row 模式：进编时的快照，cancel 时回滚 */
-  const rowSnapshots = new Map<string, RowData>();
+  const rowSnapshots = new Map<string, T>();
 
-  /**
-   * row/table 模式下文本类编辑器的草稿缓冲，key 为 `${rowKey}:${prop}`。
-   * cell 模式的单槽 draft 不够用——row/table 模式可以同时有多个格子在编辑。
-   * 输入时只写这里，失焦才通过 flushLiveDraft 真正 writeCell 提交，
-   * 避免每敲一个字符就直写（否则撤销重做粒度、脏追踪、校验都会被打得很碎）。
-   */
-  const liveDrafts = reactive(new Map<string, unknown>());
+  /** 统一草稿仓：cell 模式单槙、row/table 模式多槙，共用同一存储与寻址方式 */
+  const drafts = reactive(new Map<string, unknown>());
 
-  function liveDraftKey(rowKey: string, prop: string): string {
+  function draftKey(rowKey: string, prop: string): string {
     return `${rowKey}:${prop}`;
   }
 
-  function getLiveDraft(rowKey: string, prop: string): { has: boolean; value: unknown } {
-    const key = liveDraftKey(rowKey, prop);
-    return { has: liveDrafts.has(key), value: liveDrafts.get(key) };
+  function getDraft(
+    rowKey: string,
+    prop: string,
+  ): { has: boolean; value: unknown } {
+    const key = draftKey(rowKey, prop);
+    return { has: drafts.has(key), value: drafts.get(key) };
   }
 
-  function setLiveDraft(rowKey: string, prop: string, value: unknown): void {
-    liveDrafts.set(liveDraftKey(rowKey, prop), value);
+  function setDraft(rowKey: string, prop: string, value: unknown): void {
+    drafts.set(draftKey(rowKey, prop), value);
   }
 
-  /** 失焦提交：把缓冲的草稿经 writeCell 流水线写回，随后清掉草稿位 */
-  function flushLiveDraft(row: RowData, rowIndex: number, rowKey: string, prop: string): void {
-    const key = liveDraftKey(rowKey, prop);
-    if (!liveDrafts.has(key)) return;
-    const value = liveDrafts.get(key);
-    liveDrafts.delete(key);
+  function deleteDraft(rowKey: string, prop: string): void {
+    drafts.delete(draftKey(rowKey, prop));
+  }
+
+  /** 失焦提交：把缓冲的草稿经 writeCell 流水线写回，随后清掉草稿位（row/table 模式文本类编辑器用） */
+  function flushDraft(
+    row: T,
+    rowIndex: number,
+    rowKey: string,
+    prop: string,
+  ): void {
+    const key = draftKey(rowKey, prop);
+    if (!drafts.has(key)) return;
+    const value = drafts.get(key);
+    drafts.delete(key);
     writeCell(row, rowIndex, prop, value);
   }
 
   /** 丢弃某行所有未提交的草稿（row 模式取消编辑 / 行被删除时调用，不写回） */
-  function discardLiveDraftsForRow(rowKey: string): void {
+  function discardDraftsForRow(rowKey: string): void {
     const prefix = `${rowKey}:`;
-    for (const key of [...liveDrafts.keys()]) {
-      if (key.startsWith(prefix)) liveDrafts.delete(key);
+    for (const key of [...drafts.keys()]) {
+      if (key.startsWith(prefix)) drafts.delete(key);
     }
   }
 
@@ -98,16 +111,20 @@ export function createEditing(options: EditingOptions) {
     for (const rowKey of removedRowKeys) {
       editingRowKeys.delete(rowKey);
       rowSnapshots.delete(rowKey);
-      discardLiveDraftsForRow(rowKey);
+      discardDraftsForRow(rowKey);
     }
   }
 
-  function resolveEditable(row: RowData, rowIndex: number, node: ColumnNode): boolean {
+  function resolveEditable(
+    row: T,
+    rowIndex: number,
+    node: ColumnNode<T>,
+  ): boolean {
     const column = node.column;
     if (!column.prop) return false;
     const editable = column.editable;
     if (typeof editable === 'function') {
-      return !!editable(row, rowIndex);
+      return !!editable({ row, rowIndex });
     }
     return !!editable;
   }
@@ -121,7 +138,7 @@ export function createEditing(options: EditingOptions) {
     return !isDependencyDisabled(row, rowIndex, node);
   }
 
-  function isRowEditing(row: RowData): boolean {
+  function isRowEditing(row: T): boolean {
     return editingRowKeys.has(getRowKeyStr(row));
   }
 
@@ -143,14 +160,18 @@ export function createEditing(options: EditingOptions) {
     }
   }
 
-  async function focusEditor(rowIndex: number, colIndex: number, hasInitialValue: boolean) {
+  async function focusEditor(
+    rowIndex: number,
+    colIndex: number,
+    hasInitialValue: boolean,
+  ) {
     await nextTick();
-    const td = selection.getCellEl(rowIndex, colIndex);
-    if (!td) return;
+    const cellEl = selection.getCellEl(rowIndex, colIndex);
+    if (!cellEl) return;
     // 优先真实输入框；EP 的 .el-input__wrapper 带 tabindex="-1"，不能误聚焦到包装层
     const input =
-      td.querySelector<HTMLElement>('input, textarea') ??
-      td.querySelector<HTMLElement>('[tabindex]:not([tabindex="-1"])');
+      cellEl.querySelector<HTMLElement>('input, textarea') ??
+      cellEl.querySelector<HTMLElement>('[tabindex]:not([tabindex="-1"])');
     if (!input) return;
     input.focus();
     if (isTextLikeInput(input)) {
@@ -178,31 +199,42 @@ export function createEditing(options: EditingOptions) {
     if (editingCell.value) commitEdit();
     const node = leafNodes.value[colIndex];
     const row = data()[rowIndex];
+    const prop = node.column.prop!;
     const hasInitial = 'defaultValue' in opts;
-    draft.value = hasInitial ? opts.defaultValue : row[node.column.prop!];
+    setDraft(
+      getRowKeyStr(row),
+      prop,
+      hasInitial ? opts.defaultValue : row[prop],
+    );
     editingCell.value = { rowIndex, colIndex };
     selection.setActiveCell(rowIndex, colIndex);
     void focusEditor(rowIndex, colIndex, hasInitial);
     return true;
   }
 
-  function updateDraft(value: unknown) {
-    draft.value = value;
-  }
-
   /** cell 模式提交：经 writeCell 流水线（脏值跳过 / 联动 / 校验） */
-  function commitEdit() {
+  function commitEdit(): void {
     const current = editingCell.value;
     if (!current) return;
     editingCell.value = null;
     const node = leafNodes.value[current.colIndex];
     const row = data()[current.rowIndex];
     if (!node?.column.prop || !row) return;
-    writeCell(row, current.rowIndex, node.column.prop, draft.value);
+    const rowKey = getRowKeyStr(row);
+    const prop = node.column.prop;
+    const { value } = getDraft(rowKey, prop);
+    deleteDraft(rowKey, prop);
+    writeCell(row, current.rowIndex, prop, value);
   }
 
-  function cancelEdit() {
+  function cancelEdit(): void {
+    const current = editingCell.value;
+    if (!current) return;
     editingCell.value = null;
+    const node = leafNodes.value[current.colIndex];
+    const row = data()[current.rowIndex];
+    if (node?.column.prop && row)
+      deleteDraft(getRowKeyStr(row), node.column.prop);
   }
 
   function startRowEdit(rowIndex: number): boolean {
@@ -230,17 +262,18 @@ export function createEditing(options: EditingOptions) {
   }
 
   /** row 模式取消：静默回滚到快照（不触发联动与 cell-change） */
-  function cancelRowEdit(rowIndex: number) {
+  function cancelRowEdit(rowIndex: number): void {
     const row = data()[rowIndex];
     if (!row) return;
     const key = getRowKeyStr(row);
     if (!editingRowKeys.has(key)) return;
     // 未提交的草稿本来就没写进 row，直接丢弃即可；不能 flush，否则等于强行提交取消中的编辑
-    discardLiveDraftsForRow(key);
+    discardDraftsForRow(key);
     const snapshot = rowSnapshots.get(key);
     if (snapshot) {
       for (const prop of Object.keys(row)) {
-        if (!(prop in snapshot)) delete row[prop];
+        // T 是泛型类型参数，只能整体读取，不能按 key 删除；T extends RowData 保证这里转写是安全的
+        if (!(prop in snapshot)) delete (row as RowData)[prop];
       }
       Object.assign(row, cloneDeep(snapshot));
     }
@@ -252,23 +285,23 @@ export function createEditing(options: EditingOptions) {
   return {
     mode,
     editingCell,
-    draft,
     canEditCell,
     isCellEditing,
     isRowEditing,
     startEdit,
-    updateDraft,
     commitEdit,
     cancelEdit,
     startRowEdit,
     commitRowEdit,
     cancelRowEdit,
-    getLiveDraft,
-    setLiveDraft,
-    flushLiveDraft,
-    discardLiveDraftsForRow,
+    getDraft,
+    setDraft,
+    flushDraft,
+    discardDraftsForRow,
     pruneRemovedRows,
   };
 }
 
-export type EditingApi = ReturnType<typeof createEditing>;
+export type EditingApi<T extends RowData = RowData> = ReturnType<
+  typeof createEditing<T>
+>;

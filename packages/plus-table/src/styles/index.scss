@@ -247,10 +247,6 @@
     color: var(--el-text-color-placeholder);
     cursor: grab;
     user-select: none;
-
-    &.is-disabled {
-      visibility: hidden;
-    }
   }
 
   &__actions {

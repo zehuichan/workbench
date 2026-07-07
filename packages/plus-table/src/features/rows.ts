@@ -1,16 +1,18 @@
 import { clamp, cloneDeep } from 'es-toolkit';
 import type { PlusTableEmits, RowData } from '../types';
 
-export interface RowsOptions {
-  data: () => RowData[];
-  emit: PlusTableEmits;
+export interface RowsOptions<T extends RowData = RowData> {
+  data: () => T[];
+  emit: PlusTableEmits<T>;
 }
 
 /** 行结构操作：全部以新数组经 update:data 回传，父级是唯一数据源 */
-export function createRows(options: RowsOptions) {
+export function createRows<T extends RowData = RowData>(
+  options: RowsOptions<T>,
+) {
   const { data, emit } = options;
 
-  function insertRow(row: RowData = {}, index?: number): RowData {
+  function insertRow(row: T = {} as T, index?: number): T {
     const list = [...data()];
     const at = index === undefined ? list.length : clamp(index, 0, list.length);
     list.splice(at, 0, row);
@@ -18,7 +20,7 @@ export function createRows(options: RowsOptions) {
     return row;
   }
 
-  function removeRow(index: number): RowData | undefined {
+  function removeRow(index: number): T | undefined {
     const list = [...data()];
     if (index < 0 || index >= list.length) return undefined;
     const [removed] = list.splice(index, 1);
@@ -28,11 +30,17 @@ export function createRows(options: RowsOptions) {
 
   function moveRow(from: number, to: number): boolean {
     const list = [...data()];
-    if (from < 0 || from >= list.length || to < 0 || to >= list.length || from === to) {
+    if (
+      from < 0 ||
+      from >= list.length ||
+      to < 0 ||
+      to >= list.length ||
+      from === to
+    ) {
       return false;
     }
     const [moved] = list.splice(from, 1);
-    list.splice(to, 0, moved);
+    list.splice(to, 0, moved!);
     emit('update:data', list);
     return true;
   }
@@ -41,7 +49,7 @@ export function createRows(options: RowsOptions) {
    * 复制行并插到原行之后。
    * rowKey 字段需通过 patch 覆盖为新值，否则会与原行撞 key。
    */
-  function duplicateRow(index: number, patch?: RowData): RowData | undefined {
+  function duplicateRow(index: number, patch?: Partial<T>): T | undefined {
     const source = data()[index];
     if (!source) return undefined;
     const clone = Object.assign(cloneDeep(source), patch);
@@ -51,4 +59,6 @@ export function createRows(options: RowsOptions) {
   return { insertRow, removeRow, moveRow, duplicateRow };
 }
 
-export type RowsApi = ReturnType<typeof createRows>;
+export type RowsApi<T extends RowData = RowData> = ReturnType<
+  typeof createRows<T>
+>;

@@ -2,13 +2,15 @@
 import { computed, inject, ref } from 'vue';
 import { ElButton, ElCheckbox, ElPopover } from 'element-plus';
 import { PLUS_TABLE_INJECTION_KEY } from '../constants';
-import type { SettingItem } from '../engine/columns';
+import type { SettingItem } from '../core';
 
 defineOptions({ name: 'PlusTableColumnSettings' });
 
 const engine = inject(PLUS_TABLE_INJECTION_KEY);
 if (!engine) {
-  throw new Error('[PlusTable] PlusTableColumnSettings 必须在 PlusTable 内部使用');
+  throw new Error(
+    '[PlusTable] PlusTableColumnSettings 必须在 PlusTable 内部使用',
+  );
 }
 
 const items = computed(() => engine!.columns.settingItems.value);
@@ -32,10 +34,6 @@ function canDropOn(item: SettingItem): boolean {
 }
 
 function onDragStart(event: DragEvent, item: SettingItem) {
-  if (item.disabled) {
-    event.preventDefault();
-    return;
-  }
   dragItem.value = item;
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
@@ -80,27 +78,24 @@ function onDragEnd() {
           class="ptbl-column-settings__item"
           :class="{
             'is-dragging': dragItem?.id === item.id,
-            'is-drop-before': dropTargetId === item.id && dropPosition === 'before',
-            'is-drop-after': dropTargetId === item.id && dropPosition === 'after',
+            'is-drop-before':
+              dropTargetId === item.id && dropPosition === 'before',
+            'is-drop-after':
+              dropTargetId === item.id && dropPosition === 'after',
           }"
           :style="{ paddingLeft: `${item.level * 16}px` }"
-          :draggable="!item.disabled"
+          draggable="true"
           @dragstart="onDragStart($event, item)"
           @dragover="onDragOver($event, item)"
           @drop="onDrop($event, item)"
           @dragend="onDragEnd"
         >
-          <span
-            class="ptbl-column-settings__handle"
-            :class="{ 'is-disabled': item.disabled }"
-            aria-hidden="true"
-          >
+          <span class="ptbl-column-settings__handle" aria-hidden="true">
             ⠿
           </span>
           <el-checkbox
             :model-value="item.checked"
             :indeterminate="item.indeterminate"
-            :disabled="item.disabled"
             @change="handleToggle(item.id, $event)"
           >
             {{ item.title }}

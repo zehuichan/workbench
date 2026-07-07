@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue';
+import type { TableContext } from '../core/context';
 import type { RowData } from '../types';
 
 export interface HistoryChangeRecord {
@@ -9,17 +10,18 @@ export interface HistoryChangeRecord {
 }
 
 /** undo/redo 后实际生效的变更，带上现场解析出的行引用与下标，供外层 emit cell-change / markDirty */
-export interface AppliedHistoryChange extends HistoryChangeRecord {
-  row: RowData;
+export interface AppliedHistoryChange<
+  T extends RowData = RowData,
+> extends HistoryChangeRecord {
+  row: T;
   rowIndex: number;
 }
 
 type HistoryEntry = HistoryChangeRecord[];
 
-export interface HistoryOptions {
+export interface HistoryOptions<T extends RowData = RowData> {
   enabled: () => boolean;
-  data: () => RowData[];
-  getRowKeyStr: (row: RowData) => string;
+  context: TableContext<T>;
   limit?: number;
 }
 
@@ -28,8 +30,10 @@ export interface HistoryOptions {
  * 或换页都会让数组下标错位，只有 rowKey 在行结构变化后仍能对回正确的行。
  * 找不到对应行（行已被删除）时跳过该条，不误改其它行，也不抛错。
  */
-export function createHistory(options: HistoryOptions) {
-  const { enabled, data, getRowKeyStr, limit = 50 } = options;
+export function createHistory<T extends RowData = RowData>(
+  options: HistoryOptions<T>,
+) {
+  const { enabled, context, limit = 50 } = options;
 
   const undoStack = ref<HistoryEntry[]>([]);
   const redoStack = ref<HistoryEntry[]>([]);
@@ -37,15 +41,10 @@ export function createHistory(options: HistoryOptions) {
   const canUndo = computed(() => undoStack.value.length > 0);
   const canRedo = computed(() => redoStack.value.length > 0);
 
-  function findRowWithIndex(rowKey: string): { row: RowData; rowIndex: number } | undefined {
-    const list = data();
-    const rowIndex = list.findIndex((row) => getRowKeyStr(row) === rowKey);
-    if (rowIndex < 0) return undefined;
-    return { row: list[rowIndex]!, rowIndex };
-  }
-
   /** 记一条变更；row 模式一次提交可传多条，作为一个原子撤销单元 */
-  function pushChange(change: HistoryChangeRecord | HistoryChangeRecord[]): void {
+  function pushChange(
+    change: HistoryChangeRecord | HistoryChangeRecord[],
+  ): void {
     if (!enabled()) return;
     const entries = Array.isArray(change) ? change : [change];
     if (entries.length === 0) return;
@@ -57,10 +56,10 @@ export function createHistory(options: HistoryOptions) {
   function applyEntries(
     entries: HistoryEntry,
     direction: 'undo' | 'redo',
-  ): AppliedHistoryChange[] {
-    const applied: AppliedHistoryChange[] = [];
+  ): AppliedHistoryChange<T>[] {
+    const applied: AppliedHistoryChange<T>[] = [];
     for (const change of entries) {
-      const found = findRowWithIndex(change.rowKey);
+      const found = context.findByKey(change.rowKey);
       if (!found) {
         if ((import.meta as any)?.env?.DEV) {
           console.warn(
@@ -69,13 +68,15 @@ export function createHistory(options: HistoryOptions) {
         }
         continue;
       }
-      found.row[change.prop] = direction === 'undo' ? change.oldValue : change.newValue;
+      // T 是泛型类型参数，只能整体读取，不能按 key 写入；T extends RowData 保证这里转写是安全的
+      (found.row as RowData)[change.prop] =
+        direction === 'undo' ? change.oldValue : change.newValue;
       applied.push({ ...change, row: found.row, rowIndex: found.rowIndex });
     }
     return applied;
   }
 
-  function undo(): AppliedHistoryChange[] {
+  function undo(): AppliedHistoryChange<T>[] {
     const entries = undoStack.value.pop();
     if (!entries) return [];
     const applied = applyEntries(entries, 'undo');
@@ -83,7 +84,7 @@ export function createHistory(options: HistoryOptions) {
     return applied;
   }
 
-  function redo(): AppliedHistoryChange[] {
+  function redo(): AppliedHistoryChange<T>[] {
     const entries = redoStack.value.pop();
     if (!entries) return [];
     const applied = applyEntries(entries, 'redo');
@@ -118,4 +119,6 @@ export function createHistory(options: HistoryOptions) {
   };
 }
 
-export type HistoryApi = ReturnType<typeof createHistory>;
+export type HistoryApi<T extends RowData = RowData> = ReturnType<
+  typeof createHistory<T>
+>;

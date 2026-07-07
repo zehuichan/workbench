@@ -1,7 +1,12 @@
 import { computed, ref, watch } from 'vue';
 import { isPlainObject, sortBy } from 'es-toolkit';
-import type { ColumnNode, PlusTableColumn, PlusTableProps } from '../types';
 import { isSpecialColumn, SETTINGS_STORAGE_PREFIX } from '../constants';
+import type {
+  ColumnNode,
+  PlusTableColumn,
+  PlusTableProps,
+  RowData,
+} from '../types';
 
 const ROOT_ID = '__root';
 
@@ -13,7 +18,6 @@ export interface SettingItem {
   isGroup: boolean;
   checked: boolean;
   indeterminate: boolean;
-  disabled: boolean;
 }
 
 interface PersistedSettings {
@@ -22,12 +26,15 @@ interface PersistedSettings {
   widths: Record<string, number>;
 }
 
-function normalize(columns: PlusTableColumn[]): ColumnNode[] {
+function normalize<T extends RowData>(
+  columns: PlusTableColumn<T>[],
+): ColumnNode<T>[] {
   const seen = new Map<string, number>();
 
-  const walk = (list: PlusTableColumn[], path: string): ColumnNode[] =>
+  const walk = (list: PlusTableColumn<T>[], path: string): ColumnNode<T>[] =>
     list.map((column, index) => {
-      const base = column.prop ?? column.label ?? column.type ?? `col-${path}${index}`;
+      const base =
+        column.prop ?? column.label ?? column.type ?? `col-${path}${index}`;
       const count = seen.get(base) ?? 0;
       seen.set(base, count + 1);
       const id = count === 0 ? base : `${base}#${count}`;
@@ -40,7 +47,10 @@ function normalize(columns: PlusTableColumn[]): ColumnNode[] {
   return walk(columns, '');
 }
 
-function collectLeafIds(node: ColumnNode, into: string[] = []): string[] {
+function collectLeafIds<T extends RowData>(
+  node: ColumnNode<T>,
+  into: string[] = [],
+): string[] {
   if (node.children?.length) {
     for (const child of node.children) collectLeafIds(child, into);
   } else {
@@ -49,7 +59,10 @@ function collectLeafIds(node: ColumnNode, into: string[] = []): string[] {
   return into;
 }
 
-function flattenLeaves(nodes: ColumnNode[], into: ColumnNode[] = []): ColumnNode[] {
+function flattenLeaves<T extends RowData>(
+  nodes: ColumnNode<T>[],
+  into: ColumnNode<T>[] = [],
+): ColumnNode<T>[] {
   for (const node of nodes) {
     if (node.children?.length) flattenLeaves(node.children, into);
     else into.push(node);
@@ -58,26 +71,36 @@ function flattenLeaves(nodes: ColumnNode[], into: ColumnNode[] = []): ColumnNode
 }
 
 /** 可参与数据操作的叶子列：排除特殊列（selection/index/expand 由 el-table 原生渲染；operation 操作列无 prop，不可编辑/校验） */
-function flattenDataLeaves(nodes: ColumnNode[]): ColumnNode[] {
+function flattenDataLeaves<T extends RowData>(
+  nodes: ColumnNode<T>[],
+): ColumnNode<T>[] {
   return flattenLeaves(nodes).filter((node) => !isSpecialColumn(node.column));
 }
 
-function fixedRank(column: PlusTableColumn): number {
+function fixedRank<T extends RowData>(column: PlusTableColumn<T>): number {
   if (column.fixed === 'left') return 0;
   if (column.fixed === 'right') return 2;
   return 1;
 }
 
-export function createColumns(props: PlusTableProps) {
-  const normalizedTree = computed<ColumnNode[]>(() => normalize(props.columns ?? []));
+export function createColumns<T extends RowData = RowData>(
+  props: PlusTableProps<T>,
+) {
+  const normalizedTree = computed<ColumnNode<T>[]>(() =>
+    normalize((props.columns ?? []) as PlusTableColumn<T>[]),
+  );
 
-  const storageKey = props.settingsKey
-    ? `${SETTINGS_STORAGE_PREFIX}${props.settingsKey}`
+  const settingStorageKey =
+    typeof props.columnSetting === 'object'
+      ? props.columnSetting.storageKey
+      : undefined;
+  const storageKey = settingStorageKey
+    ? `${SETTINGS_STORAGE_PREFIX}${settingStorageKey}`
     : null;
 
   function defaultHiddenIds(): Set<string> {
     const hidden = new Set<string>();
-    const walk = (nodes: ColumnNode[]) => {
+    const walk = (nodes: ColumnNode<T>[]) => {
       for (const node of nodes) {
         if (!isSpecialColumn(node.column) && node.column.visible === false) {
           for (const id of collectLeafIds(node)) hidden.add(id);
@@ -132,12 +155,15 @@ export function createColumns(props: PlusTableProps) {
    * 按 orderMap 重排同级列；特殊列（selection/index/expand/operation）不参与排序，锚定在原始下标位置——
    * 声明在最前面的 type: 'index' 列，无论其余列怎么拖拽，永远留在最前面。
    */
-  function applyOrder(nodes: ColumnNode[], parentId: string): ColumnNode[] {
+  function applyOrder(
+    nodes: ColumnNode<T>[],
+    parentId: string,
+  ): ColumnNode<T>[] {
     const order = orderMap.value[parentId];
     let list = nodes;
     if (order?.length) {
       const orderableIndexes: number[] = [];
-      const orderable: ColumnNode[] = [];
+      const orderable: ColumnNode<T>[] = [];
       nodes.forEach((node, index) => {
         if (!isSpecialColumn(node.column)) {
           orderableIndexes.push(index);
@@ -145,7 +171,9 @@ export function createColumns(props: PlusTableProps) {
         }
       });
       const pos = new Map(order.map((id, i) => [id, i]));
-      const sorted = sortBy(orderable, [(node) => pos.get(node.id) ?? order.length]);
+      const sorted = sortBy(orderable, [
+        (node) => pos.get(node.id) ?? order.length,
+      ]);
       list = [...nodes];
       orderableIndexes.forEach((originalIndex, i) => {
         list[originalIndex] = sorted[i]!;
@@ -159,13 +187,16 @@ export function createColumns(props: PlusTableProps) {
   }
 
   /** 特殊列始终可见，不进隐藏名单 */
-  function filterHidden(nodes: ColumnNode[]): ColumnNode[] {
-    const out: ColumnNode[] = [];
+  function filterHidden(nodes: ColumnNode<T>[]): ColumnNode<T>[] {
+    const out: ColumnNode<T>[] = [];
     for (const node of nodes) {
       if (node.children?.length) {
         const children = filterHidden(node.children);
         if (children.length) out.push({ ...node, children });
-      } else if (isSpecialColumn(node.column) || !hiddenIds.value.has(node.id)) {
+      } else if (
+        isSpecialColumn(node.column) ||
+        !hiddenIds.value.has(node.id)
+      ) {
         out.push(node);
       }
     }
@@ -178,11 +209,11 @@ export function createColumns(props: PlusTableProps) {
 
   /**
    * 渲染用列树。el-table 内部会把 fixed 列重排为 [左固定, 普通, 右固定]，
-   * 这里在顶层做相同排序，保证 td 的 DOM 顺序与 leafNodes 下标一致，键盘导航才能按下标定位单元格。
+   * 这里在顶层做相同排序，保证视觉顺序与 leafNodes 下标一致，键盘导航才能按下标定位单元格。
    */
-  const displayTree = computed(() => {
-    return sortBy(visibleTree.value, [(node) => fixedRank(node.column)]);
-  });
+  const displayTree = computed(() =>
+    sortBy(visibleTree.value, [(node) => fixedRank(node.column)]),
+  );
 
   /** 可导航/可编辑叶子列（视觉顺序，排除特殊列，含 operation 操作列），供键盘导航、选区边界、列宽持久化使用 */
   const leafNodes = computed(() => flattenDataLeaves(displayTree.value));
@@ -196,20 +227,7 @@ export function createColumns(props: PlusTableProps) {
     return map;
   });
 
-  /**
-   * leafNodes 下标 → 该列在 <tr> 中的真实 <td> 下标。特殊列（selection/index/expand/operation）
-   * 不进 leafNodes，但仍作为真实 <td> 渲染，两者下标会因此错位——DOM 定位（聚焦编辑器 /
-   * scrollIntoView）必须走这份映射，不能直接拿 leafNodes 下标当 td 下标用。
-   */
-  const leafDomIndexes = computed(() => {
-    const domIndexes: number[] = [];
-    flattenLeaves(displayTree.value).forEach((node, domIndex) => {
-      if (!isSpecialColumn(node.column)) domIndexes.push(domIndex);
-    });
-    return domIndexes;
-  });
-
-  function findNode(nodes: ColumnNode[], id: string): ColumnNode | null {
+  function findNode(nodes: ColumnNode<T>[], id: string): ColumnNode<T> | null {
     for (const node of nodes) {
       if (node.id === id) return node;
       if (node.children?.length) {
@@ -223,11 +241,13 @@ export function createColumns(props: PlusTableProps) {
   /** 列设置面板条目：跳过特殊列（selection/index/expand/operation 不可配置） */
   const settingItems = computed<SettingItem[]>(() => {
     const items: SettingItem[] = [];
-    const walk = (nodes: ColumnNode[], parentId: string, level: number) => {
+    const walk = (nodes: ColumnNode<T>[], parentId: string, level: number) => {
       nodes.forEach((node) => {
         if (isSpecialColumn(node.column)) return;
         const leafIds = collectLeafIds(node);
-        const visibleCount = leafIds.filter((id) => !hiddenIds.value.has(id)).length;
+        const visibleCount = leafIds.filter(
+          (id) => !hiddenIds.value.has(id),
+        ).length;
         items.push({
           id: node.id,
           parentId,
@@ -236,7 +256,6 @@ export function createColumns(props: PlusTableProps) {
           isGroup: !!node.children?.length,
           checked: visibleCount === leafIds.length,
           indeterminate: visibleCount > 0 && visibleCount < leafIds.length,
-          disabled: !!node.column.settingDisabled,
         });
         if (node.children?.length) walk(node.children, node.id, level + 1);
       });
@@ -257,7 +276,11 @@ export function createColumns(props: PlusTableProps) {
   }
 
   /** 列设置拖拽排序：把 dragId 放到同级 targetId 的前 / 后（跨级拖拽不生效） */
-  function reorderNode(dragId: string, targetId: string, position: 'before' | 'after') {
+  function reorderNode(
+    dragId: string,
+    targetId: string,
+    position: 'before' | 'after',
+  ) {
     if (dragId === targetId) return;
     const drag = settingItems.value.find((it) => it.id === dragId);
     const target = settingItems.value.find((it) => it.id === targetId);
@@ -295,7 +318,6 @@ export function createColumns(props: PlusTableProps) {
     leafNodes,
     allLeafNodes,
     leafIndexById,
-    leafDomIndexes,
     widthMap,
     settingItems,
     toggleVisible,
@@ -305,4 +327,6 @@ export function createColumns(props: PlusTableProps) {
   };
 }
 
-export type ColumnsApi = ReturnType<typeof createColumns>;
+export type ColumnsApi<T extends RowData = RowData> = ReturnType<
+  typeof createColumns<T>
+>;
