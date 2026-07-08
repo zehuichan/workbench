@@ -16,6 +16,8 @@ if (!table) {
 const items = computed(() => table!.store.settingItems.value);
 
 function handleToggle(id: string, checked: boolean | string | number) {
+  const item = items.value.find((it) => it.id === id);
+  if (item?.disabled) return;
   table!.store.commit('toggleColumnVisible', id, !!checked);
 }
 
@@ -26,12 +28,18 @@ const dropPosition = ref<'before' | 'after'>('before');
 function canDropOn(item: SettingItem): boolean {
   return (
     !!dragItem.value &&
+    !dragItem.value.disabled &&
+    !item.disabled &&
     dragItem.value.id !== item.id &&
     dragItem.value.parentId === item.parentId
   );
 }
 
 function handleDragStart(event: DragEvent, item: SettingItem) {
+  if (item.disabled) {
+    event.preventDefault();
+    return;
+  }
   dragItem.value = item;
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move';
@@ -85,9 +93,10 @@ function handleDragEnd() {
               dropTargetId === item.id && dropPosition === 'before',
             'is-drop-after':
               dropTargetId === item.id && dropPosition === 'after',
+            'is-disabled': item.disabled,
           }"
           :style="{ paddingLeft: `${item.level * 16}px` }"
-          draggable="true"
+          :draggable="!item.disabled"
           @dragstart="handleDragStart($event, item)"
           @dragover="handleDragOver($event, item)"
           @drop="handleDrop($event, item)"
@@ -99,6 +108,7 @@ function handleDragEnd() {
           <el-checkbox
             :model-value="item.checked"
             :indeterminate="item.indeterminate"
+            :disabled="item.disabled"
             @change="handleToggle(item.id, $event)"
           >
             {{ item.title }}

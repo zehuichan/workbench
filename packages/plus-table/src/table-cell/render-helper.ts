@@ -96,14 +96,23 @@ export function getEditorSlotProps<T extends RowData = RowData>(
     isCellMode,
     false,
   );
+  const mode = table.store.states.editMode.value ?? 'cell';
+  const commit = () => {
+    if (isCellMode) table.store.commitEdit();
+    else if (mode === 'row') table.store.clearRowEditingCell(false);
+  };
+  const cancel = () => {
+    if (isCellMode) table.store.cancelEdit();
+    else if (mode === 'row') table.store.clearRowEditingCell(false);
+  };
   return {
     row,
     rowIndex,
     column,
     value,
     setValue,
-    commit: () => table.store.commitEdit(),
-    cancel: () => table.store.cancelEdit(),
+    commit,
+    cancel,
   };
 }
 
@@ -135,7 +144,12 @@ export function getEditorBinding<T extends RowData = RowData>(
     [modelProp]: value,
     [`onUpdate:${modelProp}`]: (next: unknown) => {
       setValue(next);
-      if (isCellMode && resolved.trigger === 'change') table.store.commitEdit();
+      if (resolved.trigger === 'change') {
+        if (isCellMode) table.store.commitEdit();
+        else if ((table.props.editMode ?? 'cell') === 'row') {
+          table.store.clearRowEditingCell();
+        }
+      }
     },
     onBlur: () => {
       // cell 模式失焦统一走 commitEdit：change 型编辑器选值时已经 commitEdit 过（此时是安全空操作）
@@ -144,8 +158,8 @@ export function getEditorBinding<T extends RowData = RowData>(
         return;
       }
       flush();
-      if ((table.props.validateOn ?? 'change') === 'blur') {
-        void table.store.validateCell(row, rowIndex, prop);
+      if ((table.props.editMode ?? 'cell') === 'row') {
+        table.store.clearRowEditingCell();
       }
     },
   };

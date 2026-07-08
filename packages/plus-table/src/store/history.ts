@@ -1,4 +1,5 @@
 import { computed, ref } from 'vue';
+import { HISTORY_STACK_LIMIT } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
 
@@ -29,16 +30,11 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     redoStack: ref<HistoryEntry[]>([]),
   };
 
-  const canUndo = computed(() => states.undoStack.value.length > 0);
-  const canRedo = computed(() => states.redoStack.value.length > 0);
+  const canUndo = computed(() => enabled() && states.undoStack.value.length > 0);
+  const canRedo = computed(() => enabled() && states.redoStack.value.length > 0);
 
   function enabled(): boolean {
     return !!table.store.states.history.value;
-  }
-
-  function limit(): number {
-    const history = table.store.states.history.value;
-    return typeof history === 'object' ? (history.limit ?? 50) : 50;
   }
 
   /** 记一条变更；row 模式一次提交可传多条，作为一个原子撤销单元 */
@@ -49,7 +45,9 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     const entries = Array.isArray(change) ? change : [change];
     if (entries.length === 0) return;
     states.undoStack.value.push(entries);
-    if (states.undoStack.value.length > limit()) states.undoStack.value.shift();
+    if (states.undoStack.value.length > HISTORY_STACK_LIMIT) {
+      states.undoStack.value.shift();
+    }
     states.redoStack.value = [];
   }
 
@@ -76,6 +74,7 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function undo(): AppliedHistoryChange<T>[] {
+    if (!enabled()) return [];
     const entries = states.undoStack.value.pop();
     if (!entries) return [];
     const applied = applyEntries(entries, 'undo');
@@ -84,6 +83,7 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function redo(): AppliedHistoryChange<T>[] {
+    if (!enabled()) return [];
     const entries = states.redoStack.value.pop();
     if (!entries) return [];
     const applied = applyEntries(entries, 'redo');

@@ -30,7 +30,7 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
       watcher.markDirty(rowKey, prop);
       table.emit('cell-change', { row, rowIndex, prop, value, oldValue });
       watcher.notifyFieldChange(row, rowIndex, prop);
-      if ((watcher.states.validateOn.value ?? 'change') === 'change') {
+      if (watcher.states.validateEvent.value !== false) {
         void watcher.validateCell(row, rowIndex, prop);
       }
     },
@@ -85,7 +85,7 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
         value,
         oldValue,
       });
-      if ((watcher.states.validateOn.value ?? 'change') === 'change') {
+      if (watcher.states.validateEvent.value !== false) {
         void watcher.validateCell(change.row, change.rowIndex, change.prop);
       }
     }

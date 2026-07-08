@@ -12,21 +12,26 @@ import PlusTableColumnNode from './table-column';
 import type { TableInstance } from 'element-plus';
 import type { PlusTable } from './tokens';
 import type { Store } from './store';
-import type { EditorSlotProps, HeaderSlotProps } from './table-cell/render-helper';
+import type {
+  EditorSlotProps,
+  HeaderSlotProps,
+} from './table-cell/render-helper';
 import type { PlusTableEmits, PlusTableProps, RowData } from './table/defaults';
+import type { CellContext } from './table-column/defaults';
 
 defineOptions({ name: 'PlusTable', inheritAttrs: false });
 
 const props = withDefaults(defineProps<PlusTableProps<T>>(), {
   editMode: 'cell',
-  validateOn: 'change',
-  columnSetting: false,
+  validateEvent: true,
+  cache: false,
   adaptive: false,
   page: 1,
   pageSize: 20,
   pageSizes: () => [10, 20, 50, 100],
   history: false,
   dirtyTracking: false,
+  hotkeyEnabled: true,
 });
 
 const emit = defineEmits<PlusTableEmits<T>>();
@@ -39,6 +44,7 @@ const slots = useSlots();
 defineSlots<{
   toolbar?: () => unknown;
   empty?: () => unknown;
+  [key: `cell-${string}`]: (props: CellContext<T>) => unknown;
   [key: `header-${string}`]: (props: HeaderSlotProps<T>) => unknown;
   [key: `editor-${string}`]: (props: EditorSlotProps<T>) => unknown;
 }>();
@@ -87,44 +93,62 @@ function setColumnWidth(id: string, width: number) {
   store.commit('setColumnWidth', id, width);
 }
 
-defineExpose({
-  /** 全表校验 */
-  validate: store.validate,
-  clearValidate: store.clearValidate,
-  getErrors: store.getErrors,
-  /** 行操作 */
-  insertRow: store.insertRow,
-  removeRow: store.removeRow,
-  moveRow: store.moveRow,
-  duplicateRow: store.duplicateRow,
-  /** row 模式行编辑 */
-  startRowEdit: store.startRowEdit,
-  commitRowEdit: store.commitRowEdit,
-  cancelRowEdit: store.cancelRowEdit,
-  /** cell 模式单元格编辑 */
-  startEdit: store.startEdit,
-  cancelEdit: store.cancelEdit,
-  // 内部按 E-P 命名为 setCurrentCell；公开 API 继续保留 setActiveCell。
-  setActiveCell: store.setCurrentCell,
-  /** 列设置 */
-  resetColumnSettings: store.resetSettings,
-  setColumnWidth,
-  /** 撤销重做（history prop 关闭时栈恒为空，undo/redo 为安全空操作） */
-  undo: store.undo,
-  redo: store.redo,
-  canUndo: store.canUndo,
-  canRedo: store.canRedo,
-  clearHistory: store.clearHistory,
-  /** 脏行 / 脏格追踪（dirtyTracking prop 关闭时恒无脏格） */
-  getModifiedRows: store.getModifiedRows,
-  getDirtyCells: store.getDirtyCells,
-  isCellDirty: store.isCellDirty,
-  isRowDirty: store.isRowDirty,
-  resetTracking: store.resetTracking,
-  clearDirty: store.clearDirty,
-  /** el-table 实例直通 */
-  getElTable: () => tableRef.value,
-});
+defineExpose(
+  new Proxy(
+    {
+      /** 全表校验 */
+      validate: store.validate,
+      clearValidate: store.clearValidate,
+      getErrors: store.getErrors,
+      /** 行操作 */
+      insertRow: store.insertRow,
+      removeRow: store.removeRow,
+      moveRow: store.moveRow,
+      duplicateRow: store.duplicateRow,
+      /** row 模式行编辑 */
+      startRowEdit: store.startRowEdit,
+      commitRowEdit: store.commitRowEdit,
+      cancelRowEdit: store.cancelRowEdit,
+      /** cell 模式单元格编辑 */
+      startEdit: store.startEdit,
+      cancelEdit: store.cancelEdit,
+      // 内部按 E-P 命名为 setCurrentCell；公开 API 继续保留 setActiveCell。
+      setActiveCell: store.setCurrentCell,
+      /** 列设置 */
+      resetColumnSettings: store.resetSettings,
+      setColumnWidth,
+      /** 撤销重做（history prop 关闭时栈恒为空，undo/redo 为安全空操作） */
+      undo: store.undo,
+      redo: store.redo,
+      canUndo: store.canUndo,
+      canRedo: store.canRedo,
+      clearHistory: store.clearHistory,
+      /** 脏行 / 脏格追踪（dirtyTracking prop 关闭时恒无脏格） */
+      getModifiedRows: store.getModifiedRows,
+      getDirtyCells: store.getDirtyCells,
+      isCellDirty: store.isCellDirty,
+      isRowDirty: store.isRowDirty,
+      resetTracking: store.resetTracking,
+      clearDirty: store.clearDirty,
+    },
+    {
+      get(target, prop, receiver) {
+        if (Reflect.has(target, prop)) {
+          return Reflect.get(target, prop, receiver);
+        }
+        return tableRef.value
+          ? Reflect.get(tableRef.value, prop, tableRef.value)
+          : undefined;
+      },
+      has(target, prop) {
+        return (
+          Reflect.has(target, prop) ||
+          (!!tableRef.value && Reflect.has(tableRef.value, prop))
+        );
+      },
+    },
+  ),
+);
 </script>
 
 <template>
@@ -132,9 +156,9 @@ defineExpose({
     class="plus-table"
     :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }"
   >
-    <div v-if="columnSetting || $slots.toolbar" class="plus-table__toolbar">
+    <div class="plus-table__toolbar">
       <slot name="toolbar" />
-      <PlusTableColumnSettings v-if="columnSetting" />
+      <PlusTableColumnSettings />
     </div>
 
     <div

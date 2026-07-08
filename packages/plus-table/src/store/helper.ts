@@ -6,7 +6,7 @@ import type { PlusTableProps, RowData } from '../table/defaults';
 const InitialStateMap = {
   rowKey: 'rowKey',
   editMode: 'editMode',
-  validateOn: 'validateOn',
+  validateEvent: 'validateEvent',
   history: 'history',
   dirtyTracking: 'dirtyTracking',
 } as const;
@@ -43,5 +43,9 @@ function handleValue<T extends RowData>(
   store: ReturnType<typeof useStore<T>>,
 ) {
   const storeKey = InitialStateMap[propsKey as keyof typeof InitialStateMap];
-  store.states[storeKey].value = value as never;
+  const normalized = propsKey === 'history' ? !!value : value;
+  store.states[storeKey].value = normalized as never;
+  if (propsKey === 'history' && !normalized) {
+    store.clearHistory();
+  }
 }

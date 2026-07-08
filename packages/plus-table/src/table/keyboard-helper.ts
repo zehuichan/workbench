@@ -69,6 +69,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function getCustomHotkeys(): HotkeyBinding<T>[] {
+    if (table.props.hotkeyEnabled === false) return [];
     return table.props.hotkeys ?? [];
   }
 
@@ -118,6 +119,60 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
         table.store.commitEdit();
         table.store.moveSequential(event.shiftKey ? -1 : 1);
         table.store.focusGrid();
+        event.preventDefault();
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  function openRowEditorAtCurrentOrFocusGrid() {
+    const current = table.store.states.currentCell.value;
+    const row =
+      current && table.store.states.data.value[current.rowIndex];
+    if (
+      current &&
+      row &&
+      table.store.isRowEditing(row) &&
+      table.store.canEditCell(current.rowIndex, current.colIndex)
+    ) {
+      table.store.setRowEditingCell(current.rowIndex, current.colIndex);
+      return;
+    }
+    table.store.focusGrid();
+  }
+
+  /** row 模式中单格编辑器打开期间的按键 */
+  function handleRowEditingKeydown(event: KeyboardEvent) {
+    switch (event.key) {
+      case 'Escape': {
+        const current = table.store.states.editingCell.value;
+        if (current) table.store.cancelRowEdit(current.rowIndex);
+        table.store.focusGrid();
+        event.preventDefault();
+        event.stopPropagation();
+        break;
+      }
+      case 'Enter': {
+        if (event.isComposing) return;
+        const target = event.target as HTMLElement | null;
+        if (
+          target instanceof HTMLTextAreaElement &&
+          (event.shiftKey || event.altKey)
+        ) {
+          return;
+        }
+        table.store.clearRowEditingCell(true);
+        table.store.moveCurrent(1, 0);
+        openRowEditorAtCurrentOrFocusGrid();
+        event.preventDefault();
+        break;
+      }
+      case 'Tab': {
+        table.store.clearRowEditingCell(true);
+        table.store.moveSequential(event.shiftKey ? -1 : 1);
+        openRowEditorAtCurrentOrFocusGrid();
         event.preventDefault();
         break;
       }
@@ -264,6 +319,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    const mode = table.store.states.editMode.value ?? 'cell';
     const [overrides, normals] = partition(
       getCustomHotkeys(),
       (h) => !!h.override,
@@ -272,9 +328,13 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
     // 1. 用户 override 热键：先于任何内置行为判定，任何编辑态 / 焦点位置都生效
     if (runHotkeyBindings(overrides, event)) return;
 
-    // 2. cell 模式编辑器打开中：走独立的编辑态按键流（Tab/Enter/Esc 语义不同）
-    if (table.store.states.editingCell.value) {
+    // 2. cell / row 模式编辑器打开中：走独立的编辑态按键流（Tab/Enter/Esc 语义不同）
+    if (mode === 'cell' && table.store.states.editingCell.value) {
       handleEditingKeydown(event);
+      return;
+    }
+    if (mode === 'row' && table.store.states.editingCell.value) {
+      handleRowEditingKeydown(event);
       return;
     }
 

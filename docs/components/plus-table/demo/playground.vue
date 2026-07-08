@@ -86,7 +86,7 @@ const pagedData = computed({
 
 const tableRef = ref();
 const editMode = ref('cell');
-const validateOn = ref('change');
+const validateEvent = ref(true);
 const changeLog = ref('—');
 const validationResult = ref('—');
 /** row 模式下处于编辑态的行 id（仅供操作列 UI 切换按钮） */
@@ -103,11 +103,6 @@ const adaptiveProp = computed(() => {
   if (adaptiveMode.value === 'container') return { mode: 'container' as const };
   return true;
 });
-
-// 撤销栈上限（historyLimit 已折进 history 配置对象）
-const historyProp = computed(() =>
-  historyEnabled.value ? { limit: 50 } : false,
-);
 
 const dirtyCount = computed(
   () => tableRef.value?.getModifiedRows().length ?? 0,
@@ -365,12 +360,8 @@ const columns = [
       </el-radio-group>
 
       <el-divider direction="vertical" />
-      <span class="label">校验时机</span>
-      <el-radio-group v-model="validateOn" size="small">
-        <el-radio-button value="change">change</el-radio-button>
-        <el-radio-button value="blur">blur</el-radio-button>
-        <el-radio-button value="manual">manual</el-radio-button>
-      </el-radio-group>
+      <span class="label">validate-event</span>
+      <el-checkbox v-model="validateEvent" size="small">自动校验</el-checkbox>
 
       <el-divider direction="vertical" />
       <el-button size="small" type="primary" @click="handleValidate"
@@ -443,13 +434,14 @@ const columns = [
         :columns="columns"
         :total="total"
         :edit-mode="editMode"
-        :validate-on="validateOn"
+        :validate-event="validateEvent"
         :adaptive="adaptiveProp"
-        :history="historyProp"
+        :history="historyEnabled"
         :dirty-tracking="dirtyEnabled"
         :hotkeys="hotkeys"
         row-key="id"
-        :column-setting="{ storageKey: 'docs-playground' }"
+        cache
+        id="docs-playground"
         border
         @cell-change="onCellChange"
       >
@@ -473,8 +465,9 @@ const columns = [
     </div>
 
     <p class="demo-hint">
-      提示：在列设置里隐藏「任务名称」（必填列）后点击「校验」，仍会报出该列的必填错误——校验不因列被隐藏而失效。
-      <code>Ctrl+S</code> 触发校验、<code>Ctrl+D</code>
+      提示：取消勾选 <code>validate-event</code> 后，单元格变更不再自动校验，需点击「校验」或
+      <code>Ctrl+S</code> 手动触发。在列设置里隐藏「任务名称」（必填列）后点击「校验」，仍会报出该列的必填错误——校验不因列被隐藏而失效。
+      <code>Ctrl+D</code>
       复制当前行为自定义热键（<code>hotkeys</code> prop）示例。
     </p>
   </div>

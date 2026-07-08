@@ -2,6 +2,9 @@ import type { RowData, RowKey } from './table/defaults';
 
 export const SETTINGS_STORAGE_PREFIX = 'plus-table:settings:';
 
+/** 撤销重做栈上限（组件内部常量，不对外暴露） */
+export const HISTORY_STACK_LIMIT = 50;
+
 const NATIVE_RENDER_COLUMN_TYPES = ['selection', 'index', 'expand'] as const;
 
 export const SPECIAL_COLUMN_TYPES = [

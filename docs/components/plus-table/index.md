@@ -19,7 +19,7 @@ const data = ref([{ id: 1, name: '示例' }]);
 const columns: PlusTableColumn[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'id', label: 'ID', width: 80 },
-  { prop: 'name', label: '名称', editable: true, component: 'input', required: true },
+  { prop: 'name', label: '名称', editable: true, editor: 'input', required: true },
 ];
 </script>
 
@@ -38,15 +38,14 @@ const columns: PlusTableColumn[] = [
 | `columns` | `PlusTableColumn[]` | — | 列配置，见下节 |
 | `rowKey` | `string \| (row) => string \| number` | — | **必传**，错误定位 / 行编辑态的稳定标识 |
 | `editMode` | `'none' \| 'cell' \| 'row' \| 'table'` | `'cell'` | 编辑模式，见「编辑模式」 |
-| `validateOn` | `'change' \| 'blur' \| 'manual'` | `'change'` | 自动校验时机；`manual` 时仅 `ref.validate()` 触发 |
-| `columnSetting` | `boolean` | `false` | 是否显示工具栏「列设置」按钮（显隐 + 拖拽排序 + 重置） |
-| `settingsKey` | `string` | — | 列设置 localStorage 持久化 key（显隐 / 顺序 / 列宽）；不传则不持久化；多实例需各自唯一 |
+| `validateEvent` (`validate-event`) | `boolean` | `true` | 是否在单元格变更时触发校验；`false` 时仅 `ref.validate()` 触发 |
+| `cache` | `boolean` | `false` | 是否缓存列设置（显隐 / 顺序 / 列宽）；为 `true` 时需同时传 `id` |
+| `id` | `string` | — | 列设置缓存标识（多实例需各自唯一） |
 | `adaptive` | `boolean \| AdaptiveConfig` | `false` | 自适应高度；`AdaptiveConfig`：`mode`（`'viewport'` 默认 / `'container'`）、`offsetBottom`（默认 16，仅 viewport）、`minHeight`（默认 200，仅 viewport） |
 | `total` | `number` | — | 传入即启用分页（服务端驱动，组件不切片） |
 | `page` / `pageSize` | `number` | `1` / `20` | `v-model:page` / `v-model:pageSize` |
 | `pageSizes` | `number[]` | `[10, 20, 50, 100]` | 每页条数选项 |
-| `history` | `boolean` | `false` | 是否启用撤销重做 |
-| `historyLimit` | `number` | `50` | 撤销栈上限 |
+| `history` | `boolean` | `false` | 是否启用撤销重做（撤销栈上限为组件内部常量 50） |
 | `dirtyTracking` | `boolean` | `false` | 是否启用脏行/脏格追踪 |
 | `hotkeys` | `HotkeyBinding[]` | — | 自定义热键绑定，见「自定义热键」 |
 | `hotkeyEnabled` | `boolean` | `true` | `hotkeys` 总开关（不影响内置键盘导航） |
@@ -79,16 +78,13 @@ interface PlusTableColumn extends Partial<TableColumnCtx> {
   // …原生 TableColumnCtx 属性：prop / label / type / width / align / fixed / formatter / ...
 
   children?: PlusTableColumn[];      // 多级表头，组节点只需 label
-  editable?: boolean | ((row, rowIndex) => boolean);
-  component?: BuiltinEditorType | Component;  // 编辑器，见下节；缺省为 input
-  componentProps?: Record<string, unknown> | ((row, column) => Record<string, unknown>);
-  modelProp?: string;                // 自定义组件的 v-model prop 名，默认 modelValue
+  editable?: boolean | ((ctx: RowContext) => boolean);
+  editor?: BuiltinEditorType | Component | EditorConfig;  // 编辑器，见下节；缺省为 input
   required?: boolean;                // 必填（表头红星 + 校验）
   rules?: CellRule[];                // async-validator 规则
   dependencies?: ColumnDependencies; // 字段联动，见下节
-  render?: (params: CellRenderParams) => VNodeChild;  // 展示态自定义渲染（优先于 formatter）
+  render?: (params: CellContext) => VNodeChild;  // 展示态自定义渲染（优先于 formatter）
   visible?: boolean;                 // 初始是否可见（列设置）
-  settingDisabled?: boolean;         // 列设置面板中不可操作
 }
 ```
 
@@ -96,19 +92,19 @@ interface PlusTableColumn extends Partial<TableColumnCtx> {
 - `type: 'index' | 'selection' | 'expand'` 特殊列由 `el-table` 原生渲染（序号 / 勾选框 / 展开图标），不进列设置面板、不参与键盘导航，拖拽排序时始终留在声明时的位置（如首列 `{ type: 'index', label: '#' }` 拖别的列也不会挪动）。
 - `type: 'operation'` 为 PlusTable 扩展的操作列（如 `{ type: 'operation', label: '操作', fixed: 'right', render: ... }`）：渲染方式不变（仍用 `render` 自定义按钮），但同样归入特殊列——不进列设置面板、不参与键盘导航（不会被激活态高亮/方向键选中）、拖拽排序时锚定原位、始终可见。
 
-## 编辑器 component
+## 编辑器 editor
 
 ```ts
-component: 'select'                 // 内置类型标识
-component: MyEditor                 // 任意自定义组件（默认 v-model:modelValue）
-componentProps: { clearable: true } // 透传给编辑器的 props（联动 dependencies.componentProps 优先级更高）
-modelProp: 'value'                  // 自定义组件的 v-model prop 名，默认 modelValue
+editor: 'select'                                 // 内置类型标识
+editor: MyEditor                                 // 任意自定义组件（默认 v-model:modelValue）
+editor: { type: 'select', props: { clearable: true } }
+editor: { component: MyEditor, modelProp: 'value', props: { clearable: true } }
 ```
 
 - 内置类型：`input`、`textarea`、`input-number`、`select`（`ElSelectV2`）、`date-picker`、`time-picker`、`switch`、`checkbox`。
 - 提交时机按编辑器推导：文本类失焦提交，选择类变更即提交。
-- `select` 的选项走 `componentProps: { options: [...] }`（`ElSelectV2` 原生 `options` prop，`{ label, value, disabled? }[]`）；动态选项用 `dependencies.componentProps`（见「字段联动」）。
-- 局部接管用 `editor-${prop}` 插槽，优先于 `component` 配置。
+- `select` 的选项走 `editor: { type: 'select', props: { options: [...] } }`（`ElSelectV2` 原生 `options` prop，`{ label, value, disabled? }[]`）；动态选项用 `dependencies.componentProps`（见「字段联动」）。
+- 局部接管用 `editor-${prop}` 插槽，优先于 `editor` 配置。
 
 ## 编辑模式 editMode
 
@@ -153,7 +149,7 @@ const hotkeys: HotkeyBinding[] = [
 
 - 列级 `required` / `rules`（async-validator）；规则的自定义 `validator` 的 source 为整行，可跨字段校验。
 - 校验遍历**全部列**，不因列被「列设置」隐藏而漏检——隐藏一个必填列后，`validate()` / 自动校验仍会报出该列的错误。
-- `validateOn` 控制自动校验时机；`ref.validate()` 全表校验，默认滚动并激活到首个错误格；`ref.getErrors()` 只读读取当前错误集合，便于自定义错误汇总面板。
+- `validateEvent`（`validate-event`）控制是否在单元格变更时触发校验；`false` 时仅 `ref.validate()` 手动全表校验，默认滚动并激活到首个错误格；`ref.getErrors()` 只读读取当前错误集合，便于自定义错误汇总面板。
 - 同一格快速连续触发异步校验时，按内部版本号丢弃过期结果，最终只体现最后一次输入的校验结果。
 - 错误格红框 + 底色 + hover tooltip 显示错误信息；`dependencies.required` 联动算出的动态必填会打上 `ptbl-cell--required` 类名（默认无内置视觉，表头星号已覆盖静态必填的提示需求，可自定义样式识别动态必填格）。
 
@@ -162,6 +158,7 @@ const hotkeys: HotkeyBinding[] = [
 `history` 开启后，`cell` / `row` / `table` 模式下的取值提交（文本类失焦提交、选择类变更即提交）都会记入撤销栈，按 `rowKey` 寻址——插入/删除/移动行或换页后再撤销/重做，也不会作用到错误的行。
 
 - `ref.undo()` / `ref.redo()`；`ref.canUndo` / `ref.canRedo`（`Ref<boolean>`，可直接绑到按钮 `disabled`）；`ref.clearHistory()`。
+- 撤销栈上限为组件内部常量（50），不可通过 props 配置。
 - `Ctrl+Z` / `Ctrl+Shift+Z`（或 `Ctrl+Y`）为内置快捷键。
 - 目标行已被删除时，该条撤销/重做记录会被跳过而不是报错。
 
@@ -208,8 +205,8 @@ dependencies: {
 
 - 面板内勾选显隐（组节点联动子列、半选态），**拖拽行**调整列顺序（仅限同级之间），「重置」恢复默认。
 - **列宽**：拖拽表头边框调整（`el-table` 原生行为，需 `border`），调整结果自动记录。
-- 传 `settingsKey` 后，显隐 / 顺序 / 列宽均持久化到 localStorage。
-- `settingDisabled: true` 的列在面板中不可勾选、不可拖拽（但仍显示在列表里）；`type: 'selection' | 'index' | 'expand' | 'operation'` 特殊列则完全不出现在面板中。
+- `cache` 为 `true` 且传入 `id` 后，显隐 / 顺序 / 列宽均持久化到 localStorage。列设置面板默认始终可用。
+- `type: 'selection' | 'index' | 'expand' | 'operation'` 特殊列不出现在列设置面板中。
 
 ## 分页
 
@@ -224,9 +221,10 @@ dependencies: {
 ```ts
 import { PlusTable, PLUS_TABLE_INJECTION_KEY, EDITOR_REGISTRY } from '@labs/plus-table';
 import type {
-  PlusTableProps, PlusTableColumn, RowData, EditMode, ValidateOn,
+  PlusTableProps, PlusTableColumn, RowData, EditMode,
   BuiltinEditorType,
   ColumnDependencies, DependencyApi,
+  CellContext, EditorConfig,
   CellRule, CellError, ValidateResult,
   CellChangePayload, PageChangePayload, AdaptiveConfig,
   HotkeyBinding, HotkeyContext,

@@ -40,9 +40,7 @@ export type {
   CellChangePayload,
   CellError,
   CellRule,
-  ColumnSettingConfig,
   EditMode,
-  HistoryConfig,
   HotkeyBinding,
   HotkeyContext,
   PageChangePayload,
@@ -51,7 +49,6 @@ export type {
   RowContext,
   RowData,
   RowKey,
-  ValidateOn,
   ValidateResult,
 } from './table/defaults';
 export type {

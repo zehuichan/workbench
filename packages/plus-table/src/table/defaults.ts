@@ -10,9 +10,6 @@ export type RowKey<T extends RowData = RowData> =
 /** 编辑模式：不可编辑 / 单元格 / 整行 / 全表常驻 */
 export type EditMode = 'none' | 'cell' | 'row' | 'table';
 
-/** 自动校验时机；manual 时仅 ref.validate() 触发 */
-export type ValidateOn = 'change' | 'blur' | 'manual';
-
 export type CellRule = RuleItem;
 
 export interface CellError {
@@ -26,16 +23,6 @@ export interface CellError {
 export interface RowContext<T extends RowData = RowData> {
   row: T;
   rowIndex: number;
-}
-
-export interface ColumnSettingConfig {
-  /** 显隐 / 顺序 / 列宽持久化到 localStorage 的 key；不传则不持久化 */
-  storageKey?: string;
-}
-
-export interface HistoryConfig {
-  /** 撤销栈上限，默认 50 */
-  limit?: number;
 }
 
 export interface AdaptiveConfig {
@@ -104,21 +91,26 @@ export interface PlusTableProps<T extends RowData = RowData> {
   columns: PlusTableColumnDef[];
   rowKey: RowKey<T>;
   editMode?: EditMode | string;
-  validateOn?: ValidateOn | string;
-  /** 是否显示列设置入口；传对象可配置 localStorage 持久化 key */
-  columnSetting?: boolean | ColumnSettingConfig;
+  /** 是否在单元格变更时自动触发校验；false 时仅 ref.validate() 触发 */
+  validateEvent?: boolean;
+  /** 是否缓存列设置（显隐 / 顺序 / 列宽）；为 true 时需同时传 `id` 才写入 localStorage */
+  cache?: boolean;
+  /** 列设置缓存标识，多实例需各自唯一 */
+  id?: string;
   adaptive?: boolean | AdaptiveConfig;
   /** 传入即启用分页（服务端驱动，组件不切片） */
   total?: number;
   page?: number;
   pageSize?: number;
   pageSizes?: number[];
-  /** 撤销重做；传对象可配置撤销栈上限，默认 false */
-  history?: boolean | HistoryConfig;
+  /** 撤销重做，默认 false */
+  history?: boolean;
   /** 脏行/脏格追踪，默认 false */
   dirtyTracking?: boolean;
   /** 自定义热键绑定 */
   hotkeys?: HotkeyBinding<T>[];
+  /** 自定义热键总开关，不影响内置键盘导航 */
+  hotkeyEnabled?: boolean;
 }
 
 export interface PlusTableEmits<T extends RowData = RowData> {

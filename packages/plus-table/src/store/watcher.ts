@@ -11,10 +11,8 @@ import { useValidation } from './validation';
 import type { PlusTable } from '../tokens';
 import type {
   EditMode,
-  HistoryConfig,
   RowData,
   RowKey,
-  ValidateOn,
 } from '../table/defaults';
 
 export interface RowLocation<T extends RowData = RowData> {
@@ -27,8 +25,8 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
     data: shallowRef<T[]>([]),
     rowKey: ref<RowKey<T>>(table.props.rowKey),
     editMode: ref<EditMode | string>(table.props.editMode ?? 'cell'),
-    validateOn: ref<ValidateOn | string>(table.props.validateOn ?? 'change'),
-    history: ref<boolean | HistoryConfig | undefined>(table.props.history),
+    validateEvent: ref<boolean>(table.props.validateEvent ?? true),
+    history: ref<boolean>(!!table.props.history),
     dirtyTracking: ref<boolean | undefined>(table.props.dirtyTracking),
   };
 

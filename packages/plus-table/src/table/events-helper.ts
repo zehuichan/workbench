@@ -41,9 +41,22 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     _cell: HTMLElement,
     event: Event,
   ) {
-    if ((table.props.editMode ?? 'cell') === 'table') return;
+    const mode = (table.props.editMode ?? 'cell') as EditMode;
+    if (mode === 'table') return;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0 || colIndex < 0) return;
+
+    if (mode === 'row' && table.store.isRowEditing(row)) {
+      if (table.store.canEditCell(rowIndex, colIndex)) {
+        table.store.setRowEditingCell(rowIndex, colIndex);
+      } else {
+        table.store.clearRowEditingCell(true);
+        table.store.commit('setCurrentCell', rowIndex, colIndex, false);
+        table.store.focusGrid();
+      }
+      return;
+    }
+
     table.store.commit('setCurrentCell', rowIndex, colIndex, false);
     // 点击落在编辑器里时不抢焦点，否则把焦点交给网格容器以接收热键
     const target = event.target as HTMLElement | null;
@@ -64,14 +77,11 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     const mode = (table.props.editMode ?? 'cell') as EditMode;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0) return;
-    if (mode === 'cell' && colIndex >= 0) table.store.startEdit(rowIndex, colIndex);
-    else if (mode === 'row') table.store.startRowEdit(rowIndex);
-  }
-
-  /** validateOn === 'blur' 时由单元格编辑器 blur 调用 */
-  function handleEditorBlur(row: T, rowIndex: number, prop: string) {
-    if ((table.props.validateOn ?? 'change') === 'blur') {
-      void table.store.validateCell(row, rowIndex, prop);
+    if (mode === 'cell' && colIndex >= 0) {
+      table.store.startEdit(rowIndex, colIndex);
+    } else if (mode === 'row') {
+      table.store.startRowEdit(rowIndex);
+      if (colIndex >= 0) table.store.setRowEditingCell(rowIndex, colIndex);
     }
   }
 
@@ -82,6 +92,5 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     getCellPosition,
     handleCellClick,
     handleCellDblclick,
-    handleEditorBlur,
   };
 }

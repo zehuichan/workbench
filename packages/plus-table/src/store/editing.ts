@@ -32,12 +32,12 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
   const states = {
     /** cell 模式：当前编辑格 */
     editingCell: shallowRef<CellPosition | null>(null),
-    /** row 模式：处于编辑态的行 key */
-    editingRowKeys: reactive(new Set<string>()),
+    /** row 模式：当前编辑行 key */
+    editingRowKey: shallowRef<string | null>(null),
   };
 
-  /** row 模式：进编时的快照，cancel 时回滚 */
-  const rowSnapshots = new Map<string, T>();
+  /** row 模式：当前编辑行快照，cancel 时回滚 */
+  let editingRowSnapshot: T | null = null;
 
   /** 统一草稿仓：cell 模式单槙、row/table 模式多槙，共用同一存储与寻址方式 */
   const drafts = reactive(new Map<string, unknown>());
@@ -80,17 +80,50 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
     }
   }
 
+  function flushRowDrafts(rowKey: string): void {
+    const found = table.store.states.keysMap.value.get(rowKey);
+    if (!found) {
+      discardDraftsForRow(rowKey);
+      return;
+    }
+    const prefix = `${rowKey}:`;
+    for (const key of [...drafts.keys()]) {
+      if (!key.startsWith(prefix)) continue;
+      flushDraft(found.row, found.rowIndex, rowKey, key.slice(prefix.length));
+    }
+  }
+
+  function restoreEditingRowKey(): void {
+    states.editingRowKey.value = null;
+  }
+
+  function clearEditingRow(flush = true): void {
+    const rowKey = states.editingRowKey.value;
+    if (!rowKey) return;
+
+    if (flush) flushRowDrafts(rowKey);
+    else discardDraftsForRow(rowKey);
+
+    const current = states.editingCell.value;
+    const currentRow = current
+      ? table.store.states.data.value[current.rowIndex]
+      : undefined;
+    if (currentRow && table.store.getRowKey(currentRow) === rowKey) {
+      states.editingCell.value = null;
+    }
+
+    restoreEditingRowKey();
+    editingRowSnapshot = null;
+  }
+
   /** 行失效后调用：清掉该行残留的编辑态 / 快照 / 草稿，避免长会话下无限增长 */
   function cleanEditing(): void {
     const keysMap = table.store.states.keysMap.value;
-    for (const rowKey of [...states.editingRowKeys]) {
-      if (!keysMap.has(rowKey)) states.editingRowKeys.delete(rowKey);
-    }
-    for (const rowKey of [...rowSnapshots.keys()]) {
-      if (!keysMap.has(rowKey)) {
-        rowSnapshots.delete(rowKey);
-        discardDraftsForRow(rowKey);
-      }
+    const editingRowKey = states.editingRowKey.value;
+    if (editingRowKey && !keysMap.has(editingRowKey)) {
+      discardDraftsForRow(editingRowKey);
+      restoreEditingRowKey();
+      editingRowSnapshot = null;
     }
     const current = states.editingCell.value;
     if (current && !table.store.states.data.value[current.rowIndex]) {
@@ -122,7 +155,7 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function isRowEditing(row: T): boolean {
-    return states.editingRowKeys.has(table.store.getRowKey(row));
+    return states.editingRowKey.value === table.store.getRowKey(row);
   }
 
   /** 单元格是否处于编辑器渲染态（三种模式统一入口） */
@@ -198,6 +231,7 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
 
   /** cell 模式提交：经 setCellValue 流水线（脏值跳过 / 联动 / 校验） */
   function commitEdit(): void {
+    if (mode.value !== 'cell') return;
     const current = states.editingCell.value;
     if (!current) return;
     states.editingCell.value = null;
@@ -212,6 +246,7 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function cancelEdit(): void {
+    if (mode.value !== 'cell') return;
     const current = states.editingCell.value;
     if (!current) return;
     states.editingCell.value = null;
@@ -220,14 +255,46 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
     if (node?.column.prop && row) deleteDraft(table.store.getRowKey(row), node.column.prop);
   }
 
+  function clearRowEditingCell(flush = false): void {
+    const current = states.editingCell.value;
+    if (!current || mode.value !== 'row') return;
+    const row = table.store.states.data.value[current.rowIndex];
+    const node = table.store.states.columns.value[current.colIndex];
+    const prop = node?.column.prop;
+    if (flush && row && prop) {
+      flushDraft(row, current.rowIndex, table.store.getRowKey(row), prop);
+    }
+    states.editingCell.value = null;
+    if (row && prop) deleteDraft(table.store.getRowKey(row), prop);
+  }
+
+  /** row 模式：在已进编的行上设置当前格编辑器 */
+  function setRowEditingCell(rowIndex: number, colIndex: number): boolean {
+    if (mode.value !== 'row') return false;
+    const row = table.store.states.data.value[rowIndex];
+    if (!row || !isRowEditing(row) || !canEditCell(rowIndex, colIndex)) {
+      return false;
+    }
+    const node = table.store.states.columns.value[colIndex];
+    const prop = node?.column.prop;
+    if (!prop) return false;
+    clearRowEditingCell(true);
+    setDraft(table.store.getRowKey(row), prop, row[prop]);
+    states.editingCell.value = { rowIndex, colIndex };
+    table.store.setCurrentCell(rowIndex, colIndex, false);
+    void focusEditor(rowIndex, colIndex, false);
+    return true;
+  }
+
   function startRowEdit(rowIndex: number): boolean {
     if (mode.value !== 'row') return false;
     const row = table.store.states.data.value[rowIndex];
     if (!row) return false;
     const key = table.store.getRowKey(row);
-    if (states.editingRowKeys.has(key)) return true;
-    rowSnapshots.set(key, cloneDeep(row));
-    states.editingRowKeys.add(key);
+    if (states.editingRowKey.value === key) return true;
+    clearEditingRow(true);
+    editingRowSnapshot = cloneDeep(row);
+    states.editingRowKey.value = key;
     return true;
   }
 
@@ -236,11 +303,13 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
     const row = table.store.states.data.value[rowIndex];
     if (!row) return false;
     const key = table.store.getRowKey(row);
-    if (!states.editingRowKeys.has(key)) return true;
+    if (states.editingRowKey.value !== key) return true;
+    flushRowDrafts(key);
+    states.editingCell.value = null;
     const errors = await table.store.validateRow(rowIndex);
     if (errors.length) return false;
-    states.editingRowKeys.delete(key);
-    rowSnapshots.delete(key);
+    restoreEditingRowKey();
+    editingRowSnapshot = null;
     return true;
   }
 
@@ -249,18 +318,22 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
     const row = table.store.states.data.value[rowIndex];
     if (!row) return;
     const key = table.store.getRowKey(row);
-    if (!states.editingRowKeys.has(key)) return;
+    if (states.editingRowKey.value !== key) return;
+    states.editingCell.value = null;
     // 未提交的草稿本来就没写进 row，直接丢弃即可；不能 flush，否则等于强行提交取消中的编辑
     discardDraftsForRow(key);
-    const snapshot = rowSnapshots.get(key);
+    const dirtyProps = new Set(Object.keys(row));
+    const snapshot = editingRowSnapshot;
     if (snapshot) {
+      for (const prop of Object.keys(snapshot)) dirtyProps.add(prop);
       for (const prop of Object.keys(row)) {
         if (!(prop in snapshot)) delete (row as RowData)[prop];
       }
       Object.assign(row, cloneDeep(snapshot));
     }
-    states.editingRowKeys.delete(key);
-    rowSnapshots.delete(key);
+    for (const prop of dirtyProps) table.store.markDirty(key, prop);
+    restoreEditingRowKey();
+    editingRowSnapshot = null;
     table.store.clearRowValidate(row);
   }
 
@@ -273,6 +346,8 @@ export function useEditing<T extends RowData = RowData>(table: PlusTable<T>) {
     commitEdit,
     cancelEdit,
     startRowEdit,
+    setRowEditingCell,
+    clearRowEditingCell,
     commitRowEdit,
     cancelRowEdit,
     getDraft,

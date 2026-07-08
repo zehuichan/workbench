@@ -15,6 +15,7 @@ export interface SettingItem {
   isGroup: boolean;
   checked: boolean;
   indeterminate: boolean;
+  disabled: boolean;
 }
 
 interface PersistedSettings {
@@ -56,6 +57,18 @@ function collectLeafIds<T extends RowData>(
   return into;
 }
 
+function collectConfigurableLeafIds<T extends RowData>(
+  node: ColumnNode<T>,
+  into: string[] = [],
+): string[] {
+  if (node.children?.length) {
+    for (const child of node.children) collectConfigurableLeafIds(child, into);
+  } else if (!isSpecialColumn(node.column)) {
+    into.push(node.id);
+  }
+  return into;
+}
+
 function flattenLeaves<T extends RowData>(
   nodes: ColumnNode<T>[],
   into: ColumnNode<T>[] = [],
@@ -91,14 +104,9 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
     widthMap: ref<Record<string, number>>({}),
   };
 
-  const settingStorageKey = computed(() =>
-    typeof table.props.columnSetting === 'object'
-      ? table.props.columnSetting.storageKey
-      : undefined,
-  );
   const storageKey = computed(() =>
-    settingStorageKey.value
-      ? `${SETTINGS_STORAGE_PREFIX}${settingStorageKey.value}`
+    table.props.cache && table.props.id
+      ? `${SETTINGS_STORAGE_PREFIX}${table.props.id}`
       : null,
   );
 
@@ -246,6 +254,7 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
       nodes.forEach((node) => {
         if (isSpecialColumn(node.column)) return;
         const leafIds = collectLeafIds(node);
+        const configurableLeafIds = collectConfigurableLeafIds(node);
         const visibleCount = leafIds.filter(
           (id) => !states.hiddenIds.value.has(id),
         ).length;
@@ -257,6 +266,7 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
           isGroup: !!node.children?.length,
           checked: visibleCount === leafIds.length,
           indeterminate: visibleCount > 0 && visibleCount < leafIds.length,
+          disabled: configurableLeafIds.length === 0,
         });
         if (node.children?.length) walk(node.children, node.id, level + 1);
       });
@@ -268,8 +278,10 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
   function toggleColumnVisible(id: string, visible: boolean) {
     const node = findNode(states._columns.value, id);
     if (!node) return;
+    const leafIds = collectConfigurableLeafIds(node);
+    if (!leafIds.length) return;
     const next = new Set(states.hiddenIds.value);
-    for (const leafId of collectLeafIds(node)) {
+    for (const leafId of leafIds) {
       if (visible) next.delete(leafId);
       else next.add(leafId);
     }
@@ -285,7 +297,8 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
     if (dragId === targetId) return;
     const drag = settingItems.value.find((it) => it.id === dragId);
     const target = settingItems.value.find((it) => it.id === targetId);
-    if (!drag || !target || drag.parentId !== target.parentId) return;
+    if (!drag || drag.disabled || !target || drag.parentId !== target.parentId)
+      return;
     const siblings =
       drag.parentId === ROOT_ID
         ? orderedTree.value
