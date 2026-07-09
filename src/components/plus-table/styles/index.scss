@@ -31,7 +31,30 @@
     --el-table-border-color: var(--el-border-color-light);
     --el-table-header-bg-color: var(--el-fill-color-light);
     --el-table-text-color: var(--el-text-color-primary);
+    // 尺寸跟随 el-table size（config-provider / size prop），避免写死高度盖住 small
+    --ptbl-cell-min-height: 40px;
+    --ptbl-cell-padding-y: 6px;
+    --ptbl-cell-padding-x: 12px;
+    --ptbl-cell-editing-padding-y: 2px;
+    --ptbl-cell-editing-padding-x: 4px;
     font-weight: 500;
+
+    // 与 Element Plus table size 对齐（.el-table--small / --large）
+    &--small {
+      --ptbl-cell-min-height: 32px;
+      --ptbl-cell-padding-y: 2px;
+      --ptbl-cell-padding-x: 8px;
+      --ptbl-cell-editing-padding-y: 1px;
+      --ptbl-cell-editing-padding-x: 2px;
+    }
+
+    &--large {
+      --ptbl-cell-min-height: 48px;
+      --ptbl-cell-padding-y: 8px;
+      --ptbl-cell-padding-x: 16px;
+      --ptbl-cell-editing-padding-y: 4px;
+      --ptbl-cell-editing-padding-x: 6px;
+    }
 
     th.el-table__cell {
       color: var(--el-text-color-primary);
@@ -82,8 +105,8 @@
   align-items: center;
   box-sizing: border-box;
   width: 100%;
-  min-height: 40px;
-  padding: 6px 12px;
+  min-height: var(--ptbl-cell-min-height, 40px);
+  padding: var(--ptbl-cell-padding-y, 6px) var(--ptbl-cell-padding-x, 12px);
 
   &--editable {
     cursor: cell;
@@ -99,7 +122,8 @@
   }
 
   &--editing {
-    padding: 2px 4px;
+    padding: var(--ptbl-cell-editing-padding-y, 2px)
+      var(--ptbl-cell-editing-padding-x, 4px);
     cursor: default;
   }
 
