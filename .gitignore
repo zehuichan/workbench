@@ -12,13 +12,6 @@ dist
 dist-ssr
 *.local
 
-# Turborepo
-.turbo
-
-# VitePress
-docs/.vitepress/dist
-docs/.vitepress/cache
-
 # TypeScript build info
 *.tsbuildinfo
 

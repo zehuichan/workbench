@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { PlusTable } from '@labs/plus-table';
-import type { EditMode } from '@labs/plus-table';
+import { PlusTable } from '@/components/plus-table';
+import type { EditMode } from '@/components/plus-table';
 
 const data = ref([
   { id: 1, name: '需求评审', amount: 1200 },
