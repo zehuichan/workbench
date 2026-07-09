@@ -180,7 +180,6 @@ export function useValidation<T extends RowData = RowData>(
   }
 
   return {
-    errors,
     getCellError,
     getErrors,
     validateCell,
@@ -189,6 +188,5 @@ export function useValidation<T extends RowData = RowData>(
     clearValidate,
     clearRowValidate,
     cleanValidation,
-    states: {},
   };
 }

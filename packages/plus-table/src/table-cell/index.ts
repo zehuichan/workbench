@@ -1,8 +1,8 @@
-import { defineComponent, h, inject } from 'vue';
+import { defineComponent, h } from 'vue';
 import { ElTooltip } from 'element-plus';
-import { PLUS_TABLE_INJECTION_KEY } from '../tokens';
+import { usePlusTable } from '../tokens';
 import { getCellView } from './render-helper';
-import { getCellClasses, getEditorWrapperClass } from './styles-helper';
+import { getCellClasses, getEditorWrapperClass } from './style-helper';
 import type { PropType, VNodeChild } from 'vue';
 import type { TableColumnCtx } from 'element-plus';
 import type { RowData } from '../table/defaults';
@@ -20,15 +20,12 @@ export default defineComponent({
     node: { type: Object as PropType<ColumnNode>, required: true },
   },
   setup(props) {
-    const table = inject(PLUS_TABLE_INJECTION_KEY);
-    if (!table) {
-      throw new Error('[PlusTable] PlusTableCell 必须在 PlusTable 内部使用');
-    }
+    const table = usePlusTable();
 
     function renderDisplay(value: unknown): VNodeChild {
       const { row, rowIndex, node } = props;
       const column = node.column;
-      const slot = column.prop ? table!.slots[`cell-${column.prop}`] : undefined;
+      const slot = column.prop ? table.slots[`cell-${column.prop}`] : undefined;
       if (slot) return slot({ row, rowIndex, column, value });
       if (column.render) {
         return column.render({ row, rowIndex, column, value });
@@ -48,8 +45,8 @@ export default defineComponent({
       const { row, rowIndex, node } = props;
       const column = node.column;
       const prop = column.prop;
-      const editorSlot = prop ? table!.slots[`editor-${prop}`] : undefined;
-      const view = getCellView(table!, row, rowIndex, node, !!editorSlot);
+      const editorSlot = prop ? table.slots[`editor-${prop}`] : undefined;
+      const view = getCellView(table, row, rowIndex, node, !!editorSlot);
 
       const content = view.editing
         ? h('div', { class: getEditorWrapperClass(column.align) }, [

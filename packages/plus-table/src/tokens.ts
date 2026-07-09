@@ -1,3 +1,4 @@
+import { inject } from 'vue';
 import type { InjectionKey, Ref, Slots } from 'vue';
 import type { Store } from './store';
 import type { PlusTableEmits, PlusTableProps, RowData } from './table/defaults';
@@ -18,3 +19,11 @@ export interface PlusTable<T extends RowData = RowData> {
 
 export const PLUS_TABLE_INJECTION_KEY: InjectionKey<PlusTable<any>> =
   Symbol('plus-table');
+
+export function usePlusTable<T extends RowData = RowData>(): PlusTable<T> {
+  const table = inject(PLUS_TABLE_INJECTION_KEY);
+  if (!table) {
+    throw new Error('[PlusTable] 当前组件必须在 PlusTable 内部使用');
+  }
+  return table as PlusTable<T>;
+}

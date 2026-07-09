@@ -55,6 +55,5 @@ export function useRows<T extends RowData = RowData>(table: PlusTable<T>) {
     removeRow,
     moveRow,
     duplicateRow,
-    states: {},
   };
 }

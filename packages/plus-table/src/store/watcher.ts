@@ -1,5 +1,5 @@
-import { computed, ref, shallowRef } from 'vue';
-import { getRowIdentity } from '../util';
+import { computed, shallowRef } from 'vue';
+import { devWarn, getRowIdentity } from '../util';
 import { useColumns } from './columns';
 import { useCurrent } from './current';
 import { useDependencies } from './dependencies';
@@ -9,34 +9,37 @@ import { useHistory } from './history';
 import { useRows } from './rows';
 import { useValidation } from './validation';
 import type { PlusTable } from '../tokens';
-import type {
-  EditMode,
-  RowData,
-  RowKey,
-} from '../table/defaults';
+import type { EditMode, RowData, RowKey } from '../table/defaults';
+import type { ColumnNode } from '../table-column/defaults';
 
 export interface RowLocation<T extends RowData = RowData> {
   row: T;
   rowIndex: number;
 }
 
+export interface CellLocation<
+  T extends RowData = RowData,
+> extends RowLocation<T> {
+  node: ColumnNode<T>;
+  colIndex: number;
+  prop: string;
+  rowKey: string;
+}
+
 export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
   const baseStates = {
     data: shallowRef<T[]>([]),
-    rowKey: ref<RowKey<T>>(table.props.rowKey),
-    editMode: ref<EditMode | string>(table.props.editMode ?? 'cell'),
-    validateEvent: ref<boolean>(table.props.validateEvent ?? true),
-    history: ref<boolean>(!!table.props.history),
-    dirtyTracking: ref<boolean | undefined>(table.props.dirtyTracking),
+    rowKey: computed<RowKey<T>>(() => table.props.rowKey),
+    editMode: computed<EditMode>(() => table.props.editMode ?? 'cell'),
+    validateEvent: computed<boolean>(() => table.props.validateEvent ?? true),
+    history: computed<boolean>(() => !!table.props.history),
+    dirtyTracking: computed<boolean>(() => !!table.props.dirtyTracking),
   };
 
   const rowRegistry = computed(() => {
     const keysMap = new Map<string, RowLocation<T>>();
     const rowKeyMap = new WeakMap<T, string>();
     const counts = new Map<string, number>();
-    const warn = (message: string) => {
-      if ((import.meta as any)?.env?.DEV) console.warn(message);
-    };
 
     baseStates.data.value.forEach((row: T, rowIndex: number) => {
       const raw =
@@ -44,7 +47,7 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
           ? baseStates.rowKey.value(row)
           : row[baseStates.rowKey.value];
       if (raw === undefined || raw === null || raw === '') {
-        warn(
+        devWarn(
           '[PlusTable] 检测到 rowKey 解析出空值，可能导致编辑态 / 校验 / 脏标记串到别的行上，请检查 row-key 配置。',
         );
       }
@@ -56,7 +59,7 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
 
     for (const [key, count] of counts) {
       if (count > 1) {
-        warn(
+        devWarn(
           `[PlusTable] 检测到重复的 rowKey="${key}"（共 ${count} 行），可能导致编辑态 / 校验 / 脏标记串到别的行上，请确保 row-key 唯一。`,
         );
       }
@@ -87,8 +90,27 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
     );
   }
 
+  function locateCell(
+    rowIndex: number,
+    colIndex: number,
+  ): CellLocation<T> | null {
+    const row = states.data.value[rowIndex];
+    const node = columns.states.columns.value[colIndex];
+    const prop = node?.column.prop;
+    if (!row || !node || !prop) return null;
+    return {
+      row,
+      rowIndex,
+      node,
+      colIndex,
+      prop,
+      rowKey: getRowKey(row),
+    };
+  }
+
   return {
     getRowKey,
+    locateCell,
     ...columns,
     ...current,
     ...dependencies,
@@ -101,12 +123,9 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
       ...states,
       ...columns.states,
       ...current.states,
-      ...dependencies.states,
       ...history.states,
       ...dirty.states,
-      ...validation.states,
       ...editing.states,
-      ...rows.states,
     },
   };
 }

@@ -1,5 +1,5 @@
 import type { PlusTable } from '../tokens';
-import type { EditMode, RowData } from './defaults';
+import type { RowData } from './defaults';
 
 export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
   function handlePageChange(page: number) {
@@ -28,7 +28,8 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
    */
   function getCellPosition(row: T, column: { columnKey?: string }) {
     const rowKey = table.store.getRowKey(row);
-    const rowIndex = table.store.states.keysMap.value.get(rowKey)?.rowIndex ?? -1;
+    const rowIndex =
+      table.store.states.keysMap.value.get(rowKey)?.rowIndex ?? -1;
     const colIndex = column.columnKey
       ? table.store.getColumnIndex(column.columnKey)
       : -1;
@@ -41,7 +42,7 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     _cell: HTMLElement,
     event: Event,
   ) {
-    const mode = (table.props.editMode ?? 'cell') as EditMode;
+    const mode = table.store.states.editMode.value;
     if (mode === 'table') return;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0 || colIndex < 0) return;
@@ -74,7 +75,7 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     column: { columnKey?: string },
     _cell: HTMLElement,
   ) {
-    const mode = (table.props.editMode ?? 'cell') as EditMode;
+    const mode = table.store.states.editMode.value;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0) return;
     if (mode === 'cell' && colIndex >= 0) {

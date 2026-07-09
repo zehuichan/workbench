@@ -1,7 +1,21 @@
 import { partition } from 'es-toolkit';
 import { typedCharToDraft } from '../editors/registry';
+import { devWarn } from '../util';
 import type { PlusTable } from '../tokens';
 import type { HotkeyBinding, HotkeyContext, RowData } from './defaults';
+
+const ARROW_DELTAS: Record<string, [number, number]> = {
+  ArrowUp: [-1, 0],
+  ArrowDown: [1, 0],
+  ArrowLeft: [0, -1],
+  ArrowRight: [0, 1],
+};
+
+interface ActiveEditorKeyActions {
+  cancel: () => void;
+  commit: () => void;
+  afterMove: () => void;
+}
 
 function isFromEditorElement(event: KeyboardEvent): boolean {
   const target = event.target as HTMLElement | null;
@@ -42,15 +56,17 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
     const current = table.store.states.currentCell.value;
     const rowIndex = current?.rowIndex ?? -1;
     const colIndex = current?.colIndex ?? -1;
-    const row = rowIndex >= 0 ? (table.store.states.data.value[rowIndex] ?? null) : null;
-    const column =
-      colIndex >= 0 ? (table.store.states.columns.value[colIndex]?.column ?? null) : null;
+    const cell = current
+      ? table.store.locateCell(current.rowIndex, current.colIndex)
+      : null;
+    const row = cell?.row ?? null;
+    const column = cell?.node.column ?? null;
     return {
       event,
       rowIndex,
       colIndex,
       row,
-      prop: column?.prop,
+      prop: cell?.prop,
       column,
       data: table.store.states.data.value,
       navigate: (rowDelta, colDelta) =>
@@ -60,8 +76,14 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
       },
       cancelEdit: () => table.store.cancelEdit(),
       setValue: (value) => {
-        if (!row || !column?.prop) return;
-        table.store.commit('setCellValue', row, rowIndex, column.prop, value);
+        if (!cell) return;
+        table.store.commit(
+          'setCellValue',
+          cell.row,
+          cell.rowIndex,
+          cell.prop,
+          value,
+        );
       },
       undo: table.store.undo,
       redo: table.store.redo,
@@ -80,20 +102,36 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
     for (const binding of bindings) {
       if (!matchesHotkey(event, binding.key)) continue;
       const ctx = buildContext(event);
-      if (binding.when && !binding.when(ctx)) continue;
-      if (binding.preventDefault !== false) event.preventDefault();
-      if (binding.stopPropagation) event.stopPropagation();
-      const result = binding.handler(ctx);
-      if (result !== false) return true;
+      try {
+        if (binding.when && !binding.when(ctx)) continue;
+        if (binding.preventDefault !== false) event.preventDefault();
+        if (binding.stopPropagation) event.stopPropagation();
+        const result = binding.handler(ctx);
+        if (result !== false) return true;
+      } catch (err) {
+        devWarn(
+          `[PlusTable] 自定义热键 "${binding.key}" 执行失败，已跳过：${String(err)}`,
+        );
+      }
     }
     return false;
   }
 
-  /** cell 模式编辑器打开期间的按键 */
-  function handleEditingKeydown(event: KeyboardEvent) {
+  function isTextAreaLineBreak(event: KeyboardEvent): boolean {
+    const target = event.target as HTMLElement | null;
+    return (
+      target instanceof HTMLTextAreaElement && (event.shiftKey || event.altKey)
+    );
+  }
+
+  /** cell / row 模式编辑器打开期间的按键 */
+  function handleActiveEditorKeydown(
+    event: KeyboardEvent,
+    actions: ActiveEditorKeyActions,
+  ) {
     switch (event.key) {
       case 'Escape': {
-        table.store.cancelEdit();
+        actions.cancel();
         table.store.focusGrid();
         event.preventDefault();
         event.stopPropagation();
@@ -101,24 +139,18 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
       }
       case 'Enter': {
         if (event.isComposing) return;
-        const target = event.target as HTMLElement | null;
         // 仿 Excel：textarea 中 Alt/Shift+Enter 换行，Enter 提交
-        if (
-          target instanceof HTMLTextAreaElement &&
-          (event.shiftKey || event.altKey)
-        ) {
-          return;
-        }
-        table.store.commitEdit();
+        if (isTextAreaLineBreak(event)) return;
+        actions.commit();
         table.store.moveCurrent(1, 0);
-        table.store.focusGrid();
+        actions.afterMove();
         event.preventDefault();
         break;
       }
       case 'Tab': {
-        table.store.commitEdit();
+        actions.commit();
         table.store.moveSequential(event.shiftKey ? -1 : 1);
-        table.store.focusGrid();
+        actions.afterMove();
         event.preventDefault();
         break;
       }
@@ -129,8 +161,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
 
   function openRowEditorAtCurrentOrFocusGrid() {
     const current = table.store.states.currentCell.value;
-    const row =
-      current && table.store.states.data.value[current.rowIndex];
+    const row = current && table.store.states.data.value[current.rowIndex];
     if (
       current &&
       row &&
@@ -143,47 +174,9 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
     table.store.focusGrid();
   }
 
-  /** row 模式中单格编辑器打开期间的按键 */
-  function handleRowEditingKeydown(event: KeyboardEvent) {
-    switch (event.key) {
-      case 'Escape': {
-        const current = table.store.states.editingCell.value;
-        if (current) table.store.cancelRowEdit(current.rowIndex);
-        table.store.focusGrid();
-        event.preventDefault();
-        event.stopPropagation();
-        break;
-      }
-      case 'Enter': {
-        if (event.isComposing) return;
-        const target = event.target as HTMLElement | null;
-        if (
-          target instanceof HTMLTextAreaElement &&
-          (event.shiftKey || event.altKey)
-        ) {
-          return;
-        }
-        table.store.clearRowEditingCell(true);
-        table.store.moveCurrent(1, 0);
-        openRowEditorAtCurrentOrFocusGrid();
-        event.preventDefault();
-        break;
-      }
-      case 'Tab': {
-        table.store.clearRowEditingCell(true);
-        table.store.moveSequential(event.shiftKey ? -1 : 1);
-        openRowEditorAtCurrentOrFocusGrid();
-        event.preventDefault();
-        break;
-      }
-      default:
-        break;
-    }
-  }
-
   /** Tab / Esc：任何编辑模式、任何焦点位置都由网格统一拦截，不因焦点落在输入框内而被放过 */
   function handleGlobalKey(event: KeyboardEvent): boolean {
-    const mode = table.store.states.editMode.value ?? 'cell';
+    const mode = table.store.states.editMode.value;
 
     if (event.key === 'Escape') {
       const current = table.store.states.currentCell.value;
@@ -212,7 +205,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
 
   /** 非编辑态的导航 / 进编 / 撤销重做按键；焦点在编辑器控件内部时不接管 */
   function handleBuiltinNavigation(event: KeyboardEvent): boolean {
-    const mode = table.store.states.editMode.value ?? 'cell';
+    const mode = table.store.states.editMode.value;
     const ctrl = event.ctrlKey || event.metaKey;
     const current = table.store.states.currentCell.value;
 
@@ -240,33 +233,22 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
       return handled();
     }
 
+    const delta = ARROW_DELTAS[event.key];
+    if (delta) {
+      table.store.moveCurrent(delta[0], delta[1]);
+      syncFocus();
+      return handled();
+    }
+
     switch (event.key) {
-      case 'ArrowUp':
-        table.store.moveCurrent(-1, 0);
-        syncFocus();
-        return handled();
-      case 'ArrowDown':
-        table.store.moveCurrent(1, 0);
-        syncFocus();
-        return handled();
-      case 'ArrowLeft':
-        table.store.moveCurrent(0, -1);
-        syncFocus();
-        return handled();
-      case 'ArrowRight':
-        table.store.moveCurrent(0, 1);
-        syncFocus();
-        return handled();
       case 'Home':
-        if (ctrl) table.store.moveToTableCorner(false);
-        else table.store.moveToRowEdge(false);
+      case 'End': {
+        const end = event.key === 'End';
+        if (ctrl) table.store.moveToTableCorner(end);
+        else table.store.moveToRowEdge(end);
         syncFocus();
         return handled();
-      case 'End':
-        if (ctrl) table.store.moveToTableCorner(true);
-        else table.store.moveToRowEdge(true);
-        syncFocus();
-        return handled();
+      }
       case 'Enter': {
         if (event.isComposing || !current) return false;
         if (
@@ -282,7 +264,9 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
       }
       case 'F2': {
         if (!current) return false;
-        if (mode === 'cell') table.store.startEdit(current.rowIndex, current.colIndex);
+        if (mode === 'cell') {
+          table.store.startEdit(current.rowIndex, current.colIndex);
+        }
         return handled();
       }
       case 'Delete':
@@ -302,7 +286,8 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
           isPrintableKey(event) &&
           table.store.canEditCell(current.rowIndex, current.colIndex)
         ) {
-          const column = table.store.states.columns.value[current.colIndex]?.column;
+          const column =
+            table.store.states.columns.value[current.colIndex]?.column;
           const draft = typedCharToDraft(column?.editor, event.key);
           if (draft === undefined) {
             table.store.startEdit(current.rowIndex, current.colIndex);
@@ -319,7 +304,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    const mode = table.store.states.editMode.value ?? 'cell';
+    const mode = table.store.states.editMode.value;
     const [overrides, normals] = partition(
       getCustomHotkeys(),
       (h) => !!h.override,
@@ -330,11 +315,22 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
 
     // 2. cell / row 模式编辑器打开中：走独立的编辑态按键流（Tab/Enter/Esc 语义不同）
     if (mode === 'cell' && table.store.states.editingCell.value) {
-      handleEditingKeydown(event);
+      handleActiveEditorKeydown(event, {
+        cancel: table.store.cancelEdit,
+        commit: table.store.commitEdit,
+        afterMove: table.store.focusGrid,
+      });
       return;
     }
     if (mode === 'row' && table.store.states.editingCell.value) {
-      handleRowEditingKeydown(event);
+      handleActiveEditorKeydown(event, {
+        cancel: () => {
+          const current = table.store.states.editingCell.value;
+          if (current) table.store.cancelRowEdit(current.rowIndex);
+        },
+        commit: () => table.store.clearRowEditingCell(true),
+        afterMove: openRowEditorAtCurrentOrFocusGrid,
+      });
       return;
     }
 

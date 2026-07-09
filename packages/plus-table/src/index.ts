@@ -4,26 +4,7 @@ export { PlusTable };
 
 export { PLUS_TABLE_INJECTION_KEY } from './tokens';
 export { EDITOR_REGISTRY, resolveEditor } from './editors/registry';
-export { createStore } from './store/helper';
 
-export type {
-  SettingItem,
-} from './store/columns';
-export type {
-  Store,
-} from './store';
-export type {
-  CellPosition,
-} from './store/current';
-export type {
-  DependencyState,
-} from './store/dependencies';
-export type {
-  HistoryApi,
-} from './store/history';
-export type {
-  DirtyApi,
-} from './store/dirty';
 export type {
   EditorSlotProps,
   HeaderSlotProps,
@@ -35,6 +16,12 @@ export type {
   EditorAdapter,
   ResolvedEditor,
 } from './editors/registry';
+export type { Store } from './store';
+export type { SettingItem } from './store/columns';
+export type { CellPosition } from './store/current';
+export type { DependencyState } from './store/dependencies';
+export type { DirtyApi } from './store/dirty';
+export type { HistoryApi } from './store/history';
 export type {
   AdaptiveConfig,
   CellChangePayload,

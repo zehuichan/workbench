@@ -47,27 +47,19 @@ function normalize<T extends RowData>(
 
 function collectLeafIds<T extends RowData>(
   node: ColumnNode<T>,
+  include: (node: ColumnNode<T>) => boolean = () => true,
   into: string[] = [],
 ): string[] {
   if (node.children?.length) {
-    for (const child of node.children) collectLeafIds(child, into);
-  } else {
+    for (const child of node.children) collectLeafIds(child, include, into);
+  } else if (include(node)) {
     into.push(node.id);
   }
   return into;
 }
 
-function collectConfigurableLeafIds<T extends RowData>(
-  node: ColumnNode<T>,
-  into: string[] = [],
-): string[] {
-  if (node.children?.length) {
-    for (const child of node.children) collectConfigurableLeafIds(child, into);
-  } else if (!isSpecialColumn(node.column)) {
-    into.push(node.id);
-  }
-  return into;
-}
+const collectConfigurableLeafIds = <T extends RowData>(node: ColumnNode<T>) =>
+  collectLeafIds(node, (leaf) => !isSpecialColumn(leaf.column));
 
 function flattenLeaves<T extends RowData>(
   nodes: ColumnNode<T>[],
@@ -219,7 +211,9 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
     return out;
   }
 
-  const orderedTree = computed(() => applyOrder(states._columns.value, ROOT_ID));
+  const orderedTree = computed(() =>
+    applyOrder(states._columns.value, ROOT_ID),
+  );
   const visibleTree = computed(() => filterHidden(orderedTree.value));
 
   /**
@@ -254,7 +248,7 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
       nodes.forEach((node) => {
         if (isSpecialColumn(node.column)) return;
         const leafIds = collectLeafIds(node);
-        const configurableLeafIds = collectConfigurableLeafIds(node);
+        const configurableIds = collectConfigurableLeafIds(node);
         const visibleCount = leafIds.filter(
           (id) => !states.hiddenIds.value.has(id),
         ).length;
@@ -266,7 +260,7 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
           isGroup: !!node.children?.length,
           checked: visibleCount === leafIds.length,
           indeterminate: visibleCount > 0 && visibleCount < leafIds.length,
-          disabled: configurableLeafIds.length === 0,
+          disabled: configurableIds.length === 0,
         });
         if (node.children?.length) walk(node.children, node.id, level + 1);
       });
@@ -311,7 +305,10 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
 
   /** 记录表头拖拽调宽后的列宽（持久化） */
   function setColumnWidth(id: string, width: number) {
-    states.widthMap.value = { ...states.widthMap.value, [id]: Math.round(width) };
+    states.widthMap.value = {
+      ...states.widthMap.value,
+      [id]: Math.round(width),
+    };
   }
 
   function resetSettings() {

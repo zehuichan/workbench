@@ -1,15 +1,12 @@
 import { nextTick, shallowRef } from 'vue';
 import { clamp } from 'es-toolkit';
+import { focusEditorElement } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
 
 export interface CellPosition {
   rowIndex: number;
   colIndex: number;
-}
-
-function escapeAttrValue(value: string): string {
-  return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
 }
 
 export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
@@ -49,7 +46,7 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     const columnId = table.store.states.columns.value[colIndex]?.id;
     if (!columnId) return null;
     return tr.querySelector<HTMLElement>(
-      `[data-ptbl-col="${escapeAttrValue(columnId)}"]`,
+      `[data-ptbl-col="${CSS.escape(columnId)}"]`,
     );
   }
 
@@ -139,24 +136,14 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     void nextTick(() => {
       if (states.currentCell.value !== current) return;
       const cellEl = getCellEl(current.rowIndex, current.colIndex);
-      const input = cellEl?.querySelector<HTMLElement>(
-        'input, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!input) {
-        focusGrid();
-        return;
-      }
-      if (document.activeElement === input) return;
-      input.focus({ preventScroll: true });
       if (
-        input instanceof HTMLInputElement ||
-        input instanceof HTMLTextAreaElement
+        !focusEditorElement(cellEl, {
+          preventScroll: true,
+          select: 'all',
+          skipIfFocused: true,
+        })
       ) {
-        try {
-          input.select();
-        } catch {
-          // number 等输入类型不支持 selection API
-        }
+        focusGrid();
       }
     });
   }

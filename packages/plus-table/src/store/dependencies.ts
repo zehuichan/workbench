@@ -1,10 +1,7 @@
 import { cellKey } from '../util';
 import type { PlusTable } from '../tokens';
 import type { CellRule, RowData } from '../table/defaults';
-import type {
-  DependencyApi,
-  PlusTableColumn,
-} from '../table-column/defaults';
+import type { DependencyApi, PlusTableColumn } from '../table-column/defaults';
 
 export interface DependencyState {
   disabled: boolean;
@@ -75,6 +72,5 @@ export function useDependencies<T extends RowData = RowData>(
   return {
     getDependencyState,
     notifyFieldChange,
-    states: {},
   };
 }

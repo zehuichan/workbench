@@ -1,24 +1,19 @@
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { ElButton, ElCheckbox, ElPopover } from 'element-plus';
-import { PLUS_TABLE_INJECTION_KEY } from '../tokens';
+import { usePlusTable } from '../tokens';
 import type { SettingItem } from '../store/columns';
 
 defineOptions({ name: 'PlusTableColumnSettings' });
 
-const table = inject(PLUS_TABLE_INJECTION_KEY);
-if (!table) {
-  throw new Error(
-    '[PlusTable] PlusTableColumnSettings 必须在 PlusTable 内部使用',
-  );
-}
+const table = usePlusTable();
 
-const items = computed(() => table!.store.settingItems.value);
+const items = computed(() => table.store.settingItems.value);
 
 function handleToggle(id: string, checked: boolean | string | number) {
   const item = items.value.find((it) => it.id === id);
   if (item?.disabled) return;
-  table!.store.commit('toggleColumnVisible', id, !!checked);
+  table.store.commit('toggleColumnVisible', id, !!checked);
 }
 
 const dragItem = ref<SettingItem | null>(null);
@@ -61,7 +56,7 @@ function handleDragOver(event: DragEvent, item: SettingItem) {
 function handleDrop(event: DragEvent, item: SettingItem) {
   if (!canDropOn(item)) return;
   event.preventDefault();
-  table!.store.commit(
+  table.store.commit(
     'updateColumnOrder',
     dragItem.value!.id,
     item.id,
@@ -116,7 +111,7 @@ function handleDragEnd() {
         </li>
       </ul>
       <div class="ptbl-column-settings__actions">
-        <el-button text size="small" @click="table!.store.resetSettings()">
+        <el-button text size="small" @click="table.store.resetSettings()">
           重置
         </el-button>
       </div>

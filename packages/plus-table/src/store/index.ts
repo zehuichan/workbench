@@ -7,8 +7,8 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
   const watcher = useWatcher(table);
 
   const mutations = {
-    setData(data: T[] = []) {
-      watcher.states.data.value = data ?? [];
+    setData(data: T[]) {
+      watcher.states.data.value = data;
       watcher.cleanHistory();
       watcher.cleanDirty();
       watcher.cleanValidation();
@@ -30,7 +30,7 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
       watcher.markDirty(rowKey, prop);
       table.emit('cell-change', { row, rowIndex, prop, value, oldValue });
       watcher.notifyFieldChange(row, rowIndex, prop);
-      if (watcher.states.validateEvent.value !== false) {
+      if (watcher.states.validateEvent.value) {
         void watcher.validateCell(row, rowIndex, prop);
       }
     },
@@ -85,7 +85,7 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
         value,
         oldValue,
       });
-      if (watcher.states.validateEvent.value !== false) {
+      if (watcher.states.validateEvent.value) {
         void watcher.validateCell(change.row, change.rowIndex, change.prop);
       }
     }
@@ -100,15 +100,13 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function clearCell(rowIndex: number, colIndex: number) {
-    const node = watcher.states.columns.value[colIndex];
-    const row = watcher.states.data.value[rowIndex];
-    if (!node?.column.prop || !row) return;
-    commit('setCellValue', row, rowIndex, node.column.prop, null);
+    const cell = watcher.locateCell(rowIndex, colIndex);
+    if (!cell) return;
+    commit('setCellValue', cell.row, cell.rowIndex, cell.prop, null);
   }
 
   return {
     ...watcher,
-    mutations,
     commit,
     clearCell,
     undo,

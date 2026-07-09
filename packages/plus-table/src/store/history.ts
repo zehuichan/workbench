@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue';
-import { HISTORY_STACK_LIMIT } from '../util';
+import { devWarn, HISTORY_STACK_LIMIT } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
 
@@ -30,8 +30,12 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     redoStack: ref<HistoryEntry[]>([]),
   };
 
-  const canUndo = computed(() => enabled() && states.undoStack.value.length > 0);
-  const canRedo = computed(() => enabled() && states.redoStack.value.length > 0);
+  const canUndo = computed(
+    () => enabled() && states.undoStack.value.length > 0,
+  );
+  const canRedo = computed(
+    () => enabled() && states.redoStack.value.length > 0,
+  );
 
   function enabled(): boolean {
     return !!table.store.states.history.value;
@@ -59,11 +63,9 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     for (const change of entries) {
       const found = table.store.states.keysMap.value.get(change.rowKey);
       if (!found) {
-        if ((import.meta as any)?.env?.DEV) {
-          console.warn(
-            `[PlusTable] ${direction === 'undo' ? '撤销' : '重做'}跳过：rowKey="${change.rowKey}" 对应的行已不存在`,
-          );
-        }
+        devWarn(
+          `[PlusTable] ${direction === 'undo' ? '撤销' : '重做'}跳过：rowKey="${change.rowKey}" 对应的行已不存在`,
+        );
         continue;
       }
       (found.row as RowData)[change.prop] =

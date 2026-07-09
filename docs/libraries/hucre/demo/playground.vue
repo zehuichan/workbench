@@ -346,7 +346,7 @@ async function handleBuilderExport() {
 }
 
 function downloadBlob(data: Uint8Array, filename: string, mime: string) {
-  const blob = new Blob([data], { type: mime });
+  const blob = new Blob([new Uint8Array(data)], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

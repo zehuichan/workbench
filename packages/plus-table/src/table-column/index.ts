@@ -1,6 +1,6 @@
-import { defineComponent, h, inject } from 'vue';
+import { defineComponent, h } from 'vue';
 import { ElTableColumn } from 'element-plus';
-import { PLUS_TABLE_INJECTION_KEY } from '../tokens';
+import { usePlusTable } from '../tokens';
 import { isNativeRenderColumn } from '../util';
 import PlusTableCell from '../table-cell';
 import type { PropType, VNodeChild } from 'vue';
@@ -33,16 +33,11 @@ export default defineComponent({
     node: { type: Object as PropType<ColumnNode<any>>, required: true },
   },
   setup(props) {
-    const table = inject(PLUS_TABLE_INJECTION_KEY);
-    if (!table) {
-      throw new Error(
-        '[PlusTable] PlusTableColumnNode 必须在 PlusTable 内部使用',
-      );
-    }
+    const table = usePlusTable();
 
     function renderHeader(column: PlusTableColumn): VNodeChild {
       const headerSlot = column.prop
-        ? table!.slots[`header-${column.prop}`]
+        ? table.slots[`header-${column.prop}`]
         : undefined;
       return h(
         'span',
@@ -104,7 +99,7 @@ export default defineComponent({
           // header-dragend 调宽时用 columnKey 找回叶子列
           columnKey: node.id,
           ...nativeProps(column),
-          width: table!.store.states.widthMap.value[node.id] ?? column.width,
+          width: table.store.states.widthMap.value[node.id] ?? column.width,
         },
         {
           header: () => renderHeader(column),

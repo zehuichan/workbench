@@ -1,4 +1,5 @@
 import { resolveEditor } from '../editors/registry';
+import { resolveEditable } from '../util';
 import type { Component } from 'vue';
 import type { PlusTable } from '../tokens';
 import type { CellError, EditMode, RowData } from '../table/defaults';
@@ -43,19 +44,31 @@ export interface CellView<T extends RowData = RowData> {
   editorSlotProps: EditorSlotProps<T> | null;
 }
 
+interface CellBindingContext<T extends RowData = RowData> {
+  table: PlusTable<T>;
+  row: T;
+  rowIndex: number;
+  rowKey: string;
+  prop: string;
+  isCellMode: boolean;
+}
+
+interface CellEditorContext<T extends RowData = RowData> extends Omit<
+  CellBindingContext<T>,
+  'prop'
+> {
+  column: PlusTableColumn<T>;
+}
+
 /**
  * 单元格取值 + 写入策略：cell 模式读写草稿仓；row/table 模式下 wantsBuffer 时草稿仓缓冲、
  * 失焦提交，否则 setValue 即时写值。editor-${prop} 插槽与内置/自定义编辑器共用此策略。
  */
 export function getCellBinding<T extends RowData = RowData>(
-  table: PlusTable<T>,
-  row: T,
-  rowIndex: number,
-  rowKey: string,
-  prop: string,
-  isCellMode: boolean,
+  ctx: CellBindingContext<T>,
   wantsBuffer: boolean,
 ) {
+  const { table, row, rowIndex, rowKey, prop, isCellMode } = ctx;
   const useBuffer = !isCellMode && wantsBuffer;
   let value: unknown;
   if (isCellMode) {
@@ -78,25 +91,16 @@ export function getCellBinding<T extends RowData = RowData>(
 }
 
 export function getEditorSlotProps<T extends RowData = RowData>(
-  table: PlusTable<T>,
-  row: T,
-  rowIndex: number,
-  rowKey: string,
-  column: PlusTableColumn<T>,
-  isCellMode: boolean,
+  ctx: CellEditorContext<T>,
 ): EditorSlotProps<T> {
+  const { table, row, rowIndex, rowKey, column, isCellMode } = ctx;
   const prop = column.prop!;
   // 插槽是完全自定义的内容，PlusTable 不假设失焦语义，也不做缓冲——commit/cancel 留给业务侧自行接线
   const { value, setValue } = getCellBinding(
-    table,
-    row,
-    rowIndex,
-    rowKey,
-    prop,
-    isCellMode,
+    { table, row, rowIndex, rowKey, prop, isCellMode },
     false,
   );
-  const mode = table.store.states.editMode.value ?? 'cell';
+  const mode = table.store.states.editMode.value;
   const commit = () => {
     if (isCellMode) table.store.commitEdit();
     else if (mode === 'row') table.store.clearRowEditingCell(false);
@@ -117,26 +121,18 @@ export function getEditorSlotProps<T extends RowData = RowData>(
 }
 
 export function getEditorBinding<T extends RowData = RowData>(
-  table: PlusTable<T>,
-  row: T,
-  rowIndex: number,
-  rowKey: string,
-  column: PlusTableColumn<T>,
-  isCellMode: boolean,
+  ctx: CellEditorContext<T>,
   depState: DependencyState | undefined,
 ): EditorBinding {
+  const { table, row, rowIndex, rowKey, column, isCellMode } = ctx;
   const prop = column.prop!;
   const resolved = resolveEditor(column.editor, { row, rowIndex });
   const modelProp = resolved.modelProp;
   const { value, setValue, flush } = getCellBinding(
-    table,
-    row,
-    rowIndex,
-    rowKey,
-    prop,
-    isCellMode,
+    { table, row, rowIndex, rowKey, prop, isCellMode },
     resolved.trigger === 'blur',
   );
+  const mode = table.store.states.editMode.value;
 
   const bind: Record<string, unknown> = {
     ...resolved.componentProps,
@@ -146,7 +142,7 @@ export function getEditorBinding<T extends RowData = RowData>(
       setValue(next);
       if (resolved.trigger === 'change') {
         if (isCellMode) table.store.commitEdit();
-        else if ((table.props.editMode ?? 'cell') === 'row') {
+        else if (mode === 'row') {
           table.store.clearRowEditingCell();
         }
       }
@@ -158,7 +154,7 @@ export function getEditorBinding<T extends RowData = RowData>(
         return;
       }
       flush();
-      if ((table.props.editMode ?? 'cell') === 'row') {
+      if (mode === 'row') {
         table.store.clearRowEditingCell();
       }
     },
@@ -178,53 +174,42 @@ export function getCellView<T extends RowData = RowData>(
   const column = node.column;
   const prop = column.prop;
   const value = prop ? row[prop] : undefined;
-  const mode = (table.props.editMode ?? 'cell') as EditMode;
+  const mode = table.store.states.editMode.value;
   const isCellMode = mode === 'cell';
 
   const colIndex = table.store.getColumnIndex(node.id);
   const inGrid = colIndex >= 0;
-  const editing = inGrid && table.store.isCellEditing(rowIndex, colIndex);
-  const editable = inGrid && table.store.canEditCell(rowIndex, colIndex);
   const active = inGrid && table.store.isCurrentCell(rowIndex, colIndex);
   const error = prop ? table.store.getCellError(row, prop) : undefined;
+  const rowKey = prop ? table.store.getRowKey(row) : '';
 
   const depState = column.dependencies
     ? table.store.getDependencyState(row, rowIndex, column)
     : undefined;
   const rawEditable =
-    mode !== 'none' &&
-    !!prop &&
-    (typeof column.editable === 'function'
-      ? !!column.editable({ row, rowIndex })
-      : !!column.editable);
+    mode !== 'none' && !!prop && resolveEditable(row, rowIndex, column);
   const disabled = rawEditable && !!depState?.disabled;
+  const editable = inGrid && rawEditable && !disabled;
+  const current = table.store.states.editingCell.value;
+  const editing =
+    inGrid &&
+    (mode === 'table'
+      ? editable
+      : mode === 'row'
+        ? table.store.isRowEditing(row) && editable
+        : mode === 'cell'
+          ? current?.rowIndex === rowIndex && current?.colIndex === colIndex
+          : false);
   // 动态必填：联动算出来的必填状态格内即时可见，不必等提交校验失败才发现
   const required = !!column.required || !!depState?.required;
-  const dirty = !!prop && table.store.isCellDirty(table.store.getRowKey(row), prop);
+  const dirty = !!prop && table.store.isCellDirty(rowKey, prop);
 
   let editorBind: EditorBinding | null = null;
   let editorSlotProps: EditorSlotProps<T> | null = null;
   if (editing && prop) {
-    const rowKey = table.store.getRowKey(row);
-    if (hasEditorSlot)
-      editorSlotProps = getEditorSlotProps(
-        table,
-        row,
-        rowIndex,
-        rowKey,
-        column,
-        isCellMode,
-      );
-    else
-      editorBind = getEditorBinding(
-        table,
-        row,
-        rowIndex,
-        rowKey,
-        column,
-        isCellMode,
-        depState,
-      );
+    const ctx = { table, row, rowIndex, rowKey, column, isCellMode };
+    if (hasEditorSlot) editorSlotProps = getEditorSlotProps(ctx);
+    else editorBind = getEditorBinding(ctx, depState);
   }
 
   return {

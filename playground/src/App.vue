@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { PlusTable } from '@labs/plus-table';
+import type { EditMode } from '@labs/plus-table';
 
 const data = ref([
   { id: 1, name: '需求评审', amount: 1200 },
@@ -11,20 +12,29 @@ const data = ref([
 const columns = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'id', label: 'ID', width: 80 },
-  { prop: 'name', label: '名称', editable: true, editor: 'input', required: true },
+  {
+    prop: 'name',
+    label: '名称',
+    editable: true,
+    editor: 'input',
+    required: true,
+  },
   {
     prop: 'amount',
     label: '金额',
     align: 'right',
     editable: true,
-    editor: { type: 'input-number', props: { min: 0, step: 100, controls: false } },
+    editor: {
+      type: 'input-number',
+      props: { min: 0, step: 100, controls: false },
+    },
     formatter: (row: any) => `¥ ${(row.amount ?? 0).toLocaleString('zh-CN')}`,
   },
 ];
 
 const query = new URLSearchParams(window.location.search);
 const tableRef = ref();
-const editMode = ref(query.get('editMode') ?? 'cell');
+const editMode = ref((query.get('editMode') ?? 'cell') as EditMode);
 const historyEnabled = ref(query.get('history') === '1');
 const dirtyEnabled = ref(query.get('dirty') === '1');
 const useNameSlot = query.get('slot') === '1';

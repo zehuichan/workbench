@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends RowData = RowData">
-import { computed, provide, ref, useSlots, watch } from 'vue';
+import { computed, provide, ref, useSlots } from 'vue';
 import { ElPagination, ElTable } from 'element-plus';
 import './styles/index.scss';
 import { PLUS_TABLE_INJECTION_KEY } from './tokens';
@@ -62,20 +62,11 @@ const table: PlusTable<T> = {
   store: null as unknown as Store<T>,
 };
 const store = createStore<T>(table, props);
-table.store = store;
 provide(PLUS_TABLE_INJECTION_KEY, table);
 
 const style = useStyle(table);
 const events = useEvents(table);
 const keyboard = useKeyboard(table);
-
-watch(
-  () => props.data,
-  (data) => {
-    store.commit('setData', data ?? []);
-  },
-  { immediate: true },
-);
 
 const displayTree = store.states.originColumns;
 const tableData = store.states.data;
@@ -88,10 +79,6 @@ const rowKeyProp = computed(
 );
 
 const paginationEnabled = computed(() => props.total !== undefined);
-
-function setColumnWidth(id: string, width: number) {
-  store.commit('setColumnWidth', id, width);
-}
 
 defineExpose(
   new Proxy(
@@ -116,7 +103,7 @@ defineExpose(
       setActiveCell: store.setCurrentCell,
       /** 列设置 */
       resetColumnSettings: store.resetSettings,
-      setColumnWidth,
+      setColumnWidth: store.setColumnWidth,
       /** 撤销重做（history prop 关闭时栈恒为空，undo/redo 为安全空操作） */
       undo: store.undo,
       redo: store.redo,

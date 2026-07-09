@@ -19,7 +19,13 @@ const data = ref([{ id: 1, name: '示例' }]);
 const columns: PlusTableColumn[] = [
   { type: 'index', label: '#', width: 60 },
   { prop: 'id', label: 'ID', width: 80 },
-  { prop: 'name', label: '名称', editable: true, editor: 'input', required: true },
+  {
+    prop: 'name',
+    label: '名称',
+    editable: true,
+    editor: 'input',
+    required: true,
+  },
 ];
 </script>
 
@@ -77,14 +83,14 @@ const columns: PlusTableColumn[] = [
 interface PlusTableColumn extends Partial<TableColumnCtx> {
   // …原生 TableColumnCtx 属性：prop / label / type / width / align / fixed / formatter / ...
 
-  children?: PlusTableColumn[];      // 多级表头，组节点只需 label
+  children?: PlusTableColumn[]; // 多级表头，组节点只需 label
   editable?: boolean | ((ctx: RowContext) => boolean);
-  editor?: BuiltinEditorType | Component | EditorConfig;  // 编辑器，见下节；缺省为 input
-  required?: boolean;                // 必填（表头红星 + 校验）
-  rules?: CellRule[];                // async-validator 规则
+  editor?: BuiltinEditorType | Component | EditorConfig; // 编辑器，见下节；缺省为 input
+  required?: boolean; // 必填（表头红星 + 校验）
+  rules?: CellRule[]; // async-validator 规则
   dependencies?: ColumnDependencies; // 字段联动，见下节
-  render?: (params: CellContext) => VNodeChild;  // 展示态自定义渲染（优先于 formatter）
-  visible?: boolean;                 // 初始是否可见（列设置）
+  render?: (params: CellContext) => VNodeChild; // 展示态自定义渲染（优先于 formatter）
+  visible?: boolean; // 初始是否可见（列设置）
 }
 ```
 
@@ -131,7 +137,7 @@ editor: { component: MyEditor, modelProp: 'value', props: { clearable: true } }
 const hotkeys: HotkeyBinding[] = [
   {
     key: 'Ctrl+S',
-    override: true,               // 先于内置热键判定，任何编辑态/焦点位置都生效
+    override: true, // 先于内置热键判定，任何编辑态/焦点位置都生效
     handler: (ctx) => {
       ctx.event; // 原生事件，已按 preventDefault 默认值处理
       // ctx.row / ctx.prop / ctx.column：活动格上下文；ctx.setValue / ctx.navigate / ctx.undo / ctx.redo 等操作
@@ -197,7 +203,7 @@ dependencies: {
 - **列设置**：`resetColumnSettings()`、`setColumnWidth(columnId, width)`（columnId 为 prop，无 prop 时为 label 或 type）
 - **撤销重做**（`history` 关闭时恒为空操作）：`undo()`、`redo()`、`canUndo` / `canRedo`（`Ref<boolean>`）、`clearHistory()`
 - **脏数据追踪**（`dirtyTracking` 关闭时恒无脏格）：`getModifiedRows()`、`getDirtyCells()`、`isCellDirty(rowKey, prop)`、`isRowDirty(rowKey)`、`resetTracking()`、`clearDirty(rowKey?, prop?)`
-- **el-table 直通**：`getElTable()`
+- **el-table 直通**：未命中的 ref 方法 / 属性会透传到内部 `el-table` 实例
 
 行操作下标均为**当前 `data` 数组下标**（服务端分页时即「当前页下标」）。
 
@@ -219,14 +225,28 @@ dependencies: {
 ## 类型导出
 
 ```ts
-import { PlusTable, PLUS_TABLE_INJECTION_KEY, EDITOR_REGISTRY } from '@labs/plus-table';
+import {
+  PlusTable,
+  PLUS_TABLE_INJECTION_KEY,
+  EDITOR_REGISTRY,
+} from '@labs/plus-table';
 import type {
-  PlusTableProps, PlusTableColumn, RowData, EditMode,
+  PlusTableProps,
+  PlusTableColumn,
+  RowData,
+  EditMode,
   BuiltinEditorType,
-  ColumnDependencies, DependencyApi,
-  CellContext, EditorConfig,
-  CellRule, CellError, ValidateResult,
-  CellChangePayload, PageChangePayload, AdaptiveConfig,
-  HotkeyBinding, HotkeyContext,
+  ColumnDependencies,
+  DependencyApi,
+  CellContext,
+  EditorConfig,
+  CellRule,
+  CellError,
+  ValidateResult,
+  CellChangePayload,
+  PageChangePayload,
+  AdaptiveConfig,
+  HotkeyBinding,
+  HotkeyContext,
 } from '@labs/plus-table';
 ```
