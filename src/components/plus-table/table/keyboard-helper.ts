@@ -1,5 +1,5 @@
 import { partition } from 'es-toolkit';
-import { typedCharToDraft } from '../editors/registry';
+import { typedCharToDraft } from '../adapter';
 import { devWarn } from '../util';
 import type { PlusTable } from '../tokens';
 import type { HotkeyBinding, HotkeyContext, RowData } from './defaults';

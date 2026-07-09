@@ -3,7 +3,7 @@ import PlusTable from './table.vue';
 export { PlusTable };
 
 export { PLUS_TABLE_INJECTION_KEY } from './tokens';
-export { EDITOR_REGISTRY, resolveEditor } from './editors/registry';
+export { EDITOR_REGISTRY, resolveEditor } from './adapter';
 
 export type {
   EditorSlotProps,
@@ -15,7 +15,7 @@ export type {
   BuiltinEditorType,
   EditorAdapter,
   ResolvedEditor,
-} from './editors/registry';
+} from './adapter';
 export type { Store } from './store';
 export type { SettingItem } from './store/columns';
 export type { CellPosition } from './store/current';

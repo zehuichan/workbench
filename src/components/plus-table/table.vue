@@ -7,7 +7,7 @@ import { createStore } from './store/helper';
 import { useEvents } from './table/events-helper';
 import { useKeyboard } from './table/keyboard-helper';
 import { useStyle } from './table/style-helper';
-import PlusTableColumnSettings from './column-settings/index.vue';
+import PlusTableColumnSettings from './table-column-settings/index.vue';
 import PlusTableColumnNode from './table-column';
 import type { TableInstance } from 'element-plus';
 import type { PlusTable } from './tokens';

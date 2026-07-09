@@ -1,4 +1,4 @@
-import { resolveEditor } from '../editors/registry';
+import { resolveEditor } from '../adapter';
 import { resolveEditable } from '../util';
 import type { Component } from 'vue';
 import type { PlusTable } from '../tokens';

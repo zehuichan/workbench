@@ -40,8 +40,8 @@ component-labs/
             ├── table/
             ├── table-cell/
             ├── table-column/
-            ├── editors/
-            ├── column-settings/
+            ├── adapter/
+            ├── table-column-settings/
             ├── styles/
             ├── tokens.ts
             └── util.ts

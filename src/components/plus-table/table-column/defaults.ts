@@ -1,6 +1,6 @@
 import type { Component, VNodeChild } from 'vue';
 import type { TableColumnCtx } from 'element-plus';
-import type { BuiltinEditorType } from '../editors/registry';
+import type { BuiltinEditorType } from '../adapter';
 import type { CellRule, RowContext, RowData } from '../table/defaults';
 
 export interface DependencyApi<T extends RowData = RowData> {

@@ -1,3 +1,7 @@
+/**
+ * 单元格编辑器组件适配器：把列上的 editor 配置归一化为可渲染的组件描述。
+ * 命名与 vben 体系的 component adapter 对齐。
+ */
 import {
   ElCheckbox,
   ElDatePicker,
