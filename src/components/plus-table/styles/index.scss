@@ -106,22 +106,10 @@
   // cell 模式编辑中：单元格框为唯一边框，编辑器自身去边框（类 Excel）
   &--editing-focus {
     box-shadow: inset 0 0 0 1.5px var(--el-color-primary-dark-2);
-
-    .el-input__wrapper,
-    .el-select__wrapper,
-    .el-textarea__inner {
-      box-shadow: none !important;
-    }
   }
 
   // row 模式整行进编：编辑器平时无边框（视觉同普通单元格），聚焦的格才显示框
   &--editing-quiet {
-    .el-input__wrapper,
-    .el-select__wrapper,
-    .el-textarea__inner {
-      box-shadow: none !important;
-    }
-
     &:focus-within {
       box-shadow: inset 0 0 0 1.5px var(--el-color-primary-dark-2);
     }

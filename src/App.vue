@@ -73,7 +73,6 @@ function toggleHistory() {
   <main style="max-width: 960px; margin: 40px auto; padding: 0 16px">
     <h1 style="font-size: 20px; margin-bottom: 16px">PlusTable Playground</h1>
     <div
-      v-if="showTools"
       style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px"
     >
       <button type="button" @click="startFirstRowEdit">编辑首行</button>
