@@ -7,10 +7,14 @@
 ```
 component-labs/
 ├── src/
-│   ├── App.vue                 # 本地调试入口
+│   ├── App.vue
 │   ├── main.ts
-│   └── components/
-│       └── plus-table/         # PlusTable 组件源码
+│   ├── router/
+│   ├── layouts/
+│   ├── views/plus-table/     # PlusTable 场景 demo
+│   ├── components/plus-table/
+│   └── composables/
+├── docs/superpowers/
 ├── index.html
 ├── vite.config.ts
 └── package.json
@@ -24,6 +28,19 @@ pnpm install
 # 启动开发服务器（默认端口 8000）
 pnpm dev
 ```
+
+## Playground
+
+`pnpm dev` 后访问 http://localhost:8000 。
+
+侧栏切换 PlusTable 场景：
+
+- `/plus-table/basic-editing`
+- `/plus-table/dependencies-validation`
+- `/plus-table/history-dirty`
+- `/plus-table/pagination-rows`
+
+后续 composables demo 约定路径：`/composables/<name>`（本期未注册）。
 
 ## 常用脚本
 
