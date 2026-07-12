@@ -58,7 +58,7 @@ function handleFlush() {
 </script>
 
 <template>
-  <DemoPage>
+  <DemoPage width="wide">
     <header class="demo__header">
       <h1 class="demo__title">useFormDraft</h1>
       <p class="demo__desc">
@@ -69,98 +69,94 @@ function handleFlush() {
       </p>
     </header>
 
-    <div class="demo__api demo__api--split">
-      <div class="demo__api-block">
-        <h2 class="demo__api-title">Options</h2>
-        <table class="demo__table">
-          <thead>
-            <tr>
-              <th>名称</th>
-              <th>类型</th>
-              <th>说明</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>form</code></td>
-              <td><code>Ref&lt;T&gt;</code></td>
-              <td>必填。可变表单状态，须为可 JSON 序列化的普通对象。</td>
-            </tr>
-            <tr>
-              <td><code>key</code></td>
-              <td><code>MaybeRefOrGetter&lt;string&gt;</code></td>
-              <td>
-                必填。完整 storage key。key 变化不会自动迁移旧数据。
-              </td>
-            </tr>
-            <tr>
-              <td><code>enabled</code></td>
-              <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
-              <td>默认 <code>true</code>。为 false 时不写入。</td>
-            </tr>
-            <tr>
-              <td><code>defaults</code></td>
-              <td><code>MaybeRefOrGetter&lt;Partial&lt;T&gt;&gt;</code></td>
-              <td>可选。Restore 时浅合并到底层（草稿覆盖其上）。</td>
-            </tr>
-            <tr>
-              <td><code>debounceMs</code></td>
-              <td><code>MaybeRefOrGetter&lt;number&gt;</code></td>
-              <td>默认 <code>500</code>。变更后多久写入。</td>
-            </tr>
-            <tr>
-              <td><code>onError</code></td>
-              <td><code>(error: unknown) =&gt; void</code></td>
-              <td>可选。key / 序列化 / storage 失败回调。</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="demo__api">
+      <h2 class="demo__api-title">Options</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>form</code></td>
+            <td><code>Ref&lt;T&gt;</code></td>
+            <td>必填。可变表单状态，须为可 JSON 序列化的普通对象。</td>
+          </tr>
+          <tr>
+            <td><code>key</code></td>
+            <td><code>MaybeRefOrGetter&lt;string&gt;</code></td>
+            <td>
+              必填。完整 storage key。key 变化不会自动迁移旧数据。
+            </td>
+          </tr>
+          <tr>
+            <td><code>enabled</code></td>
+            <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
+            <td>默认 <code>true</code>。为 false 时不写入。</td>
+          </tr>
+          <tr>
+            <td><code>defaults</code></td>
+            <td><code>MaybeRefOrGetter&lt;Partial&lt;T&gt;&gt;</code></td>
+            <td>可选。Restore 时浅合并到底层（草稿覆盖其上）。</td>
+          </tr>
+          <tr>
+            <td><code>debounceMs</code></td>
+            <td><code>MaybeRefOrGetter&lt;number&gt;</code></td>
+            <td>默认 <code>500</code>。变更后多久写入。</td>
+          </tr>
+          <tr>
+            <td><code>onError</code></td>
+            <td><code>(error: unknown) =&gt; void</code></td>
+            <td>可选。key / 序列化 / storage 失败回调。</td>
+          </tr>
+        </tbody>
+      </table>
 
-      <div class="demo__api-block">
-        <h2 class="demo__api-title">Returns</h2>
-        <table class="demo__table">
-          <thead>
-            <tr>
-              <th>名称</th>
-              <th>类型</th>
-              <th>说明</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>isPending</code></td>
-              <td><code>Ref&lt;boolean&gt;</code></td>
-              <td>是否仍在 debounce 等待写入。</td>
-            </tr>
-            <tr>
-              <td><code>error</code></td>
-              <td><code>Ref&lt;unknown | null&gt;</code></td>
-              <td>最近一次失败原因。</td>
-            </tr>
-            <tr>
-              <td><code>restore</code></td>
-              <td><code>() =&gt; boolean</code></td>
-              <td>读取当前 key 的草稿并浅合并进 form；无草稿返回 false。</td>
-            </tr>
-            <tr>
-              <td><code>clear</code></td>
-              <td><code>() =&gt; boolean</code></td>
-              <td>删除当前 key 的草稿。</td>
-            </tr>
-            <tr>
-              <td><code>flush</code></td>
-              <td><code>() =&gt; boolean</code></td>
-              <td>取消 debounce，立即写入当前 form。</td>
-            </tr>
-            <tr>
-              <td><code>withPaused</code></td>
-              <td><code>(task) =&gt; Promise&lt;R&gt;</code></td>
-              <td>执行期间忽略 form 变更，不调度写入。</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <h2 class="demo__api-title">Returns</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>isPending</code></td>
+            <td><code>Ref&lt;boolean&gt;</code></td>
+            <td>是否仍在 debounce 等待写入。</td>
+          </tr>
+          <tr>
+            <td><code>error</code></td>
+            <td><code>Ref&lt;unknown | null&gt;</code></td>
+            <td>最近一次失败原因。</td>
+          </tr>
+          <tr>
+            <td><code>restore</code></td>
+            <td><code>() =&gt; boolean</code></td>
+            <td>读取当前 key 的草稿并浅合并进 form；无草稿返回 false。</td>
+          </tr>
+          <tr>
+            <td><code>clear</code></td>
+            <td><code>() =&gt; boolean</code></td>
+            <td>删除当前 key 的草稿。</td>
+          </tr>
+          <tr>
+            <td><code>flush</code></td>
+            <td><code>() =&gt; boolean</code></td>
+            <td>取消 debounce，立即写入当前 form。</td>
+          </tr>
+          <tr>
+            <td><code>withPaused</code></td>
+            <td><code>(task) =&gt; Promise&lt;R&gt;</code></td>
+            <td>执行期间忽略 form 变更，不调度写入。</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <DemoBlock>
@@ -207,15 +203,4 @@ function handleFlush() {
     </DemoBlock>
   </DemoPage>
 </template>
-
-<style scoped>
-.demo__pre {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #606266;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-</style>
 

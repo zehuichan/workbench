@@ -31,7 +31,7 @@ useSaveHotkey({ handler: save, enabled, active });
 </script>
 
 <template>
-  <DemoPage>
+  <DemoPage width="wide">
     <header class="demo__header">
       <h1 class="demo__title">useSaveHotkey</h1>
       <p class="demo__desc">
@@ -41,58 +41,67 @@ useSaveHotkey({ handler: save, enabled, active });
       </p>
     </header>
 
-    <div class="demo__api demo__api--split">
-      <div class="demo__api-block">
-        <h2 class="demo__api-title">Options</h2>
-        <table class="demo__table">
-          <thead>
-            <tr>
-              <th>名称</th>
-              <th>类型</th>
-              <th>说明</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><code>handler</code></td>
-              <td><code>() =&gt; void | Promise&lt;void&gt;</code></td>
-              <td>必填。与主保存按钮相同的保存逻辑。</td>
-            </tr>
-            <tr>
-              <td><code>enabled</code></td>
-              <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
-              <td>
-                默认 <code>true</code>。为 false
-                时不执行，但仍可能挡住下层注册。
-              </td>
-            </tr>
-            <tr>
-              <td><code>active</code></td>
-              <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
-              <td>
-                默认 <code>true</code>。为 false
-                时注销本注册（例如对话框未打开、KeepAlive
-                失活配合生命周期）。
-              </td>
-            </tr>
-            <tr>
-              <td><code>onError</code></td>
-              <td><code>(error: unknown) =&gt; void</code></td>
-              <td>可选。handler 或谓词求值失败时回调。</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="demo__api">
+      <h2 class="demo__api-title">Options</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>handler</code></td>
+            <td><code>() =&gt; void | Promise&lt;void&gt;</code></td>
+            <td>必填。与主保存按钮相同的保存逻辑。</td>
+          </tr>
+          <tr>
+            <td><code>enabled</code></td>
+            <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
+            <td>
+              默认 <code>true</code>。为 false
+              时不执行，但仍可能挡住下层注册。
+            </td>
+          </tr>
+          <tr>
+            <td><code>active</code></td>
+            <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
+            <td>
+              默认 <code>true</code>。为 false
+              时注销本注册（例如对话框未打开、KeepAlive
+              失活配合生命周期）。
+            </td>
+          </tr>
+          <tr>
+            <td><code>onError</code></td>
+            <td><code>(error: unknown) =&gt; void</code></td>
+            <td>可选。handler 或谓词求值失败时回调。</td>
+          </tr>
+        </tbody>
+      </table>
 
-      <div class="demo__api-block">
-        <h2 class="demo__api-title">Returns</h2>
-        <div class="demo__panel">
-          <p class="demo__hint demo__hint--tight">
-            无返回值。挂载时注册，卸载 /
-            <code>onDeactivated</code> 时移除。
-          </p>
-        </div>
-      </div>
+      <h2 class="demo__api-title">Returns</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>—</td>
+            <td>—</td>
+            <td>
+              无返回值。挂载时注册，卸载 /
+              <code>onDeactivated</code> 时移除。
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <DemoBlock>
