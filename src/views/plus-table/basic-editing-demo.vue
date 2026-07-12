@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import DemoBlock from '@/components/demo/demo-block.vue';
+import DemoPage from '@/components/demo/demo-page.vue';
 import { PlusTable } from '@/components/plus-table';
 
 defineOptions({ name: 'BasicEditingDemo' });
@@ -101,37 +103,107 @@ const columns = [
 </script>
 
 <template>
-  <section class="demo">
+  <DemoPage width="wide">
     <header class="demo__header">
       <h1 class="demo__title">基础编辑</h1>
       <p class="demo__desc">
-        cell 模式：input / input-number / select / date-picker / switch
+        展示 <code>editMode="cell"</code>：双击或
+        <kbd>Enter</kbd>/<kbd>F2</kbd>/可打印字符进入编辑，方向键在格间移动。本页覆盖内置编辑器
+        <code>input</code> / <code>input-number</code> / <code>select</code> /
+        <code>date-picker</code> / <code>switch</code>。
       </p>
     </header>
-    <PlusTable
-      v-model:data="data"
-      :columns="columns"
-      row-key="id"
-      edit-mode="cell"
-      border
-    />
-  </section>
+
+    <div class="demo__api">
+      <h2 class="demo__api-title">PlusTable Props（本页用到）</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>data</code> / <code>v-model:data</code></td>
+            <td><code>T[]</code></td>
+            <td>必填。表格数据；编辑经 <code>update:data</code> 回写。</td>
+          </tr>
+          <tr>
+            <td><code>columns</code></td>
+            <td><code>PlusTableColumnDef[]</code></td>
+            <td>必填。列配置（可编辑、编辑器、格式化等）。</td>
+          </tr>
+          <tr>
+            <td><code>row-key</code></td>
+            <td><code>keyof T | (row) =&gt; string | number</code></td>
+            <td>必填。行唯一标识。</td>
+          </tr>
+          <tr>
+            <td><code>edit-mode</code></td>
+            <td><code>'none' | 'cell' | 'row' | 'table'</code></td>
+            <td>默认 <code>cell</code>。本页为单元格进编。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="demo__api-title">Column 关键字段</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>prop</code></td>
+            <td><code>string</code></td>
+            <td>字段名；特殊列可用 <code>type: 'index' | 'selection' | …</code>。</td>
+          </tr>
+          <tr>
+            <td><code>editable</code></td>
+            <td><code>boolean | (ctx) =&gt; boolean</code></td>
+            <td>是否可编辑。</td>
+          </tr>
+          <tr>
+            <td><code>editor</code></td>
+            <td>
+              <code>BuiltinEditorType | Component | EditorConfig</code>
+            </td>
+            <td>
+              内置：<code>input</code> /
+              <code>textarea</code> / <code>input-number</code> /
+              <code>select</code> / <code>date-picker</code> /
+              <code>time-picker</code> / <code>switch</code> /
+              <code>checkbox</code>；或
+              <code>{ type, props }</code>。
+            </td>
+          </tr>
+          <tr>
+            <td><code>formatter</code></td>
+            <td>el-table 同名</td>
+            <td>展示态格式化（编辑器用原始值）。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <DemoBlock>
+      <p class="demo__hint">
+        单击选中格子 → 方向键移动；双击或按 Enter 进编；select / switch
+        选值后会自动提交并把焦点交回网格，可继续用方向键。
+      </p>
+      <PlusTable
+        v-model:data="data"
+        :columns="columns"
+        row-key="id"
+        edit-mode="cell"
+        border
+      />
+    </DemoBlock>
+  </DemoPage>
 </template>
 
-<style scoped>
-.demo__header {
-  margin-bottom: 16px;
-}
-
-.demo__title {
-  margin: 0 0 6px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.demo__desc {
-  margin: 0;
-  font-size: 13px;
-  color: #909399;
-}
-</style>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import DemoBlock from '@/components/demo/demo-block.vue';
+import DemoPage from '@/components/demo/demo-page.vue';
 import { PlusTable } from '@/components/plus-table';
 
 defineOptions({ name: 'HistoryDirtyDemo' });
@@ -74,54 +76,133 @@ function handleResetTracking() {
 </script>
 
 <template>
-  <section class="demo">
+  <DemoPage width="wide">
     <header class="demo__header">
       <h1 class="demo__title">历史与脏追踪</h1>
       <p class="demo__desc">
-        开启 history + dirtyTracking；编辑后可撤销并查看脏行。
+        <code>history</code> 打开撤销/重做栈（也可
+        <kbd>Ctrl</kbd>+<kbd>Z</kbd> /
+        <kbd>Ctrl</kbd>+<kbd>Y</kbd>）。
+        <code>dirtyTracking</code> 相对基线标记改过的行/格；保存成功后通常调
+        <code>resetTracking()</code> 把当前数据设为新基线。
       </p>
     </header>
-    <PlusTable
-      ref="tableRef"
-      v-model:data="data"
-      :columns="columns"
-      row-key="id"
-      edit-mode="cell"
-      history
-      dirty-tracking
-      border
-      @cell-change="refreshDirty"
-    >
-      <template #toolbar>
-        <el-button :disabled="!canUndo" @click="handleUndo">Undo</el-button>
-        <el-button :disabled="!canRedo" @click="handleRedo">Redo</el-button>
-        <el-button @click="handleResetTracking">Reset tracking</el-button>
-        <span class="demo__meta">脏行 {{ dirtyCount }}</span>
-      </template>
-    </PlusTable>
-  </section>
+
+    <div class="demo__api">
+      <h2 class="demo__api-title">PlusTable Props</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>history</code></td>
+            <td><code>boolean</code></td>
+            <td>默认 <code>false</code>。开启单元格变更撤销/重做。</td>
+          </tr>
+          <tr>
+            <td><code>dirty-tracking</code></td>
+            <td><code>boolean</code></td>
+            <td>默认 <code>false</code>。开启脏行/脏格追踪。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="demo__api-title">Expose（历史）</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>undo</code> / <code>redo</code></td>
+            <td><code>() =&gt; AppliedChange[]</code></td>
+            <td>撤销 / 重做；关闭 history 时为空操作。</td>
+          </tr>
+          <tr>
+            <td><code>canUndo</code> / <code>canRedo</code></td>
+            <td><code>ComputedRef&lt;boolean&gt;</code></td>
+            <td>是否可撤销 / 重做。</td>
+          </tr>
+          <tr>
+            <td><code>clearHistory</code></td>
+            <td><code>() =&gt; void</code></td>
+            <td>清空撤销重做栈。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="demo__api-title">Expose（脏追踪）</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>getModifiedRows</code></td>
+            <td><code>() =&gt; T[]</code></td>
+            <td>当前有脏格的行。</td>
+          </tr>
+          <tr>
+            <td><code>getDirtyCells</code></td>
+            <td><code>() =&gt; Set&lt;string&gt;</code></td>
+            <td><code>rowKey:prop</code> 形式的脏格集合。</td>
+          </tr>
+          <tr>
+            <td><code>isCellDirty</code> / <code>isRowDirty</code></td>
+            <td>谓词</td>
+            <td>判断单格 / 整行是否脏。</td>
+          </tr>
+          <tr>
+            <td><code>resetTracking</code></td>
+            <td><code>() =&gt; void</code></td>
+            <td>以当前 data 为新基线并清空脏标记。</td>
+          </tr>
+          <tr>
+            <td><code>clearDirty</code></td>
+            <td><code>(rowKey?, prop?) =&gt; void</code></td>
+            <td>按范围清除脏标记（不改数据）。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <DemoBlock>
+      <p class="demo__hint">
+        改名称/金额 → 脏行数增加 → Undo/Redo；点 Reset tracking
+        后脏行清零（数据保留）。
+      </p>
+      <PlusTable
+        ref="tableRef"
+        v-model:data="data"
+        :columns="columns"
+        row-key="id"
+        edit-mode="cell"
+        history
+        dirty-tracking
+        border
+        @cell-change="refreshDirty"
+      >
+        <template #toolbar>
+          <el-button :disabled="!canUndo" @click="handleUndo">Undo</el-button>
+          <el-button :disabled="!canRedo" @click="handleRedo">Redo</el-button>
+          <el-button @click="handleResetTracking">Reset tracking</el-button>
+          <span class="demo__meta">脏行 {{ dirtyCount }}</span>
+        </template>
+      </PlusTable>
+    </DemoBlock>
+  </DemoPage>
 </template>
 
-<style scoped>
-.demo__header {
-  margin-bottom: 16px;
-}
-
-.demo__title {
-  margin: 0 0 6px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.demo__desc {
-  margin: 0;
-  font-size: 13px;
-  color: #909399;
-}
-
-.demo__meta {
-  margin-left: 12px;
-  font-size: 13px;
-  color: #606266;
-}
-</style>

@@ -1,0 +1,237 @@
+/* Playground documentation chrome (Element Plus docs–like) */
+:root {
+  --demo-primary: #409eff;
+  --demo-primary-soft: #ecf5ff;
+  --demo-text: #303133;
+  --demo-text-secondary: #606266;
+  --demo-text-muted: #909399;
+  --demo-border: #e4e7ed;
+  --demo-border-light: #ebeef5;
+  --demo-bg: #f5f7fa;
+  --demo-bg-soft: #fafafa;
+  --demo-code-bg: #f0f2f5;
+}
+
+.demo {
+  color: var(--demo-text);
+}
+
+.demo--readable .demo__header,
+.demo--readable .demo__api {
+  max-width: 56rem;
+}
+
+.demo--wide {
+  max-width: none;
+}
+
+.demo__header {
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--demo-border-light);
+}
+
+.demo__title {
+  margin: 0 0 10px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--demo-text);
+}
+
+.demo__desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--demo-text-secondary);
+}
+
+.demo__desc code,
+.demo__hint code,
+.demo__table code,
+.demo__status code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  padding: 1px 5px;
+  background: var(--demo-code-bg);
+  border-radius: 3px;
+  color: var(--demo-text);
+}
+
+.demo__desc kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border: 1px solid var(--demo-border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.demo__api {
+  margin-bottom: 32px;
+}
+
+.demo__api--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px 24px;
+}
+
+.demo__api-block {
+  min-width: 0;
+}
+
+.demo__api-title,
+.demo__section-title {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--demo-text);
+}
+
+.demo__api-title + .demo__table {
+  margin-bottom: 20px;
+}
+
+.demo__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #fff;
+  border: 1px solid var(--demo-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.demo__table th,
+.demo__table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--demo-border-light);
+  vertical-align: top;
+  color: var(--demo-text-secondary);
+  line-height: 1.55;
+}
+
+.demo__table th {
+  background: var(--demo-bg-soft);
+  color: var(--demo-text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.demo__table th:first-child,
+.demo__table td:first-child {
+  white-space: nowrap;
+}
+
+.demo__table tr:last-child td {
+  border-bottom: none;
+}
+
+.demo__table tr:hover td {
+  background: #f9fafc;
+}
+
+.demo__hint {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--demo-text-muted);
+}
+
+.demo__hint--tight {
+  margin-bottom: 0;
+}
+
+.demo__meta {
+  margin-left: 12px;
+  font-size: 13px;
+  color: var(--demo-text-secondary);
+}
+
+.demo__block {
+  margin-top: 8px;
+  border: 1px solid var(--demo-border);
+  border-radius: 4px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.demo__block-body {
+  padding: 20px 20px 16px;
+}
+
+.demo__block-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px 14px;
+  border-top: 1px dashed var(--demo-border);
+  background: var(--demo-bg-soft);
+  font-size: 12px;
+  color: var(--demo-text-muted);
+}
+
+.demo__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.demo__control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--demo-text-secondary);
+}
+
+.demo__status {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--demo-text-secondary);
+}
+
+.demo__panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px 24px;
+  align-items: start;
+}
+
+.demo__form,
+.demo__snapshot,
+.demo__panel {
+  padding: 18px 20px;
+  background: var(--demo-bg-soft);
+  border: 1px solid var(--demo-border-light);
+  border-radius: 4px;
+}
+
+.demo__snapshot-title,
+.demo__panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--demo-text);
+}
+
+.demo__snapshot pre {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--demo-text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 1100px) {
+  .demo__api--split,
+  .demo__panels {
+    grid-template-columns: 1fr;
+  }
+}

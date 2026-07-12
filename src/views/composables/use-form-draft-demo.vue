@@ -9,6 +9,8 @@ import {
   ElSwitch,
 } from 'element-plus';
 import { useFormDraft } from '@/composables';
+import DemoBlock from '@/components/demo/demo-block.vue';
+import DemoPage from '@/components/demo/demo-page.vue';
 
 defineOptions({ name: 'UseFormDraftDemo' });
 
@@ -56,89 +58,164 @@ function handleFlush() {
 </script>
 
 <template>
-  <section class="demo">
+  <DemoPage>
     <header class="demo__header">
       <h1 class="demo__title">useFormDraft</h1>
       <p class="demo__desc">
-        表单变更 debounce 写入 localStorage（key:
-        {{ DRAFT_KEY }}）。刷新后需手动 Restore，避免静默覆盖。
+        把表单对象 debounce 写入
+        <code>localStorage</code>，用于崩溃/刷新后恢复。
+        <strong>恢复必须显式调用</strong>
+        <code>restore()</code>，避免本地草稿静默覆盖服务端数据。
       </p>
     </header>
 
-    <div class="demo__toolbar">
-      <label class="demo__control">
-        <span>enabled</span>
-        <el-switch v-model="enabled" />
-      </label>
-      <el-button size="small" type="primary" @click="handleRestore">
-        Restore
-      </el-button>
-      <el-button size="small" @click="handleFlush">Flush</el-button>
-      <el-button size="small" @click="handleClear">Clear</el-button>
+    <div class="demo__api demo__api--split">
+      <div class="demo__api-block">
+        <h2 class="demo__api-title">Options</h2>
+        <table class="demo__table">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>form</code></td>
+              <td><code>Ref&lt;T&gt;</code></td>
+              <td>必填。可变表单状态，须为可 JSON 序列化的普通对象。</td>
+            </tr>
+            <tr>
+              <td><code>key</code></td>
+              <td><code>MaybeRefOrGetter&lt;string&gt;</code></td>
+              <td>
+                必填。完整 storage key。key 变化不会自动迁移旧数据。
+              </td>
+            </tr>
+            <tr>
+              <td><code>enabled</code></td>
+              <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
+              <td>默认 <code>true</code>。为 false 时不写入。</td>
+            </tr>
+            <tr>
+              <td><code>defaults</code></td>
+              <td><code>MaybeRefOrGetter&lt;Partial&lt;T&gt;&gt;</code></td>
+              <td>可选。Restore 时浅合并到底层（草稿覆盖其上）。</td>
+            </tr>
+            <tr>
+              <td><code>debounceMs</code></td>
+              <td><code>MaybeRefOrGetter&lt;number&gt;</code></td>
+              <td>默认 <code>500</code>。变更后多久写入。</td>
+            </tr>
+            <tr>
+              <td><code>onError</code></td>
+              <td><code>(error: unknown) =&gt; void</code></td>
+              <td>可选。key / 序列化 / storage 失败回调。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="demo__api-block">
+        <h2 class="demo__api-title">Returns</h2>
+        <table class="demo__table">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>类型</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>isPending</code></td>
+              <td><code>Ref&lt;boolean&gt;</code></td>
+              <td>是否仍在 debounce 等待写入。</td>
+            </tr>
+            <tr>
+              <td><code>error</code></td>
+              <td><code>Ref&lt;unknown | null&gt;</code></td>
+              <td>最近一次失败原因。</td>
+            </tr>
+            <tr>
+              <td><code>restore</code></td>
+              <td><code>() =&gt; boolean</code></td>
+              <td>读取当前 key 的草稿并浅合并进 form；无草稿返回 false。</td>
+            </tr>
+            <tr>
+              <td><code>clear</code></td>
+              <td><code>() =&gt; boolean</code></td>
+              <td>删除当前 key 的草稿。</td>
+            </tr>
+            <tr>
+              <td><code>flush</code></td>
+              <td><code>() =&gt; boolean</code></td>
+              <td>取消 debounce，立即写入当前 form。</td>
+            </tr>
+            <tr>
+              <td><code>withPaused</code></td>
+              <td><code>(task) =&gt; Promise&lt;R&gt;</code></td>
+              <td>执行期间忽略 form 变更，不调度写入。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <p class="demo__status">
-      isPending: <strong>{{ isPending }}</strong> · error: {{ errorLabel }}
-    </p>
+    <DemoBlock>
+      <p class="demo__hint">
+        编辑表单 → 等 debounce 或点 Flush → 刷新页面 → 点 Restore
+        回填。Clear 后 Restore 会提示无草稿。当前 key：
+        <code>{{ DRAFT_KEY }}</code>
+      </p>
 
-    <el-form label-width="72px" class="demo__form">
-      <el-form-item label="姓名">
-        <el-input v-model="form.name" />
-      </el-form-item>
-      <el-form-item label="邮箱">
-        <el-input v-model="form.email" />
-      </el-form-item>
-      <el-form-item label="备注">
-        <el-input v-model="form.remark" type="textarea" :rows="3" />
-      </el-form-item>
-    </el-form>
-  </section>
+      <div class="demo__toolbar">
+        <label class="demo__control">
+          <span>enabled</span>
+          <el-switch v-model="enabled" />
+        </label>
+        <el-button size="small" type="primary" @click="handleRestore">
+          Restore
+        </el-button>
+        <el-button size="small" @click="handleFlush">Flush</el-button>
+        <el-button size="small" @click="handleClear">Clear</el-button>
+      </div>
+
+      <p class="demo__status">
+        isPending: <strong>{{ isPending }}</strong> · error: {{ errorLabel }}
+      </p>
+
+      <div class="demo__panels">
+        <el-form label-width="72px" class="demo__form">
+          <el-form-item label="姓名">
+            <el-input v-model="form.name" />
+          </el-form-item>
+          <el-form-item label="邮箱">
+            <el-input v-model="form.email" />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="form.remark" type="textarea" :rows="4" />
+          </el-form-item>
+        </el-form>
+
+        <div class="demo__panel">
+          <div class="demo__panel-title">当前 form</div>
+          <pre class="demo__pre">{{ JSON.stringify(form, null, 2) }}</pre>
+        </div>
+      </div>
+    </DemoBlock>
+  </DemoPage>
 </template>
 
 <style scoped>
-.demo__header {
-  margin-bottom: 16px;
-}
-
-.demo__title {
-  margin: 0 0 6px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.demo__desc {
+.demo__pre {
   margin: 0;
-  font-size: 13px;
-  color: #909399;
-}
-
-.demo__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 16px;
-  margin-bottom: 12px;
-}
-
-.demo__control {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.6;
   color: #606266;
-}
-
-.demo__status {
-  margin: 0 0 16px;
-  font-size: 13px;
-  color: #606266;
-}
-
-.demo__form {
-  max-width: 480px;
-  padding: 16px;
-  background: #fff;
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>
+

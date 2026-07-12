@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import DemoBlock from '@/components/demo/demo-block.vue';
+import DemoPage from '@/components/demo/demo-page.vue';
 import { PlusTable } from '@/components/plus-table';
 
 defineOptions({ name: 'PaginationRowsDemo' });
@@ -84,57 +86,130 @@ function duplicateFirstOnPage() {
 </script>
 
 <template>
-  <section class="demo">
+  <DemoPage width="wide">
     <header class="demo__header">
       <h1 class="demo__title">分页与行操作</h1>
       <p class="demo__desc">
-        全量在内存切片；增删复制改源数据。表格仅接收当前页。
+        传入 <code>total</code> 即启用分页 UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
+        <code>data</code>（服务端分页同理）。本页用内存全量 +
+        <code>computed</code> 切片演示。行增删改请改全量源，不要对当前页数组调
+        <code>insertRow</code>（否则只动这一页）。
       </p>
     </header>
-    <PlusTable
-      :data="pageRows"
-      :columns="columns"
-      row-key="id"
-      edit-mode="cell"
-      border
-      :total="allRows.length"
-      :page="page"
-      :page-size="pageSize"
-      :page-sizes="[5, 10, 20]"
-      @update:page="page = $event"
-      @update:page-size="pageSize = $event"
-      @page-change="handlePageChange"
-    >
-      <template #toolbar>
-        <el-button type="primary" @click="addRow">新增</el-button>
-        <el-button @click="removeFirstOnPage">删除当前页首行</el-button>
-        <el-button @click="duplicateFirstOnPage">复制当前页首行</el-button>
-        <span class="demo__meta">共 {{ allRows.length }} 行</span>
-      </template>
-    </PlusTable>
-  </section>
+
+    <div class="demo__api">
+      <h2 class="demo__api-title">PlusTable Props（分页）</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>total</code></td>
+            <td><code>number</code></td>
+            <td>传入即显示分页；总条数（服务端返回）。</td>
+          </tr>
+          <tr>
+            <td><code>page</code> / <code>v-model:page</code></td>
+            <td><code>number</code></td>
+            <td>默认 <code>1</code>。当前页。</td>
+          </tr>
+          <tr>
+            <td><code>page-size</code> / <code>v-model:pageSize</code></td>
+            <td><code>number</code></td>
+            <td>默认 <code>20</code>。每页条数。</td>
+          </tr>
+          <tr>
+            <td><code>page-sizes</code></td>
+            <td><code>number[]</code></td>
+            <td>默认 <code>[10, 20, 50, 100]</code>。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="demo__api-title">Events</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>载荷</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>update:page</code> / <code>update:pageSize</code></td>
+            <td><code>number</code></td>
+            <td>分页控件变更。</td>
+          </tr>
+          <tr>
+            <td><code>page-change</code></td>
+            <td><code>{ page, pageSize }</code></td>
+            <td>页码或 pageSize 变化时一并抛出，便于拉数。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="demo__api-title">Expose（行操作，作用于传入的 data）</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>insertRow(row?, index?)</code></td>
+            <td>插入行并 <code>update:data</code>。</td>
+          </tr>
+          <tr>
+            <td><code>removeRow(index)</code></td>
+            <td>按当前 <code>data</code> 下标删除。</td>
+          </tr>
+          <tr>
+            <td><code>duplicateRow(index, patch?)</code></td>
+            <td>复制行；须用 <code>patch</code> 覆盖新 <code>rowKey</code>。</td>
+          </tr>
+          <tr>
+            <td><code>moveRow(from, to)</code></td>
+            <td>移动行。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <DemoBlock>
+      <p class="demo__hint">
+        翻页 / 改 pageSize；「新增」追加到全量末尾并跳到末页；删除/复制针对当前页首行，改的是
+        <code>allRows</code>。
+      </p>
+      <PlusTable
+        :data="pageRows"
+        :columns="columns"
+        row-key="id"
+        edit-mode="cell"
+        border
+        :total="allRows.length"
+        :page="page"
+        :page-size="pageSize"
+        :page-sizes="[5, 10, 20]"
+        @update:page="page = $event"
+        @update:page-size="pageSize = $event"
+        @page-change="handlePageChange"
+      >
+        <template #toolbar>
+          <el-button type="primary" @click="addRow">新增</el-button>
+          <el-button @click="removeFirstOnPage">删除当前页首行</el-button>
+          <el-button @click="duplicateFirstOnPage">复制当前页首行</el-button>
+          <span class="demo__meta">共 {{ allRows.length }} 行</span>
+        </template>
+      </PlusTable>
+    </DemoBlock>
+  </DemoPage>
 </template>
 
-<style scoped>
-.demo__header {
-  margin-bottom: 16px;
-}
-
-.demo__title {
-  margin: 0 0 6px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.demo__desc {
-  margin: 0;
-  font-size: 13px;
-  color: #909399;
-}
-
-.demo__meta {
-  margin-left: 12px;
-  font-size: 13px;
-  color: #606266;
-}
-</style>

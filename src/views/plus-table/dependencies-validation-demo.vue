@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import DemoBlock from '@/components/demo/demo-block.vue';
+import DemoPage from '@/components/demo/demo-page.vue';
 import { PlusTable } from '@/components/plus-table';
 import type { ValidateResult } from '@/components/plus-table';
 
@@ -107,49 +109,133 @@ async function handleValidate() {
 </script>
 
 <template>
-  <section class="demo">
+  <DemoPage width="wide">
     <header class="demo__header">
       <h1 class="demo__title">联动与校验</h1>
       <p class="demo__desc">
-        类别驱动明细选项；必填校验。第 3 行故意留空便于触发失败。
+        列上的 <code>dependencies</code> 按
+        <code>triggerFields</code> 响应同行其他字段变化（动态 options /
+        disabled、副作用清空）。静态 <code>required</code> /
+        <code>rules</code> 做校验；也可
+        <code>ref.validate()</code> 全表校验。第 3 行故意留空便于看失败提示。
       </p>
     </header>
-    <PlusTable
-      ref="tableRef"
-      v-model:data="data"
-      :columns="columns"
-      row-key="id"
-      edit-mode="cell"
-      border
-    >
-      <template #toolbar>
-        <el-button type="primary" @click="handleValidate">校验</el-button>
-        <span v-if="lastValidate" class="demo__meta">{{ lastValidate }}</span>
-      </template>
-    </PlusTable>
-  </section>
+
+    <div class="demo__api">
+      <h2 class="demo__api-title">Column 校验 / 联动</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>required</code></td>
+            <td><code>boolean</code></td>
+            <td>静态必填（格内会标示）。</td>
+          </tr>
+          <tr>
+            <td><code>rules</code></td>
+            <td><code>RuleItem[]</code></td>
+            <td>async-validator 规则；与联动动态 rules 合并。</td>
+          </tr>
+          <tr>
+            <td><code>dependencies</code></td>
+            <td><code>ColumnDependencies</code></td>
+            <td>字段联动配置，见下表。</td>
+          </tr>
+          <tr>
+            <td><code>validateEvent</code></td>
+            <td><code>boolean</code></td>
+            <td>
+              表级 prop，默认 <code>true</code>。为 false 时仅
+              <code>validate()</code> 触发校验。
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="demo__api-title">dependencies</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>triggerFields</code></td>
+            <td><code>string[]</code></td>
+            <td>必填。这些字段变更时跑 <code>trigger</code> 副作用。</td>
+          </tr>
+          <tr>
+            <td><code>componentProps</code></td>
+            <td><code>(row, api) =&gt; Record</code></td>
+            <td>动态编辑器 props（如下拉 options / disabled）。</td>
+          </tr>
+          <tr>
+            <td><code>trigger</code></td>
+            <td><code>(row, api) =&gt; void</code></td>
+            <td>
+              副作用；用 <code>api.setValue(prop, value)</code> 改同行其他字段。
+            </td>
+          </tr>
+          <tr>
+            <td><code>disabled</code> / <code>required</code> / <code>rules</code></td>
+            <td>函数</td>
+            <td>可选。按行动态禁用、必填、规则。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 class="demo__api-title">Expose</h2>
+      <table class="demo__table">
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>类型</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>validate</code></td>
+            <td><code>() =&gt; Promise&lt;ValidateResult&gt;</code></td>
+            <td>全表校验；返回 <code>{ valid, errors }</code>。</td>
+          </tr>
+          <tr>
+            <td><code>clearValidate</code> / <code>getErrors</code></td>
+            <td>—</td>
+            <td>清空 / 读取当前错误。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <DemoBlock>
+      <p class="demo__hint">
+        改「类别」→「明细」选项切换，非法明细会被清空。点「校验」看第 3
+        行空必填失败。
+      </p>
+      <PlusTable
+        ref="tableRef"
+        v-model:data="data"
+        :columns="columns"
+        row-key="id"
+        edit-mode="cell"
+        border
+      >
+        <template #toolbar>
+          <el-button type="primary" @click="handleValidate">校验</el-button>
+          <span v-if="lastValidate" class="demo__meta">{{ lastValidate }}</span>
+        </template>
+      </PlusTable>
+    </DemoBlock>
+  </DemoPage>
 </template>
 
-<style scoped>
-.demo__header {
-  margin-bottom: 16px;
-}
-
-.demo__title {
-  margin: 0 0 6px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.demo__desc {
-  margin: 0;
-  font-size: 13px;
-  color: #909399;
-}
-
-.demo__meta {
-  margin-left: 12px;
-  font-size: 13px;
-  color: #606266;
-}
-</style>

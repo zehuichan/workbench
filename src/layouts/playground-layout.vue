@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '@/styles/demo-docs.css';
+
 defineOptions({ name: 'PlaygroundLayout' });
 
 const plusTableLinks = [
@@ -54,58 +56,67 @@ const composablesLinks = [
 .playground {
   display: flex;
   min-height: 100vh;
-  background: #f5f7fa;
-  color: #303133;
+  background: var(--demo-bg, #f5f7fa);
+  color: var(--demo-text, #303133);
 }
 
 .playground__nav {
-  width: 220px;
+  width: 240px;
   flex-shrink: 0;
-  padding: 20px 12px;
+  padding: 24px 16px;
   background: #fff;
-  border-right: 1px solid #e4e7ed;
+  border-right: 1px solid var(--demo-border, #e4e7ed);
 }
 
 .playground__brand {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 8px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 8px 28px;
+  color: var(--demo-text, #303133);
 }
 
 .playground__group + .playground__group {
-  margin-top: 16px;
+  margin-top: 24px;
 }
 
 .playground__group-title {
   font-size: 12px;
-  color: #909399;
-  margin: 0 8px 8px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--demo-text-muted, #909399);
+  margin: 0 8px 10px;
 }
 
 .playground__link {
   display: block;
-  padding: 8px 10px;
-  border-radius: 6px;
-  color: #606266;
+  padding: 9px 12px;
+  border-radius: 4px;
+  color: var(--demo-text-secondary, #606266);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.4;
   margin-bottom: 2px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .playground__link:hover {
-  background: #f2f6fc;
-  color: #409eff;
+  background: var(--demo-primary-soft, #ecf5ff);
+  color: var(--demo-primary, #409eff);
 }
 
 .playground__link.is-active {
-  background: #ecf5ff;
-  color: #409eff;
+  background: var(--demo-primary-soft, #ecf5ff);
+  color: var(--demo-primary, #409eff);
   font-weight: 600;
 }
 
 .playground__main {
   flex: 1;
   min-width: 0;
-  padding: 24px 28px 40px;
+  padding: 32px 40px 64px;
 }
 </style>
