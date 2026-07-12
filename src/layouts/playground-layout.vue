@@ -7,6 +7,12 @@ const plusTableLinks = [
   { to: '/plus-table/history-dirty', label: '历史与脏追踪' },
   { to: '/plus-table/pagination-rows', label: '分页与行操作' },
 ] as const;
+
+const composablesLinks = [
+  { to: '/composables/use-auto-save', label: 'useAutoSave' },
+  { to: '/composables/use-form-draft', label: 'useFormDraft' },
+  { to: '/composables/use-save-hotkey', label: 'useSaveHotkey' },
+] as const;
 </script>
 
 <template>
@@ -17,6 +23,18 @@ const plusTableLinks = [
         <div class="playground__group-title">PlusTable</div>
         <router-link
           v-for="link in plusTableLinks"
+          :key="link.to"
+          class="playground__link"
+          active-class="is-active"
+          :to="link.to"
+        >
+          {{ link.label }}
+        </router-link>
+      </div>
+      <div class="playground__group">
+        <div class="playground__group-title">Composables</div>
+        <router-link
+          v-for="link in composablesLinks"
           :key="link.to"
           class="playground__link"
           active-class="is-active"
@@ -52,6 +70,10 @@ const plusTableLinks = [
   font-size: 15px;
   font-weight: 600;
   margin: 0 8px 20px;
+}
+
+.playground__group + .playground__group {
+  margin-top: 16px;
 }
 
 .playground__group-title {
