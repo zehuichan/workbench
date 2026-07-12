@@ -11,12 +11,12 @@ withDefaults(
 </script>
 
 <template>
-  <div class="demo__block">
-    <div class="demo__block-body">
-      <h2 class="demo__section-title">{{ title }}</h2>
+  <div class="demo-block">
+    <div class="demo-block__body">
+      <h2 class="demo-block__title">{{ title }}</h2>
       <p v-if="hint" class="demo__hint">{{ hint }}</p>
       <slot />
     </div>
-    <div class="demo__block-footer">playground</div>
+    <div class="demo-block__footer">playground</div>
   </div>
 </template>

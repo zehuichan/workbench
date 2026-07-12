@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import '@/styles/demo-docs.css';
+import '@/styles/index.scss';
 
 defineOptions({ name: 'PlaygroundLayout' });
 
@@ -51,72 +51,3 @@ const composablesLinks = [
     </main>
   </div>
 </template>
-
-<style scoped>
-.playground {
-  display: flex;
-  min-height: 100vh;
-  background: var(--demo-bg, #f5f7fa);
-  color: var(--demo-text, #303133);
-}
-
-.playground__nav {
-  width: 240px;
-  flex-shrink: 0;
-  padding: 24px 16px;
-  background: #fff;
-  border-right: 1px solid var(--demo-border, #e4e7ed);
-}
-
-.playground__brand {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin: 0 8px 28px;
-  color: var(--demo-text, #303133);
-}
-
-.playground__group + .playground__group {
-  margin-top: 24px;
-}
-
-.playground__group-title {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--demo-text-muted, #909399);
-  margin: 0 8px 10px;
-}
-
-.playground__link {
-  display: block;
-  padding: 9px 12px;
-  border-radius: 4px;
-  color: var(--demo-text-secondary, #606266);
-  text-decoration: none;
-  font-size: 14px;
-  line-height: 1.4;
-  margin-bottom: 2px;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-
-.playground__link:hover {
-  background: var(--demo-primary-soft, #ecf5ff);
-  color: var(--demo-primary, #409eff);
-}
-
-.playground__link.is-active {
-  background: var(--demo-primary-soft, #ecf5ff);
-  color: var(--demo-primary, #409eff);
-  font-weight: 600;
-}
-
-.playground__main {
-  flex: 1;
-  min-width: 0;
-  padding: 32px 40px 64px;
-}
-</style>

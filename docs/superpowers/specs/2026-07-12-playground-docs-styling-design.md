@@ -37,7 +37,7 @@ Date: 2026-07-12
 | 页面 | `width` |
 |------|---------|
 | PlusTable ×4 | `wide` |
-| Composables ×3 | `readable` |
+| Composables ×3 | `wide`（与 PlusTable 同一通栏文档排版） |
 
 ### DemoBlock
 
@@ -52,12 +52,11 @@ Date: 2026-07-12
 
 ## Styling
 
-- 单一样式文件：`src/styles/demo-docs.css`（取代 `views/styles/demo-page.css` 与 `views/composables/composables-demo.css`）
+- 单一样式文件：`src/styles/index.scss`（SCSS + BEM；取代旧 CSS）
 - 在 `playground-layout.vue` 引入一次；demo 页不再各自 import 旧 CSS
-- CSS 变量对齐 Element：主色 `#409eff`，边框 `#e4e7ed`，表头 `#fafafa`，正文 `#303133`，次要 `#606266`
-- 标题层级：`h1` ≈ 22–24px；`h2`（API / 试一试）≈ 16px，带轻微分隔
-- `code`：等宽 + 浅灰底
-- `wide`：内容接近铺满 main；`readable`：说明与 API 约 `56rem`，Demo 卡片可略宽于文案
+- 块：`playground`（壳）、`demo`（文档页）、`demo-block`（试一试卡片）
+- Token / mixin 对齐 Element：主色 `#409eff`，边框 `#e4e7ed`，表头 `#fafafa`；API / 卡片标题带左侧主色条
+- `wide`：通栏；`readable`：说明与 API 约 `56rem`，`demo-block` 约 `64rem`
 
 ### Sidebar（`playground-layout.vue`）
 
@@ -73,11 +72,11 @@ Date: 2026-07-12
 
 - `src/components/demo/demo-page.vue`
 - `src/components/demo/demo-block.vue`
-- `src/styles/demo-docs.css`
+- `src/styles/index.scss`
 
 **修改**
 
-- `src/layouts/playground-layout.vue` — 侧栏样式；引入 `demo-docs.css`
+- `src/layouts/playground-layout.vue` — 侧栏样式并入 `index.scss`；引入该文件
 - PlusTable demos ×4 — 套 `DemoPage`/`DemoBlock`
 - Composables demos ×3 — 同上
 
