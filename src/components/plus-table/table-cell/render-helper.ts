@@ -1,6 +1,6 @@
+import { nextTick, type Component } from 'vue';
 import { resolveEditor } from '../adapter';
 import { resolveEditable } from '../util';
-import type { Component } from 'vue';
 import type { PlusTable } from '../tokens';
 import type { CellError, EditMode, RowData } from '../table/defaults';
 import type { ColumnNode, PlusTableColumn } from '../table-column/defaults';
@@ -141,9 +141,14 @@ export function getEditorBinding<T extends RowData = RowData>(
     [`onUpdate:${modelProp}`]: (next: unknown) => {
       setValue(next);
       if (resolved.trigger === 'change') {
-        if (isCellMode) table.store.commitEdit();
-        else if (mode === 'row') {
+        if (isCellMode) {
+          table.store.commitEdit();
+          // select/date/switch 等常挂到 body 的浮层上；卸掉编辑器后焦点不在 grid，
+          // 需交回网格才能继续方向键导航（Enter/Esc 路径已有 focusGrid）
+          void nextTick(() => table.store.focusGrid());
+        } else if (mode === 'row') {
           table.store.clearRowEditingCell();
+          void nextTick(() => table.store.focusGrid());
         }
       }
     },
