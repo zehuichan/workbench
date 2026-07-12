@@ -76,6 +76,18 @@
       background-color: var(--el-fill-color-light);
     }
 
+    // 活动/编辑格抬到边框补丁之上：el-table--border 的 :before/:after 与
+    // .el-table__border-*-patch 用更高 z-index 画在最外圈，会盖住最右/最左格的 inset 高亮。
+    // td 自身带 z-index 形成层叠上下文，只抬 .ptbl-cell 无效，必须抬所在 td。
+    .el-table__body
+      td.el-table__cell:has(
+        .ptbl-cell--active,
+        .ptbl-cell--editing-focus,
+        .ptbl-cell--editing-quiet:focus-within
+      ) {
+      z-index: calc(var(--el-table-index) + 3);
+    }
+
     // 勾选行底色（纯 CSS :has()，无 JS 开销）
     tr:has(.el-checkbox.is-checked) > td.el-table__cell {
       background-color: var(--el-color-primary-light-9);
