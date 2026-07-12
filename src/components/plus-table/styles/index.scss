@@ -1,3 +1,16 @@
+.ptbl-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .plus-table {
   display: flex;
   flex-direction: column;
@@ -109,6 +122,12 @@
 // container 模式：网格区域撑满剩余空间，交给 el-table 自身的固定表头 + 内部滚动
 .plus-table--adaptive-container > .plus-table__grid {
   flex: 1;
+}
+
+.ptbl-cell-tooltip-trigger {
+  display: block;
+  width: 100%;
+  min-width: 0;
 }
 
 .ptbl-cell {
@@ -274,6 +293,16 @@
     color: var(--el-text-color-placeholder);
     cursor: grab;
     user-select: none;
+  }
+
+  &__moves {
+    display: flex;
+    flex: none;
+    gap: 2px;
+
+    .el-button + .el-button {
+      margin-left: 0;
+    }
   }
 
   &__actions {

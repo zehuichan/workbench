@@ -60,6 +60,12 @@ interface CellEditorContext<T extends RowData = RowData> extends Omit<
   column: PlusTableColumn<T>;
 }
 
+interface CellRenderLocation {
+  rowKey: string;
+  rowIndex: number;
+  colIndex: number;
+}
+
 /**
  * 单元格取值 + 写入策略：cell 模式读写草稿仓；row/table 模式下 wantsBuffer 时草稿仓缓冲、
  * 失焦提交，否则 setValue 即时写值。editor-${prop} 插槽与内置/自定义编辑器共用此策略。
@@ -172,21 +178,20 @@ export function getEditorBinding<T extends RowData = RowData>(
 export function getCellView<T extends RowData = RowData>(
   table: PlusTable<T>,
   row: T,
-  rowIndex: number,
   node: ColumnNode<T>,
+  location: CellRenderLocation,
   hasEditorSlot: boolean,
 ): CellView<T> {
+  const { rowKey, rowIndex, colIndex } = location;
   const column = node.column;
   const prop = column.prop;
   const value = prop ? row[prop] : undefined;
   const mode = table.store.states.editMode.value;
   const isCellMode = mode === 'cell';
 
-  const colIndex = table.store.getColumnIndex(node.id);
   const inGrid = colIndex >= 0;
-  const active = inGrid && table.store.isCurrentCell(rowIndex, colIndex);
+  const active = inGrid && table.store.isCurrentRef(rowKey, node.id);
   const error = prop ? table.store.getCellError(row, prop) : undefined;
-  const rowKey = prop ? table.store.getRowKey(row) : '';
 
   const depState = column.dependencies
     ? table.store.getDependencyState(row, rowIndex, column)
@@ -195,7 +200,6 @@ export function getCellView<T extends RowData = RowData>(
     mode !== 'none' && !!prop && resolveEditable(row, rowIndex, column);
   const disabled = rawEditable && !!depState?.disabled;
   const editable = inGrid && rawEditable && !disabled;
-  const current = table.store.states.editingCell.value;
   const editing =
     inGrid &&
     (mode === 'table'
@@ -203,7 +207,7 @@ export function getCellView<T extends RowData = RowData>(
       : mode === 'row'
         ? table.store.isRowEditing(row) && editable
         : mode === 'cell'
-          ? current?.rowIndex === rowIndex && current?.colIndex === colIndex
+          ? table.store.isEditingRef(rowKey, node.id)
           : false);
   // 动态必填：联动算出来的必填状态格内即时可见，不必等提交校验失败才发现
   const required = !!column.required || !!depState?.required;

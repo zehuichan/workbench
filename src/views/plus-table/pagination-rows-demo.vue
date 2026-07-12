@@ -90,7 +90,8 @@ function duplicateFirstOnPage() {
     <header class="demo__header">
       <h1 class="demo__title">分页与行操作</h1>
       <p class="demo__desc">
-        传入 <code>total</code> 即启用分页 UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
+        传入 <code>total</code> 即启用分页
+        UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
         <code>data</code>（服务端分页同理）。本页用内存全量 +
         <code>computed</code> 切片演示。行增删改请改全量源，不要对当前页数组调
         <code>insertRow</code>（否则只动这一页）。
@@ -164,7 +165,7 @@ function duplicateFirstOnPage() {
         </thead>
         <tbody>
           <tr>
-            <td><code>insertRow(row?, index?)</code></td>
+            <td><code>insertRow(row, index?)</code></td>
             <td>插入行并 <code>update:data</code>。</td>
           </tr>
           <tr>
@@ -172,8 +173,10 @@ function duplicateFirstOnPage() {
             <td>按当前 <code>data</code> 下标删除。</td>
           </tr>
           <tr>
-            <td><code>duplicateRow(index, patch?)</code></td>
-            <td>复制行；须用 <code>patch</code> 覆盖新 <code>rowKey</code>。</td>
+            <td><code>duplicateRow(index, patch)</code></td>
+            <td>
+              复制行；须用 <code>patch</code> 覆盖新 <code>rowKey</code>。
+            </td>
           </tr>
           <tr>
             <td><code>moveRow(from, to)</code></td>
@@ -185,7 +188,8 @@ function duplicateFirstOnPage() {
 
     <DemoBlock>
       <p class="demo__hint">
-        翻页 / 改 pageSize；「新增」追加到全量末尾并跳到末页；删除/复制针对当前页首行，改的是
+        翻页 / 改
+        pageSize；「新增」追加到全量末尾并跳到末页；删除/复制针对当前页首行，改的是
         <code>allRows</code>。
       </p>
       <PlusTable
@@ -212,4 +216,3 @@ function duplicateFirstOnPage() {
     </DemoBlock>
   </DemoPage>
 </template>
-

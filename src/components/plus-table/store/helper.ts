@@ -10,9 +10,9 @@ export function createStore<T extends RowData = RowData>(
   const store = useStore<T>(table);
   table.store = store;
   watch(
-    () => props.data,
+    () => [...(props.data ?? [])],
     (data) => {
-      store.commit('setData', data ?? []);
+      store.commit('setData', data);
     },
     { immediate: true },
   );

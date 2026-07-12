@@ -1,3 +1,4 @@
+import { isControl } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from './defaults';
 
@@ -43,31 +44,32 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     event: Event,
   ) {
     const mode = table.store.states.editMode.value;
-    if (mode === 'table') return;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0 || colIndex < 0) return;
+    table.store.commit('setCurrentCell', rowIndex, colIndex, false);
 
+    const fromControl = isControl(event.target, _cell);
     if (mode === 'row' && table.store.isRowEditing(row)) {
       if (table.store.canEditCell(rowIndex, colIndex)) {
-        table.store.setRowEditingCell(rowIndex, colIndex);
+        const editing = table.store.getEditingCellLocation();
+        if (
+          !fromControl ||
+          editing?.rowIndex !== rowIndex ||
+          editing.colIndex !== colIndex
+        ) {
+          table.store.setRowEditingCell(rowIndex, colIndex);
+        }
       } else {
         table.store.clearRowEditingCell(true);
-        table.store.commit('setCurrentCell', rowIndex, colIndex, false);
-        table.store.focusGrid();
+        if (!fromControl) table.store.focusGrid();
       }
       return;
     }
 
-    table.store.commit('setCurrentCell', rowIndex, colIndex, false);
-    // 点击落在编辑器里时不抢焦点，否则把焦点交给网格容器以接收热键
-    const target = event.target as HTMLElement | null;
-    if (
-      !target?.closest(
-        'input, textarea, .el-select, .el-switch, .el-checkbox, [contenteditable="true"]',
-      )
-    ) {
-      table.store.focusGrid();
-    }
+    // 点击真实控件时保留其原生焦点；table 模式的空白区域则把焦点交给当前格编辑器。
+    if (fromControl) return;
+    if (mode === 'table') table.store.focusCurrentCellEditor();
+    else table.store.focusGrid();
   }
 
   function handleCellDblclick(

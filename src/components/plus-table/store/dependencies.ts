@@ -1,4 +1,3 @@
-import { cellKey } from '../util';
 import type { PlusTable } from '../tokens';
 import type { CellRule, RowData } from '../table/defaults';
 import type { DependencyApi, PlusTableColumn } from '../table-column/defaults';
@@ -48,16 +47,21 @@ export function useDependencies<T extends RowData = RowData>(
     };
   }
 
-  /** 当前同步触发链中已处理的 `${rowKey}:${prop}`，防止 trigger 互相 setValue 造成死循环 */
-  let chain: Set<string> | null = null;
+  /** 当前同步触发链中已处理的 rowKey -> props，防止 trigger 互相 setValue 造成死循环 */
+  let chain: Map<string, Set<string>> | null = null;
 
   /** 字段提交后广播给依赖方，执行 trigger 副作用 */
   function notifyFieldChange(row: T, rowIndex: number, changedProp: string) {
-    const chainKey = cellKey(table.store.getRowKey(row), changedProp);
+    const rowKey = table.store.getRowKey(row);
     const isRoot = chain === null;
-    if (isRoot) chain = new Set();
-    if (chain!.has(chainKey)) return;
-    chain!.add(chainKey);
+    if (isRoot) chain = new Map();
+    let props = chain!.get(rowKey);
+    if (!props) {
+      props = new Set();
+      chain!.set(rowKey, props);
+    }
+    if (props.has(changedProp)) return;
+    props.add(changedProp);
     try {
       for (const node of table.store.states.allColumns.value) {
         const dep = node.column.dependencies;

@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends RowData = RowData">
-import { computed, provide, ref, useSlots } from 'vue';
+import { computed, provide, ref, useId, useSlots } from 'vue';
 import { ElPagination, ElTable } from 'element-plus';
 import './styles/index.scss';
 import { PLUS_TABLE_INJECTION_KEY } from './tokens';
@@ -11,7 +11,7 @@ import PlusTableColumnSettings from './table-column-settings/index.vue';
 import PlusTableColumnNode from './table-column';
 import type { TableInstance } from 'element-plus';
 import type { PlusTable } from './tokens';
-import type { Store } from './store';
+import type { InternalStore } from './store';
 import type {
   EditorSlotProps,
   HeaderSlotProps,
@@ -49,6 +49,23 @@ defineSlots<{
   [key: `editor-${string}`]: (props: EditorSlotProps<T>) => unknown;
 }>();
 
+function idPart(value: string): string {
+  let result = 'v';
+  for (let index = 0; index < value.length; index++) {
+    result += `-${value.charCodeAt(index).toString(36)}`;
+  }
+  return result;
+}
+
+const idPrefix = `ptbl-${idPart(useId())}`;
+const ids = {
+  description: `${idPrefix}-description`,
+  cell: (rowKey: string, colId: string) =>
+    `${idPrefix}-cell-${idPart(rowKey)}_${idPart(colId)}`,
+  error: (rowKey: string, colId: string) =>
+    `${idPrefix}-error-${idPart(rowKey)}_${idPart(colId)}`,
+};
+
 const gridRef = ref<HTMLElement>();
 const paginationRef = ref<HTMLElement>();
 const tableRef = ref<TableInstance>();
@@ -59,7 +76,8 @@ const table: PlusTable<T> = {
   slots,
   gridRef,
   paginationRef,
-  store: null as unknown as Store<T>,
+  ids,
+  store: null as unknown as InternalStore<T>,
 };
 const store = createStore<T>(table, props);
 provide(PLUS_TABLE_INJECTION_KEY, table);
@@ -72,6 +90,10 @@ const displayTree = store.states.originColumns;
 const tableData = store.states.data;
 const tableHeight = style.tableHeight;
 const isAdaptiveContainer = style.isContainerMode;
+const activeCellId = computed(() => {
+  const cell = store.getCurrentCellLocation();
+  return cell ? ids.cell(cell.rowKey, cell.node.id) : undefined;
+});
 
 // el-table 的 row-key 类型签名比本组件窄（函数变体只接受返回 string），做一次适配
 const rowKeyProp = computed(
@@ -152,8 +174,14 @@ defineExpose(
       ref="gridRef"
       class="plus-table__grid"
       tabindex="0"
+      :aria-describedby="ids.description"
+      :aria-activedescendant="activeCellId"
       @keydown="keyboard.handleKeydown"
     >
+      <span :id="ids.description" class="ptbl-visually-hidden">
+        使用方向键或 Tab 在数据单元格间移动；按 Enter 或 F2 开始编辑，编辑时按
+        Escape 取消。
+      </span>
       <el-table
         ref="tableRef"
         :data="tableData"

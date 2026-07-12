@@ -1,7 +1,6 @@
 import { reactive } from 'vue';
 import { compact } from 'es-toolkit';
 import Schema from 'async-validator';
-import { cellKey } from '../util';
 import type { ValidateError } from 'async-validator';
 import type { PlusTable } from '../tokens';
 import type {
@@ -15,11 +14,13 @@ import type { ColumnNode } from '../table-column/defaults';
 export function useValidation<T extends RowData = RowData>(
   table: PlusTable<T>,
 ) {
-  /** key 为 `${rowKey}:${prop}` */
-  const errors = reactive(new Map<string, CellError>());
+  /** rowKey -> prop -> 单元格错误 */
+  const errors = reactive(new Map<string, Map<string, CellError>>());
 
   /** rowKey -> prop -> 最新一次发起校验的版本号；异步 resolve 时非最新版本的结果直接丢弃，避免旧结果覆盖新结果。 */
   const versions = new Map<string, Map<string, number>>();
+  /** 全局单调递增，行版本表清除后也不会复用旧校验的版本号。 */
+  let nextVersion = 0;
 
   function bumpVersion(rowKey: string, prop: string): number {
     let propVersions = versions.get(rowKey);
@@ -27,7 +28,7 @@ export function useValidation<T extends RowData = RowData>(
       propVersions = new Map();
       versions.set(rowKey, propVersions);
     }
-    const next = (propVersions.get(prop) ?? 0) + 1;
+    const next = ++nextVersion;
     propVersions.set(prop, next);
     return next;
   }
@@ -40,13 +41,32 @@ export function useValidation<T extends RowData = RowData>(
     return versions.get(rowKey)?.get(prop) === version;
   }
 
+  function setCellError(error: CellError): void {
+    let rowErrors = errors.get(error.rowKey);
+    if (!rowErrors) {
+      rowErrors = reactive(new Map<string, CellError>());
+      errors.set(error.rowKey, rowErrors);
+    }
+    rowErrors.set(error.prop, error);
+  }
+
+  function deleteCellError(rowKey: string, prop: string): void {
+    const rowErrors = errors.get(rowKey);
+    if (!rowErrors?.delete(prop)) return;
+    if (rowErrors.size === 0) errors.delete(rowKey);
+  }
+
   function getCellError(row: T, prop: string): CellError | undefined {
-    return errors.get(cellKey(table.store.getRowKey(row), prop));
+    return errors.get(table.store.getRowKey(row))?.get(prop);
   }
 
   /** 只读访问器：供业务侧渲染自定义错误汇总面板 */
   function getErrors(): CellError[] {
-    return [...errors.values()];
+    const result: CellError[] = [];
+    for (const rowErrors of errors.values()) {
+      result.push(...rowErrors.values());
+    }
+    return result;
   }
 
   function buildRules(
@@ -76,7 +96,6 @@ export function useValidation<T extends RowData = RowData>(
     const prop = node.column.prop;
     if (!prop) return null;
     const rowKey = table.store.getRowKey(row);
-    const key = cellKey(rowKey, prop);
     const version = bumpVersion(rowKey, prop);
     const rules = buildRules(row, rowIndex, node);
 
@@ -84,11 +103,11 @@ export function useValidation<T extends RowData = RowData>(
     const resolveCurrentRowIndex = (): number | null => {
       if (!isLatestVersion(rowKey, prop, version)) return null;
       const location = table.store.states.keysMap.value.get(rowKey);
-      return location ? location.rowIndex : null;
+      return location?.row === row ? location.rowIndex : null;
     };
 
     if (!rules.length) {
-      errors.delete(key);
+      deleteCellError(rowKey, prop);
       return null;
     }
     try {
@@ -99,7 +118,7 @@ export function useValidation<T extends RowData = RowData>(
         suppressValidatorError: true,
       });
       if (resolveCurrentRowIndex() === null) return null;
-      errors.delete(key);
+      deleteCellError(rowKey, prop);
       return null;
     } catch (err) {
       const currentIndex = resolveCurrentRowIndex();
@@ -112,7 +131,7 @@ export function useValidation<T extends RowData = RowData>(
         prop,
         message,
       };
-      errors.set(key, cellError);
+      setCellError(cellError);
       return cellError;
     }
   }
@@ -157,25 +176,41 @@ export function useValidation<T extends RowData = RowData>(
     return { valid: collected.length === 0, errors: collected };
   }
 
-  function clearValidate() {
+  function clearValidate(): void {
     errors.clear();
+    versions.clear();
   }
 
-  function clearRowValidate(row: T) {
-    const prefix = `${table.store.getRowKey(row)}:`;
-    for (const key of [...errors.keys()]) {
-      if (key.startsWith(prefix)) errors.delete(key);
-    }
+  /** 数据行身份失效时调用：清错误与版本表，使该行所有在飞校验结果作废。 */
+  function invalidateValidationRow(rowKey: string): void {
+    errors.delete(rowKey);
+    versions.delete(rowKey);
+  }
+
+  function clearRowValidate(row: T): void {
+    invalidateValidationRow(table.store.getRowKey(row));
   }
 
   /** 行失效后调用：清掉该行残留的错误与版本号，避免长会话下无限增长 */
-  function cleanValidation() {
+  function cleanValidation(): void {
     const keysMap = table.store.states.keysMap.value;
-    for (const [key, error] of [...errors]) {
-      if (!keysMap.has(error.rowKey)) errors.delete(key);
+    const invalidRowKeys = new Set<string>();
+    for (const rowKey of errors.keys()) {
+      if (!keysMap.has(rowKey)) invalidRowKeys.add(rowKey);
     }
-    for (const rowKey of [...versions.keys()]) {
-      if (!keysMap.has(rowKey)) versions.delete(rowKey);
+    for (const rowKey of versions.keys()) {
+      if (!keysMap.has(rowKey)) invalidRowKeys.add(rowKey);
+    }
+    for (const rowKey of invalidRowKeys) invalidateValidationRow(rowKey);
+
+    for (const [rowKey, rowErrors] of errors) {
+      const rowIndex = keysMap.get(rowKey)?.rowIndex;
+      if (rowIndex === undefined) continue;
+      for (const [prop, error] of rowErrors) {
+        if (error.rowIndex !== rowIndex) {
+          rowErrors.set(prop, { ...error, rowIndex });
+        }
+      }
     }
   }
 
@@ -187,6 +222,7 @@ export function useValidation<T extends RowData = RowData>(
     validate,
     clearValidate,
     clearRowValidate,
+    invalidateValidationRow,
     cleanValidation,
   };
 }

@@ -41,14 +41,52 @@ const serverSnapshot = ref<FormState | null>(readServerSnapshot());
 const enabled = ref(true);
 const debounceMs = ref(500);
 
-const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+function delay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (!signal) {
+      setTimeout(resolve, ms);
+      return;
+    }
+
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const cleanup = () => {
+      if (timer !== undefined) clearTimeout(timer);
+      signal.removeEventListener('abort', handleAbort);
+    };
+    const settle = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      callback();
+    };
+    const handleAbort = () => {
+      settle(() =>
+        reject(
+          signal.reason ??
+            new DOMException('The operation was aborted.', 'AbortError'),
+        ),
+      );
+    };
+
+    if (signal.aborted) {
+      handleAbort();
+      return;
+    }
+
+    timer = setTimeout(() => settle(resolve), ms);
+    signal.addEventListener('abort', handleAbort, { once: true });
+    if (signal.aborted) handleAbort();
+  });
+}
 
 const { status, lastSavedAt, error, flush, withPaused } = useAutoSave({
   source: form,
   enabled,
   debounceMs,
-  save: async (value) => {
-    await delay(400);
+  save: async (value, signal) => {
+    await delay(400, signal);
     const next: FormState = {
       title: value.title,
       note: value.note,
@@ -114,9 +152,14 @@ async function handlePausedEdit() {
           </tr>
           <tr>
             <td><code>save</code></td>
-            <td><code>(value: T) =&gt; void | Promise&lt;void&gt;</code></td>
             <td>
-              必填。真正落盘/请求；回调内不要调用本实例的
+              <code
+                >(value: T, signal: AbortSignal) =&gt; void |
+                Promise&lt;void&gt;</code
+              >
+            </td>
+            <td>
+              必填。真正落盘/请求；销毁时 signal 会中止。回调内不要调用本实例的
               <code>flush</code> / <code>withPaused</code>。
             </td>
           </tr>
@@ -186,9 +229,10 @@ async function handlePausedEdit() {
 
     <DemoBlock>
       <p class="demo__hint">
-        改标题/备注 → 看 <code>status</code> 从 pending → saving →
-        saved；点 Flush 跳过等待；点 withPaused 编辑时备注会变但不会触发自动保存。
-        <code>save</code> 目前用 <code>localStorage</code> 模拟服务端，刷新后快照仍在。
+        改标题/备注 → 看 <code>status</code> 从 pending → saving → saved；点
+        Flush 跳过等待；点 withPaused 编辑时备注会变但不会触发自动保存。
+        <code>save</code> 目前用
+        <code>localStorage</code> 模拟服务端，刷新后快照仍在。
       </p>
 
       <div class="demo__toolbar">
@@ -228,7 +272,8 @@ async function handlePausedEdit() {
 
         <div class="demo__snapshot">
           <div class="demo__snapshot-title">
-            服务端快照（localStorage · <code>{{ SERVER_KEY }}</code>）
+            服务端快照（localStorage · <code>{{ SERVER_KEY }}</code
+            >）
           </div>
           <pre>{{
             serverSnapshot
@@ -240,4 +285,3 @@ async function handlePausedEdit() {
     </DemoBlock>
   </DemoPage>
 </template>
-

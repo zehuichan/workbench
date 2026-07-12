@@ -225,9 +225,12 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
   );
   const columns = computed(() => flattenDataLeaves(originColumns.value));
   const allColumns = computed(() => flattenDataLeaves(states._columns.value));
+  const columnIndexMap = computed(
+    () => new Map(columns.value.map((node, index) => [node.id, index])),
+  );
 
   function getColumnIndex(columnKey: string): number {
-    return columns.value.findIndex((node) => node.id === columnKey);
+    return columnIndexMap.value.get(columnKey) ?? -1;
   }
 
   function findNode(nodes: ColumnNode<T>[], id: string): ColumnNode<T> | null {
@@ -336,6 +339,7 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
       originColumns,
       columns,
       allColumns,
+      columnIndexMap,
     },
   };
 }

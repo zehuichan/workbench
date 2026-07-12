@@ -16,6 +16,32 @@ function handleToggle(id: string, checked: boolean | string | number) {
   table.store.commit('toggleColumnVisible', id, !!checked);
 }
 
+function siblings(item: SettingItem): SettingItem[] {
+  return items.value.filter(
+    (candidate) => candidate.parentId === item.parentId,
+  );
+}
+
+function canMove(item: SettingItem, direction: -1 | 1): boolean {
+  if (item.disabled) return false;
+  const list = siblings(item);
+  const index = list.findIndex((candidate) => candidate.id === item.id);
+  return index >= 0 && !!list[index + direction];
+}
+
+function move(item: SettingItem, direction: -1 | 1) {
+  const list = siblings(item);
+  const index = list.findIndex((candidate) => candidate.id === item.id);
+  const target = list[index + direction];
+  if (index < 0 || !target || item.disabled) return;
+  table.store.commit(
+    'updateColumnOrder',
+    item.id,
+    target.id,
+    direction < 0 ? 'before' : 'after',
+  );
+}
+
 const dragItem = ref<SettingItem | null>(null);
 const dropTargetId = ref<string | null>(null);
 const dropPosition = ref<'before' | 'after'>('before');
@@ -108,6 +134,30 @@ function handleDragEnd() {
           >
             {{ item.title }}
           </el-checkbox>
+          <span class="ptbl-column-settings__moves">
+            <el-button
+              text
+              circle
+              size="small"
+              :disabled="!canMove(item, -1)"
+              :aria-label="`上移列“${item.title}”`"
+              :title="`上移列“${item.title}”`"
+              @click="move(item, -1)"
+            >
+              ↑
+            </el-button>
+            <el-button
+              text
+              circle
+              size="small"
+              :disabled="!canMove(item, 1)"
+              :aria-label="`下移列“${item.title}”`"
+              :title="`下移列“${item.title}”`"
+              @click="move(item, 1)"
+            >
+              ↓
+            </el-button>
+          </span>
         </li>
       </ul>
       <div class="ptbl-column-settings__actions">

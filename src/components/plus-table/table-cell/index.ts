@@ -22,8 +22,8 @@ export default defineComponent({
   setup(props) {
     const table = usePlusTable();
 
-    function renderDisplay(value: unknown): VNodeChild {
-      const { row, rowIndex, node } = props;
+    function renderDisplay(value: unknown, rowIndex: number): VNodeChild {
+      const { row, node } = props;
       const column = node.column;
       const slot = column.prop ? table.slots[`cell-${column.prop}`] : undefined;
       if (slot) return slot({ row, rowIndex, column, value });
@@ -46,7 +46,17 @@ export default defineComponent({
       const column = node.column;
       const prop = column.prop;
       const editorSlot = prop ? table.slots[`editor-${prop}`] : undefined;
-      const view = getCellView(table, row, rowIndex, node, !!editorSlot);
+      const rowKey = table.store.getRowKey(row);
+      const position = table.store.resolveCellPosition({
+        rowKey,
+        colId: node.id,
+      });
+      const location = {
+        rowKey,
+        rowIndex: position?.rowIndex ?? rowIndex,
+        colIndex: position?.colIndex ?? -1,
+      };
+      const view = getCellView(table, row, node, location, !!editorSlot);
 
       const content = view.editing
         ? h('div', { class: getEditorWrapperClass(column.align) }, [
@@ -56,22 +66,41 @@ export default defineComponent({
                 ? h(view.editorBind.component as never, view.editorBind.bind)
                 : null,
           ])
-        : renderDisplay(view.value);
+        : renderDisplay(view.value, location.rowIndex);
+
+      const errorId = view.error ? table.ids.error(rowKey, node.id) : undefined;
+      const children: VNodeChild[] = [content];
+      if (view.error) {
+        children.push(
+          h(
+            'span',
+            { id: errorId, class: 'ptbl-visually-hidden' },
+            view.error.message,
+          ),
+        );
+      }
 
       const cell = h(
         'div',
         {
+          id: table.ids.cell(rowKey, node.id),
           class: getCellClasses(view),
           'data-ptbl-col': node.id,
+          'aria-current': view.active ? 'true' : undefined,
+          'aria-invalid': view.error ? 'true' : undefined,
+          'aria-describedby': errorId,
         },
-        [content],
+        children,
       );
 
       return view.error
         ? h(
             ElTooltip,
             { content: view.error.message, placement: 'top', effect: 'dark' },
-            { default: () => cell },
+            {
+              default: () =>
+                h('div', { class: 'ptbl-cell-tooltip-trigger' }, [cell]),
+            },
           )
         : cell;
     };

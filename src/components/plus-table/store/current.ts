@@ -1,4 +1,4 @@
-import { nextTick, shallowRef } from 'vue';
+import { nextTick, reactive, shallowRef, watch } from 'vue';
 import { clamp } from 'es-toolkit';
 import { focusEditorElement } from '../util';
 import type { PlusTable } from '../tokens';
@@ -9,10 +9,38 @@ export interface CellPosition {
   colIndex: number;
 }
 
+/** 表格内部的稳定单元格身份；公开 API 仍只使用 CellPosition。 */
+export interface CellRef {
+  rowKey: string;
+  colId: string;
+}
+
+function samePosition(
+  left: CellPosition | null,
+  right: CellPosition | null,
+): boolean {
+  return (
+    left === right ||
+    (!!left &&
+      !!right &&
+      left.rowIndex === right.rowIndex &&
+      left.colIndex === right.colIndex)
+  );
+}
+
+/** reactive Set 使用的内部 key；数组序列化可避免 rowKey / colId 拼接碰撞。 */
+export function cellRefKey(rowKey: string, colId: string): string {
+  return JSON.stringify([rowKey, colId]);
+}
+
 export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
+  const currentRef = shallowRef<CellRef | null>(null);
   const states = {
+    /** 兼容公开 Store：对外仍按当前行列顺序呈现下标位置。 */
     currentCell: shallowRef<CellPosition | null>(null),
   };
+  /** 按 key 订阅活动态，只让旧格和新格的渲染失效。 */
+  const currentCells = reactive(new Set<string>());
 
   function rowCount(): number {
     return table.store.states.data.value.length;
@@ -27,68 +55,125 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     return clamp(value, 0, Math.max(max - 1, 0));
   }
 
-  function getRowEl(rowIndex: number): HTMLTableRowElement | null {
+  function setCurrentRef(next: CellRef | null): void {
+    const current = currentRef.value;
+    if (
+      current === next ||
+      (current &&
+        next &&
+        current.rowKey === next.rowKey &&
+        current.colId === next.colId)
+    ) {
+      syncCurrentCell();
+      return;
+    }
+    if (current) currentCells.delete(cellRefKey(current.rowKey, current.colId));
+    currentRef.value = next;
+    if (next) currentCells.add(cellRefKey(next.rowKey, next.colId));
+    syncCurrentCell();
+  }
+
+  function getCurrentRef(): CellRef | null {
+    return currentRef.value;
+  }
+
+  /** 公开下标调用边界进入内部稳定身份。 */
+  function toCellRef(rowIndex: number, colIndex: number): CellRef | null {
+    const row = table.store.states.data.value[rowIndex];
+    const node = table.store.states.columns.value[colIndex];
+    if (!row || !node) return null;
+    return { rowKey: table.store.getRowKey(row), colId: node.id };
+  }
+
+  /** 按最新行列顺序把稳定身份解析回公开位置。 */
+  function resolveCellPosition(ref: CellRef): CellPosition | null {
+    const rowIndex = table.store.states.keysMap.value.get(ref.rowKey)?.rowIndex;
+    const colIndex = table.store.getColumnIndex(ref.colId);
+    if (rowIndex === undefined || colIndex < 0) return null;
+    return { rowIndex, colIndex };
+  }
+
+  function syncCurrentCell(): void {
+    const current = currentRef.value;
+    const next = current ? resolveCellPosition(current) : null;
+    const mirrored = states.currentCell.value;
+    if (samePosition(mirrored, next)) return;
+    states.currentCell.value = next;
+  }
+
+  /** 直接按实例内稳定 cell id 定位，不依赖 Element Plus 当前 DOM 行顺序。 */
+  function getCellElRef(ref: CellRef): HTMLElement | null {
     const grid = table.gridRef.value;
     if (!grid) return null;
-    const rows = grid.querySelectorAll<HTMLTableRowElement>(
-      '.el-table__body-wrapper tbody tr.el-table__row',
+    return grid.querySelector<HTMLElement>(
+      `#${CSS.escape(table.ids.cell(ref.rowKey, ref.colId))}`,
     );
-    return rows.item(rowIndex);
   }
 
-  /**
-   * 按 rowIndex 结构定位真实 <tr>（行顺序始终与 data 一致，不受列显隐影响），
-   * 再按列 id 在行内查找带 data-ptbl-col 标记的单元格——不依赖任何 DOM 下标换算。
-   */
   function getCellEl(rowIndex: number, colIndex: number): HTMLElement | null {
-    const tr = getRowEl(rowIndex);
-    if (!tr) return null;
-    const columnId = table.store.states.columns.value[colIndex]?.id;
-    if (!columnId) return null;
-    return tr.querySelector<HTMLElement>(
-      `[data-ptbl-col="${CSS.escape(columnId)}"]`,
-    );
+    const ref = toCellRef(rowIndex, colIndex);
+    return ref ? getCellElRef(ref) : null;
   }
 
-  function scrollCellIntoView(rowIndex: number, colIndex: number) {
-    getCellEl(rowIndex, colIndex)?.scrollIntoView({
+  function scrollCellRef(ref: CellRef) {
+    getCellElRef(ref)?.scrollIntoView({
       block: 'nearest',
       inline: 'nearest',
     });
   }
 
+  function scrollCellIntoView(rowIndex: number, colIndex: number) {
+    const ref = toCellRef(rowIndex, colIndex);
+    if (ref) scrollCellRef(ref);
+  }
+
   function setCurrentCell(rowIndex: number, colIndex: number, scroll = true) {
     if (rowCount() === 0 || colCount() === 0) {
-      states.currentCell.value = null;
+      setCurrentRef(null);
       return;
     }
-    const next: CellPosition = {
+    const nextPosition: CellPosition = {
       rowIndex: clampIndex(rowIndex, rowCount()),
       colIndex: clampIndex(colIndex, colCount()),
     };
-    const current = states.currentCell.value;
-    if (
-      current?.rowIndex !== next.rowIndex ||
-      current?.colIndex !== next.colIndex
-    ) {
-      states.currentCell.value = next;
+    const next = toCellRef(nextPosition.rowIndex, nextPosition.colIndex);
+    if (!next) {
+      setCurrentRef(null);
+      return;
     }
-    if (scroll) scrollCellIntoView(next.rowIndex, next.colIndex);
+    setCurrentRef(next);
+    if (scroll) scrollCellRef(next);
+  }
+
+  function isCurrentRef(rowKey: string, colId: string): boolean {
+    return currentCells.has(cellRefKey(rowKey, colId));
   }
 
   function isCurrentCell(rowIndex: number, colIndex: number): boolean {
-    const current = states.currentCell.value;
-    return current?.rowIndex === rowIndex && current?.colIndex === colIndex;
+    const ref = toCellRef(rowIndex, colIndex);
+    return !!ref && isCurrentRef(ref.rowKey, ref.colId);
+  }
+
+  /** 数据行身份失效时调用：清掉该 rowKey 上的活动格。 */
+  function invalidateCurrentRow(rowKey: string): void {
+    if (currentRef.value?.rowKey === rowKey) setCurrentRef(null);
+  }
+
+  function cleanCurrent(): void {
+    const current = currentRef.value;
+    if (current && !resolveCellPosition(current)) setCurrentRef(null);
+    else syncCurrentCell();
   }
 
   /** 方向移动（不换行），无活动格时落到首格 */
   function moveCurrent(deltaRow: number, deltaCol: number) {
-    const current = states.currentCell.value;
-    if (!current) {
+    const current = currentRef.value;
+    const position = current ? resolveCellPosition(current) : null;
+    if (!position) {
       setCurrentCell(0, 0);
       return;
     }
-    setCurrentCell(current.rowIndex + deltaRow, current.colIndex + deltaCol);
+    setCurrentCell(position.rowIndex + deltaRow, position.colIndex + deltaCol);
   }
 
   /** 顺序移动（Tab 流，行尾换行），无活动格时落到首格 */
@@ -96,25 +181,27 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     const cols = colCount();
     const total = rowCount() * cols;
     if (total === 0 || cols === 0) return;
-    const current = states.currentCell.value;
-    if (!current) {
+    const current = currentRef.value;
+    const position = current ? resolveCellPosition(current) : null;
+    if (!position) {
       setCurrentCell(0, 0);
       return;
     }
     const flat = Math.min(
-      Math.max(current.rowIndex * cols + current.colIndex + delta, 0),
+      Math.max(position.rowIndex * cols + position.colIndex + delta, 0),
       total - 1,
     );
     setCurrentCell(Math.floor(flat / cols), flat % cols);
   }
 
   function moveToRowEdge(end: boolean) {
-    const current = states.currentCell.value;
-    if (!current) {
+    const current = currentRef.value;
+    const position = current ? resolveCellPosition(current) : null;
+    if (!position) {
       setCurrentCell(0, 0);
       return;
     }
-    setCurrentCell(current.rowIndex, end ? colCount() - 1 : 0);
+    setCurrentCell(position.rowIndex, end ? colCount() - 1 : 0);
   }
 
   function moveToTableCorner(end: boolean) {
@@ -131,11 +218,11 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
    * 也同步过去，用户看到高亮跳到了新格子，但键入内容却还是灌进旧格子的输入框。
    */
   function focusCurrentCellEditor() {
-    const current = states.currentCell.value;
+    const current = currentRef.value;
     if (!current) return;
     void nextTick(() => {
-      if (states.currentCell.value !== current) return;
-      const cellEl = getCellEl(current.rowIndex, current.colIndex);
+      if (currentRef.value !== current) return;
+      const cellEl = getCellElRef(current);
       if (
         !focusEditorElement(cellEl, {
           preventScroll: true,
@@ -148,15 +235,39 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     });
   }
 
+  watch(
+    states.currentCell,
+    (next) => {
+      const current = currentRef.value;
+      if (!next) {
+        if (current) setCurrentRef(null);
+        return;
+      }
+      const position = current ? resolveCellPosition(current) : null;
+      if (samePosition(next, position)) return;
+      setCurrentRef(toCellRef(next.rowIndex, next.colIndex));
+    },
+    { flush: 'sync' },
+  );
+
   return {
     isCurrentCell,
+    isCurrentRef,
     setCurrentCell,
+    getCurrentRef,
+    toCellRef,
+    resolveCellPosition,
+    syncCurrentCell,
+    invalidateCurrentRow,
+    cleanCurrent,
     moveCurrent,
     moveSequential,
     moveToRowEdge,
     moveToTableCorner,
     getCellEl,
+    getCellElRef,
     scrollCellIntoView,
+    scrollCellRef,
     focusGrid,
     focusCurrentCellEditor,
     states,

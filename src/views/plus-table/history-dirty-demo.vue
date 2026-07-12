@@ -82,9 +82,8 @@ function handleResetTracking() {
     <header class="demo__header">
       <h1 class="demo__title">历史与脏追踪</h1>
       <p class="demo__desc">
-        <code>history</code> 打开撤销/重做栈（也可
-        <kbd>Ctrl</kbd>+<kbd>Z</kbd> /
-        <kbd>Ctrl</kbd>+<kbd>Y</kbd>）。
+        <code>history</code> 打开撤销/重做栈（也可 <kbd>Ctrl</kbd>+<kbd>Z</kbd>
+        / <kbd>Ctrl</kbd>+<kbd>Y</kbd>）。
         <code>dirtyTracking</code> 相对基线标记改过的行/格；保存成功后通常调
         <code>resetTracking()</code> 把当前数据设为新基线。
       </p>
@@ -159,8 +158,11 @@ function handleResetTracking() {
           </tr>
           <tr>
             <td><code>getDirtyCells</code></td>
-            <td><code>() =&gt; Set&lt;string&gt;</code></td>
-            <td><code>rowKey:prop</code> 形式的脏格集合。</td>
+            <td><code>() =&gt; DirtyCell[]</code></td>
+            <td>
+              每项为
+              <code>{ rowKey: string; prop: string }</code>，表示一个脏格。
+            </td>
           </tr>
           <tr>
             <td><code>isCellDirty</code> / <code>isRowDirty</code></td>
@@ -207,4 +209,3 @@ function handleResetTracking() {
     </DemoBlock>
   </DemoPage>
 </template>
-

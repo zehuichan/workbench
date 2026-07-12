@@ -20,7 +20,7 @@ export type { Store } from './store';
 export type { SettingItem } from './store/columns';
 export type { CellPosition } from './store/current';
 export type { DependencyState } from './store/dependencies';
-export type { DirtyApi } from './store/dirty';
+export type { DirtyApi, DirtyCell } from './store/dirty';
 export type { HistoryApi } from './store/history';
 export type {
   AdaptiveConfig,

@@ -98,6 +98,16 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     states.redoStack.value = [];
   }
 
+  /** 数据行身份失效时调用：从 undo / redo 中移除该 rowKey 的变更，保留同批次其他行。 */
+  function invalidateHistoryRow(rowKey: string): void {
+    const filter = (stack: HistoryEntry[]) =>
+      stack
+        .map((entries) => entries.filter((change) => change.rowKey !== rowKey))
+        .filter((entries) => entries.length > 0);
+    states.undoStack.value = filter(states.undoStack.value);
+    states.redoStack.value = filter(states.redoStack.value);
+  }
+
   /** 行失效后调用：清掉引用它的历史条目，避免长会话下无限增长、避免残留条目指向错误上下文 */
   function cleanHistory(): void {
     const keysMap = table.store.states.keysMap.value;
@@ -116,11 +126,13 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     undo,
     redo,
     clearHistory,
+    invalidateHistoryRow,
     cleanHistory,
     states,
   };
 }
 
-export type HistoryApi<T extends RowData = RowData> = ReturnType<
-  typeof useHistory<T>
+export type HistoryApi<T extends RowData = RowData> = Omit<
+  ReturnType<typeof useHistory<T>>,
+  'invalidateHistoryRow'
 >;

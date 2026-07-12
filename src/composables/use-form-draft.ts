@@ -63,8 +63,14 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
   let pauseDepth = 0;
   let disposed = false;
 
+  onScopeDispose(() => {
+    disposed = true;
+  }, true);
+
   const reportError = (failure: unknown): false => {
+    if (disposed) return false;
     error.value = failure;
+    if (disposed) return false;
     if (onError) {
       try {
         onError(failure);
@@ -93,8 +99,11 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
 
   const writeDraft = (expectedKey?: string): boolean => {
     try {
-      if (disposed || pauseDepth > 0 || !toValue(enabled)) return false;
+      if (disposed || pauseDepth > 0) return false;
+      const enabledValue = toValue(enabled);
+      if (disposed || !enabledValue) return false;
       const currentKey = resolveKey();
+      if (disposed) return false;
       if (expectedKey !== undefined && expectedKey !== currentKey) return false;
       if (!isPlainObject(form.value)) {
         throw new TypeError(
@@ -107,9 +116,13 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
           '[useFormDraft] Form cannot be serialized as JSON.',
         );
       }
-      resolveStorage().setItem(currentKey, serialized);
+      if (disposed) return false;
+      const storage = resolveStorage();
+      if (disposed) return false;
+      storage.setItem(currentKey, serialized);
+      if (disposed) return false;
       error.value = null;
-      return true;
+      return !disposed;
     } catch (failure) {
       return reportError(failure);
     }
@@ -133,19 +146,63 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
 
   const scheduleDraft = (): void => {
     try {
-      if (disposed || pauseDepth > 0 || !toValue(enabled)) return;
-      scheduledKey = resolveKey();
+      if (disposed || pauseDepth > 0) return;
+      const enabledValue = toValue(enabled);
+      if (disposed || !enabledValue) return;
+      const nextKey = resolveKey();
+      if (disposed) return;
+      scheduledKey = nextKey;
       draftTimer.start();
+      if (disposed) cancelScheduledDraft();
     } catch (failure) {
       cancelScheduledDraft();
       reportError(failure);
     }
   };
 
+  let debounceReadable = true;
+  const stopDebounceWatch = watch(
+    () => {
+      try {
+        const value = toValue(debounceMs);
+        debounceReadable = true;
+        return value;
+      } catch (failure) {
+        debounceReadable = false;
+        cancelScheduledDraft();
+        reportError(failure);
+        return undefined;
+      }
+    },
+    () => {
+      if (!debounceReadable || disposed || !draftTimer.isPending.value) {
+        return;
+      }
+
+      draftTimer.stop();
+      if (disposed) return;
+      try {
+        draftTimer.start();
+        if (disposed) draftTimer.stop();
+      } catch (failure) {
+        cancelScheduledDraft();
+        reportError(failure);
+      }
+    },
+    { flush: 'sync' },
+  );
+
   const restore = (): boolean => {
+    if (disposed) return false;
     cancelScheduledDraft();
+    if (disposed) return false;
     try {
-      const raw = resolveStorage().getItem(resolveKey());
+      const storage = resolveStorage();
+      if (disposed) return false;
+      const currentKey = resolveKey();
+      if (disposed) return false;
+      const raw = storage.getItem(currentKey);
+      if (disposed) return false;
       if (raw === null) {
         error.value = null;
         return false;
@@ -159,6 +216,7 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
       }
 
       const fallback = defaults === undefined ? {} : toValue(defaults);
+      if (disposed) return false;
       if (!isPlainObject(fallback)) {
         throw new TypeError(
           '[useFormDraft] "defaults" must be a plain object.',
@@ -171,26 +229,36 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
       } finally {
         pauseDepth -= 1;
       }
+      if (disposed) return false;
       error.value = null;
-      return true;
+      return !disposed;
     } catch (failure) {
       return reportError(failure);
     }
   };
 
   const clear = (): boolean => {
+    if (disposed) return false;
     cancelScheduledDraft();
+    if (disposed) return false;
     try {
-      resolveStorage().removeItem(resolveKey());
+      const storage = resolveStorage();
+      if (disposed) return false;
+      const currentKey = resolveKey();
+      if (disposed) return false;
+      storage.removeItem(currentKey);
+      if (disposed) return false;
       error.value = null;
-      return true;
+      return !disposed;
     } catch (failure) {
       return reportError(failure);
     }
   };
 
   const flush = (): boolean => {
+    if (disposed) return false;
     cancelScheduledDraft();
+    if (disposed) return false;
     return writeDraft();
   };
 
@@ -223,6 +291,7 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
     },
     () => {
       cancelScheduledDraft();
+      if (disposed) return;
       if (keyReadable) error.value = null;
     },
     { flush: 'sync' },
@@ -247,11 +316,11 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
   );
 
   onScopeDispose(() => {
-    disposed = true;
     cancelScheduledDraft();
     stopFormWatch();
     stopKeyWatch();
     stopEnabledWatch();
+    stopDebounceWatch();
   }, true);
 
   return {

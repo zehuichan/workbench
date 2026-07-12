@@ -1,8 +1,12 @@
 import { shallowRef, triggerRef } from 'vue';
 import { cloneDeep, isEqual } from 'es-toolkit';
-import { cellKey } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
+
+export interface DirtyCell {
+  rowKey: string;
+  prop: string;
+}
 
 /**
  * 脏行/脏格追踪。以 rowKey 寻址、以 rowKey 存基线快照（不是数组下标），
@@ -65,11 +69,11 @@ export function useDirty<T extends RowData = RowData>(table: PlusTable<T>) {
     return states.dirtyCells.value.has(rowKey);
   }
 
-  /** 返回 `${rowKey}:${prop}` 形式的脏格集合 */
-  function getDirtyCells(): Set<string> {
-    const result = new Set<string>();
+  /** 返回脏格身份的只读快照，不暴露内部 Map / Set。 */
+  function getDirtyCells(): DirtyCell[] {
+    const result: DirtyCell[] = [];
     for (const [rowKey, props] of states.dirtyCells.value) {
-      for (const prop of props) result.add(cellKey(rowKey, prop));
+      for (const prop of props) result.push({ rowKey, prop });
     }
     return result;
   }
@@ -107,21 +111,26 @@ export function useDirty<T extends RowData = RowData>(table: PlusTable<T>) {
     states.dirtyCells.value = new Map();
   }
 
+  /** 数据行身份失效时调用：同时丢弃该 rowKey 的基线与脏标记。 */
+  function invalidateDirtyRow(rowKey: string): void {
+    baseline.delete(rowKey);
+    if (states.dirtyCells.value.delete(rowKey)) {
+      triggerRef(states.dirtyCells);
+    }
+  }
+
   /** 行失效后调用：清掉该行的脏标记与基线快照，避免长会话下无限增长 */
   function cleanDirty(): void {
-    let changed = false;
     const keysMap = table.store.states.keysMap.value;
     const map = states.dirtyCells.value;
+    const invalidRowKeys = new Set<string>();
     for (const rowKey of [...baseline.keys()]) {
-      if (!keysMap.has(rowKey)) baseline.delete(rowKey);
+      if (!keysMap.has(rowKey)) invalidRowKeys.add(rowKey);
     }
     for (const rowKey of [...map.keys()]) {
-      if (!keysMap.has(rowKey)) {
-        map.delete(rowKey);
-        changed = true;
-      }
+      if (!keysMap.has(rowKey)) invalidRowKeys.add(rowKey);
     }
-    if (changed) triggerRef(states.dirtyCells);
+    for (const rowKey of invalidRowKeys) invalidateDirtyRow(rowKey);
   }
 
   return {
@@ -133,11 +142,13 @@ export function useDirty<T extends RowData = RowData>(table: PlusTable<T>) {
     getModifiedRows,
     clearDirty,
     resetTracking,
+    invalidateDirtyRow,
     cleanDirty,
     states,
   };
 }
 
-export type DirtyApi<T extends RowData = RowData> = ReturnType<
-  typeof useDirty<T>
+export type DirtyApi<T extends RowData = RowData> = Omit<
+  ReturnType<typeof useDirty<T>>,
+  'invalidateDirtyRow'
 >;

@@ -19,7 +19,7 @@ export interface UseAutoSaveOptions<T> {
    * Persists the latest value evaluated when a save starts.
    * Must not call this instance's flush or withPaused controls.
    */
-  save: (value: T) => void | Promise<void>;
+  save: (value: T, signal: AbortSignal) => void | Promise<void>;
   /** Whether source changes may schedule automatic saves. */
   enabled?: MaybeRefOrGetter<boolean>;
   /** Delay before an automatic save starts. */
@@ -79,12 +79,19 @@ export function useAutoSave<T>(
   let disposed = false;
   let invokingSaveSynchronously = false;
   let inFlight: Promise<void> | null = null;
+  let activeController: AbortController | null = null;
   const activeFlushes = new Set<Promise<void>>();
 
+  const createDisposedError = (): Error =>
+    new Error('[useAutoSave] Scope was disposed before flush completed.');
+
   const reportError = (failure: unknown): void => {
+    if (disposed) return;
     errorEpoch += 1;
     error.value = failure;
+    if (disposed) return;
     status.value = 'error';
+    if (disposed) return;
     if (onError) {
       try {
         onError(failure);
@@ -95,27 +102,38 @@ export function useAutoSave<T>(
   };
 
   const performSave = async (): Promise<void> => {
+    if (disposed) throw createDisposedError();
+
     const savingRevision = revision;
     const startingErrorEpoch = errorEpoch;
     let value: T;
+    let controller: AbortController | null = null;
 
     try {
       value = toValue(source);
+      if (disposed) throw createDisposedError();
+
+      controller = new AbortController();
+      activeController = controller;
       status.value = 'saving';
+      if (disposed) throw createDisposedError();
       error.value = null;
+      if (disposed) throw createDisposedError();
 
       let saveResult: void | Promise<void>;
       invokingSaveSynchronously = true;
       try {
-        saveResult = save(value);
+        saveResult = save(value, controller.signal);
       } finally {
         invokingSaveSynchronously = false;
       }
       await saveResult;
+      if (disposed) throw createDisposedError();
 
       savedRevision = Math.max(savedRevision, savingRevision);
       handledRevision = Math.max(handledRevision, savingRevision);
       lastSavedAt.value = Date.now();
+      if (disposed) throw createDisposedError();
       if (onSuccess) {
         try {
           onSuccess(value);
@@ -126,12 +144,14 @@ export function useAutoSave<T>(
           );
         }
       }
-      if (errorEpoch === startingErrorEpoch) {
+      if (!disposed && errorEpoch === startingErrorEpoch) {
         status.value = handledRevision < revision ? 'pending' : 'saved';
       }
     } catch (failure) {
-      reportError(failure);
+      if (!disposed) reportError(failure);
       throw failure;
+    } finally {
+      if (activeController === controller) activeController = null;
     }
   };
 
@@ -149,6 +169,7 @@ export function useAutoSave<T>(
   };
 
   const discardThrough = (targetRevision: number): void => {
+    if (disposed) return;
     handledRevision = Math.max(handledRevision, targetRevision);
     if (!inFlight && status.value === 'pending') {
       status.value = lastSavedAt.value === null ? 'idle' : 'saved';
@@ -163,19 +184,21 @@ export function useAutoSave<T>(
     const isComplete = () =>
       (automatic ? handledRevision : savedRevision) >= targetRevision;
 
+    const stopIfDisposed = (): boolean => {
+      if (!disposed) return false;
+      if (automatic) return true;
+      throw createDisposedError();
+    };
+
+    if (stopIfDisposed()) return;
     while (!isComplete()) {
-      if (disposed) {
-        if (automatic) return;
-        const failure = new Error(
-          '[useAutoSave] Scope was disposed before flush completed.',
-        );
-        reportError(failure);
-        throw failure;
-      }
+      if (stopIfDisposed()) return;
       if (automatic) {
         if (generation !== autoSaveGeneration) return;
         try {
-          if (pauseDepth > 0 || !toValue(enabled)) {
+          const enabledValue = toValue(enabled);
+          if (stopIfDisposed()) return;
+          if (pauseDepth > 0 || !enabledValue) {
             discardThrough(targetRevision);
             return;
           }
@@ -185,7 +208,9 @@ export function useAutoSave<T>(
         }
       }
       await getOrStartSave();
+      if (stopIfDisposed()) return;
     }
+    stopIfDisposed();
   };
 
   let autoSaveGeneration = 0;
@@ -209,9 +234,43 @@ export function useAutoSave<T>(
   };
 
   const scheduleSave = (): void => {
+    if (disposed) return;
     scheduledGeneration = ++autoSaveGeneration;
     saveTimer.start();
+    if (disposed) saveTimer.stop();
   };
+
+  let debounceReadable = true;
+  const stopDebounceWatch = watch(
+    () => {
+      try {
+        const value = toValue(debounceMs);
+        debounceReadable = true;
+        return value;
+      } catch (failure) {
+        debounceReadable = false;
+        cancelScheduledSave();
+        reportError(failure);
+        return undefined;
+      }
+    },
+    () => {
+      if (!debounceReadable || disposed || !saveTimer.isPending.value) {
+        return;
+      }
+
+      saveTimer.stop();
+      if (disposed) return;
+      try {
+        saveTimer.start();
+        if (disposed) saveTimer.stop();
+      } catch (failure) {
+        cancelScheduledSave();
+        reportError(failure);
+      }
+    },
+    { flush: 'sync' },
+  );
 
   let enabledReadable = true;
   const stopEnabledWatch = watch(
@@ -251,14 +310,9 @@ export function useAutoSave<T>(
     },
     () => {
       try {
-        if (
-          !sourceReadable ||
-          disposed ||
-          pauseDepth > 0 ||
-          !toValue(enabled)
-        ) {
-          return;
-        }
+        if (!sourceReadable || disposed || pauseDepth > 0) return;
+        const enabledValue = toValue(enabled);
+        if (disposed || !enabledValue) return;
         revision += 1;
         if (!inFlight) status.value = 'pending';
         scheduleSave();
@@ -271,6 +325,8 @@ export function useAutoSave<T>(
   );
 
   const flush = (): Promise<void> => {
+    if (disposed) return Promise.reject(createDisposedError());
+
     if (invokingSaveSynchronously) {
       const failure = new Error(
         '[useAutoSave] flush cannot be called from the save callback.',
@@ -280,6 +336,7 @@ export function useAutoSave<T>(
     }
 
     cancelScheduledSave();
+    if (disposed) return Promise.reject(createDisposedError());
     if (pauseDepth > 0) {
       const failure = new Error(
         '[useAutoSave] Cannot flush while auto-save is paused.',
@@ -291,7 +348,9 @@ export function useAutoSave<T>(
     const targetRevision = revision;
     const operation = (async () => {
       if (inFlight) await inFlight;
+      if (disposed) throw createDisposedError();
       await drainThrough(targetRevision);
+      if (disposed) throw createDisposedError();
     })();
 
     activeFlushes.add(operation);
@@ -334,10 +393,12 @@ export function useAutoSave<T>(
 
   onScopeDispose(() => {
     disposed = true;
+    activeController?.abort();
+    activeController = null;
     cancelScheduledSave();
-    discardThrough(revision);
     stopSourceWatch();
     stopEnabledWatch();
+    stopDebounceWatch();
   }, true);
 
   return {

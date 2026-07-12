@@ -1,7 +1,7 @@
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
 import { devWarn, getRowIdentity } from '../util';
 import { useColumns } from './columns';
-import { useCurrent } from './current';
+import { useCurrent, type CellRef } from './current';
 import { useDependencies } from './dependencies';
 import { useDirty } from './dirty';
 import { useEditing } from './editing';
@@ -80,8 +80,27 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
   const history = useHistory(table);
   const dirty = useDirty(table);
   const validation = useValidation(table);
-  const editing = useEditing(table);
+  const editing = useEditing(table, current.resolveCellPosition);
   const rows = useRows(table);
+
+  watch(
+    columns.states.columnIndexMap,
+    (next, previous) => {
+      const hiddenIds: string[] = [];
+      for (const id of previous.keys()) {
+        if (!next.has(id)) hiddenIds.push(id);
+      }
+      if (hiddenIds.length) editing.discardColumnDrafts(hiddenIds);
+      current.cleanCurrent();
+      editing.cleanEditingCell();
+    },
+    { flush: 'sync' },
+  );
+
+  watch(rowRegistry, () => {
+    current.cleanCurrent();
+    editing.cleanEditing();
+  });
 
   function getRowKey(row: T): string {
     return (
@@ -90,27 +109,36 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
     );
   }
 
-  function locateCell(
-    rowIndex: number,
-    colIndex: number,
-  ): CellLocation<T> | null {
+  /** 按最新行列顺序把稳定身份解析为完整单元格上下文。 */
+  function locateCellRef(ref: CellRef): CellLocation<T> | null {
+    const position = current.resolveCellPosition(ref);
+    if (!position) return null;
+    const { rowIndex, colIndex } = position;
     const row = states.data.value[rowIndex];
     const node = columns.states.columns.value[colIndex];
     const prop = node?.column.prop;
     if (!row || !node || !prop) return null;
-    return {
-      row,
-      rowIndex,
-      node,
-      colIndex,
-      prop,
-      rowKey: getRowKey(row),
-    };
+    return { row, rowIndex, node, colIndex, prop, rowKey: ref.rowKey };
+  }
+
+  function locateCell(
+    rowIndex: number,
+    colIndex: number,
+  ): CellLocation<T> | null {
+    const ref = current.toCellRef(rowIndex, colIndex);
+    return ref ? locateCellRef(ref) : null;
+  }
+
+  function getCurrentCellLocation(): CellLocation<T> | null {
+    const ref = current.getCurrentRef();
+    return ref ? locateCellRef(ref) : null;
   }
 
   return {
     getRowKey,
     locateCell,
+    locateCellRef,
+    getCurrentCellLocation,
     ...columns,
     ...current,
     ...dependencies,

@@ -39,10 +39,6 @@ export function getRowIdentity<T extends RowData = RowData>(
   return String(raw);
 }
 
-export function cellKey(rowKey: string, prop: string): string {
-  return `${rowKey}:${prop}`;
-}
-
 export function devWarn(message: string): void {
   if ((import.meta as any)?.env?.DEV) console.warn(message);
 }
@@ -59,8 +55,58 @@ export function resolveEditable<T extends RowData = RowData>(
     : !!editable;
 }
 
+const CONTROL_SELECTOR = [
+  'input',
+  'textarea',
+  'select',
+  'button',
+  'a[href]',
+  'label',
+  '[contenteditable=""]',
+  '[contenteditable="true"]',
+  '[tabindex]',
+  '[role~="button"]',
+  '[role~="checkbox"]',
+  '[role~="combobox"]',
+  '[role~="link"]',
+  '[role~="listbox"]',
+  '[role~="menuitem"]',
+  '[role~="menuitemcheckbox"]',
+  '[role~="menuitemradio"]',
+  '[role~="option"]',
+  '[role~="radio"]',
+  '[role~="searchbox"]',
+  '[role~="slider"]',
+  '[role~="spinbutton"]',
+  '[role~="switch"]',
+  '[role~="tab"]',
+  '[role~="textbox"]',
+  '[role~="treeitem"]',
+  '[data-ptbl-control]',
+].join(', ');
+
 export const FOCUSABLE_EDITOR_SELECTOR =
-  'input, textarea, [tabindex]:not([tabindex="-1"])';
+  `:is(${CONTROL_SELECTOR})` +
+  ':not([disabled])' +
+  ':not([aria-disabled="true"])' +
+  ':not([tabindex="-1"])' +
+  ':not(input[type="hidden"])' +
+  ':not(label)';
+
+export function isControl(
+  target: EventTarget | null,
+  boundary?: EventTarget | null,
+): boolean {
+  if (!(target instanceof Element)) return false;
+  const control = target.closest(CONTROL_SELECTOR);
+  if (!control) return false;
+  if (boundary === undefined) return true;
+  return (
+    boundary instanceof Element &&
+    control !== boundary &&
+    boundary.contains(control)
+  );
+}
 
 function isTextInput(
   el: HTMLElement,
@@ -78,6 +124,16 @@ export function focusEditorElement(
   root: HTMLElement | null | undefined,
   options: FocusEditorOptions = {},
 ): boolean {
+  const focused = document.activeElement;
+  if (
+    options.skipIfFocused &&
+    focused instanceof Element &&
+    root?.contains(focused) &&
+    isControl(focused, root)
+  ) {
+    return true;
+  }
+
   const input = root?.querySelector<HTMLElement>(FOCUSABLE_EDITOR_SELECTOR);
   if (!input) return false;
   if (options.skipIfFocused && document.activeElement === input) return true;

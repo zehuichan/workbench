@@ -1,6 +1,9 @@
 import { useWatcher } from './watcher';
+import { getRowIdentity } from '../util';
+import type { ShallowRef } from 'vue';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
+import type { CellPosition } from './current';
 import type { AppliedHistoryChange } from './history';
 
 function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
@@ -8,7 +11,29 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
 
   const mutations = {
     setData(data: T[]) {
+      const rowKey = watcher.states.rowKey.value;
+      const previousRowsByKey = new Map<string, T>(
+        [...watcher.states.keysMap.value].map(([key, location]) => [
+          key,
+          location.row,
+        ]),
+      );
+      const nextRowsByKey = new Map<string, T>();
+      for (const row of data) {
+        nextRowsByKey.set(getRowIdentity(row, rowKey), row);
+      }
+
+      for (const [key, previousRow] of previousRowsByKey) {
+        if (nextRowsByKey.get(key) === previousRow) continue;
+        watcher.invalidateCurrentRow(key);
+        watcher.invalidateEditingRow(key);
+        watcher.invalidateHistoryRow(key);
+        watcher.invalidateDirtyRow(key);
+        watcher.invalidateValidationRow(key);
+      }
+
       watcher.states.data.value = data;
+      watcher.cleanCurrent();
       watcher.cleanHistory();
       watcher.cleanDirty();
       watcher.cleanValidation();
@@ -116,4 +141,42 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
 
 export default useStore;
 
-export type Store<T extends RowData = RowData> = ReturnType<typeof useStore<T>>;
+export type InternalStore<T extends RowData = RowData> = ReturnType<
+  typeof useStore<T>
+>;
+
+type InternalStoreKey =
+  | 'cleanCurrent'
+  | 'cleanEditingCell'
+  | 'discardColumnDrafts'
+  | 'getCellElRef'
+  | 'getCurrentCellLocation'
+  | 'getCurrentRef'
+  | 'getEditingCellLocation'
+  | 'isCurrentRef'
+  | 'isEditingRef'
+  | 'invalidateCurrentRow'
+  | 'invalidateDirtyRow'
+  | 'invalidateEditingRow'
+  | 'invalidateHistoryRow'
+  | 'invalidateValidationRow'
+  | 'locateCellRef'
+  | 'resolveCellPosition'
+  | 'scrollCellRef'
+  | 'syncCurrentCell'
+  | 'syncEditingCell'
+  | 'toCellRef';
+
+/** 对外维持原有 index-based Store 形态，稳定 CellRef 相关成员仅供组件内部使用。 */
+export type Store<T extends RowData = RowData> = Omit<
+  InternalStore<T>,
+  InternalStoreKey | 'states'
+> & {
+  states: Omit<
+    InternalStore<T>['states'],
+    'columnIndexMap' | 'currentCell' | 'editingCell'
+  > & {
+    currentCell: ShallowRef<CellPosition | null>;
+    editingCell: ShallowRef<CellPosition | null>;
+  };
+};
