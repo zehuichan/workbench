@@ -2,9 +2,9 @@
 
 $demo-primary: #409eff;
 $demo-primary-soft: #ecf5ff;
-$demo-text: #303133;
-$demo-text-secondary: #606266;
-$demo-text-muted: #909399;
+$demo-text: #141414;
+$demo-text-secondary: #333333;
+$demo-text-muted: #4e4e4e;
 $demo-border: #e4e7ed;
 $demo-border-light: #ebeef5;
 $demo-bg: #f5f7fa;
@@ -12,6 +12,27 @@ $demo-bg-soft: #fafafa;
 $demo-code-bg: #f0f2f5;
 $demo-radius: 4px;
 $demo-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+// Layout shell (modern-normalize 已处理 box-sizing / body margin)
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  background: $demo-bg;
+  // modern-normalize 未含 CJK；补 Element Plus 同款无衬线栈，避免中文回退宋体
+  font-family:
+    'Helvetica Neue',
+    Helvetica,
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    '微软雅黑',
+    Arial,
+    sans-serif;
+}
 
 :root {
   --demo-primary: #{$demo-primary};
@@ -56,16 +77,26 @@ $demo-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 // ---------------------------------------------------------------------------
 .playground {
   display: flex;
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
   background: $demo-bg;
   color: $demo-text;
 
   &__nav {
     width: 240px;
     flex-shrink: 0;
+    height: 100%;
     padding: 24px 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
     background: #fff;
     border-right: 1px solid $demo-border;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   &__brand {
@@ -119,7 +150,10 @@ $demo-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   &__main {
     flex: 1;
     min-width: 0;
+    height: 100%;
     padding: 32px 40px 64px;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 
@@ -226,7 +260,7 @@ $demo-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     th {
       background: $demo-bg-soft;
-      color: $demo-text-muted;
+      color: $demo-text;
       font-weight: 600;
       white-space: nowrap;
     }
@@ -235,6 +269,12 @@ $demo-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     td:first-child {
       width: 7.5rem;
       white-space: nowrap;
+      color: $demo-text;
+      font-weight: 500;
+    }
+
+    th:first-child {
+      font-weight: 600;
     }
 
     th:nth-child(2),

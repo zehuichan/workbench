@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, unref } from 'vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 import { PlusTable } from '@/components/plus-table';
@@ -15,8 +15,9 @@ interface Row {
 interface TableExpose {
   undo: () => unknown;
   redo: () => unknown;
-  canUndo: { value: boolean };
-  canRedo: { value: boolean };
+  /** 经模板 ref 访问时 ComputedRef 会被解包成 boolean */
+  canUndo: boolean;
+  canRedo: boolean;
   getModifiedRows: () => Row[];
   resetTracking: () => void;
 }
@@ -52,8 +53,9 @@ const columns = [
   },
 ];
 
-const canUndo = computed(() => tableRef.value?.canUndo?.value ?? false);
-const canRedo = computed(() => tableRef.value?.canRedo?.value ?? false);
+// expose 的 ComputedRef 在模板 ref 上会被解包；用 unref 兼容两种形态
+const canUndo = computed(() => !!unref(tableRef.value?.canUndo));
+const canRedo = computed(() => !!unref(tableRef.value?.canRedo));
 
 function refreshDirty() {
   dirtyCount.value = tableRef.value?.getModifiedRows()?.length ?? 0;
