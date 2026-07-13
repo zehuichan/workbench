@@ -32,9 +32,9 @@ const demos = [
   {
     path: './plus-table/pagination-rows-demo.vue',
     source: paginationRows,
-    sections: 3,
-    rows: 10,
-    content: ['PlusTable Props（分页）', 'Events', 'allRows'],
+    sections: 4,
+    rows: 12,
+    content: ['PlusTable Props（分页）', 'Events', 'Slots', '#title', '#summary'],
   },
   {
     path: './composables/use-auto-save-demo.vue',

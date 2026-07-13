@@ -154,6 +154,20 @@ function duplicateFirstOnPage() {
           <td>移动行。</td>
         </tr>
       </DemoApiTable>
+
+      <DemoApiTable title="Slots" :headers="['名称', '说明']">
+        <tr>
+          <td><code>#title</code></td>
+          <td>顶栏左侧标题区，与 toolbar / 列设置同一行。</td>
+        </tr>
+        <tr>
+          <td><code>#summary</code></td>
+          <td>
+            底栏左侧汇总区；有分页时与分页同一行，无
+            <code>total</code> 时仍可单独显示。
+          </td>
+        </tr>
+      </DemoApiTable>
     </template>
 
     <DemoBlock>
@@ -176,11 +190,14 @@ function duplicateFirstOnPage() {
         @update:page-size="pageSize = $event"
         @page-change="handlePageChange"
       >
+        <template #title>任务列表</template>
         <template #toolbar>
           <el-button type="primary" @click="addRow">新增</el-button>
           <el-button @click="removeFirstOnPage">删除当前页首行</el-button>
           <el-button @click="duplicateFirstOnPage">复制当前页首行</el-button>
-          <span class="demo__meta">共 {{ allRows.length }} 行</span>
+        </template>
+        <template #summary>
+          <span class="demo__meta">共 {{ allRows.length }} 行 · 当前页 {{ pageRows.length }} 条</span>
         </template>
       </PlusTable>
     </DemoBlock>
