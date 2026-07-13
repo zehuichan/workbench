@@ -1,48 +1,19 @@
 /**
  * 单元格编辑器组件适配器：把列上的 component / componentProps 归一化为可渲染描述。
  * 命名与 vben FormSchema 的 component adapter 对齐。
+ * 内置组件注册见 ./component。
  */
-import {
-  ElCheckbox,
-  ElDatePicker,
-  ElInput,
-  ElInputNumber,
-  ElSelectV2,
-  ElSwitch,
-  ElTimePicker,
-} from 'element-plus';
-import { isPlainObject } from 'es-toolkit';
+import { isFunction, isPlainObject, isString } from 'es-toolkit';
 import type { Component } from 'vue';
 import type { RowContext, RowData } from '../table/defaults';
+import {
+  EDITOR_REGISTRY,
+  TYPED_REGISTRY,
+  type BuiltinEditorType,
+} from './component';
 
-export interface EditorAdapter {
-  component: Component;
-  componentProps?: Record<string, unknown>;
-  /** 提交时机：blur=失焦提交（文本类）；change=变更即提交（选择类） */
-  trigger: 'blur' | 'change';
-}
-
-export const EDITOR_REGISTRY = {
-  input: { component: ElInput, trigger: 'blur' },
-  textarea: {
-    component: ElInput,
-    componentProps: { type: 'textarea', autosize: true },
-    trigger: 'blur',
-  },
-  'input-number': { component: ElInputNumber, trigger: 'blur' },
-  select: { component: ElSelectV2, trigger: 'change' },
-  'date-picker': { component: ElDatePicker, trigger: 'change' },
-  'time-picker': { component: ElTimePicker, trigger: 'change' },
-  switch: { component: ElSwitch, trigger: 'change' },
-  checkbox: { component: ElCheckbox, trigger: 'change' },
-} satisfies Record<string, EditorAdapter>;
-
-/** 内置编辑器标识，由 EDITOR_REGISTRY 的键推导——新增编辑器只需扩展注册表 */
-export type BuiltinEditorType = keyof typeof EDITOR_REGISTRY;
-
-/** satisfies 会保留每个条目各自的窄类型（如无 componentProps），这里收敛成统一形状供查表用 */
-const TYPED_REGISTRY: Record<BuiltinEditorType, EditorAdapter> =
-  EDITOR_REGISTRY;
+export type { BuiltinEditorType, EditorAdapter } from './component';
+export { EDITOR_REGISTRY } from './component';
 
 /** 列上的编辑控件：内置标识或自定义 Vue 组件 */
 export type ColumnComponent = BuiltinEditorType | Component;
@@ -70,35 +41,22 @@ export interface ResolvedEditor {
   modelProp: string;
 }
 
-function isBuiltinType(value: unknown): value is BuiltinEditorType {
-  return typeof value === 'string' && Object.hasOwn(TYPED_REGISTRY, value);
-}
-
-function isComponentLike(value: unknown): value is Component {
-  if (typeof value === 'function') return true;
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    ('setup' in value || 'render' in value || 'template' in value)
-  );
-}
-
-function resolveModelProp(value: unknown): string {
-  if (value === undefined) return 'modelValue';
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new TypeError('[PlusTable] modelProp 必须是非空字符串。');
-  }
-  return value;
-}
-
+/**
+ * 与 vben FormField 一致：string → 查注册表；否则直接当自定义组件。
+ */
 function resolveComponent(
   component: ColumnComponent | undefined,
   modelProp = 'modelValue',
 ): Pick<ResolvedEditor, 'component' | 'trigger' | 'modelProp'> & {
   defaults: Record<string, unknown>;
 } {
-  if (component === undefined || isBuiltinType(component)) {
-    const adapter = TYPED_REGISTRY[component ?? 'input'];
+  if (component === undefined || isString(component)) {
+    if (isString(component) && !Object.hasOwn(TYPED_REGISTRY, component)) {
+      throw new TypeError(`[PlusTable] 未知的 component="${component}"。`);
+    }
+    const adapter = isString(component)
+      ? TYPED_REGISTRY[component as BuiltinEditorType]
+      : TYPED_REGISTRY.input;
     return {
       component: adapter.component,
       trigger: adapter.trigger,
@@ -106,12 +64,7 @@ function resolveComponent(
       defaults: { ...adapter.componentProps },
     };
   }
-  if (isComponentLike(component)) {
-    return { component, trigger: 'blur', modelProp, defaults: {} };
-  }
-  throw new TypeError(
-    `[PlusTable] 未知的 component="${String(component)}"。`,
-  );
+  return { component, trigger: 'blur', modelProp, defaults: {} };
 }
 
 /** 把列上的 component / componentProps 归一化为可直接渲染的描述 */
@@ -121,11 +74,11 @@ export function resolveEditor<T extends RowData = RowData>(
 ): ResolvedEditor {
   const base = resolveComponent(
     fields?.component,
-    resolveModelProp(fields?.modelProp),
+    fields?.modelProp ?? 'modelValue',
   );
   const configProps = fields?.componentProps;
   const resolvedProps =
-    typeof configProps === 'function' ? configProps(ctx) : configProps;
+    isFunction(configProps) ? configProps(ctx) : configProps;
   if (resolvedProps !== undefined && !isPlainObject(resolvedProps)) {
     throw new TypeError(
       '[PlusTable] componentProps 必须是普通对象，函数式 componentProps 也必须返回普通对象。',
@@ -148,8 +101,8 @@ export function typedCharToDraft<T extends RowData = RowData>(
   char: string,
 ): unknown {
   const { component } = resolveComponent(fields?.component);
-  if (component === ElInput) return char;
-  if (component === ElInputNumber) {
+  if (component === EDITOR_REGISTRY.input.component) return char;
+  if (component === EDITOR_REGISTRY['input-number'].component) {
     return /^[0-9]$/.test(char) ? Number(char) : undefined;
   }
   return undefined;

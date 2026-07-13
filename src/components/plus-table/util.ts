@@ -1,3 +1,4 @@
+import { isFunction, isNumber, isString } from 'es-toolkit';
 import type { RowData, RowKey } from './table/defaults';
 import type { PlusTableColumn } from './table-column/defaults';
 
@@ -32,10 +33,7 @@ export function isNativeRenderColumn(column: ColumnTypeLike): boolean {
 }
 
 export function assertRowKey(rowKey: unknown): asserts rowKey is RowKey {
-  if (
-    (typeof rowKey !== 'string' || rowKey.length === 0) &&
-    typeof rowKey !== 'function'
-  ) {
+  if ((!isString(rowKey) || rowKey.length === 0) && !isFunction(rowKey)) {
     throw new TypeError(
       '[PlusTable] rowKey 必须是非空字段名或返回 string/number 的函数。',
     );
@@ -47,11 +45,11 @@ export function getRowIdentity<T extends RowData = RowData>(
   rowKey: RowKey<T>,
 ): string {
   assertRowKey(rowKey);
-  const raw = typeof rowKey === 'function' ? rowKey(row) : row[rowKey];
+  const raw = isFunction(rowKey) ? rowKey(row) : row[rowKey];
   if (raw === undefined || raw === null || raw === '') {
     throw new TypeError('[PlusTable] rowKey 解析结果不能为空。');
   }
-  if (typeof raw !== 'string' && typeof raw !== 'number') {
+  if (!isString(raw) && !isNumber(raw)) {
     throw new TypeError('[PlusTable] rowKey 解析结果必须是 string 或 number。');
   }
   return String(raw);
@@ -68,9 +66,7 @@ export function resolveEditable<T extends RowData = RowData>(
 ): boolean {
   if (!column.prop) return false;
   const editable = column.editable;
-  return typeof editable === 'function'
-    ? !!editable({ row, rowIndex })
-    : !!editable;
+  return isFunction(editable) ? !!editable({ row, rowIndex }) : !!editable;
 }
 
 const CONTROL_SELECTOR = [

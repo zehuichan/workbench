@@ -1,4 +1,4 @@
-import { isPlainObject } from 'es-toolkit';
+import { isBoolean, isFunction, isPlainObject, isString } from 'es-toolkit';
 import { isSpecialColumn } from '../util';
 import type { PlusTable } from '../tokens';
 import type { CellRule, RowData } from '../table/defaults';
@@ -46,7 +46,7 @@ export function assertColumnDependencies<T extends RowData = RowData>(
   if (
     !Array.isArray(dependencies.triggerFields) ||
     dependencies.triggerFields.some(
-      (field) => typeof field !== 'string' || field.length === 0,
+      (field) => !isString(field) || field.length === 0,
     )
   ) {
     throw new TypeError(
@@ -55,7 +55,7 @@ export function assertColumnDependencies<T extends RowData = RowData>(
   }
   for (const key of DEPENDENCY_CALLBACK_KEYS) {
     const callback = dependencies[key];
-    if (callback !== undefined && typeof callback !== 'function') {
+    if (callback !== undefined && !isFunction(callback)) {
       throw new TypeError(`[PlusTable] dependencies.${key} 必须是函数。`);
     }
   }
@@ -93,12 +93,12 @@ export function useDependencies<T extends RowData = RowData>(
     const required = dep.required?.(row, api);
     const rules = dep.rules?.(row, api);
     const componentProps = dep.componentProps?.(row, api);
-    if (disabled !== undefined && typeof disabled !== 'boolean') {
+    if (disabled !== undefined && !isBoolean(disabled)) {
       throw new TypeError(
         '[PlusTable] dependencies.disabled 必须返回 boolean。',
       );
     }
-    if (required !== undefined && typeof required !== 'boolean') {
+    if (required !== undefined && !isBoolean(required)) {
       throw new TypeError(
         '[PlusTable] dependencies.required 必须返回 boolean。',
       );

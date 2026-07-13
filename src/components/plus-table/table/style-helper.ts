@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 import { useElementBounding, useWindowSize } from '@vueuse/core';
+import { isPlainObject } from 'es-toolkit';
 import type { PlusTable } from '../tokens';
 import type { AdaptiveConfig, RowData } from './defaults';
 
@@ -10,7 +11,7 @@ const DEFAULT_MIN_HEIGHT = 200;
 export function useStyle<T extends RowData = RowData>(table: PlusTable<T>) {
   const config = computed<Required<AdaptiveConfig>>(() => {
     const adaptive = table.props.adaptive;
-    const overrides = typeof adaptive === 'object' ? adaptive : {};
+    const overrides = isPlainObject(adaptive) ? adaptive : {};
     return {
       mode: overrides.mode ?? 'viewport',
       offsetBottom: overrides.offsetBottom ?? DEFAULT_OFFSET_BOTTOM,

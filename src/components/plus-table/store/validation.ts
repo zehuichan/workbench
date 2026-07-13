@@ -1,5 +1,6 @@
 import { reactive } from 'vue';
 import Schema from 'async-validator';
+import { isString } from 'es-toolkit';
 import type { ValidateError } from 'async-validator';
 import type { PlusTable } from '../tokens';
 import type {
@@ -132,7 +133,7 @@ export function useValidation<T extends RowData = RowData>(
       if (currentIndex === null) return null;
       const validateErrors = (err as { errors?: ValidateError[] })?.errors;
       const message = validateErrors?.[0]?.message;
-      if (typeof message !== 'string') throw err;
+      if (!isString(message)) throw err;
       const cellError: CellError = {
         rowKey,
         rowIndex: currentIndex,

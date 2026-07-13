@@ -1,3 +1,4 @@
+import { isFunction } from 'es-toolkit';
 import type { Ref } from 'vue';
 
 export function createTableExpose<Local extends object, Table extends object>(
@@ -23,7 +24,7 @@ export function createTableExpose<Local extends object, Table extends object>(
         boundMethods.clear();
       }
       const value = Reflect.get(table, property, table);
-      if (typeof value !== 'function') return value;
+      if (!isFunction(value)) return value;
       const source = value as Method;
       const cached = boundMethods.get(property);
       if (cached?.source === source) return cached.bound;

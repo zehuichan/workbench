@@ -1,6 +1,6 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import { defaultWindow } from '@vueuse/core';
-import { isPlainObject, sortBy } from 'es-toolkit';
+import { isNumber, isPlainObject, isString, sortBy } from 'es-toolkit';
 import { isSpecialColumn, SETTINGS_STORAGE_PREFIX } from '../util';
 import { assertColumnDependencies } from './dependencies';
 import type { PlusTable } from '../tokens';
@@ -27,9 +27,7 @@ interface PersistedSettings {
 }
 
 function isStringArray(value: unknown): value is string[] {
-  return (
-    Array.isArray(value) && value.every((item) => typeof item === 'string')
-  );
+  return Array.isArray(value) && value.every(isString);
 }
 
 function isOrderMap(value: unknown): value is Record<string, string[]> {
@@ -41,7 +39,7 @@ function isWidthMap(value: unknown): value is Record<string, number> {
     isPlainObject(value) &&
     Object.values(value).every(
       (width) =>
-        typeof width === 'number' && Number.isFinite(width) && width > 0,
+        isNumber(width) && Number.isFinite(width) && width > 0,
     )
   );
 }
@@ -106,7 +104,7 @@ function normalize<T extends RowData>(
     list.map((column, index) => {
       assertColumnDependencies(column);
       const explicitId =
-        typeof column.columnKey === 'string' && column.columnKey.length > 0
+        isString(column.columnKey) && column.columnKey.length > 0
           ? column.columnKey
           : null;
       if (!column.children?.length && !isSpecialColumn(column) && column.prop) {

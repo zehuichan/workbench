@@ -8,7 +8,7 @@ import {
   type Ref,
 } from 'vue';
 import { defaultWindow, useTimeoutFn } from '@vueuse/core';
-import { isPlainObject } from 'es-toolkit';
+import { isPlainObject, isString } from 'es-toolkit';
 import { watchReadable } from './watch-readable';
 
 export interface UseFormDraftOptions<
@@ -95,7 +95,7 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
 
   const resolveKey = (): string => {
     const value = readValue(key);
-    if (typeof value !== 'string' || value.trim().length === 0) {
+    if (!isString(value) || value.trim().length === 0) {
       return reportAndThrow(
         new TypeError('[useFormDraft] "key" must be a non-empty string.'),
       );

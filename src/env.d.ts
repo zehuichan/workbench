@@ -9,3 +9,7 @@ declare module '*.vue' {
   >;
   export default component;
 }
+
+/** Allow side-effect style imports under noUncheckedSideEffectImports (TS 5.6+/6). */
+declare module '*.css' {}
+declare module '*.scss' {}
