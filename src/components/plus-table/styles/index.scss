@@ -53,6 +53,9 @@
   }
 
   &__grid {
+    // 成为 ptbl-visually-hidden 等 absolute 子节点的 containing block，
+    // 避免它们以初始包含块定位、撑高 document 造成双滚动条。
+    position: relative;
     outline: none;
     min-height: 0;
   }
