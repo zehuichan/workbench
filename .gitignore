@@ -28,3 +28,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Superpowers SDD runtime workspace (ephemeral; keep docs/superpowers/ only)
+.superpowers/
