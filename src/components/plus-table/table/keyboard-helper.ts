@@ -275,7 +275,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
           table.store.canEditCell(cell.rowIndex, cell.colIndex)
         ) {
           const column = cell.node.column;
-          const draft = typedCharToDraft(column?.editor, event.key);
+          const draft = typedCharToDraft(column, event.key);
           if (draft === undefined) {
             table.store.startEdit(cell.rowIndex, cell.colIndex);
           } else {

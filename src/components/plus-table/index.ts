@@ -13,7 +13,9 @@ export type {
 } from './table-cell/render-helper';
 export type {
   BuiltinEditorType,
+  ColumnComponent,
   EditorAdapter,
+  EditorColumnFields,
   ResolvedEditor,
 } from './adapter';
 export type { Store } from './store';
@@ -41,10 +43,8 @@ export type {
 export type {
   CellContext,
   ColumnDependencies,
-  ColumnEditor,
   ColumnNode,
   DependencyApi,
-  EditorConfig,
   PlusTableColumn,
   PlusTableColumnDef,
 } from './table-column/defaults';

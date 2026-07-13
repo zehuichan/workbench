@@ -44,15 +44,13 @@ const columns = [
     editable: true,
     required: true,
     rules: [{ required: true, message: '请选择类别' }],
-    editor: {
-      type: 'select',
-      props: {
-        options: [
-          { label: '硬件', value: 'hardware' },
-          { label: '软件', value: 'software' },
-        ],
-        clearable: true,
-      },
+    component: 'select',
+    componentProps: {
+      options: [
+        { label: '硬件', value: 'hardware' },
+        { label: '软件', value: 'software' },
+      ],
+      clearable: true,
     },
     formatter: (row: Row) =>
       (({ hardware: '硬件', software: '软件' }) as Record<string, string>)[
@@ -66,7 +64,8 @@ const columns = [
     editable: true,
     required: true,
     rules: [{ required: true, message: '请选择明细' }],
-    editor: { type: 'select', props: { clearable: true } },
+    component: 'select',
+    componentProps: { clearable: true },
     dependencies: {
       triggerFields: ['category'],
       componentProps: (row: Row) => ({
@@ -93,7 +92,7 @@ const columns = [
     label: '备注',
     minWidth: 160,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
 ];
 

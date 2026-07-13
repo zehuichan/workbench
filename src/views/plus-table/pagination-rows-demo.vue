@@ -38,14 +38,14 @@ const columns = [
     label: '名称',
     minWidth: 160,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
   {
     prop: 'owner',
     label: '负责人',
     width: 140,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
 ];
 

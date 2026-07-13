@@ -1,6 +1,6 @@
 /**
- * 单元格编辑器组件适配器：把列上的 editor 配置归一化为可渲染的组件描述。
- * 命名与 vben 体系的 component adapter 对齐。
+ * 单元格编辑器组件适配器：把列上的 component / componentProps 归一化为可渲染描述。
+ * 命名与 vben FormSchema 的 component adapter 对齐。
  */
 import {
   ElCheckbox,
@@ -14,7 +14,6 @@ import {
 import { isPlainObject } from 'es-toolkit';
 import type { Component } from 'vue';
 import type { RowContext, RowData } from '../table/defaults';
-import type { ColumnEditor, EditorConfig } from '../table-column/defaults';
 
 export interface EditorAdapter {
   component: Component;
@@ -45,20 +44,30 @@ export type BuiltinEditorType = keyof typeof EDITOR_REGISTRY;
 const TYPED_REGISTRY: Record<BuiltinEditorType, EditorAdapter> =
   EDITOR_REGISTRY;
 
+/** 列上的编辑控件：内置标识或自定义 Vue 组件 */
+export type ColumnComponent = BuiltinEditorType | Component;
+
+export interface EditorColumnFields<T extends RowData = RowData> {
+  /**
+   * 编辑控件；editable 且未配置时默认 input。
+   * 内置标识见 BuiltinEditorType，或传入自定义 Vue 组件。
+   */
+  component?: ColumnComponent;
+  /** 透传给编辑控件的 props；dependencies.componentProps 覆盖同名项 */
+  componentProps?:
+    | Record<string, unknown>
+    | ((ctx: RowContext<T>) => Record<string, unknown>);
+  /** 自定义组件的 v-model prop 名，默认 modelValue */
+  modelProp?: string;
+}
+
 export interface ResolvedEditor {
   component: Component;
-  /** 内置编辑器默认 props 与 editor.props（静态/函数式）按此优先级合并后的最终 props；
+  /** 注册表默认 props 与列 componentProps 合并后的最终 props；
    * dependencies.componentProps 覆盖同名项由渲染层负责，不在此处合并 */
   componentProps: Record<string, unknown>;
   trigger: 'blur' | 'change';
   modelProp: string;
-}
-
-interface EditorBase {
-  component: Component;
-  trigger: 'blur' | 'change';
-  modelProp: string;
-  adapterProps: Record<string, unknown>;
 }
 
 function isBuiltinType(value: unknown): value is BuiltinEditorType {
@@ -77,92 +86,54 @@ function isComponentLike(value: unknown): value is Component {
 function resolveModelProp(value: unknown): string {
   if (value === undefined) return 'modelValue';
   if (typeof value !== 'string' || value.trim().length === 0) {
-    throw new TypeError('[PlusTable] editor.modelProp 必须是非空字符串。');
+    throw new TypeError('[PlusTable] modelProp 必须是非空字符串。');
   }
   return value;
 }
 
-function resolveBuiltinEditor(
-  type: BuiltinEditorType,
+function resolveComponent(
+  component: ColumnComponent | undefined,
   modelProp = 'modelValue',
-): EditorBase {
-  const adapter = TYPED_REGISTRY[type];
-  return {
-    component: adapter.component,
-    trigger: adapter.trigger,
-    modelProp,
-    adapterProps: { ...adapter.componentProps },
-  };
-}
-
-/** 解析出编辑器的组件本体 / 提交时机 / v-model prop 名 / 内置适配器默认 props，不涉及 editor.props（可能是函数，需要行上下文） */
-function resolveEditorBase<T extends RowData = RowData>(
-  editor: ColumnEditor<T> | undefined,
-): EditorBase {
-  if (editor === undefined) return resolveBuiltinEditor('input');
-  if (isBuiltinType(editor)) {
-    return resolveBuiltinEditor(editor);
-  }
-  if (isComponentLike(editor)) {
+): Pick<ResolvedEditor, 'component' | 'trigger' | 'modelProp'> & {
+  defaults: Record<string, unknown>;
+} {
+  if (component === undefined || isBuiltinType(component)) {
+    const adapter = TYPED_REGISTRY[component ?? 'input'];
     return {
-      component: editor,
-      trigger: 'blur',
-      modelProp: 'modelValue',
-      adapterProps: {},
+      component: adapter.component,
+      trigger: adapter.trigger,
+      modelProp,
+      defaults: { ...adapter.componentProps },
     };
   }
-  if (!isPlainObject(editor)) {
-    throw new TypeError('[PlusTable] editor 必须是内置类型、组件或配置对象。');
+  if (isComponentLike(component)) {
+    return { component, trigger: 'blur', modelProp, defaults: {} };
   }
-
-  const config = editor as EditorConfig<T>;
-  if (config.type !== undefined && config.component !== undefined) {
-    throw new TypeError(
-      '[PlusTable] editor.type 与 editor.component 不能同时配置。',
-    );
-  }
-  if (config.component !== undefined) {
-    if (!isComponentLike(config.component)) {
-      throw new TypeError('[PlusTable] editor.component 不是有效的 Vue 组件。');
-    }
-    return {
-      component: config.component,
-      trigger: 'blur',
-      modelProp: resolveModelProp(config.modelProp),
-      adapterProps: {},
-    };
-  }
-  if (config.type !== undefined && !isBuiltinType(config.type)) {
-    throw new TypeError(
-      `[PlusTable] 未知的 editor.type="${String(config.type)}"。`,
-    );
-  }
-  return resolveBuiltinEditor(
-    config.type ?? 'input',
-    resolveModelProp(config.modelProp),
+  throw new TypeError(
+    `[PlusTable] 未知的 component="${String(component)}"。`,
   );
 }
 
-/** 把列上的 editor 配置归一化为可直接渲染的描述；ctx 供 editor.props 为函数时求值 */
+/** 把列上的 component / componentProps 归一化为可直接渲染的描述 */
 export function resolveEditor<T extends RowData = RowData>(
-  editor: ColumnEditor<T> | undefined,
+  fields: EditorColumnFields<T> | undefined,
   ctx: RowContext<T>,
 ): ResolvedEditor {
-  const base = resolveEditorBase(editor);
-  const configProps =
-    isBuiltinType(editor) || isComponentLike(editor)
-      ? undefined
-      : (editor as EditorConfig<T> | undefined)?.props;
+  const base = resolveComponent(
+    fields?.component,
+    resolveModelProp(fields?.modelProp),
+  );
+  const configProps = fields?.componentProps;
   const resolvedProps =
     typeof configProps === 'function' ? configProps(ctx) : configProps;
   if (resolvedProps !== undefined && !isPlainObject(resolvedProps)) {
     throw new TypeError(
-      '[PlusTable] editor.props 必须是普通对象，函数式 props 也必须返回普通对象。',
+      '[PlusTable] componentProps 必须是普通对象，函数式 componentProps 也必须返回普通对象。',
     );
   }
   return {
     component: base.component,
-    componentProps: { ...base.adapterProps, ...(resolvedProps ?? {}) },
+    componentProps: { ...base.defaults, ...(resolvedProps ?? {}) },
     trigger: base.trigger,
     modelProp: base.modelProp,
   };
@@ -173,10 +144,10 @@ export function resolveEditor<T extends RowData = RowData>(
  * 返回 undefined 表示该编辑器不种入字符，仅进入编辑态。
  */
 export function typedCharToDraft<T extends RowData = RowData>(
-  editor: ColumnEditor<T> | undefined,
+  fields: EditorColumnFields<T> | undefined,
   char: string,
 ): unknown {
-  const { component } = resolveEditorBase(editor);
+  const { component } = resolveComponent(fields?.component);
   if (component === ElInput) return char;
   if (component === ElInputNumber) {
     return /^[0-9]$/.test(char) ? Number(char) : undefined;

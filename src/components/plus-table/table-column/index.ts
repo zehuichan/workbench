@@ -9,7 +9,9 @@ import type { RowData } from '../table/defaults';
 import type { ColumnNode, PlusTableColumn } from './defaults';
 
 const PLUS_TABLE_COLUMN_PROPS = [
-  'editor',
+  'component',
+  'componentProps',
+  'modelProp',
   'editable',
   'rules',
   'required',

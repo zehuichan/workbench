@@ -322,7 +322,7 @@ const columns = [
     label: '名称',
     minWidth: 140,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
   {
     prop: 'amount',
@@ -330,10 +330,8 @@ const columns = [
     width: 120,
     align: 'right',
     editable: true,
-    editor: {
-      type: 'input-number',
-      props: { min: 0, step: 100, controls: false },
-    },
+    component: 'input-number',
+    componentProps: { min: 0, step: 100, controls: false },
     formatter: (row: Row) => `¥ ${(row.amount ?? 0).toLocaleString('zh-CN')}`,
   },
   {
@@ -341,10 +339,8 @@ const columns = [
     label: '状态',
     width: 140,
     editable: true,
-    editor: {
-      type: 'select',
-      props: { options: statusOptions, clearable: true },
-    },
+    component: 'select',
+    componentProps: { options: statusOptions, clearable: true },
     formatter: (row: Row) =>
       statusOptions.find((o) => o.value === row.status)?.label ?? row.status,
   },
@@ -353,10 +349,8 @@ const columns = [
     label: '截止日期',
     width: 160,
     editable: true,
-    editor: {
-      type: 'date-picker',
-      props: { type: 'date', valueFormat: 'YYYY-MM-DD' },
-    },
+    component: 'date-picker',
+    componentProps: { type: 'date', valueFormat: 'YYYY-MM-DD' },
   },
   {
     prop: 'enabled',
@@ -364,7 +358,7 @@ const columns = [
     width: 90,
     align: 'center',
     editable: true,
-    editor: 'switch',
+    component: 'switch',
   },
 ];
 </script>
@@ -470,15 +464,13 @@ const columns = [
     editable: true,
     required: true,
     rules: [{ required: true, message: '请选择类别' }],
-    editor: {
-      type: 'select',
-      props: {
-        options: [
-          { label: '硬件', value: 'hardware' },
-          { label: '软件', value: 'software' },
-        ],
-        clearable: true,
-      },
+    component: 'select',
+    componentProps: {
+      options: [
+        { label: '硬件', value: 'hardware' },
+        { label: '软件', value: 'software' },
+      ],
+      clearable: true,
     },
     formatter: (row: Row) =>
       ({ hardware: '硬件', software: '软件' } as Record<string, string>)[
@@ -492,7 +484,8 @@ const columns = [
     editable: true,
     required: true,
     rules: [{ required: true, message: '请选择明细' }],
-    editor: { type: 'select', props: { clearable: true } },
+    component: 'select',
+    componentProps: { clearable: true },
     dependencies: {
       triggerFields: ['category'],
       componentProps: (row: Row) => ({
@@ -516,7 +509,7 @@ const columns = [
     label: '备注',
     minWidth: 160,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
 ];
 
@@ -641,7 +634,7 @@ const columns = [
     label: '名称',
     minWidth: 160,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
   {
     prop: 'amount',
@@ -649,10 +642,8 @@ const columns = [
     width: 140,
     align: 'right',
     editable: true,
-    editor: {
-      type: 'input-number',
-      props: { min: 0, step: 10, controls: false },
-    },
+    component: 'input-number',
+    componentProps: { min: 0, step: 10, controls: false },
   },
 ];
 
@@ -791,14 +782,14 @@ const columns = [
     label: '名称',
     minWidth: 160,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
   {
     prop: 'owner',
     label: '负责人',
     width: 140,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
 ];
 

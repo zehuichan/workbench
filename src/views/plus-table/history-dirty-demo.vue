@@ -39,7 +39,7 @@ const columns = [
     label: '名称',
     minWidth: 160,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
   {
     prop: 'amount',
@@ -47,10 +47,8 @@ const columns = [
     width: 140,
     align: 'right',
     editable: true,
-    editor: {
-      type: 'input-number',
-      props: { min: 0, step: 10, controls: false },
-    },
+    component: 'input-number',
+    componentProps: { min: 0, step: 10, controls: false },
   },
 ];
 

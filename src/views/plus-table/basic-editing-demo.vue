@@ -56,7 +56,7 @@ const columns = [
     label: '名称',
     minWidth: 140,
     editable: true,
-    editor: 'input',
+    component: 'input',
   },
   {
     prop: 'amount',
@@ -64,10 +64,8 @@ const columns = [
     width: 120,
     align: 'right',
     editable: true,
-    editor: {
-      type: 'input-number',
-      props: { min: 0, step: 100, controls: false },
-    },
+    component: 'input-number',
+    componentProps: { min: 0, step: 100, controls: false },
     formatter: (row: Row) => `¥ ${(row.amount ?? 0).toLocaleString('zh-CN')}`,
   },
   {
@@ -75,10 +73,8 @@ const columns = [
     label: '状态',
     width: 140,
     editable: true,
-    editor: {
-      type: 'select',
-      props: { options: statusOptions, clearable: true },
-    },
+    component: 'select',
+    componentProps: { options: statusOptions, clearable: true },
     formatter: (row: Row) =>
       statusOptions.find((o) => o.value === row.status)?.label ?? row.status,
   },
@@ -87,10 +83,8 @@ const columns = [
     label: '截止日期',
     width: 160,
     editable: true,
-    editor: {
-      type: 'date-picker',
-      props: { type: 'date', valueFormat: 'YYYY-MM-DD' },
-    },
+    component: 'date-picker',
+    componentProps: { type: 'date', valueFormat: 'YYYY-MM-DD' },
   },
   {
     prop: 'enabled',
@@ -98,7 +92,7 @@ const columns = [
     width: 90,
     align: 'center',
     editable: true,
-    editor: 'switch',
+    component: 'switch',
   },
 ];
 </script>
@@ -151,16 +145,16 @@ const columns = [
           <td>是否可编辑。</td>
         </tr>
         <tr>
-          <td><code>editor</code></td>
+          <td><code>component</code></td>
           <td>
-            <code>BuiltinEditorType | Component | EditorConfig</code>
+            <code>BuiltinEditorType | Component</code>
           </td>
           <td>
-            内置：<code>input</code> / <code>textarea</code> /
+            编辑控件。内置：<code>input</code> / <code>textarea</code> /
             <code>input-number</code> / <code>select</code> /
             <code>date-picker</code> / <code>time-picker</code> /
-            <code>switch</code> / <code>checkbox</code>；或
-            <code>{ type, props }</code>。
+            <code>switch</code> / <code>checkbox</code>；可用
+            <code>componentProps</code> 透传参数。
           </td>
         </tr>
         <tr>

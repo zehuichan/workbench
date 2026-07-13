@@ -132,7 +132,7 @@ export function getEditorBinding<T extends RowData = RowData>(
 ): EditorBinding {
   const { table, row, rowIndex, rowKey, column, isCellMode } = ctx;
   const prop = column.prop!;
-  const resolved = resolveEditor(column.editor, { row, rowIndex });
+  const resolved = resolveEditor(column, { row, rowIndex });
   const modelProp = resolved.modelProp;
   const { value, setValue, flush } = getCellBinding(
     { table, row, rowIndex, rowKey, prop, isCellMode },

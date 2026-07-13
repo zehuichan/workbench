@@ -1,6 +1,6 @@
-import type { Component, VNodeChild } from 'vue';
+import type { VNodeChild } from 'vue';
 import type { TableColumnCtx } from 'element-plus';
-import type { BuiltinEditorType } from '../adapter';
+import type { EditorColumnFields } from '../adapter';
 import type { CellRule, RowContext, RowData } from '../table/defaults';
 
 export interface DependencyApi<T extends RowData = RowData> {
@@ -22,30 +22,11 @@ export interface ColumnDependencies<T extends RowData = RowData> {
   required?: (row: T, api: DependencyApi<T>) => boolean;
   /** 动态校验规则（与列静态 rules 合并） */
   rules?: (row: T, api: DependencyApi<T>) => CellRule[] | null | undefined;
-  /** 动态编辑器参数（如下拉选项） */
+  /** 动态编辑器参数（如下拉选项）；覆盖列静态 componentProps 同名项 */
   componentProps?: (row: T, api: DependencyApi<T>) => Record<string, unknown>;
   /** 依赖字段变更时的副作用，经 api.setValue 改本行其他字段 */
   trigger?: (row: T, api: DependencyApi<T>) => void;
 }
-
-export interface EditorConfig<T extends RowData = RowData> {
-  /** 内置编辑器标识；与 component 二选一 */
-  type?: BuiltinEditorType;
-  /** 自定义组件；与 type 二选一 */
-  component?: Component;
-  /** 透传给编辑器的 props（联动 dependencies.componentProps 会覆盖同名项） */
-  props?:
-    | Record<string, unknown>
-    | ((ctx: RowContext<T>) => Record<string, unknown>);
-  /** 自定义组件的 v-model prop 名，默认 modelValue */
-  modelProp?: string;
-}
-
-/** 列上的 editor 配置：内置类型标识 / 自定义组件 / 详细配置对象 */
-export type ColumnEditor<T extends RowData = RowData> =
-  | BuiltinEditorType
-  | Component
-  | EditorConfig<T>;
 
 /** 单元格级上下文：render 回调参数，在行上下文基础上附带列与当前值 */
 export interface CellContext<
@@ -58,18 +39,17 @@ export interface CellContext<
 /**
  * 列配置：继承 el-table-column 的 TableColumnCtx，width/align/fixed/sortable/formatter 等原生属性
  * 直接可用（含 type: 'index' | 'selection' | 'expand' 特殊列原生直通）。
+ * 编辑控件字段（component / componentProps / modelProp）对齐 vben FormSchema。
  */
-export interface PlusTableColumn<T extends RowData = RowData> extends Partial<
-  Omit<TableColumnCtx<T>, 'children' | 'prop' | 'type'>
-> {
+export interface PlusTableColumn<T extends RowData = RowData>
+  extends Partial<Omit<TableColumnCtx<T>, 'children' | 'prop' | 'type'>>,
+    EditorColumnFields<T> {
   prop?: keyof T & string;
   type?: 'index' | 'selection' | 'expand' | 'operation';
   /** 多级表头，组节点只需 label */
   children?: PlusTableColumn<T>[];
   /** 单元格是否可编辑 */
   editable?: boolean | ((ctx: RowContext<T>) => boolean);
-  /** 编辑器；editable 且未配置时默认 input */
-  editor?: ColumnEditor<T>;
   required?: boolean;
   rules?: CellRule[];
   dependencies?: ColumnDependencies<T>;
