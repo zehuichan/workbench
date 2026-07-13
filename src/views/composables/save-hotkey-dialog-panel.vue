@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ElButton, ElMessage } from 'element-plus';
+import { ElMessage } from 'element-plus';
 import { useSaveHotkey } from '@/composables';
 
 defineOptions({ name: 'SaveHotkeyDialogPanel' });

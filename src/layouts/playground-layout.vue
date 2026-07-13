@@ -1,42 +1,39 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 import '@/styles/index.scss';
 
 defineOptions({ name: 'PlaygroundLayout' });
 
-const plusTableLinks = [
-  { to: '/plus-table/basic-editing', label: '基础编辑' },
-  { to: '/plus-table/dependencies-validation', label: '联动与校验' },
-  { to: '/plus-table/history-dirty', label: '历史与脏追踪' },
-  { to: '/plus-table/pagination-rows', label: '分页与行操作' },
-] as const;
-
-const composablesLinks = [
-  { to: '/composables/use-auto-save', label: 'useAutoSave' },
-  { to: '/composables/use-form-draft', label: 'useFormDraft' },
-  { to: '/composables/use-save-hotkey', label: 'useSaveHotkey' },
-] as const;
+const router = useRouter();
+const groupOrder = ['PlusTable', 'Composables'] as const;
+const navGroups = computed(() =>
+  groupOrder.map((group) => ({
+    name: group,
+    links: router
+      .getRoutes()
+      .filter((route) => route.meta.group === group)
+      .sort((left, right) => Number(left.meta.order) - Number(right.meta.order))
+      .map((route) => ({
+        to: route.path,
+        label: String(route.meta.title),
+      })),
+  })),
+);
 </script>
 
 <template>
   <div class="playground">
     <aside class="playground__nav">
       <div class="playground__brand">Component Labs</div>
-      <div class="playground__group">
-        <div class="playground__group-title">PlusTable</div>
+      <div
+        v-for="group in navGroups"
+        :key="group.name"
+        class="playground__group"
+      >
+        <div class="playground__group-title">{{ group.name }}</div>
         <router-link
-          v-for="link in plusTableLinks"
-          :key="link.to"
-          class="playground__link"
-          active-class="is-active"
-          :to="link.to"
-        >
-          {{ link.label }}
-        </router-link>
-      </div>
-      <div class="playground__group">
-        <div class="playground__group-title">Composables</div>
-        <router-link
-          v-for="link in composablesLinks"
+          v-for="link in group.links"
           :key="link.to"
           class="playground__link"
           active-class="is-active"

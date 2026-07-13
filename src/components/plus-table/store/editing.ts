@@ -1,24 +1,10 @@
-import { nextTick, reactive, shallowRef, watch } from 'vue';
-import { cloneDeep } from 'es-toolkit';
+import { computed, nextTick, reactive, shallowRef } from 'vue';
+import { cloneDeep, isEqual } from 'es-toolkit';
 import { focusEditorElement, resolveEditable } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
-import type { ColumnNode } from '../table-column/defaults';
 import { cellRefKey, type CellPosition, type CellRef } from './current';
 import type { CellLocation } from './watcher';
-
-function samePosition(
-  left: CellPosition | null,
-  right: CellPosition | null,
-): boolean {
-  return (
-    left === right ||
-    (!!left &&
-      !!right &&
-      left.rowIndex === right.rowIndex &&
-      left.colIndex === right.colIndex)
-  );
-}
 
 /**
  * 编辑状态机 + 统一草稿仓。cell / row / table 三种模式共用同一份按 rowKey、prop
@@ -32,7 +18,18 @@ export function useEditing<T extends RowData = RowData>(
   const editingRef = shallowRef<CellRef | null>(null);
   const states = {
     /** 兼容公开 Store：对外仍按当前行列顺序呈现下标位置。 */
-    editingCell: shallowRef<CellPosition | null>(null),
+    editingCell: computed<CellPosition | null>({
+      get: (previous) => {
+        const current = editingRef.value;
+        const next = current ? resolveCellPosition(current) : null;
+        return isEqual(previous, next) ? (previous ?? null) : next;
+      },
+      set: (next) => {
+        setEditingCell(
+          next ? table.store.toCellRef(next.rowIndex, next.colIndex) : null,
+        );
+      },
+    }),
     /** row 模式：当前编辑行 key */
     editingRowKey: shallowRef<string | null>(null),
   };
@@ -41,6 +38,8 @@ export function useEditing<T extends RowData = RowData>(
 
   /** row 模式：当前编辑行快照，cancel 时回滚 */
   let editingRowSnapshot: T | null = null;
+  let editingRowEpoch = 0;
+  let editingRowContentEpoch = 0;
 
   /** 统一草稿仓：cell 模式单槽、row/table 模式多槽，共用同一存储与结构化寻址方式 */
   const drafts = reactive(new Map<string, Map<string, unknown>>());
@@ -54,21 +53,11 @@ export function useEditing<T extends RowData = RowData>(
         current.rowKey === next.rowKey &&
         current.colId === next.colId)
     ) {
-      syncEditingCell();
       return;
     }
     if (current) editingCells.delete(cellRefKey(current.rowKey, current.colId));
     editingRef.value = next;
     if (next) editingCells.add(cellRefKey(next.rowKey, next.colId));
-    syncEditingCell();
-  }
-
-  function syncEditingCell(): void {
-    const current = editingRef.value;
-    const next = current ? resolveCellPosition(current) : null;
-    const mirrored = states.editingCell.value;
-    if (samePosition(mirrored, next)) return;
-    states.editingCell.value = next;
   }
 
   function getEditingCellLocation(): CellLocation<T> | null {
@@ -94,18 +83,18 @@ export function useEditing<T extends RowData = RowData>(
       drafts.set(rowKey, rowDrafts);
     }
     rowDrafts.set(prop, value);
+    if (states.editingRowKey.value === rowKey) editingRowContentEpoch += 1;
   }
 
   function deleteDraft(rowKey: string, prop: string): void {
     const rowDrafts = drafts.get(rowKey);
     if (!rowDrafts?.delete(prop)) return;
+    if (states.editingRowKey.value === rowKey) editingRowContentEpoch += 1;
     if (rowDrafts.size === 0) drafts.delete(rowKey);
   }
 
   function getRefProp(ref: CellRef): string | undefined {
-    return table.store.states.allColumns.value.find(
-      (node: ColumnNode<T>) => node.id === ref.colId,
-    )?.column.prop;
+    return table.store.getColumnById(ref.colId)?.column.prop;
   }
 
   function deleteRefDraft(ref: CellRef): void {
@@ -116,26 +105,15 @@ export function useEditing<T extends RowData = RowData>(
   /** 隐藏活动编辑列时，按 allColumns 找回 prop 后丢弃草稿并退出该格编辑。 */
   function cleanEditingCell(): void {
     const current = editingRef.value;
-    if (!current) {
-      syncEditingCell();
-      return;
-    }
-    if (table.store.getColumnIndex(current.colId) >= 0) {
-      syncEditingCell();
-      return;
-    }
+    if (!current || table.store.getColumnIndex(current.colId) >= 0) return;
     deleteRefDraft(current);
     setEditingCell(null);
   }
 
-  /** table 模式没有 editingRef；隐藏列时仍需逐行清掉该字段的失焦缓冲草稿。 */
-  function discardColumnDrafts(colIds: Iterable<string>): void {
-    const allColumns = table.store.states.allColumns.value;
+  /** table 模式没有 editingRef；最后一个可见字段视图消失时仍需清掉其失焦草稿。 */
+  function discardDraftProps(props: Iterable<string>): void {
     const rowKeys = [...table.store.states.keysMap.value.keys()];
-    for (const colId of colIds) {
-      const prop = allColumns.find((node: ColumnNode<T>) => node.id === colId)
-        ?.column.prop;
-      if (prop === undefined) continue;
+    for (const prop of props) {
       for (const rowKey of rowKeys) deleteDraft(rowKey, prop);
     }
   }
@@ -155,7 +133,9 @@ export function useEditing<T extends RowData = RowData>(
 
   /** 丢弃某行所有未提交的草稿（row 模式取消编辑 / 行被删除时调用，不写回） */
   function discardDraftsForRow(rowKey: string): void {
-    drafts.delete(rowKey);
+    if (drafts.delete(rowKey) && states.editingRowKey.value === rowKey) {
+      editingRowContentEpoch += 1;
+    }
   }
 
   function flushRowDrafts(rowKey: string): void {
@@ -170,6 +150,12 @@ export function useEditing<T extends RowData = RowData>(
     }
   }
 
+  function endEditingRowSession(): void {
+    states.editingRowKey.value = null;
+    editingRowSnapshot = null;
+    editingRowEpoch += 1;
+  }
+
   function clearEditingRow(flush = true): void {
     const rowKey = states.editingRowKey.value;
     if (!rowKey) return;
@@ -180,8 +166,7 @@ export function useEditing<T extends RowData = RowData>(
     const current = editingRef.value;
     if (current?.rowKey === rowKey) setEditingCell(null);
 
-    states.editingRowKey.value = null;
-    editingRowSnapshot = null;
+    endEditingRowSession();
   }
 
   /** 数据行身份失效时调用：丢弃该 rowKey 下全部编辑上下文，不把旧草稿写入新行。 */
@@ -189,28 +174,8 @@ export function useEditing<T extends RowData = RowData>(
     discardDraftsForRow(rowKey);
     if (editingRef.value?.rowKey === rowKey) setEditingCell(null);
     if (states.editingRowKey.value === rowKey) {
-      states.editingRowKey.value = null;
-      editingRowSnapshot = null;
+      endEditingRowSession();
     }
-  }
-
-  /** 行失效后调用：清掉该行残留的编辑态 / 快照 / 草稿，避免长会话下无限增长 */
-  function cleanEditing(): void {
-    const keysMap = table.store.states.keysMap.value;
-    const invalidRowKeys = new Set<string>();
-    for (const rowKey of drafts.keys()) {
-      if (!keysMap.has(rowKey)) invalidRowKeys.add(rowKey);
-    }
-    const editingRowKey = states.editingRowKey.value;
-    if (editingRowKey && !keysMap.has(editingRowKey)) {
-      invalidRowKeys.add(editingRowKey);
-    }
-    const current = editingRef.value;
-    if (current && !keysMap.has(current.rowKey)) {
-      invalidRowKeys.add(current.rowKey);
-    }
-    for (const rowKey of invalidRowKeys) invalidateEditingRow(rowKey);
-    syncEditingCell();
   }
 
   function isLocatedCellEditable(cell: CellLocation<T>): boolean {
@@ -353,6 +318,7 @@ export function useEditing<T extends RowData = RowData>(
     clearEditingRow(true);
     editingRowSnapshot = cloneDeep(row);
     states.editingRowKey.value = key;
+    editingRowEpoch += 1;
     return true;
   }
 
@@ -361,13 +327,25 @@ export function useEditing<T extends RowData = RowData>(
     const row = table.store.states.data.value[rowIndex];
     if (!row) return false;
     const key = table.store.getRowKey(row);
-    if (states.editingRowKey.value !== key) return true;
+    if (states.editingRowKey.value !== key) return false;
+    const epoch = editingRowEpoch;
     flushRowDrafts(key);
     setEditingCell(null);
+    const contentEpoch = editingRowContentEpoch;
+    const submittedRow = cloneDeep(row);
     const errors = await table.store.validateRow(rowIndex);
     if (errors.length) return false;
-    states.editingRowKey.value = null;
-    editingRowSnapshot = null;
+    const currentLocation = table.store.states.keysMap.value.get(key);
+    if (
+      editingRowEpoch !== epoch ||
+      editingRowContentEpoch !== contentEpoch ||
+      states.editingRowKey.value !== key ||
+      currentLocation?.row !== row ||
+      !isEqual(row, submittedRow)
+    ) {
+      return false;
+    }
+    endEditingRowSession();
     return true;
   }
 
@@ -390,25 +368,9 @@ export function useEditing<T extends RowData = RowData>(
       Object.assign(row, cloneDeep(snapshot));
     }
     for (const prop of dirtyProps) table.store.markDirty(key, prop);
-    states.editingRowKey.value = null;
-    editingRowSnapshot = null;
+    endEditingRowSession();
     table.store.clearRowValidate(row);
   }
-
-  watch(
-    states.editingCell,
-    (next) => {
-      const current = editingRef.value;
-      if (!next) {
-        if (current) setEditingCell(null);
-        return;
-      }
-      const position = current ? resolveCellPosition(current) : null;
-      if (samePosition(next, position)) return;
-      setEditingCell(table.store.toCellRef(next.rowIndex, next.colIndex));
-    },
-    { flush: 'sync' },
-  );
 
   return {
     canEditCell,
@@ -417,8 +379,7 @@ export function useEditing<T extends RowData = RowData>(
     isRowEditing,
     getEditingCellLocation,
     cleanEditingCell,
-    discardColumnDrafts,
-    syncEditingCell,
+    discardDraftProps,
     startEdit,
     commitEdit,
     cancelEdit,
@@ -432,7 +393,6 @@ export function useEditing<T extends RowData = RowData>(
     flushDraft,
     discardDraftsForRow,
     invalidateEditingRow,
-    cleanEditing,
     states,
   };
 }

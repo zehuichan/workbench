@@ -8,6 +8,7 @@ export type RowData = Record<string, any>;
 
 export type RowKey<T extends RowData = RowData> =
   | (keyof T & string)
+  /** 函数必须是纯函数，并仅从行字段派生稳定身份；不可依赖对象引用。 */
   | ((row: T) => string | number);
 
 /** 编辑模式：不可编辑 / 单元格 / 整行 / 全表常驻 */

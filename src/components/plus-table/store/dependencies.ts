@@ -1,3 +1,5 @@
+import { isPlainObject } from 'es-toolkit';
+import { isSpecialColumn } from '../util';
 import type { PlusTable } from '../tokens';
 import type { CellRule, RowData } from '../table/defaults';
 import type { DependencyApi, PlusTableColumn } from '../table-column/defaults';
@@ -16,9 +18,57 @@ const EMPTY_STATE: DependencyState = {
   componentProps: {},
 };
 
+const DEPENDENCY_CALLBACK_KEYS = [
+  'disabled',
+  'required',
+  'rules',
+  'componentProps',
+  'trigger',
+] as const;
+
+export function assertColumnDependencies<T extends RowData = RowData>(
+  column: PlusTableColumn<T>,
+): void {
+  const dependencies: unknown = column.dependencies;
+  if (dependencies === undefined) return;
+  if (!isPlainObject(dependencies)) {
+    throw new TypeError('[PlusTable] column.dependencies 必须是配置对象。');
+  }
+  if (
+    !column.prop ||
+    isSpecialColumn(column) ||
+    Boolean(column.children?.length)
+  ) {
+    throw new TypeError(
+      '[PlusTable] dependencies 只能配置在具有非空 prop 的叶子数据列上。',
+    );
+  }
+  if (
+    !Array.isArray(dependencies.triggerFields) ||
+    dependencies.triggerFields.some(
+      (field) => typeof field !== 'string' || field.length === 0,
+    )
+  ) {
+    throw new TypeError(
+      '[PlusTable] dependencies.triggerFields 必须是字段名数组。',
+    );
+  }
+  for (const key of DEPENDENCY_CALLBACK_KEYS) {
+    const callback = dependencies[key];
+    if (callback !== undefined && typeof callback !== 'function') {
+      throw new TypeError(`[PlusTable] dependencies.${key} 必须是函数。`);
+    }
+  }
+}
+
 export function useDependencies<T extends RowData = RowData>(
   table: PlusTable<T>,
 ) {
+  function requireProp(column: PlusTableColumn<T>): string {
+    assertColumnDependencies(column);
+    return column.prop!;
+  }
+
   function makeApi(row: T, rowIndex: number, prop: string): DependencyApi<T> {
     return {
       row,
@@ -38,12 +88,36 @@ export function useDependencies<T extends RowData = RowData>(
   ): DependencyState {
     const dep = column.dependencies;
     if (!dep) return EMPTY_STATE;
-    const api = makeApi(row, rowIndex, column.prop ?? '');
+    const api = makeApi(row, rowIndex, requireProp(column));
+    const disabled = dep.disabled?.(row, api);
+    const required = dep.required?.(row, api);
+    const rules = dep.rules?.(row, api);
+    const componentProps = dep.componentProps?.(row, api);
+    if (disabled !== undefined && typeof disabled !== 'boolean') {
+      throw new TypeError(
+        '[PlusTable] dependencies.disabled 必须返回 boolean。',
+      );
+    }
+    if (required !== undefined && typeof required !== 'boolean') {
+      throw new TypeError(
+        '[PlusTable] dependencies.required 必须返回 boolean。',
+      );
+    }
+    if (rules !== undefined && rules !== null && !Array.isArray(rules)) {
+      throw new TypeError(
+        '[PlusTable] dependencies.rules 必须返回规则数组、null 或 undefined。',
+      );
+    }
+    if (componentProps !== undefined && !isPlainObject(componentProps)) {
+      throw new TypeError(
+        '[PlusTable] dependencies.componentProps 必须返回普通对象或 undefined。',
+      );
+    }
     return {
-      disabled: !!dep.disabled?.(row, api),
-      required: !!dep.required?.(row, api),
-      rules: dep.rules?.(row, api) ?? null,
-      componentProps: dep.componentProps?.(row, api) ?? {},
+      disabled: disabled ?? false,
+      required: required ?? false,
+      rules: rules ?? null,
+      componentProps: componentProps ?? {},
     };
   }
 
@@ -64,9 +138,10 @@ export function useDependencies<T extends RowData = RowData>(
     props.add(changedProp);
     try {
       for (const node of table.store.states.allColumns.value) {
+        assertColumnDependencies(node.column);
         const dep = node.column.dependencies;
         if (!dep?.trigger || !dep.triggerFields.includes(changedProp)) continue;
-        dep.trigger(row, makeApi(row, rowIndex, node.column.prop ?? ''));
+        dep.trigger(row, makeApi(row, rowIndex, requireProp(node.column)));
       }
     } finally {
       if (isRoot) chain = null;

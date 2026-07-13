@@ -11,6 +11,7 @@ import {
   ElSwitch,
   ElTimePicker,
 } from 'element-plus';
+import { isPlainObject } from 'es-toolkit';
 import type { Component } from 'vue';
 import type { RowContext, RowData } from '../table/defaults';
 import type { ColumnEditor, EditorConfig } from '../table-column/defaults';
@@ -61,7 +62,7 @@ interface EditorBase {
 }
 
 function isBuiltinType(value: unknown): value is BuiltinEditorType {
-  return typeof value === 'string' && value in TYPED_REGISTRY;
+  return typeof value === 'string' && Object.hasOwn(TYPED_REGISTRY, value);
 }
 
 function isComponentLike(value: unknown): value is Component {
@@ -73,18 +74,34 @@ function isComponentLike(value: unknown): value is Component {
   );
 }
 
+function resolveModelProp(value: unknown): string {
+  if (value === undefined) return 'modelValue';
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new TypeError('[PlusTable] editor.modelProp 必须是非空字符串。');
+  }
+  return value;
+}
+
+function resolveBuiltinEditor(
+  type: BuiltinEditorType,
+  modelProp = 'modelValue',
+): EditorBase {
+  const adapter = TYPED_REGISTRY[type];
+  return {
+    component: adapter.component,
+    trigger: adapter.trigger,
+    modelProp,
+    adapterProps: { ...adapter.componentProps },
+  };
+}
+
 /** 解析出编辑器的组件本体 / 提交时机 / v-model prop 名 / 内置适配器默认 props，不涉及 editor.props（可能是函数，需要行上下文） */
 function resolveEditorBase<T extends RowData = RowData>(
   editor: ColumnEditor<T> | undefined,
 ): EditorBase {
+  if (editor === undefined) return resolveBuiltinEditor('input');
   if (isBuiltinType(editor)) {
-    const adapter = TYPED_REGISTRY[editor];
-    return {
-      component: adapter.component,
-      trigger: adapter.trigger,
-      modelProp: 'modelValue',
-      adapterProps: { ...adapter.componentProps },
-    };
+    return resolveBuiltinEditor(editor);
   }
   if (isComponentLike(editor)) {
     return {
@@ -94,23 +111,36 @@ function resolveEditorBase<T extends RowData = RowData>(
       adapterProps: {},
     };
   }
-  const config = (editor ?? {}) as EditorConfig<T>;
-  if (config.component) {
+  if (!isPlainObject(editor)) {
+    throw new TypeError('[PlusTable] editor 必须是内置类型、组件或配置对象。');
+  }
+
+  const config = editor as EditorConfig<T>;
+  if (config.type !== undefined && config.component !== undefined) {
+    throw new TypeError(
+      '[PlusTable] editor.type 与 editor.component 不能同时配置。',
+    );
+  }
+  if (config.component !== undefined) {
+    if (!isComponentLike(config.component)) {
+      throw new TypeError('[PlusTable] editor.component 不是有效的 Vue 组件。');
+    }
     return {
       component: config.component,
       trigger: 'blur',
-      modelProp: config.modelProp ?? 'modelValue',
+      modelProp: resolveModelProp(config.modelProp),
       adapterProps: {},
     };
   }
-  const adapter =
-    TYPED_REGISTRY[config.type as BuiltinEditorType] ?? TYPED_REGISTRY.input;
-  return {
-    component: adapter.component,
-    trigger: adapter.trigger,
-    modelProp: config.modelProp ?? 'modelValue',
-    adapterProps: { ...adapter.componentProps },
-  };
+  if (config.type !== undefined && !isBuiltinType(config.type)) {
+    throw new TypeError(
+      `[PlusTable] 未知的 editor.type="${String(config.type)}"。`,
+    );
+  }
+  return resolveBuiltinEditor(
+    config.type ?? 'input',
+    resolveModelProp(config.modelProp),
+  );
 }
 
 /** 把列上的 editor 配置归一化为可直接渲染的描述；ctx 供 editor.props 为函数时求值 */
@@ -124,10 +154,15 @@ export function resolveEditor<T extends RowData = RowData>(
       ? undefined
       : (editor as EditorConfig<T> | undefined)?.props;
   const resolvedProps =
-    typeof configProps === 'function' ? configProps(ctx) : (configProps ?? {});
+    typeof configProps === 'function' ? configProps(ctx) : configProps;
+  if (resolvedProps !== undefined && !isPlainObject(resolvedProps)) {
+    throw new TypeError(
+      '[PlusTable] editor.props 必须是普通对象，函数式 props 也必须返回普通对象。',
+    );
+  }
   return {
     component: base.component,
-    componentProps: { ...base.adapterProps, ...resolvedProps },
+    componentProps: { ...base.adapterProps, ...(resolvedProps ?? {}) },
     trigger: base.trigger,
     modelProp: base.modelProp,
   };

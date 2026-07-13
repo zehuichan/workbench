@@ -4,6 +4,7 @@ import { ElPagination, ElTable } from 'element-plus';
 import './styles/index.scss';
 import { PLUS_TABLE_INJECTION_KEY } from './tokens';
 import { createStore } from './store/helper';
+import { createTableExpose } from './table/expose-helper';
 import { useEvents } from './table/events-helper';
 import { useKeyboard } from './table/keyboard-helper';
 import { useStyle } from './table/style-helper';
@@ -103,7 +104,7 @@ const rowKeyProp = computed(
 const paginationEnabled = computed(() => props.total !== undefined);
 
 defineExpose(
-  new Proxy(
+  createTableExpose(
     {
       /** 全表校验 */
       validate: store.validate,
@@ -140,22 +141,7 @@ defineExpose(
       resetTracking: store.resetTracking,
       clearDirty: store.clearDirty,
     },
-    {
-      get(target, prop, receiver) {
-        if (Reflect.has(target, prop)) {
-          return Reflect.get(target, prop, receiver);
-        }
-        return tableRef.value
-          ? Reflect.get(tableRef.value, prop, tableRef.value)
-          : undefined;
-      },
-      has(target, prop) {
-        return (
-          Reflect.has(target, prop) ||
-          (!!tableRef.value && Reflect.has(tableRef.value, prop))
-        );
-      },
-    },
+    tableRef,
   ),
 );
 </script>

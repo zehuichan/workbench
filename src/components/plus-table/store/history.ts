@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue';
-import { devWarn, HISTORY_STACK_LIMIT } from '../util';
+import { HISTORY_STACK_LIMIT } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
 
@@ -59,36 +59,39 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     entries: HistoryEntry,
     direction: 'undo' | 'redo',
   ): AppliedHistoryChange<T>[] {
-    const applied: AppliedHistoryChange<T>[] = [];
-    for (const change of entries) {
+    const resolved = entries.map((change) => {
       const found = table.store.states.keysMap.value.get(change.rowKey);
       if (!found) {
-        devWarn(
-          `[PlusTable] ${direction === 'undo' ? '撤销' : '重做'}跳过：rowKey="${change.rowKey}" 对应的行已不存在`,
+        throw new Error(
+          `[PlusTable] ${direction === 'undo' ? '撤销' : '重做'}失败：rowKey="${change.rowKey}" 对应的行已不存在。`,
         );
-        continue;
       }
+      return { change, found };
+    });
+
+    return resolved.map(({ change, found }) => {
       (found.row as RowData)[change.prop] =
         direction === 'undo' ? change.oldValue : change.newValue;
-      applied.push({ ...change, row: found.row, rowIndex: found.rowIndex });
-    }
-    return applied;
+      return { ...change, row: found.row, rowIndex: found.rowIndex };
+    });
   }
 
   function undo(): AppliedHistoryChange<T>[] {
     if (!enabled()) return [];
-    const entries = states.undoStack.value.pop();
+    const entries = states.undoStack.value.at(-1);
     if (!entries) return [];
     const applied = applyEntries(entries, 'undo');
+    states.undoStack.value.pop();
     states.redoStack.value.push(entries);
     return applied;
   }
 
   function redo(): AppliedHistoryChange<T>[] {
     if (!enabled()) return [];
-    const entries = states.redoStack.value.pop();
+    const entries = states.redoStack.value.at(-1);
     if (!entries) return [];
     const applied = applyEntries(entries, 'redo');
+    states.redoStack.value.pop();
     states.undoStack.value.push(entries);
     return applied;
   }
@@ -108,17 +111,6 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     states.redoStack.value = filter(states.redoStack.value);
   }
 
-  /** 行失效后调用：清掉引用它的历史条目，避免长会话下无限增长、避免残留条目指向错误上下文 */
-  function cleanHistory(): void {
-    const keysMap = table.store.states.keysMap.value;
-    const clean = (stack: HistoryEntry[]) =>
-      stack
-        .map((entries) => entries.filter((c) => keysMap.has(c.rowKey)))
-        .filter((entries) => entries.length > 0);
-    states.undoStack.value = clean(states.undoStack.value);
-    states.redoStack.value = clean(states.redoStack.value);
-  }
-
   return {
     canUndo,
     canRedo,
@@ -127,7 +119,6 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     redo,
     clearHistory,
     invalidateHistoryRow,
-    cleanHistory,
     states,
   };
 }

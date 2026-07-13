@@ -4,7 +4,6 @@ defineOptions({ name: 'DemoBlock' });
 withDefaults(
   defineProps<{
     title?: string;
-    hint?: string;
   }>(),
   { title: '试一试' },
 );
@@ -14,7 +13,9 @@ withDefaults(
   <div class="demo-block">
     <div class="demo-block__body">
       <h2 class="demo-block__title">{{ title }}</h2>
-      <p v-if="hint" class="demo__hint">{{ hint }}</p>
+      <p v-if="$slots.hint" class="demo__hint">
+        <slot name="hint" />
+      </p>
       <slot />
     </div>
     <div class="demo-block__footer">playground</div>

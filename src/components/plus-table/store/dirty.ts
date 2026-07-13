@@ -119,20 +119,6 @@ export function useDirty<T extends RowData = RowData>(table: PlusTable<T>) {
     }
   }
 
-  /** 行失效后调用：清掉该行的脏标记与基线快照，避免长会话下无限增长 */
-  function cleanDirty(): void {
-    const keysMap = table.store.states.keysMap.value;
-    const map = states.dirtyCells.value;
-    const invalidRowKeys = new Set<string>();
-    for (const rowKey of [...baseline.keys()]) {
-      if (!keysMap.has(rowKey)) invalidRowKeys.add(rowKey);
-    }
-    for (const rowKey of [...map.keys()]) {
-      if (!keysMap.has(rowKey)) invalidRowKeys.add(rowKey);
-    }
-    for (const rowKey of invalidRowKeys) invalidateDirtyRow(rowKey);
-  }
-
   return {
     touchRow,
     markDirty,
@@ -143,7 +129,6 @@ export function useDirty<T extends RowData = RowData>(table: PlusTable<T>) {
     clearDirty,
     resetTracking,
     invalidateDirtyRow,
-    cleanDirty,
     states,
   };
 }

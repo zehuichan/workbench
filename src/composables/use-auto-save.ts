@@ -4,11 +4,11 @@ import {
   ref,
   shallowRef,
   toValue,
-  watch,
   type MaybeRefOrGetter,
   type Ref,
 } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
+import { watchReadable } from './watch-readable';
 
 export type AutoSaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
 
@@ -101,6 +101,15 @@ export function useAutoSave<T>(
     }
   };
 
+  const readValue = <Value>(value: MaybeRefOrGetter<Value>): Value => {
+    try {
+      return toValue(value);
+    } catch (failure) {
+      reportError(failure);
+      throw failure;
+    }
+  };
+
   const performSave = async (): Promise<void> => {
     if (disposed) throw createDisposedError();
 
@@ -111,7 +120,6 @@ export function useAutoSave<T>(
 
     try {
       value = toValue(source);
-      if (disposed) throw createDisposedError();
 
       controller = new AbortController();
       activeController = controller;
@@ -144,11 +152,15 @@ export function useAutoSave<T>(
           );
         }
       }
+      if (disposed) throw createDisposedError();
       if (!disposed && errorEpoch === startingErrorEpoch) {
         status.value = handledRevision < revision ? 'pending' : 'saved';
       }
     } catch (failure) {
-      if (!disposed) reportError(failure);
+      if (!disposed) {
+        handledRevision = Math.max(handledRevision, savingRevision);
+        reportError(failure);
+      }
       throw failure;
     } finally {
       if (activeController === controller) activeController = null;
@@ -160,11 +172,14 @@ export function useAutoSave<T>(
 
     const task = Promise.resolve().then(performSave);
     inFlight = task;
-    void task
-      .finally(() => {
+    void task.then(
+      () => {
         if (inFlight === task) inFlight = null;
-      })
-      .catch(() => undefined);
+      },
+      () => {
+        if (inFlight === task) inFlight = null;
+      },
+    );
     return task;
   };
 
@@ -195,33 +210,38 @@ export function useAutoSave<T>(
       if (stopIfDisposed()) return;
       if (automatic) {
         if (generation !== autoSaveGeneration) return;
-        try {
-          const enabledValue = toValue(enabled);
-          if (stopIfDisposed()) return;
-          if (pauseDepth > 0 || !enabledValue) {
-            discardThrough(targetRevision);
-            return;
-          }
-        } catch (failure) {
-          reportError(failure);
+        const enabledValue = readValue(enabled);
+        if (stopIfDisposed()) return;
+        if (pauseDepth > 0 || !enabledValue) {
+          discardThrough(targetRevision);
+          return;
+        }
+      }
+      try {
+        await getOrStartSave();
+      } catch (failure) {
+        if (
+          !automatic ||
+          disposed ||
+          generation !== autoSaveGeneration ||
+          handledRevision >= targetRevision
+        ) {
           throw failure;
         }
       }
-      await getOrStartSave();
       if (stopIfDisposed()) return;
     }
     stopIfDisposed();
   };
 
   let autoSaveGeneration = 0;
-  let scheduledGeneration = 0;
   const saveTimer = useTimeoutFn(
     () => {
       const targetRevision = revision;
-      const generation = scheduledGeneration;
-      void drainThrough(targetRevision, true, generation).catch(
-        () => undefined,
-      );
+      const generation = autoSaveGeneration;
+      void drainThrough(targetRevision, true, generation).catch(() => {
+        // 自动保存没有 Promise 消费方；失败已由 error/onError 暴露。
+      });
     },
     debounceMs,
     { immediate: false },
@@ -229,99 +249,67 @@ export function useAutoSave<T>(
 
   const cancelScheduledSave = (): void => {
     autoSaveGeneration += 1;
-    scheduledGeneration = autoSaveGeneration;
     saveTimer.stop();
+  };
+
+  const startSaveTimer = (): void => {
+    try {
+      saveTimer.start();
+    } catch (failure) {
+      cancelScheduledSave();
+      reportError(failure);
+      throw failure;
+    }
   };
 
   const scheduleSave = (): void => {
     if (disposed) return;
-    scheduledGeneration = ++autoSaveGeneration;
-    saveTimer.start();
-    if (disposed) saveTimer.stop();
+    autoSaveGeneration += 1;
+    startSaveTimer();
   };
 
-  let debounceReadable = true;
-  const stopDebounceWatch = watch(
+  watchReadable(
+    () => toValue(debounceMs),
     () => {
-      try {
-        const value = toValue(debounceMs);
-        debounceReadable = true;
-        return value;
-      } catch (failure) {
-        debounceReadable = false;
-        cancelScheduledSave();
-        reportError(failure);
-        return undefined;
-      }
-    },
-    () => {
-      if (!debounceReadable || disposed || !saveTimer.isPending.value) {
-        return;
-      }
-
+      if (disposed || !saveTimer.isPending.value) return;
       saveTimer.stop();
-      if (disposed) return;
-      try {
-        saveTimer.start();
-        if (disposed) saveTimer.stop();
-      } catch (failure) {
-        cancelScheduledSave();
-        reportError(failure);
-      }
+      startSaveTimer();
     },
-    { flush: 'sync' },
+    (failure) => {
+      cancelScheduledSave();
+      reportError(failure);
+    },
   );
 
-  let enabledReadable = true;
-  const stopEnabledWatch = watch(
-    () => {
-      try {
-        const value = toValue(enabled);
-        enabledReadable = true;
-        return value;
-      } catch (failure) {
-        enabledReadable = false;
-        reportError(failure);
-        return false;
-      }
-    },
+  watchReadable(
+    () => toValue(enabled),
     (value) => {
-      if (!enabledReadable || !value) {
+      if (!value) {
         cancelScheduledSave();
         discardThrough(revision);
       }
     },
-    { flush: 'sync' },
+    (failure) => {
+      cancelScheduledSave();
+      reportError(failure);
+    },
   );
 
-  let sourceReadable = true;
-  const stopSourceWatch = watch(
+  watchReadable(
+    () => toValue(source),
     () => {
-      try {
-        const value = toValue(source);
-        sourceReadable = true;
-        return value;
-      } catch (failure) {
-        sourceReadable = false;
-        cancelScheduledSave();
-        reportError(failure);
-        return undefined;
-      }
+      if (disposed || pauseDepth > 0) return;
+      revision += 1;
+      const enabledValue = readValue(enabled);
+      if (!enabledValue) return;
+      if (!inFlight) status.value = 'pending';
+      scheduleSave();
     },
-    () => {
-      try {
-        if (!sourceReadable || disposed || pauseDepth > 0) return;
-        const enabledValue = toValue(enabled);
-        if (disposed || !enabledValue) return;
-        revision += 1;
-        if (!inFlight) status.value = 'pending';
-        scheduleSave();
-      } catch (failure) {
-        cancelScheduledSave();
-        reportError(failure);
-      }
+    (failure) => {
+      cancelScheduledSave();
+      reportError(failure);
     },
-    { deep: true, flush: 'sync' },
+    { deep: true },
   );
 
   const flush = (): Promise<void> => {
@@ -336,7 +324,6 @@ export function useAutoSave<T>(
     }
 
     cancelScheduledSave();
-    if (disposed) return Promise.reject(createDisposedError());
     if (pauseDepth > 0) {
       const failure = new Error(
         '[useAutoSave] Cannot flush while auto-save is paused.',
@@ -354,15 +341,19 @@ export function useAutoSave<T>(
     })();
 
     activeFlushes.add(operation);
-    void operation
-      .finally(() => {
+    void operation.then(
+      () => {
         activeFlushes.delete(operation);
-      })
-      .catch(() => undefined);
+      },
+      () => {
+        activeFlushes.delete(operation);
+      },
+    );
     return operation;
   };
 
   const withPaused = async <R>(task: () => R | Promise<R>): Promise<R> => {
+    if (disposed) throw createDisposedError();
     if (invokingSaveSynchronously) {
       const failure = new Error(
         '[useAutoSave] withPaused cannot be called from the save callback.',
@@ -376,15 +367,17 @@ export function useAutoSave<T>(
     discardThrough(revision);
     try {
       while (activeFlushes.size > 0) {
-        await Promise.allSettled([...activeFlushes]);
-      }
-      if (inFlight) {
-        try {
-          await inFlight;
-        } catch {
-          // The save state and callback already contain the failure.
+        const results = await Promise.allSettled([...activeFlushes]);
+        const rejected = results.find(
+          (result): result is PromiseRejectedResult =>
+            result.status === 'rejected',
+        );
+        if (rejected) {
+          throw rejected.reason;
         }
       }
+      if (inFlight) await inFlight;
+      if (disposed) throw createDisposedError();
       return await task();
     } finally {
       pauseDepth -= 1;
@@ -396,9 +389,6 @@ export function useAutoSave<T>(
     activeController?.abort();
     activeController = null;
     cancelScheduledSave();
-    stopSourceWatch();
-    stopEnabledWatch();
-    stopDebounceWatch();
   }, true);
 
   return {

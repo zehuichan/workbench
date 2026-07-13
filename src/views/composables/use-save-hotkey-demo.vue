@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import {
-  ElButton,
-  ElDialog,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElMessage,
-  ElSwitch,
-} from 'element-plus';
+import { ElMessage } from 'element-plus';
 import { useSaveHotkey } from '@/composables';
+import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 import SaveHotkeyDialogPanel from './save-hotkey-dialog-panel.vue';
@@ -32,83 +25,59 @@ useSaveHotkey({ handler: save, enabled, active });
 
 <template>
   <DemoPage width="wide">
-    <header class="demo__header">
-      <h1 class="demo__title">useSaveHotkey</h1>
-      <p class="demo__desc">
-        为当前组件注册 <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>S</kbd>，应与页面「保存」按钮共用
-        <code>handler</code>。组件树更深的注册优先；同深度后注册的优先。
-        <code>enabled === false</code> 的顶层会挡住下层，而不是穿透。
-      </p>
-    </header>
+    <template #description>
+      为当前组件注册
+      <kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>S</kbd>，应与页面「保存」按钮共用
+      <code>handler</code>。组件树更深的注册优先；同深度后注册的优先。
+      <code>enabled === false</code> 的顶层会挡住下层，而不是穿透。
+    </template>
 
-    <div class="demo__api">
-      <h2 class="demo__api-title">Options</h2>
-      <table class="demo__table">
-        <thead>
-          <tr>
-            <th>名称</th>
-            <th>类型</th>
-            <th>说明</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>handler</code></td>
-            <td><code>() =&gt; void | Promise&lt;void&gt;</code></td>
-            <td>必填。与主保存按钮相同的保存逻辑。</td>
-          </tr>
-          <tr>
-            <td><code>enabled</code></td>
-            <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
-            <td>
-              默认 <code>true</code>。为 false
-              时不执行，但仍可能挡住下层注册。
-            </td>
-          </tr>
-          <tr>
-            <td><code>active</code></td>
-            <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
-            <td>
-              默认 <code>true</code>。为 false
-              时注销本注册（例如对话框未打开、KeepAlive
-              失活配合生命周期）。
-            </td>
-          </tr>
-          <tr>
-            <td><code>onError</code></td>
-            <td><code>(error: unknown) =&gt; void</code></td>
-            <td>可选。handler 或谓词求值失败时回调。</td>
-          </tr>
-        </tbody>
-      </table>
+    <template #api>
+      <DemoApiTable title="Options">
+        <tr>
+          <td><code>handler</code></td>
+          <td><code>() =&gt; void | Promise&lt;void&gt;</code></td>
+          <td>必填。与主保存按钮相同的保存逻辑。</td>
+        </tr>
+        <tr>
+          <td><code>enabled</code></td>
+          <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
+          <td>
+            默认 <code>true</code>。为 false 时不执行，但仍可能挡住下层注册。
+          </td>
+        </tr>
+        <tr>
+          <td><code>active</code></td>
+          <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
+          <td>
+            默认 <code>true</code>。为 false
+            时注销本注册（例如对话框未打开、KeepAlive 失活配合生命周期）。
+          </td>
+        </tr>
+        <tr>
+          <td><code>onError</code></td>
+          <td><code>(error: unknown) =&gt; void</code></td>
+          <td>可选。handler 或谓词求值失败时回调。</td>
+        </tr>
+      </DemoApiTable>
 
-      <h2 class="demo__api-title">Returns</h2>
-      <table class="demo__table">
-        <thead>
-          <tr>
-            <th>名称</th>
-            <th>类型</th>
-            <th>说明</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>—</td>
-            <td>—</td>
-            <td>
-              无返回值。挂载时注册，卸载 /
-              <code>onDeactivated</code> 时移除。
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <DemoApiTable title="Returns">
+        <tr>
+          <td>—</td>
+          <td>—</td>
+          <td>
+            无返回值。挂载时注册，卸载 /
+            <code>onDeactivated</code> 时移除。
+          </td>
+        </tr>
+      </DemoApiTable>
+    </template>
 
     <DemoBlock>
-      <p class="demo__hint">
-        在本页按 Ctrl/Cmd+S 或点「保存」→ 主表单计数增加。打开对话框后再按快捷键 →
-        触发对话框内 handler。关掉 enabled/active 可观察主热键失效。
-      </p>
+      <template #hint>
+        在本页按 Ctrl/Cmd+S 或点「保存」→ 主表单计数增加。打开对话框后再按快捷键
+        → 触发对话框内 handler。关掉 enabled/active 可观察主热键失效。
+      </template>
 
       <div class="demo__toolbar">
         <label class="demo__control">
@@ -150,4 +119,3 @@ useSaveHotkey({ handler: save, enabled, active });
     </el-dialog>
   </DemoPage>
 </template>
-

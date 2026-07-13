@@ -2,18 +2,20 @@ interface SaveHotkeyEntry {
   handler: () => void | Promise<void>;
   enabled: () => boolean;
   onError?: (error: unknown) => void;
-  scope: Node;
+  resolveScopes: () => readonly Node[];
   owner: object;
   appScope: Node;
   priority: number;
-  busy: boolean;
+  execution: { busy: boolean };
+  order: number;
 }
 
-export type SaveHotkeyRegistration = Omit<SaveHotkeyEntry, 'busy'>;
+export type SaveHotkeyRegistration = Omit<SaveHotkeyEntry, 'order'>;
 
 const stack: SaveHotkeyEntry[] = [];
 
 let listening = false;
+let registrationOrder = 0;
 
 function reportError(entry: SaveHotkeyEntry, error: unknown): void {
   if (!entry.onError) {
@@ -28,40 +30,106 @@ function reportError(entry: SaveHotkeyEntry, error: unknown): void {
 }
 
 async function triggerEntry(entry: SaveHotkeyEntry): Promise<void> {
-  if (entry.busy) return;
+  if (entry.execution.busy) return;
   try {
     if (!entry.enabled()) return;
-    entry.busy = true;
+    entry.execution.busy = true;
     await entry.handler();
   } catch (error) {
     reportError(entry, error);
   } finally {
-    entry.busy = false;
+    entry.execution.busy = false;
   }
 }
 
-function scopeContainsEventPath(
-  scope: Node,
+function getScopePathIndex(
+  scopes: readonly Node[],
   path: readonly EventTarget[],
-): boolean {
-  return path.some(
-    (target) =>
-      target === scope || (target instanceof Node && scope.contains(target)),
+): number | undefined {
+  let bestIndex = Number.POSITIVE_INFINITY;
+  let containsPath = false;
+
+  for (const scope of scopes) {
+    const index = path.indexOf(scope);
+    if (index !== -1) {
+      bestIndex = Math.min(bestIndex, index);
+    } else if (
+      path.some((target) => target instanceof Node && scope.contains(target))
+    ) {
+      containsPath = true;
+    }
+  }
+
+  if (bestIndex !== Number.POSITIVE_INFINITY) return bestIndex;
+  return containsPath ? Number.POSITIVE_INFINITY : undefined;
+}
+
+type ScopeCache = Map<SaveHotkeyEntry, readonly Node[]>;
+
+function getScopes(entry: SaveHotkeyEntry, cache: ScopeCache): readonly Node[] {
+  const cached = cache.get(entry);
+  if (cached) return cached;
+  const scopes = entry.resolveScopes();
+  cache.set(entry, scopes);
+  return scopes;
+}
+
+function isConnectedEntry(entry: SaveHotkeyEntry, cache: ScopeCache): boolean {
+  return (
+    entry.appScope.isConnected &&
+    getScopes(entry, cache).some((scope) => scope.isConnected)
   );
 }
 
-function isConnectedEntry(entry: SaveHotkeyEntry): boolean {
-  return entry.scope.isConnected && entry.appScope.isConnected;
+function isDocumentLevelTarget(
+  target: EventTarget | null | undefined,
+): boolean {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return false;
+  }
+  return (
+    target === window ||
+    target === document ||
+    target === document.documentElement ||
+    target === document.body
+  );
 }
 
-function findEventOwner(path: readonly EventTarget[]): object | undefined {
+/**
+ * Resolves which Vue app owns the shortcut.
+ * Nested component priority is applied later; this only picks the app.
+ */
+function findEventOwner(
+  path: readonly EventTarget[],
+  cache: ScopeCache,
+): object | undefined {
   let owner: object | undefined;
-  let bestAppIndex = Number.POSITIVE_INFINITY;
-  const seenOwners = new Set<object>();
-
+  let bestScopeIndex = Number.POSITIVE_INFINITY;
   for (let index = stack.length - 1; index >= 0; index -= 1) {
     const entry = stack[index];
-    if (!entry || !isConnectedEntry(entry) || seenOwners.has(entry.owner)) {
+    if (!entry || !isConnectedEntry(entry, cache)) continue;
+
+    const scopeIndex = getScopePathIndex(getScopes(entry, cache), path);
+    if (scopeIndex === undefined) continue;
+    if (scopeIndex < bestScopeIndex) {
+      owner = entry.owner;
+      bestScopeIndex = scopeIndex;
+    } else if (scopeIndex === Number.POSITIVE_INFINITY && owner === undefined) {
+      owner = entry.owner;
+    }
+  }
+
+  if (owner) return owner;
+
+  let bestAppIndex = Number.POSITIVE_INFINITY;
+  const seenOwners = new Set<object>();
+  for (let index = stack.length - 1; index >= 0; index -= 1) {
+    const entry = stack[index];
+    if (
+      !entry ||
+      !isConnectedEntry(entry, cache) ||
+      seenOwners.has(entry.owner)
+    ) {
       continue;
     }
     seenOwners.add(entry.owner);
@@ -75,25 +143,40 @@ function findEventOwner(path: readonly EventTarget[]): object | undefined {
 
   if (owner) return owner;
 
-  let bestScopeIndex = Number.POSITIVE_INFINITY;
-  for (let index = stack.length - 1; index >= 0; index -= 1) {
-    const entry = stack[index];
-    if (
-      !entry ||
-      !isConnectedEntry(entry) ||
-      !scopeContainsEventPath(entry.scope, path)
-    ) {
-      continue;
-    }
+  // Focus on body/html/document (common before any input is focused): still own the
+  // shortcut so Ctrl/Cmd+S does not fall through to the browser save dialog.
+  const focusTarget = path[0];
+  if (!isDocumentLevelTarget(focusTarget)) return undefined;
 
-    const scopeIndex = path.indexOf(entry.scope);
-    if (scopeIndex !== -1 && scopeIndex < bestScopeIndex) {
-      owner = entry.owner;
-      bestScopeIndex = scopeIndex;
+  let latest: SaveHotkeyEntry | undefined;
+  for (const entry of stack) {
+    if (
+      isConnectedEntry(entry, cache) &&
+      (!latest || entry.order > latest.order)
+    ) {
+      latest = entry;
     }
   }
 
-  return owner;
+  return latest?.owner;
+}
+
+/** Highest-priority connected entry for the given app (deeper / later wins). */
+function findTopEntry(
+  owner: object,
+  cache: ScopeCache,
+): SaveHotkeyEntry | undefined {
+  for (let index = stack.length - 1; index >= 0; index -= 1) {
+    const candidate = stack[index];
+    if (
+      candidate &&
+      candidate.owner === owner &&
+      isConnectedEntry(candidate, cache)
+    ) {
+      return candidate;
+    }
+  }
+  return undefined;
 }
 
 function handleKeydown(event: KeyboardEvent): void {
@@ -108,22 +191,11 @@ function handleKeydown(event: KeyboardEvent): void {
   }
 
   const path = event.composedPath();
-  const owner = findEventOwner(path);
+  const cache: ScopeCache = new Map();
+  const owner = findEventOwner(path, cache);
   if (!owner) return;
 
-  let top: SaveHotkeyEntry | undefined;
-  for (let index = stack.length - 1; index >= 0; index -= 1) {
-    const candidate = stack[index];
-    if (
-      candidate &&
-      candidate.owner === owner &&
-      isConnectedEntry(candidate) &&
-      scopeContainsEventPath(candidate.scope, path)
-    ) {
-      top = candidate;
-      break;
-    }
-  }
+  const top = findTopEntry(owner, cache);
   if (!top) return;
 
   event.preventDefault();
@@ -153,7 +225,7 @@ export function registerSaveHotkey(
 
   const entry: SaveHotkeyEntry = {
     ...registration,
-    busy: false,
+    order: ++registrationOrder,
   };
   let registered = true;
 

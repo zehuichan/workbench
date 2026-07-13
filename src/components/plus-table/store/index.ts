@@ -1,6 +1,6 @@
 import { useWatcher } from './watcher';
 import { getRowIdentity } from '../util';
-import type { ShallowRef } from 'vue';
+import { toRaw, type WritableComputedRef } from 'vue';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
 import type { CellPosition } from './current';
@@ -8,36 +8,32 @@ import type { AppliedHistoryChange } from './history';
 
 function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
   const watcher = useWatcher(table);
+  let committedRowsByKey = new Map<string, T>();
 
   const mutations = {
     setData(data: T[]) {
       const rowKey = watcher.states.rowKey.value;
-      const previousRowsByKey = new Map<string, T>(
-        [...watcher.states.keysMap.value].map(([key, location]) => [
-          key,
-          location.row,
-        ]),
-      );
       const nextRowsByKey = new Map<string, T>();
-      for (const row of data) {
-        nextRowsByKey.set(getRowIdentity(row, rowKey), row);
+      for (const [rowIndex, row] of data.entries()) {
+        const key = getRowIdentity(row, rowKey);
+        if (nextRowsByKey.has(key)) {
+          throw new Error(
+            `[PlusTable] setData 失败：第 ${rowIndex} 行的 rowKey="${key}" 与前序行重复。`,
+          );
+        }
+        nextRowsByKey.set(key, row);
       }
 
-      for (const [key, previousRow] of previousRowsByKey) {
+      const invalidatedRowKeys: string[] = [];
+      for (const [key, previousRow] of committedRowsByKey) {
         if (nextRowsByKey.get(key) === previousRow) continue;
-        watcher.invalidateCurrentRow(key);
-        watcher.invalidateEditingRow(key);
-        watcher.invalidateHistoryRow(key);
-        watcher.invalidateDirtyRow(key);
-        watcher.invalidateValidationRow(key);
+        invalidatedRowKeys.push(key);
       }
 
+      watcher.rowLifecycle.invalidate(invalidatedRowKeys);
       watcher.states.data.value = data;
-      watcher.cleanCurrent();
-      watcher.cleanHistory();
-      watcher.cleanDirty();
-      watcher.cleanValidation();
-      watcher.cleanEditing();
+      committedRowsByKey = nextRowsByKey;
+      watcher.rowLifecycle.committed();
     },
 
     /**
@@ -48,6 +44,37 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
       const oldValue = row[prop];
       if (Object.is(oldValue, value)) return;
       const rowKey = watcher.getRowKey(row);
+      const raw = toRaw(row);
+      let descriptorOwner: object | null = raw;
+      while (descriptorOwner) {
+        const descriptor = Object.getOwnPropertyDescriptor(
+          descriptorOwner,
+          prop,
+        );
+        if (descriptor) {
+          if (!('value' in descriptor)) {
+            throw new Error(
+              `[PlusTable] setCellValue 失败：访问器字段 "${prop}" 可能改变稳定 rowKey，不可修改。`,
+            );
+          }
+          break;
+        }
+        descriptorOwner = Object.getPrototypeOf(descriptorOwner);
+      }
+      const descriptors = Object.getOwnPropertyDescriptors(raw) as Record<
+        PropertyKey,
+        PropertyDescriptor
+      >;
+      const candidate = Object.create(
+        Object.getPrototypeOf(raw),
+        descriptors,
+      ) as T;
+      Reflect.set(candidate, prop, value);
+      if (getRowIdentity(candidate, watcher.states.rowKey.value) !== rowKey) {
+        throw new Error(
+          `[PlusTable] setCellValue 失败：写入字段 "${prop}" 会改变稳定 rowKey，不可修改。`,
+        );
+      }
       // 必须在写值之前建基线，否则行的第一次编辑会把基线拍成修改后的值，永远测不出脏
       watcher.touchRow(row, rowKey);
       (row as RowData)[prop] = value;
@@ -148,23 +175,26 @@ export type InternalStore<T extends RowData = RowData> = ReturnType<
 type InternalStoreKey =
   | 'cleanCurrent'
   | 'cleanEditingCell'
-  | 'discardColumnDrafts'
+  | 'discardDraftProps'
   | 'getCellElRef'
+  | 'getColumnById'
+  | 'getColumnsByProp'
   | 'getCurrentCellLocation'
   | 'getCurrentRef'
   | 'getEditingCellLocation'
   | 'isCurrentRef'
   | 'isEditingRef'
   | 'invalidateCurrentRow'
+  | 'invalidateColumnProps'
   | 'invalidateDirtyRow'
   | 'invalidateEditingRow'
   | 'invalidateHistoryRow'
   | 'invalidateValidationRow'
   | 'locateCellRef'
+  | 'reindexValidationErrors'
   | 'resolveCellPosition'
+  | 'rowLifecycle'
   | 'scrollCellRef'
-  | 'syncCurrentCell'
-  | 'syncEditingCell'
   | 'toCellRef';
 
 /** 对外维持原有 index-based Store 形态，稳定 CellRef 相关成员仅供组件内部使用。 */
@@ -174,9 +204,13 @@ export type Store<T extends RowData = RowData> = Omit<
 > & {
   states: Omit<
     InternalStore<T>['states'],
-    'columnIndexMap' | 'currentCell' | 'editingCell'
+    | 'columnIndexMap'
+    | 'currentCell'
+    | 'editingCell'
+    | 'validationSchema'
+    | 'visibleColumnsById'
   > & {
-    currentCell: ShallowRef<CellPosition | null>;
-    editingCell: ShallowRef<CellPosition | null>;
+    currentCell: WritableComputedRef<CellPosition | null>;
+    editingCell: WritableComputedRef<CellPosition | null>;
   };
 };

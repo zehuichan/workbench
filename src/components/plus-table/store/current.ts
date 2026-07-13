@@ -1,5 +1,5 @@
-import { nextTick, reactive, shallowRef, watch } from 'vue';
-import { clamp } from 'es-toolkit';
+import { computed, nextTick, reactive, shallowRef } from 'vue';
+import { clamp, isEqual } from 'es-toolkit';
 import { focusEditorElement } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
@@ -15,19 +15,6 @@ export interface CellRef {
   colId: string;
 }
 
-function samePosition(
-  left: CellPosition | null,
-  right: CellPosition | null,
-): boolean {
-  return (
-    left === right ||
-    (!!left &&
-      !!right &&
-      left.rowIndex === right.rowIndex &&
-      left.colIndex === right.colIndex)
-  );
-}
-
 /** reactive Set 使用的内部 key；数组序列化可避免 rowKey / colId 拼接碰撞。 */
 export function cellRefKey(rowKey: string, colId: string): string {
   return JSON.stringify([rowKey, colId]);
@@ -37,7 +24,16 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
   const currentRef = shallowRef<CellRef | null>(null);
   const states = {
     /** 兼容公开 Store：对外仍按当前行列顺序呈现下标位置。 */
-    currentCell: shallowRef<CellPosition | null>(null),
+    currentCell: computed<CellPosition | null>({
+      get: (previous) => {
+        const current = currentRef.value;
+        const next = current ? resolveCellPosition(current) : null;
+        return isEqual(previous, next) ? (previous ?? null) : next;
+      },
+      set: (next) => {
+        setCurrentRef(next ? toCellRef(next.rowIndex, next.colIndex) : null);
+      },
+    }),
   };
   /** 按 key 订阅活动态，只让旧格和新格的渲染失效。 */
   const currentCells = reactive(new Set<string>());
@@ -64,13 +60,11 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
         current.rowKey === next.rowKey &&
         current.colId === next.colId)
     ) {
-      syncCurrentCell();
       return;
     }
     if (current) currentCells.delete(cellRefKey(current.rowKey, current.colId));
     currentRef.value = next;
     if (next) currentCells.add(cellRefKey(next.rowKey, next.colId));
-    syncCurrentCell();
   }
 
   function getCurrentRef(): CellRef | null {
@@ -91,14 +85,6 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     const colIndex = table.store.getColumnIndex(ref.colId);
     if (rowIndex === undefined || colIndex < 0) return null;
     return { rowIndex, colIndex };
-  }
-
-  function syncCurrentCell(): void {
-    const current = currentRef.value;
-    const next = current ? resolveCellPosition(current) : null;
-    const mirrored = states.currentCell.value;
-    if (samePosition(mirrored, next)) return;
-    states.currentCell.value = next;
   }
 
   /** 直接按实例内稳定 cell id 定位，不依赖 Element Plus 当前 DOM 行顺序。 */
@@ -162,7 +148,6 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
   function cleanCurrent(): void {
     const current = currentRef.value;
     if (current && !resolveCellPosition(current)) setCurrentRef(null);
-    else syncCurrentCell();
   }
 
   /** 方向移动（不换行），无活动格时落到首格 */
@@ -187,8 +172,9 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
       setCurrentCell(0, 0);
       return;
     }
-    const flat = Math.min(
-      Math.max(position.rowIndex * cols + position.colIndex + delta, 0),
+    const flat = clamp(
+      position.rowIndex * cols + position.colIndex + delta,
+      0,
       total - 1,
     );
     setCurrentCell(Math.floor(flat / cols), flat % cols);
@@ -235,21 +221,6 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     });
   }
 
-  watch(
-    states.currentCell,
-    (next) => {
-      const current = currentRef.value;
-      if (!next) {
-        if (current) setCurrentRef(null);
-        return;
-      }
-      const position = current ? resolveCellPosition(current) : null;
-      if (samePosition(next, position)) return;
-      setCurrentRef(toCellRef(next.rowIndex, next.colIndex));
-    },
-    { flush: 'sync' },
-  );
-
   return {
     isCurrentCell,
     isCurrentRef,
@@ -257,7 +228,6 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     getCurrentRef,
     toCellRef,
     resolveCellPosition,
-    syncCurrentCell,
     invalidateCurrentRow,
     cleanCurrent,
     moveCurrent,

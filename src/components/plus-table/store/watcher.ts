@@ -1,5 +1,5 @@
 import { computed, shallowRef, watch } from 'vue';
-import { devWarn, getRowIdentity } from '../util';
+import { assertRowKey, getRowIdentity } from '../util';
 import { useColumns } from './columns';
 import { useCurrent, type CellRef } from './current';
 import { useDependencies } from './dependencies';
@@ -39,31 +39,20 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
   const rowRegistry = computed(() => {
     const keysMap = new Map<string, RowLocation<T>>();
     const rowKeyMap = new WeakMap<T, string>();
-    const counts = new Map<string, number>();
+    const rowKey = baseStates.rowKey.value;
+    assertRowKey(rowKey);
 
     baseStates.data.value.forEach((row: T, rowIndex: number) => {
-      const raw =
-        typeof baseStates.rowKey.value === 'function'
-          ? baseStates.rowKey.value(row)
-          : row[baseStates.rowKey.value];
-      if (raw === undefined || raw === null || raw === '') {
-        devWarn(
-          '[PlusTable] 检测到 rowKey 解析出空值，可能导致编辑态 / 校验 / 脏标记串到别的行上，请检查 row-key 配置。',
+      const key = getRowIdentity(row, rowKey);
+      const existing = keysMap.get(key);
+      if (existing) {
+        throw new Error(
+          `[PlusTable] rowKey="${key}" 重复：第 ${existing.rowIndex} 行与第 ${rowIndex} 行使用了相同标识。`,
         );
       }
-      const key = String(raw);
       keysMap.set(key, { row, rowIndex });
       rowKeyMap.set(row, key);
-      counts.set(key, (counts.get(key) ?? 0) + 1);
     });
-
-    for (const [key, count] of counts) {
-      if (count > 1) {
-        devWarn(
-          `[PlusTable] 检测到重复的 rowKey="${key}"（共 ${count} 行），可能导致编辑态 / 校验 / 脏标记串到别的行上，请确保 row-key 唯一。`,
-        );
-      }
-    }
 
     return { keysMap, rowKeyMap };
   });
@@ -82,25 +71,62 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
   const validation = useValidation(table);
   const editing = useEditing(table, current.resolveCellPosition);
   const rows = useRows(table);
+  const rowInvalidators = [
+    current.invalidateCurrentRow,
+    editing.invalidateEditingRow,
+    history.invalidateHistoryRow,
+    dirty.invalidateDirtyRow,
+    validation.invalidateValidationRow,
+  ] as const;
+  const rowLifecycle = {
+    invalidate(rowKeys: Iterable<string>): void {
+      for (const rowKey of rowKeys) {
+        for (const invalidate of rowInvalidators) invalidate(rowKey);
+      }
+    },
+    committed(): void {
+      validation.reindexValidationErrors();
+    },
+  };
 
   watch(
-    columns.states.columnIndexMap,
+    columns.states.visibleColumnsById,
     (next, previous) => {
-      const hiddenIds: string[] = [];
-      for (const id of previous.keys()) {
-        if (!next.has(id)) hiddenIds.push(id);
+      const nextProps = new Set(
+        [...next.values()]
+          .map((node) => node.column.prop)
+          .filter((prop): prop is string => !!prop),
+      );
+      const removedProps = new Set<string>();
+      for (const [id, node] of previous) {
+        const prop = node.column.prop;
+        if (
+          prop &&
+          next.get(id)?.column.prop !== prop &&
+          !nextProps.has(prop)
+        ) {
+          removedProps.add(prop);
+        }
       }
-      if (hiddenIds.length) editing.discardColumnDrafts(hiddenIds);
+      editing.discardDraftProps(removedProps);
       current.cleanCurrent();
       editing.cleanEditingCell();
     },
     { flush: 'sync' },
   );
 
-  watch(rowRegistry, () => {
-    current.cleanCurrent();
-    editing.cleanEditing();
-  });
+  watch(
+    columns.states.validationSchema,
+    (next, previous) => {
+      const changedProps = new Set(
+        [...previous, ...next]
+          .map((column) => column.prop)
+          .filter((prop): prop is string => !!prop),
+      );
+      validation.invalidateColumnProps(changedProps);
+    },
+    { deep: true, flush: 'sync' },
+  );
 
   function getRowKey(row: T): string {
     return (
@@ -139,6 +165,7 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
     locateCell,
     locateCellRef,
     getCurrentCellLocation,
+    rowLifecycle,
     ...columns,
     ...current,
     ...dependencies,

@@ -1,4 +1,5 @@
 import { clamp, cloneDeep } from 'es-toolkit';
+import { getRowIdentity } from '../util';
 import type { PlusTable } from '../tokens';
 import type { RowData } from '../table/defaults';
 
@@ -7,24 +8,14 @@ export function useRows<T extends RowData = RowData>(table: PlusTable<T>) {
   const data = () => table.store.states.data.value;
 
   function resolveRowKey(row: T): string {
-    const rowKey = table.props.rowKey;
-    const raw = typeof rowKey === 'function' ? rowKey(row) : row[rowKey];
-    if (raw === undefined || raw === null || raw === '') {
-      throw new TypeError(
-        '[PlusTable] insertRow 失败：新行的 rowKey 解析结果不能为空。',
-      );
-    }
-    return String(raw);
+    return getRowIdentity(row, table.props.rowKey);
   }
 
   function assertUniqueRowKey(row: T): void {
     const key = resolveRowKey(row);
-    const duplicated = data().some((current) => {
-      const rowKey = table.props.rowKey;
-      const raw =
-        typeof rowKey === 'function' ? rowKey(current) : current[rowKey];
-      return String(raw) === key;
-    });
+    const duplicated = data().some(
+      (current) => getRowIdentity(current, table.props.rowKey) === key,
+    );
     if (duplicated) {
       throw new Error(
         `[PlusTable] insertRow 失败：rowKey="${key}" 已存在，不能插入重复行。`,
@@ -43,7 +34,9 @@ export function useRows<T extends RowData = RowData>(table: PlusTable<T>) {
 
   function removeRow(index: number): T | undefined {
     const list = [...data()];
-    if (index < 0 || index >= list.length) return undefined;
+    if (!Number.isInteger(index) || index < 0 || index >= list.length) {
+      return undefined;
+    }
     const [removed] = list.splice(index, 1);
     table.emit('update:data', list);
     return removed;
@@ -52,6 +45,8 @@ export function useRows<T extends RowData = RowData>(table: PlusTable<T>) {
   function moveRow(from: number, to: number): boolean {
     const list = [...data()];
     if (
+      !Number.isInteger(from) ||
+      !Number.isInteger(to) ||
       from < 0 ||
       from >= list.length ||
       to < 0 ||
@@ -72,7 +67,7 @@ export function useRows<T extends RowData = RowData>(table: PlusTable<T>) {
    */
   function duplicateRow(index: number, patch: Partial<T>): T | undefined {
     const source = data()[index];
-    if (!source) return undefined;
+    if (!Number.isInteger(index) || !source) return undefined;
     const clone = Object.assign(cloneDeep(source), patch);
     return insertRow(clone, index + 1);
   }

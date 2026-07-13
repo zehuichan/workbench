@@ -1,6 +1,6 @@
 import { partition } from 'es-toolkit';
 import { typedCharToDraft } from '../adapter';
-import { devWarn, isControl } from '../util';
+import { isControl } from '../util';
 import type { PlusTable } from '../tokens';
 import type { HotkeyBinding, HotkeyContext, RowData } from './defaults';
 
@@ -102,17 +102,11 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
     for (const binding of bindings) {
       if (!matchesHotkey(event, binding.key)) continue;
       const ctx = buildContext(event);
-      try {
-        if (binding.when && !binding.when(ctx)) continue;
-        if (binding.preventDefault !== false) event.preventDefault();
-        if (binding.stopPropagation) event.stopPropagation();
-        const result = binding.handler(ctx);
-        if (result !== false) return true;
-      } catch (err) {
-        devWarn(
-          `[PlusTable] 自定义热键 "${binding.key}" 执行失败，已跳过：${String(err)}`,
-        );
-      }
+      if (binding.when && !binding.when(ctx)) continue;
+      if (binding.preventDefault !== false) event.preventDefault();
+      if (binding.stopPropagation) event.stopPropagation();
+      const result = binding.handler(ctx);
+      if (result !== false) return true;
     }
     return false;
   }

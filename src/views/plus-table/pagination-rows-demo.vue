@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 import { PlusTable } from '@/components/plus-table';
@@ -87,111 +88,80 @@ function duplicateFirstOnPage() {
 
 <template>
   <DemoPage width="wide">
-    <header class="demo__header">
-      <h1 class="demo__title">分页与行操作</h1>
-      <p class="demo__desc">
-        传入 <code>total</code> 即启用分页
-        UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
-        <code>data</code>（服务端分页同理）。本页用内存全量 +
-        <code>computed</code> 切片演示。行增删改请改全量源，不要对当前页数组调
-        <code>insertRow</code>（否则只动这一页）。
-      </p>
-    </header>
+    <template #description>
+      传入 <code>total</code> 即启用分页
+      UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
+      <code>data</code>（服务端分页同理）。本页用内存全量 +
+      <code>computed</code> 切片演示。行增删改请改全量源，不要对当前页数组调
+      <code>insertRow</code>（否则只动这一页）。
+    </template>
 
-    <div class="demo__api">
-      <h2 class="demo__api-title">PlusTable Props（分页）</h2>
-      <table class="demo__table">
-        <thead>
-          <tr>
-            <th>名称</th>
-            <th>类型</th>
-            <th>说明</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>total</code></td>
-            <td><code>number</code></td>
-            <td>传入即显示分页；总条数（服务端返回）。</td>
-          </tr>
-          <tr>
-            <td><code>page</code> / <code>v-model:page</code></td>
-            <td><code>number</code></td>
-            <td>默认 <code>1</code>。当前页。</td>
-          </tr>
-          <tr>
-            <td><code>page-size</code> / <code>v-model:pageSize</code></td>
-            <td><code>number</code></td>
-            <td>默认 <code>20</code>。每页条数。</td>
-          </tr>
-          <tr>
-            <td><code>page-sizes</code></td>
-            <td><code>number[]</code></td>
-            <td>默认 <code>[10, 20, 50, 100]</code>。</td>
-          </tr>
-        </tbody>
-      </table>
+    <template #api>
+      <DemoApiTable title="PlusTable Props（分页）">
+        <tr>
+          <td><code>total</code></td>
+          <td><code>number</code></td>
+          <td>传入即显示分页；总条数（服务端返回）。</td>
+        </tr>
+        <tr>
+          <td><code>page</code> / <code>v-model:page</code></td>
+          <td><code>number</code></td>
+          <td>默认 <code>1</code>。当前页。</td>
+        </tr>
+        <tr>
+          <td><code>page-size</code> / <code>v-model:pageSize</code></td>
+          <td><code>number</code></td>
+          <td>默认 <code>20</code>。每页条数。</td>
+        </tr>
+        <tr>
+          <td><code>page-sizes</code></td>
+          <td><code>number[]</code></td>
+          <td>默认 <code>[10, 20, 50, 100]</code>。</td>
+        </tr>
+      </DemoApiTable>
 
-      <h2 class="demo__api-title">Events</h2>
-      <table class="demo__table">
-        <thead>
-          <tr>
-            <th>名称</th>
-            <th>载荷</th>
-            <th>说明</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>update:page</code> / <code>update:pageSize</code></td>
-            <td><code>number</code></td>
-            <td>分页控件变更。</td>
-          </tr>
-          <tr>
-            <td><code>page-change</code></td>
-            <td><code>{ page, pageSize }</code></td>
-            <td>页码或 pageSize 变化时一并抛出，便于拉数。</td>
-          </tr>
-        </tbody>
-      </table>
+      <DemoApiTable title="Events" :headers="['名称', '载荷', '说明']">
+        <tr>
+          <td><code>update:page</code> / <code>update:pageSize</code></td>
+          <td><code>number</code></td>
+          <td>分页控件变更。</td>
+        </tr>
+        <tr>
+          <td><code>page-change</code></td>
+          <td><code>{ page, pageSize }</code></td>
+          <td>页码或 pageSize 变化时一并抛出，便于拉数。</td>
+        </tr>
+      </DemoApiTable>
 
-      <h2 class="demo__api-title">Expose（行操作，作用于传入的 data）</h2>
-      <table class="demo__table">
-        <thead>
-          <tr>
-            <th>名称</th>
-            <th>说明</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>insertRow(row, index?)</code></td>
-            <td>插入行并 <code>update:data</code>。</td>
-          </tr>
-          <tr>
-            <td><code>removeRow(index)</code></td>
-            <td>按当前 <code>data</code> 下标删除。</td>
-          </tr>
-          <tr>
-            <td><code>duplicateRow(index, patch)</code></td>
-            <td>
-              复制行；须用 <code>patch</code> 覆盖新 <code>rowKey</code>。
-            </td>
-          </tr>
-          <tr>
-            <td><code>moveRow(from, to)</code></td>
-            <td>移动行。</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <DemoApiTable
+        title="Expose（行操作，作用于传入的 data）"
+        :headers="['名称', '说明']"
+      >
+        <tr>
+          <td><code>insertRow(row, index?)</code></td>
+          <td>插入行并 <code>update:data</code>。</td>
+        </tr>
+        <tr>
+          <td><code>removeRow(index)</code></td>
+          <td>按当前 <code>data</code> 下标删除。</td>
+        </tr>
+        <tr>
+          <td><code>duplicateRow(index, patch)</code></td>
+          <td>复制行；须用 <code>patch</code> 覆盖新 <code>rowKey</code>。</td>
+        </tr>
+        <tr>
+          <td><code>moveRow(from, to)</code></td>
+          <td>移动行。</td>
+        </tr>
+      </DemoApiTable>
+    </template>
 
     <DemoBlock>
-      <p class="demo__hint">
+      <template #hint>
         翻页 / 改
         pageSize；「新增」追加到全量末尾并跳到末页；删除/复制针对当前页首行，改的是
         <code>allRows</code>。
-      </p>
+      </template>
       <PlusTable
         :data="pageRows"
         :columns="columns"
