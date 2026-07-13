@@ -43,6 +43,8 @@ const slots = useSlots();
  * 只能靠显式声明让消费方在使用处获得类型提示。
  */
 defineSlots<{
+  title?: () => unknown;
+  summary?: () => unknown;
   toolbar?: () => unknown;
   empty?: () => unknown;
   [key: `cell-${string}`]: (props: CellContext<T>) => unknown;
@@ -103,6 +105,10 @@ const rowKeyProp = computed(
 
 const paginationEnabled = computed(() => props.total !== undefined);
 
+const footerEnabled = computed(
+  () => !!slots.summary || paginationEnabled.value,
+);
+
 defineExpose(
   createTableExpose(
     {
@@ -151,9 +157,14 @@ defineExpose(
     class="plus-table"
     :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }"
   >
-    <div class="plus-table__toolbar">
-      <slot name="toolbar" />
-      <PlusTableColumnSettings />
+    <div class="plus-table__header">
+      <div v-if="$slots.title" class="plus-table__title">
+        <slot name="title" />
+      </div>
+      <div class="plus-table__toolbar">
+        <slot name="toolbar" />
+        <PlusTableColumnSettings />
+      </div>
     </div>
 
     <div
@@ -190,20 +201,25 @@ defineExpose(
     </div>
 
     <div
-      v-if="paginationEnabled"
+      v-if="footerEnabled"
       ref="paginationRef"
-      class="plus-table__pagination"
+      class="plus-table__footer"
     >
-      <el-pagination
-        background
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="total"
-        :current-page="page"
-        :page-size="pageSize"
-        :page-sizes="pageSizes"
-        @update:current-page="events.handlePageChange"
-        @update:page-size="events.handlePageSizeChange"
-      />
+      <div v-if="$slots.summary" class="plus-table__summary">
+        <slot name="summary" />
+      </div>
+      <div v-if="paginationEnabled" class="plus-table__pagination">
+        <el-pagination
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+          :current-page="page"
+          :page-size="pageSize"
+          :page-sizes="pageSizes"
+          @update:current-page="events.handlePageChange"
+          @update:page-size="events.handlePageSizeChange"
+        />
+      </div>
     </div>
   </div>
 </template>
