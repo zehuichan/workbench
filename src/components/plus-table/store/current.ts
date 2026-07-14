@@ -26,8 +26,7 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     /** 兼容公开 Store：对外仍按当前行列顺序呈现下标位置。 */
     currentCell: computed<CellPosition | null>({
       get: (previous) => {
-        const current = currentRef.value;
-        const next = current ? resolveCellPosition(current) : null;
+        const next = resolveCurrentPosition();
         return isEqual(previous, next) ? (previous ?? null) : next;
       },
       set: (next) => {
@@ -87,6 +86,11 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     return { rowIndex, colIndex };
   }
 
+  function resolveCurrentPosition(): CellPosition | null {
+    const current = currentRef.value;
+    return current ? resolveCellPosition(current) : null;
+  }
+
   /** 直接按实例内稳定 cell id 定位，不依赖 Element Plus 当前 DOM 行顺序。 */
   function getCellElRef(ref: CellRef): HTMLElement | null {
     const grid = table.gridRef.value;
@@ -131,6 +135,14 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     if (scroll) scrollCellRef(next);
   }
 
+  /** 无可解析活动格时选择首格并返回 null，让本次移动立即停止。 */
+  function resolveMoveOrigin(): CellPosition | null {
+    const position = resolveCurrentPosition();
+    if (position) return position;
+    setCurrentCell(0, 0);
+    return null;
+  }
+
   function isCurrentRef(rowKey: string, colId: string): boolean {
     return currentCells.has(cellRefKey(rowKey, colId));
   }
@@ -146,18 +158,13 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function cleanCurrent(): void {
-    const current = currentRef.value;
-    if (current && !resolveCellPosition(current)) setCurrentRef(null);
+    if (!resolveCurrentPosition()) setCurrentRef(null);
   }
 
   /** 方向移动（不换行），无活动格时落到首格 */
   function moveCurrent(deltaRow: number, deltaCol: number) {
-    const current = currentRef.value;
-    const position = current ? resolveCellPosition(current) : null;
-    if (!position) {
-      setCurrentCell(0, 0);
-      return;
-    }
+    const position = resolveMoveOrigin();
+    if (!position) return;
     setCurrentCell(position.rowIndex + deltaRow, position.colIndex + deltaCol);
   }
 
@@ -166,12 +173,8 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     const cols = colCount();
     const total = rowCount() * cols;
     if (total === 0 || cols === 0) return;
-    const current = currentRef.value;
-    const position = current ? resolveCellPosition(current) : null;
-    if (!position) {
-      setCurrentCell(0, 0);
-      return;
-    }
+    const position = resolveMoveOrigin();
+    if (!position) return;
     const flat = clamp(
       position.rowIndex * cols + position.colIndex + delta,
       0,
@@ -181,12 +184,8 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function moveToRowEdge(end: boolean) {
-    const current = currentRef.value;
-    const position = current ? resolveCellPosition(current) : null;
-    if (!position) {
-      setCurrentCell(0, 0);
-      return;
-    }
+    const position = resolveMoveOrigin();
+    if (!position) return;
     setCurrentCell(position.rowIndex, end ? colCount() - 1 : 0);
   }
 

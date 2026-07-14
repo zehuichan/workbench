@@ -328,8 +328,26 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
     );
   }
 
-  function defaultHiddenIds(): Set<string> {
-    return new Set(normalized.value.defaultHiddenIds);
+  function getSettingsStorage(): Storage {
+    const storage = defaultWindow?.localStorage;
+    if (!storage) throw new Error('localStorage 不可用。');
+    return storage;
+  }
+
+  function createDefaultSettings(): PersistedSettings {
+    return {
+      hidden: [...normalized.value.defaultHiddenIds],
+      order: {},
+      widths: {},
+    };
+  }
+
+  function snapshotSettings(): PersistedSettings {
+    return {
+      hidden: [...states.hiddenIds.value],
+      order: states.orderMap.value,
+      widths: states.widthMap.value,
+    };
   }
 
   function sanitizeSettings(
@@ -366,8 +384,7 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
     const key = storageKey.value;
     if (!key) return null;
     try {
-      const storage = defaultWindow?.localStorage;
-      if (!storage) throw new Error('localStorage 不可用。');
+      const storage = getSettingsStorage();
       const raw = storage.getItem(key);
       if (raw === null) return null;
       return parsePersistedSettings(raw);
@@ -381,47 +398,27 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
     storageKey,
     () => {
       const persisted = loadPersisted();
-      applySettings(
-        sanitizeSettings(
-          persisted ?? {
-            hidden: [...defaultHiddenIds()],
-            order: {},
-            widths: {},
-          },
-        ),
-      );
+      applySettings(sanitizeSettings(persisted ?? createDefaultSettings()));
     },
     { immediate: true },
   );
 
   watch(normalized, (next, previous) => {
-    const hiddenIds = new Set(states.hiddenIds.value);
+    const settings = snapshotSettings();
+    const hiddenIds = new Set(settings.hidden);
     for (const id of next.defaultHiddenIds) {
       if (!previous.byId.has(id)) hiddenIds.add(id);
     }
-    applySettings(
-      sanitizeSettings(
-        {
-          hidden: [...hiddenIds],
-          order: states.orderMap.value,
-          widths: states.widthMap.value,
-        },
-        next,
-      ),
-    );
+    settings.hidden = [...hiddenIds];
+    applySettings(sanitizeSettings(settings, next));
   });
 
   watch([states.hiddenIds, states.orderMap, states.widthMap], () => {
     const key = storageKey.value;
     if (!key) return;
     try {
-      const storage = defaultWindow?.localStorage;
-      if (!storage) throw new Error('localStorage 不可用。');
-      const payload: PersistedSettings = {
-        hidden: [...states.hiddenIds.value],
-        order: states.orderMap.value,
-        widths: states.widthMap.value,
-      };
+      const storage = getSettingsStorage();
+      const payload = snapshotSettings();
       storage.setItem(key, JSON.stringify(payload));
     } catch (error) {
       reportStorageError('写入', key, error);
@@ -502,8 +499,10 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
     if (!drag || drag.disabled || !target || drag.parentId !== target.parentId)
       return;
     const ids = getSiblingIds(drag.parentId).filter((id) => id !== dragId);
-    const index = ids.indexOf(targetId) + (position === 'after' ? 1 : 0);
-    ids.splice(index, 0, dragId);
+    const targetIndex = ids.indexOf(targetId);
+    if (targetIndex < 0) return;
+    const insertionIndex = targetIndex + (position === 'after' ? 1 : 0);
+    ids.splice(insertionIndex, 0, dragId);
     states.orderMap.value = { ...states.orderMap.value, [drag.parentId]: ids };
   }
 
@@ -525,12 +524,11 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function resetSettings() {
-    const hiddenIds = defaultHiddenIds();
-    const orderMap: Record<string, string[]> = {};
-    const widthMap: Record<string, number> = {};
+    const settings = createDefaultSettings();
+    const hiddenIds = new Set(settings.hidden);
     states.hiddenIds.value = hiddenIds;
-    states.orderMap.value = orderMap;
-    states.widthMap.value = widthMap;
+    states.orderMap.value = settings.order;
+    states.widthMap.value = settings.widths;
     const key = storageKey.value;
     if (!key) return;
     void nextTick(() => {
@@ -543,8 +541,7 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
         return;
       }
       try {
-        const storage = defaultWindow?.localStorage;
-        if (!storage) throw new Error('localStorage 不可用。');
+        const storage = getSettingsStorage();
         storage.removeItem(key);
       } catch (error) {
         reportStorageError('重置', key, error);

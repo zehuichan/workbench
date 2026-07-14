@@ -126,6 +126,31 @@ describe('PlusTable columns', () => {
     ]);
   });
 
+  it.each(['before', 'after'] as const)(
+    'ignores a reorder when the target does not exist (%s)',
+    (position) => {
+      const { store } = setup([
+        { prop: 'a', label: 'A' },
+        { prop: 'b', label: 'B' },
+        { prop: 'c', label: 'C' },
+      ]);
+
+      store.updateColumnOrder('c', 'missing', position);
+
+      expect(store.states.originColumns.value.map((node) => node.id)).toEqual([
+        'a',
+        'b',
+        'c',
+      ]);
+      expect(store.states.columns.value.map((node) => node.id)).toEqual([
+        'a',
+        'b',
+        'c',
+      ]);
+      expect(store.states.orderMap.value).toEqual({});
+    },
+  );
+
   it('matches Element Plus top-level fixed ordering', () => {
     const { store } = setup([
       { prop: 'a', label: 'A' },
