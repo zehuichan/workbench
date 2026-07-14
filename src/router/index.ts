@@ -10,7 +10,7 @@ import HistoryDirtyDemo from '@/views/plus-table/history-dirty-demo.vue';
 import PaginationRowsDemo from '@/views/plus-table/pagination-rows-demo.vue';
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
