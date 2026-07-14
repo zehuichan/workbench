@@ -24,6 +24,10 @@ jobs:
         env:
           BASE_PATH: /component-labs/
 
+      # GitHub Pages 对深层路径会 404；用同内容的 404.html 兜住 SPA 刷新
+      - name: SPA fallback
+        run: cp dist/index.html dist/404.html
+
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v4
         with:
