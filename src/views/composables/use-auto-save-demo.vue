@@ -36,36 +36,20 @@ function delay(ms: number, signal?: AbortSignal): Promise<void> {
       return;
     }
 
-    let settled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    const abortReason = () =>
+      signal.reason ??
+      new DOMException('The operation was aborted.', 'AbortError');
+    if (signal.aborted) return reject(abortReason());
 
-    const cleanup = () => {
-      if (timer !== undefined) clearTimeout(timer);
-      signal.removeEventListener('abort', handleAbort);
-    };
-    const settle = (callback: () => void) => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      callback();
-    };
     const handleAbort = () => {
-      settle(() =>
-        reject(
-          signal.reason ??
-            new DOMException('The operation was aborted.', 'AbortError'),
-        ),
-      );
+      clearTimeout(timer);
+      reject(abortReason());
     };
-
-    if (signal.aborted) {
-      handleAbort();
-      return;
-    }
-
-    timer = setTimeout(() => settle(resolve), ms);
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', handleAbort);
+      resolve();
+    }, ms);
     signal.addEventListener('abort', handleAbort, { once: true });
-    if (signal.aborted) handleAbort();
   });
 }
 

@@ -93,6 +93,10 @@ export interface UseSaveHotkeyOptions {
 export function useSaveHotkey(options: UseSaveHotkeyOptions): void {
   const { handler, enabled = true, active = true, onError } = options;
   const instance = getCurrentInstance();
+  // Reject bare effect scopes, post-mount hooks such as onMounted/onActivated,
+  // lifecycle callbacks with a mismatched scope such as onBeforeMount, and the
+  // initial render after Vue assigns render. Reflect.get accesses the internal
+  // scope/render fields without widening the public instance type.
   if (
     !instance ||
     instance.isMounted ||

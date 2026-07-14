@@ -136,6 +136,7 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
     return serialized;
   };
 
+  // The key watcher cancels reactive changes synchronously; expectedKey prevents stale writes for non-reactive getters it cannot observe.
   const writeDraft = (expectedKey?: string): boolean => {
     if (disposed || pauseDepth > 0) return false;
     const enabledValue = readValue(enabled);

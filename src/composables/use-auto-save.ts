@@ -49,6 +49,10 @@ export interface UseAutoSaveReturn {
   withPaused: <R>(task: () => R | Promise<R>) => Promise<R>;
 }
 
+const onSettled = (task: Promise<unknown>, cleanup: () => void): void => {
+  void task.then(cleanup, cleanup);
+};
+
 /**
  * Serializes debounced server-side draft saves without overlapping requests.
  *
@@ -74,6 +78,7 @@ export function useAutoSave<T>(
   let revision = 0;
   let savedRevision = 0;
   let handledRevision = 0;
+  // Prevents an in-flight success from overwriting an error reported while it awaited.
   let errorEpoch = 0;
   let pauseDepth = 0;
   let disposed = false;
@@ -86,6 +91,8 @@ export function useAutoSave<T>(
     new Error('[useAutoSave] Scope was disposed before flush completed.');
 
   const reportError = (failure: unknown): void => {
+    // Each ref write may synchronously trigger a watcher that disposes this scope.
+    // Recheck after every write so onError never runs after disposal.
     if (disposed) return;
     errorEpoch += 1;
     error.value = failure;
@@ -153,7 +160,7 @@ export function useAutoSave<T>(
         }
       }
       if (disposed) throw createDisposedError();
-      if (!disposed && errorEpoch === startingErrorEpoch) {
+      if (errorEpoch === startingErrorEpoch) {
         status.value = handledRevision < revision ? 'pending' : 'saved';
       }
     } catch (failure) {
@@ -170,16 +177,13 @@ export function useAutoSave<T>(
   const getOrStartSave = (): Promise<void> => {
     if (inFlight) return inFlight;
 
+    // Defer one microtask to coalesce same-tick synchronous changes into this save
+    // and avoid re-entry into performSave's synchronous section.
     const task = Promise.resolve().then(performSave);
     inFlight = task;
-    void task.then(
-      () => {
-        if (inFlight === task) inFlight = null;
-      },
-      () => {
-        if (inFlight === task) inFlight = null;
-      },
-    );
+    onSettled(task, () => {
+      if (inFlight === task) inFlight = null;
+    });
     return task;
   };
 
@@ -334,21 +338,14 @@ export function useAutoSave<T>(
 
     const targetRevision = revision;
     const operation = (async () => {
-      if (inFlight) await inFlight;
-      if (disposed) throw createDisposedError();
       await drainThrough(targetRevision);
       if (disposed) throw createDisposedError();
     })();
 
     activeFlushes.add(operation);
-    void operation.then(
-      () => {
-        activeFlushes.delete(operation);
-      },
-      () => {
-        activeFlushes.delete(operation);
-      },
-    );
+    onSettled(operation, () => {
+      activeFlushes.delete(operation);
+    });
     return operation;
   };
 
@@ -366,7 +363,7 @@ export function useAutoSave<T>(
     cancelScheduledSave();
     discardThrough(revision);
     try {
-      while (activeFlushes.size > 0) {
+      if (activeFlushes.size > 0) {
         const results = await Promise.allSettled([...activeFlushes]);
         const rejected = results.find(
           (result): result is PromiseRejectedResult =>

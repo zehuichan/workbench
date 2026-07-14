@@ -61,6 +61,8 @@ function getScopePathIndex(
   }
 
   if (bestIndex !== Number.POSITIVE_INFINITY) return bestIndex;
+  // A scope may contain a target without appearing in composedPath, such as at
+  // a Shadow DOM boundary or in a fragment container; treat it as the weakest match.
   return containsPath ? Number.POSITIVE_INFINITY : undefined;
 }
 
