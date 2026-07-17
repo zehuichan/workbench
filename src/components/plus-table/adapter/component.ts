@@ -27,7 +27,12 @@ export const EDITOR_REGISTRY = {
     componentProps: { type: 'textarea', autosize: true },
     trigger: 'blur',
   },
-  'input-number': { component: ElInputNumber, trigger: 'blur' },
+  // 默认关闭加减按钮：点击 controls 会打断内部 input 失焦，cell 模式无法靠 blur 退出编辑态
+  'input-number': {
+    component: ElInputNumber,
+    componentProps: { controls: false },
+    trigger: 'blur',
+  },
   select: { component: ElSelectV2, trigger: 'change' },
   'date-picker': { component: ElDatePicker, trigger: 'change' },
   'time-picker': { component: ElTimePicker, trigger: 'change' },

@@ -30,6 +30,12 @@ describe('resolveEditor', () => {
     expect(resolved.trigger).toBe('blur');
   });
 
+  it('resolves input-number with controls disabled by default', () => {
+    const resolved = resolveEditor({ component: 'input-number' }, ctx);
+    expect(resolved.componentProps).toEqual({ controls: false });
+    expect(resolved.trigger).toBe('blur');
+  });
+
   it('resolves select with change trigger', () => {
     const resolved = resolveEditor(
       {
