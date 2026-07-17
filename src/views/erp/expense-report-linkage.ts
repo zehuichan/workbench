@@ -2,7 +2,7 @@ import type { PlusTableColumnDef } from '@/components/plus-table';
 import type { DocumentDraft, DocumentLine, EmitEffectRules } from '@/composables';
 import {
   CURRENCY_OPTIONS,
-  forceField,
+  forceCurrencyWithRate,
   inheritField,
   money,
   optionLabel,
@@ -127,7 +127,7 @@ export const expenseReportRules: EmitEffectRules = {
   headerRules: {
     departmentId: inheritField('departmentId', 'departmentId'),
     projectId: inheritField('projectId', 'projectId'),
-    currency: forceField('currency', 'currency'),
+    currency: forceCurrencyWithRate(),
     exchangeRate: {
       policy: 'recalculate',
       requiresConfirmation: true,
@@ -148,7 +148,6 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
   {
     prop: 'expenseType',
     label: '费用类型',
-    minWidth: 130,
     editable: true,
     component: 'select',
     componentProps: { options: EXPENSE_TYPE_OPTIONS },
@@ -205,7 +204,7 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
     width: 120,
     editable: false,
   },
-  { prop: 'source', label: '字段来源', width: 200, editable: false },
+  { prop: 'source', label: '字段来源', editable: false },
   {
     prop: 'actions',
     type: 'operation',

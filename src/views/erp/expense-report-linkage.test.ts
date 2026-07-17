@@ -45,4 +45,36 @@ describe('expense-report-linkage rules', () => {
     expect(mutation.nextDraft.summary.localAmount).not.toBe(before);
     expect(mutation.nextDraft.summary.localAmount).toBeGreaterThan(before!);
   });
+
+  it('sets default exchange rate when currency changes from default', () => {
+    const draft = createExpenseReportDraft();
+    const beforeLocal = draft.summary.localAmount;
+    const mutation = buildHeaderMutation(
+      expenseReportRules,
+      draft,
+      'currency',
+      'USD',
+    );
+    expect(mutation.nextDraft.header.exchangeRate).toBe(7.2);
+    expect(mutation.nextDraft.summary.localAmount).toBeGreaterThan(
+      beforeLocal!,
+    );
+  });
+
+  it('keeps manual exchange rate when currency changes', () => {
+    const draft = createExpenseReportDraft();
+    const withRate = buildHeaderMutation(
+      expenseReportRules,
+      draft,
+      'exchangeRate',
+      6.5,
+    );
+    const mutation = buildHeaderMutation(
+      expenseReportRules,
+      withRate.nextDraft,
+      'currency',
+      'USD',
+    );
+    expect(mutation.nextDraft.header.exchangeRate).toBe(6.5);
+  });
 });

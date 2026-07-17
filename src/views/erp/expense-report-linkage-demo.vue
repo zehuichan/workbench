@@ -80,13 +80,13 @@ async function onRemoveLine(id: string) {
   <DemoPage width="wide">
     <template #description>
       费用报销演示表头→明细副作用：币种
-      <code>force</code>、部门/项目 <code>inherit</code>、汇率
-      <code>recalculate</code> 本位币金额。明细改部门/项目后标记为人工值。
+      <code>force</code>（默认汇率时改币种会带出新汇率）、部门/项目
+      <code>inherit</code>、汇率 <code>recalculate</code> 本位币金额。明细改部门/项目后标记为人工值；手改汇率后改币种不覆盖。
     </template>
 
     <DemoBlock>
       <template #hint>
-        改汇率会重算全部本位币金额；改明细部门/项目会标记为人工值。状态：{{
+        改币种可能带出默认汇率；手改汇率后改币种不覆盖。改汇率会重算全部本位币金额；改明细部门/项目会标记为人工值。状态：{{
           statusText
         }}
       </template>

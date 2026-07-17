@@ -14,6 +14,38 @@ export const CURRENCY_OPTIONS: SelectOption[] = [
   { label: '欧元 EUR', value: 'EUR' },
 ];
 
+export const DEFAULT_EXCHANGE_RATES: Record<string, number> = {
+  CNY: 1,
+  USD: 7.2,
+  EUR: 7.8,
+};
+
+export function defaultExchangeRate(currency: unknown): number {
+  return DEFAULT_EXCHANGE_RATES[String(currency)] ?? 1;
+}
+
+export function syncExchangeRateIfStillDefault(
+  nextHeader: Record<string, unknown>,
+  previousHeader: Record<string, unknown>,
+): void {
+  const previousDefault = defaultExchangeRate(previousHeader.currency);
+  if (Number(previousHeader.exchangeRate) !== previousDefault) return;
+  nextHeader.exchangeRate = defaultExchangeRate(nextHeader.currency);
+}
+
+export function forceCurrencyWithRate(
+  requiresConfirmation = true,
+): HeaderEmitRule {
+  return {
+    policy: 'force',
+    requiresConfirmation,
+    apply: (_line, nextHeader, previousHeader) => {
+      syncExchangeRateIfStillDefault(nextHeader, previousHeader);
+      return { patch: { currency: nextHeader.currency } };
+    },
+  };
+}
+
 export const WAREHOUSE_OPTIONS: SelectOption[] = [
   { label: '上海仓', value: 'WH-SH' },
   { label: '深圳仓', value: 'WH-SZ' },

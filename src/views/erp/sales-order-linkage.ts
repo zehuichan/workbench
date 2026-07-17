@@ -3,7 +3,7 @@ import type { DocumentDraft, DocumentLine, EmitEffectRules } from '@/composables
 import {
   CURRENCY_OPTIONS,
   WAREHOUSE_OPTIONS,
-  forceField,
+  forceCurrencyWithRate,
   inheritField,
   money,
   optionLabel,
@@ -63,6 +63,9 @@ function recalculateSalesLine(
   const unitPrice = Number(next.unitPrice ?? 0);
   const taxRate = Number(next.taxRate ?? 0);
   next.amount = money(quantity * unitPrice * (1 + taxRate));
+  next.localAmount = money(
+    Number(next.amount) * Number(header.exchangeRate ?? 0),
+  );
   return next;
 }
 
@@ -92,6 +95,7 @@ export function createSalesOrderDraft(): DocumentDraft {
     documentNo: 'SO-20260717-001',
     customerId: 'customer-east',
     currency: 'CNY',
+    exchangeRate: 1,
     warehouseId: 'WH-SH',
     taxRate: 0.13,
   };
@@ -129,6 +133,7 @@ export function createSalesOrderDraft(): DocumentDraft {
   draft.summary = {
     totalQty: sum(draft.lines, 'quantity'),
     totalAmount: sum(draft.lines, 'amount'),
+    totalLocalAmount: sum(draft.lines, 'localAmount'),
   };
   return draft;
 }
@@ -137,7 +142,12 @@ export const salesOrderRules: EmitEffectRules = {
   sourceFields: ['unitPrice', 'warehouseId', 'taxRate'],
   headerRules: {
     customerId: repriceInheritedField('unitPrice', resolveSalesPrice),
-    currency: forceField('currency', 'currency'),
+    currency: forceCurrencyWithRate(),
+    exchangeRate: {
+      policy: 'recalculate',
+      requiresConfirmation: true,
+      apply: () => ({}),
+    },
     warehouseId: inheritField('warehouseId', 'warehouseId'),
     taxRate: inheritField('taxRate', 'taxRate'),
   },
@@ -146,6 +156,7 @@ export const salesOrderRules: EmitEffectRules = {
   summarize: (lines) => ({
     totalQty: sum(lines, 'quantity'),
     totalAmount: sum(lines, 'amount'),
+    totalLocalAmount: sum(lines, 'localAmount'),
   }),
 };
 
@@ -154,7 +165,6 @@ export const salesOrderColumns: PlusTableColumnDef[] = [
   {
     prop: 'productId',
     label: '商品',
-    minWidth: 140,
     editable: true,
     component: 'select',
     componentProps: { options: SALES_PRODUCT_OPTIONS },
@@ -210,9 +220,14 @@ export const salesOrderColumns: PlusTableColumnDef[] = [
     editable: false,
   },
   {
+    prop: 'localAmount',
+    label: '本位币金额',
+    width: 120,
+    editable: false,
+  },
+  {
     prop: 'source',
     label: '字段来源',
-    width: 220,
     editable: false,
   },
   {

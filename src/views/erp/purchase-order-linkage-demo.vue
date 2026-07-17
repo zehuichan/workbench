@@ -83,13 +83,14 @@ async function onRemoveLine(id: string) {
   <DemoPage width="wide">
     <template #description>
       采购订单演示表头→明细副作用：币种
-      <code>force</code>、仓库/税率 <code>inherit</code>、供应商变更
-      <code>recalculate</code> 采购单价。明细改仓库/税率/单价后标记为人工值。
+      <code>force</code>（默认汇率时改币种会带出新汇率）、仓库/税率
+      <code>inherit</code>、供应商/汇率 <code>recalculate</code>。明细改仓库/税率/单价后标记为人工值；本位币
+      <code>amount × exchangeRate</code>。手改汇率后改币种不覆盖。
     </template>
 
     <DemoBlock>
       <template #hint>
-        改表头观察明细传播；改明细仓库/税率会标记为人工值。状态：{{
+        改币种时若汇率仍是旧币种默认值会带出新默认汇率；手改汇率后改币种会保留。状态：{{
           statusText
         }}
       </template>
@@ -120,6 +121,15 @@ async function onRemoveLine(id: string) {
               :value="option.value"
             />
           </el-select>
+        </el-form-item>
+        <el-form-item label="汇率 · 触发重算">
+          <el-input-number
+            :model-value="Number(draft.header.exchangeRate)"
+            :min="0.01"
+            :step="0.1"
+            :precision="2"
+            @change="onHeaderChange('exchangeRate', $event)"
+          />
         </el-form-item>
         <el-form-item label="收货仓库 · 继承传播">
           <el-select
@@ -175,6 +185,7 @@ async function onRemoveLine(id: string) {
       <div class="erp-page__summary">
         <span>数量合计 {{ draft.summary.totalQty ?? 0 }}</span>
         <span>价税合计 {{ draft.summary.totalAmount ?? 0 }}</span>
+        <span>本位币合计 {{ draft.summary.totalLocalAmount ?? 0 }}</span>
         <span>{{ draft.dirty ? '有未保存修改' : '干净草稿' }}</span>
       </div>
     </DemoBlock>

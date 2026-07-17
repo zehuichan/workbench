@@ -3,7 +3,7 @@ import type { DocumentDraft, DocumentLine, EmitEffectRules } from '@/composables
 import {
   CURRENCY_OPTIONS,
   WAREHOUSE_OPTIONS,
-  forceField,
+  forceCurrencyWithRate,
   inheritField,
   money,
   optionLabel,
@@ -63,6 +63,9 @@ function recalculatePurchaseLine(
   const unitPrice = Number(next.unitPrice ?? 0);
   const taxRate = Number(next.taxRate ?? 0);
   next.amount = money(quantity * unitPrice * (1 + taxRate));
+  next.localAmount = money(
+    Number(next.amount) * Number(header.exchangeRate ?? 0),
+  );
   return next;
 }
 
@@ -92,6 +95,7 @@ export function createPurchaseOrderDraft(): DocumentDraft {
     documentNo: 'PO-20260717-001',
     supplierId: 'supplier-south',
     currency: 'CNY',
+    exchangeRate: 1,
     warehouseId: 'WH-SH',
     taxRate: 0.13,
   };
@@ -129,6 +133,7 @@ export function createPurchaseOrderDraft(): DocumentDraft {
   draft.summary = {
     totalQty: sum(draft.lines, 'quantity'),
     totalAmount: sum(draft.lines, 'amount'),
+    totalLocalAmount: sum(draft.lines, 'localAmount'),
   };
   return draft;
 }
@@ -137,7 +142,12 @@ export const purchaseOrderRules: EmitEffectRules = {
   sourceFields: ['unitPrice', 'warehouseId', 'taxRate'],
   headerRules: {
     supplierId: repriceInheritedField('unitPrice', resolvePurchasePrice),
-    currency: forceField('currency', 'currency'),
+    currency: forceCurrencyWithRate(),
+    exchangeRate: {
+      policy: 'recalculate',
+      requiresConfirmation: true,
+      apply: () => ({}),
+    },
     warehouseId: inheritField('warehouseId', 'warehouseId'),
     taxRate: inheritField('taxRate', 'taxRate'),
   },
@@ -146,6 +156,7 @@ export const purchaseOrderRules: EmitEffectRules = {
   summarize: (lines) => ({
     totalQty: sum(lines, 'quantity'),
     totalAmount: sum(lines, 'amount'),
+    totalLocalAmount: sum(lines, 'localAmount'),
   }),
 };
 
@@ -154,7 +165,6 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
   {
     prop: 'materialId',
     label: '物料',
-    minWidth: 140,
     editable: true,
     component: 'select',
     componentProps: { options: PURCHASE_MATERIAL_OPTIONS },
@@ -209,7 +219,13 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
     width: 120,
     editable: false,
   },
-  { prop: 'source', label: '字段来源', width: 220, editable: false },
+  {
+    prop: 'localAmount',
+    label: '本位币金额',
+    width: 120,
+    editable: false,
+  },
+  { prop: 'source', label: '字段来源', editable: false },
   {
     prop: 'actions',
     type: 'operation',

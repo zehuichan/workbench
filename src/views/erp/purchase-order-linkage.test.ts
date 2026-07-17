@@ -45,4 +45,55 @@ describe('purchase-order-linkage rules', () => {
       draft.lines[0]?.unitPrice,
     );
   });
+
+  it('sets default exchange rate and local amounts when currency changes from default', () => {
+    const draft = createPurchaseOrderDraft();
+    const beforeLocal = draft.summary.totalLocalAmount;
+    const mutation = buildHeaderMutation(
+      purchaseOrderRules,
+      draft,
+      'currency',
+      'USD',
+    );
+    expect(mutation.nextDraft.header.exchangeRate).toBe(7.2);
+    expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(
+      beforeLocal!,
+    );
+    for (const line of mutation.nextDraft.lines) {
+      expect(line.localAmount).toBe(
+        Math.round((Number(line.amount) * 7.2 + Number.EPSILON) * 100) / 100,
+      );
+    }
+  });
+
+  it('keeps manual exchange rate when currency changes', () => {
+    const draft = createPurchaseOrderDraft();
+    const withRate = buildHeaderMutation(
+      purchaseOrderRules,
+      draft,
+      'exchangeRate',
+      6.5,
+    );
+    const mutation = buildHeaderMutation(
+      purchaseOrderRules,
+      withRate.nextDraft,
+      'currency',
+      'USD',
+    );
+    expect(mutation.nextDraft.header.exchangeRate).toBe(6.5);
+  });
+
+  it('recalculates local amounts when exchange rate changes', () => {
+    const draft = createPurchaseOrderDraft();
+    const before = draft.summary.totalLocalAmount;
+    const mutation = buildHeaderMutation(
+      purchaseOrderRules,
+      draft,
+      'exchangeRate',
+      8,
+    );
+    expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(
+      before!,
+    );
+  });
 });
