@@ -8,7 +8,7 @@ import {
   type Ref,
 } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
-import { watchReadable } from './watch-readable';
+import { watchReadable } from '../shared/watch-readable';
 
 export type AutoSaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
 

@@ -9,7 +9,7 @@ import {
 } from 'vue';
 import { defaultWindow, useTimeoutFn } from '@vueuse/core';
 import { isPlainObject, isString } from 'es-toolkit';
-import { watchReadable } from './watch-readable';
+import { watchReadable } from '../shared/watch-readable';
 
 export interface UseFormDraftOptions<
   T extends object = Record<string, unknown>,
