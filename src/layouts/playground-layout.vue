@@ -6,7 +6,7 @@ import '@/styles/index.scss';
 defineOptions({ name: 'PlaygroundLayout' });
 
 const router = useRouter();
-const groupOrder = ['PlusTable', 'Composables'] as const;
+const groupOrder = ['PlusTable', 'ERP 场景', 'Composables'] as const;
 const navGroups = computed(() =>
   groupOrder.map((group) => ({
     name: group,

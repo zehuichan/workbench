@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import autoSave from './composables/use-auto-save-demo.vue?raw';
 import formDraft from './composables/use-form-draft-demo.vue?raw';
 import saveHotkey from './composables/use-save-hotkey-demo.vue?raw';
+import expenseReport from './erp/expense-report-linkage-demo.vue?raw';
+import purchaseOrder from './erp/purchase-order-linkage-demo.vue?raw';
+import salesOrder from './erp/sales-order-linkage-demo.vue?raw';
 import basicEditing from './plus-table/basic-editing-demo.vue?raw';
 import dependenciesValidation from './plus-table/dependencies-validation-demo.vue?raw';
 import historyDirty from './plus-table/history-dirty-demo.vue?raw';
@@ -34,7 +37,13 @@ const demos = [
     source: paginationRows,
     sections: 4,
     rows: 12,
-    content: ['PlusTable Props（分页）', 'Events', 'Slots', '#title', '#summary'],
+    content: [
+      'PlusTable Props（分页）',
+      'Events',
+      'Slots',
+      '#title',
+      '#summary',
+    ],
   },
   {
     path: './composables/use-auto-save-demo.vue',
@@ -59,6 +68,12 @@ const demos = [
   },
 ] as const;
 
+const erpDemos = [
+  ['./erp/sales-order-linkage-demo.vue', salesOrder],
+  ['./erp/purchase-order-linkage-demo.vue', purchaseOrder],
+  ['./erp/expense-report-linkage-demo.vue', expenseReport],
+] as const;
+
 describe('demo content contracts', () => {
   it.each(demos)(
     'preserves API, description, and hint content in $path',
@@ -69,6 +84,20 @@ describe('demo content contracts', () => {
       expect(source).toContain('<template #api>');
       expect(source).toContain('<template #hint>');
       for (const fingerprint of content) expect(source).toContain(fingerprint);
+    },
+  );
+
+  it.each(erpDemos)(
+    'keeps ERP demo self-contained with useEmitEffect in %s',
+    (_path, source) => {
+      expect(source).toContain('useEmitEffect');
+      expect(source).not.toContain('ErpDocumentDemo');
+      expect(source).not.toContain('erp-document-demo');
+      expect(source).not.toContain('createMockDocumentServer');
+      expect(source).not.toContain('模拟并发');
+      expect(source).toContain('<template #description>');
+      expect(source).toContain('DemoPage');
+      expect(source).toContain('PlusTable');
     },
   );
 });

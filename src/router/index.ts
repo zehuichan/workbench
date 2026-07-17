@@ -4,6 +4,9 @@ import PlaygroundLayout from '@/layouts/playground-layout.vue';
 import UseAutoSaveDemo from '@/views/composables/use-auto-save-demo.vue';
 import UseFormDraftDemo from '@/views/composables/use-form-draft-demo.vue';
 import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
+import ExpenseReportLinkageDemo from '@/views/erp/expense-report-linkage-demo.vue';
+import PurchaseOrderLinkageDemo from '@/views/erp/purchase-order-linkage-demo.vue';
+import SalesOrderLinkageDemo from '@/views/erp/sales-order-linkage-demo.vue';
 import BasicEditingDemo from '@/views/plus-table/basic-editing-demo.vue';
 import DependenciesValidationDemo from '@/views/plus-table/dependencies-validation-demo.vue';
 import HistoryDirtyDemo from '@/views/plus-table/history-dirty-demo.vue';
@@ -40,6 +43,24 @@ export const router = createRouter({
           name: 'plus-table-pagination-rows',
           component: PaginationRowsDemo,
           meta: { title: '分页与行操作', group: 'PlusTable', order: 4 },
+        },
+        {
+          path: 'erp/sales-order-linkage',
+          name: 'erp-sales-order-linkage',
+          component: SalesOrderLinkageDemo,
+          meta: { title: '销售订单联动', group: 'ERP 场景', order: 1 },
+        },
+        {
+          path: 'erp/purchase-order-linkage',
+          name: 'erp-purchase-order-linkage',
+          component: PurchaseOrderLinkageDemo,
+          meta: { title: '采购订单联动', group: 'ERP 场景', order: 2 },
+        },
+        {
+          path: 'erp/expense-report-linkage',
+          name: 'erp-expense-report-linkage',
+          component: ExpenseReportLinkageDemo,
+          meta: { title: '费用报销联动', group: 'ERP 场景', order: 3 },
         },
         {
           path: 'composables/use-auto-save',
