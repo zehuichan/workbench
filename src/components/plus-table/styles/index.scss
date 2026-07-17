@@ -48,7 +48,6 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
     margin-left: auto;
   }
 
@@ -134,10 +133,15 @@
   // 交出单元格内边距，由 .ptbl-cell 接管，以便整格绘制状态底色与边框；
   // 仅对渲染了 .ptbl-cell 的格子生效——原生特殊列（index/selection/expand）不经过
   // TableCell，没有 .ptbl-cell 接管内边距，若一并清零会导致序号/勾选框贴边、错位。
+  // height: 1px 是表格行高百分比技巧：td 仍会被行内容撑开，但子元素 height:100%
+  // 能解析到真实行高，避免同行某列换行变高后其它格的高亮框只盖住内容区。
   .el-table td.el-table__cell:has(.ptbl-cell) {
+    height: 1px;
     padding: 0;
 
     > .cell {
+      display: flex;
+      height: 100%;
       padding: 0;
     }
   }
@@ -149,14 +153,17 @@
 }
 
 .ptbl-cell-tooltip-trigger {
-  display: block;
+  display: flex;
+  flex: 1 1 auto;
   width: 100%;
   min-width: 0;
+  min-height: 100%;
 }
 
 .ptbl-cell {
   position: relative;
   display: flex;
+  flex: 1 1 auto;
   align-items: center;
   box-sizing: border-box;
   width: 100%;

@@ -125,10 +125,12 @@ async function onRemoveLine(id: string) {
         </el-form-item>
         <el-form-item label="汇率 · 触发重算">
           <el-input-number
+            class="w-full!"
             :model-value="Number(draft.header.exchangeRate)"
             :min="0.01"
             :step="0.1"
             :precision="2"
+            controls-position="right"
             @change="onHeaderChange('exchangeRate', $event)"
           />
         </el-form-item>
@@ -147,11 +149,13 @@ async function onRemoveLine(id: string) {
         </el-form-item>
         <el-form-item label="默认税率 · 继承传播">
           <el-input-number
+            class="w-full!"
             :model-value="Number(draft.header.taxRate)"
             :min="0"
             :max="1"
             :step="0.01"
             :precision="2"
+            controls-position="right"
             @change="onHeaderChange('taxRate', $event)"
           />
         </el-form-item>
@@ -183,11 +187,51 @@ async function onRemoveLine(id: string) {
         </template>
       </PlusTable>
 
-      <div class="erp-page__summary">
-        <span>数量合计 {{ draft.summary.totalQty ?? 0 }}</span>
-        <span>含税合计 {{ draft.summary.totalAmount ?? 0 }}</span>
-        <span>本位币合计 {{ draft.summary.totalLocalAmount ?? 0 }}</span>
-        <span>{{ draft.dirty ? '有未保存修改' : '干净草稿' }}</span>
+      <div
+        class="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 border-t border-[var(--el-border-color-lighter)] pt-3"
+      >
+        <div class="min-w-28">
+          <div class="text-xs text-[var(--el-text-color-secondary)]">
+            数量合计
+          </div>
+          <div
+            class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-text-color-primary)]"
+          >
+            {{ draft.summary.totalQty ?? 0 }}
+          </div>
+        </div>
+        <div class="min-w-28">
+          <div class="text-xs text-[var(--el-text-color-secondary)]">
+            含税合计
+          </div>
+          <div
+            class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-text-color-primary)]"
+          >
+            {{ draft.summary.totalAmount ?? 0 }}
+          </div>
+        </div>
+        <div class="min-w-28">
+          <div class="text-xs text-[var(--el-text-color-secondary)]">
+            本位币合计
+          </div>
+          <div
+            class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-color-primary)]"
+          >
+            {{ draft.summary.totalLocalAmount ?? 0 }}
+          </div>
+        </div>
+        <div class="ml-auto flex items-center self-center">
+          <span
+            class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+            :class="
+              draft.dirty
+                ? 'bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning-dark-2)]'
+                : 'bg-[var(--el-color-success-light-9)] text-[var(--el-color-success-dark-2)]'
+            "
+          >
+            {{ draft.dirty ? '有未保存修改' : '干净草稿' }}
+          </span>
+        </div>
       </div>
     </DemoBlock>
   </DemoPage>
@@ -199,14 +243,5 @@ async function onRemoveLine(id: string) {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px 16px;
   margin-bottom: 16px;
-}
-
-.erp-page__summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 12px;
-  font-size: 14px;
-  color: var(--el-text-color-regular);
 }
 </style>

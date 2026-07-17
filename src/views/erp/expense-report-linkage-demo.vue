@@ -81,7 +81,9 @@ async function onRemoveLine(id: string) {
     <template #description>
       费用报销演示表头→明细副作用：币种
       <code>force</code>（默认汇率时改币种会带出新汇率）、部门/项目
-      <code>inherit</code>、汇率 <code>recalculate</code> 本位币金额。明细改部门/项目后标记为人工值；手改汇率后改币种不覆盖。
+      <code>inherit</code>、汇率
+      <code>recalculate</code>
+      本位币金额。明细改部门/项目后标记为人工值；手改汇率后改币种不覆盖。
     </template>
 
     <DemoBlock>
@@ -91,7 +93,11 @@ async function onRemoveLine(id: string) {
         }}
       </template>
 
-      <el-form class="erp-page__header" label-position="top" :model="draft.header">
+      <el-form
+        class="erp-page__header"
+        label-position="top"
+        :model="draft.header"
+      >
         <el-form-item label="报销人部门 · 继承传播">
           <el-select
             :model-value="draft.header.departmentId"
@@ -133,10 +139,12 @@ async function onRemoveLine(id: string) {
         </el-form-item>
         <el-form-item label="汇率 · 触发重算">
           <el-input-number
+            class="w-full!"
             :model-value="Number(draft.header.exchangeRate)"
             :min="0.01"
             :step="0.1"
             :precision="2"
+            controls-position="right"
             @change="onHeaderChange('exchangeRate', $event)"
           />
         </el-form-item>
@@ -168,11 +176,51 @@ async function onRemoveLine(id: string) {
         </template>
       </PlusTable>
 
-      <div class="erp-page__summary">
-        <span>原币合计 {{ draft.summary.originalAmount ?? 0 }}</span>
-        <span>可抵扣税额 {{ draft.summary.deductibleTax ?? 0 }}</span>
-        <span>本位币合计 {{ draft.summary.localAmount ?? 0 }}</span>
-        <span>{{ draft.dirty ? '有未保存修改' : '干净草稿' }}</span>
+      <div
+        class="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 border-t border-[var(--el-border-color-lighter)] pt-3"
+      >
+        <div class="min-w-28">
+          <div class="text-xs text-[var(--el-text-color-secondary)]">
+            原币合计
+          </div>
+          <div
+            class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-text-color-primary)]"
+          >
+            {{ draft.summary.originalAmount ?? 0 }}
+          </div>
+        </div>
+        <div class="min-w-28">
+          <div class="text-xs text-[var(--el-text-color-secondary)]">
+            可抵扣税额
+          </div>
+          <div
+            class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-text-color-primary)]"
+          >
+            {{ draft.summary.deductibleTax ?? 0 }}
+          </div>
+        </div>
+        <div class="min-w-28">
+          <div class="text-xs text-[var(--el-text-color-secondary)]">
+            本位币合计
+          </div>
+          <div
+            class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-color-primary)]"
+          >
+            {{ draft.summary.localAmount ?? 0 }}
+          </div>
+        </div>
+        <div class="ml-auto flex items-center self-center">
+          <span
+            class="rounded-full px-2.5 py-0.5 text-xs font-medium"
+            :class="
+              draft.dirty
+                ? 'bg-[var(--el-color-warning-light-9)] text-[var(--el-color-warning-dark-2)]'
+                : 'bg-[var(--el-color-success-light-9)] text-[var(--el-color-success-dark-2)]'
+            "
+          >
+            {{ draft.dirty ? '有未保存修改' : '干净草稿' }}
+          </span>
+        </div>
       </div>
     </DemoBlock>
   </DemoPage>
@@ -184,14 +232,5 @@ async function onRemoveLine(id: string) {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px 16px;
   margin-bottom: 16px;
-}
-
-.erp-page__summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 12px;
-  font-size: 14px;
-  color: var(--el-text-color-regular);
 }
 </style>
