@@ -11,7 +11,8 @@ export {
   buildHeaderMutation,
   normalizeDraft,
   removeLineMutation,
-} from './emit-effect';
+  useEmitEffect,
+} from './use-emit-effect';
 export type {
   DetailChangeCommand,
   DocumentDraft,
@@ -24,10 +25,6 @@ export type {
   FieldSource,
   HeaderEmitRule,
   HeaderLineEffect,
-} from './emit-effect';
-
-export { useEmitEffect } from './use-emit-effect';
-export type {
   UseEmitEffectOptions,
   UseEmitEffectReturn,
 } from './use-emit-effect';
