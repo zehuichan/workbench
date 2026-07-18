@@ -1,13 +1,6 @@
 {
   "version": 1,
   "skills": {
-    "first-principles-review": {
-      "source": "git@git.georgebuilder.com:georgegroup/agent-skills.git",
-      "sourceUrl": "git@git.georgebuilder.com:georgegroup/agent-skills.git",
-      "sourceType": "git",
-      "skillPath": "skills/first-principles-review/SKILL.md",
-      "computedHash": "6400df5893e6de43407e442e1ad1335aff1b84175250324b0ca7c8e2a5622d70"
-    },
     "git-commit": {
       "source": "github/awesome-copilot",
       "sourceType": "github",
