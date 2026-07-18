@@ -33,7 +33,7 @@ export function createTestTable<T extends RowData>(
 ): TestTable<T> {
   const props = reactive({
     rowKey: 'id',
-    editMode: 'cell',
+    mode: 'cell',
     validateEvent: false,
     ...options,
   }) as PlusTableProps<T>;

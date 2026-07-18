@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { describe, expect, it } from 'vitest';
-import { createTableExpose } from './expose-helper';
+import { createTableExpose } from '../../table/expose-helper';
 
 describe('PlusTable expose proxy', () => {
   it('prioritizes PlusTable APIs and binds ElTable passthrough methods', () => {

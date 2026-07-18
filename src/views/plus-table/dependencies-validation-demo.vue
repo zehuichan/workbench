@@ -196,7 +196,7 @@ async function handleValidate() {
         v-model:data="data"
         :columns="columns"
         row-key="id"
-        edit-mode="cell"
+        mode="cell"
         border
       >
         <template #toolbar>

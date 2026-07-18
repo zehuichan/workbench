@@ -94,7 +94,7 @@ export interface PlusTableProps<T extends RowData = RowData> {
   data: T[];
   columns: PlusTableColumnDef[];
   rowKey: RowKey<T>;
-  editMode?: EditMode;
+  mode?: EditMode;
   /** 是否在单元格变更时自动触发校验；false 时仅 ref.validate() 触发 */
   validateEvent?: boolean;
   /** 是否缓存列设置（显隐 / 顺序 / 列宽）；为 true 时需同时传 `id` 才写入 localStorage */

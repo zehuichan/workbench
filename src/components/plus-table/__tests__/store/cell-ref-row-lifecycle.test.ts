@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   createTestTable,
   type TestTable,
-} from '../__tests__/helpers/create-test-table';
+} from '../helpers/create-test-table';
 
 interface Row {
   id: number;
@@ -198,7 +198,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
           ],
         },
       ],
-      editMode: 'row',
+      mode: 'row',
     });
     tables.push(testTable);
     const rows = testTable.store.states.data.value;
@@ -260,7 +260,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
           ],
         },
       ],
-      editMode: 'row',
+      mode: 'row',
     });
     tables.push(testTable);
     const row = testTable.store.states.data.value[0]!;

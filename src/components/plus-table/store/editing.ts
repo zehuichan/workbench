@@ -180,7 +180,7 @@ export function useEditing<T extends RowData = RowData>(
 
   function isLocatedCellEditable(cell: CellLocation<T>): boolean {
     return (
-      table.store.states.editMode.value !== 'none' &&
+      table.store.states.mode.value !== 'none' &&
       resolveEditable(cell.row, cell.rowIndex, cell.node.column) &&
       !table.store.getDependencyState(cell.row, cell.rowIndex, cell.node.column)
         .disabled
@@ -202,7 +202,7 @@ export function useEditing<T extends RowData = RowData>(
 
   /** 单元格是否处于编辑器渲染态（三种模式统一入口） */
   function isCellEditing(rowIndex: number, colIndex: number): boolean {
-    switch (table.store.states.editMode.value) {
+    switch (table.store.states.mode.value) {
       case 'table':
         return canEditCell(rowIndex, colIndex);
       case 'row': {
@@ -233,7 +233,7 @@ export function useEditing<T extends RowData = RowData>(
     colIndex: number,
     opts: { defaultValue?: unknown } = {},
   ): boolean {
-    if (table.store.states.editMode.value !== 'cell') return false;
+    if (table.store.states.mode.value !== 'cell') return false;
     const ref = table.store.toCellRef(rowIndex, colIndex);
     if (!ref) return false;
     const cell = table.store.locateCellRef(ref);
@@ -253,7 +253,7 @@ export function useEditing<T extends RowData = RowData>(
 
   /** cell 模式提交：经 setCellValue 流水线（脏值跳过 / 联动 / 校验） */
   function commitEdit(): void {
-    if (table.store.states.editMode.value !== 'cell') return;
+    if (table.store.states.mode.value !== 'cell') return;
     const current = editingRef.value;
     if (!current) return;
     setEditingCell(null);
@@ -275,7 +275,7 @@ export function useEditing<T extends RowData = RowData>(
   }
 
   function cancelEdit(): void {
-    if (table.store.states.editMode.value !== 'cell') return;
+    if (table.store.states.mode.value !== 'cell') return;
     const current = editingRef.value;
     if (!current) return;
     setEditingCell(null);
@@ -284,7 +284,7 @@ export function useEditing<T extends RowData = RowData>(
 
   function clearRowEditingCell(flush = false): void {
     const current = editingRef.value;
-    if (!current || table.store.states.editMode.value !== 'row') return;
+    if (!current || table.store.states.mode.value !== 'row') return;
     const cell = table.store.locateCellRef(current);
     if (flush && cell)
       flushDraft(cell.row, cell.rowIndex, cell.rowKey, cell.prop);
@@ -294,7 +294,7 @@ export function useEditing<T extends RowData = RowData>(
 
   /** row 模式：在已进编的行上设置当前格编辑器 */
   function setRowEditingCell(rowIndex: number, colIndex: number): boolean {
-    if (table.store.states.editMode.value !== 'row') return false;
+    if (table.store.states.mode.value !== 'row') return false;
     const ref = table.store.toCellRef(rowIndex, colIndex);
     if (!ref) return false;
     const cell = table.store.locateCellRef(ref);
@@ -310,7 +310,7 @@ export function useEditing<T extends RowData = RowData>(
   }
 
   function startRowEdit(rowIndex: number): boolean {
-    if (table.store.states.editMode.value !== 'row') return false;
+    if (table.store.states.mode.value !== 'row') return false;
     const row = table.store.states.data.value[rowIndex];
     if (!row) return false;
     const key = table.store.getRowKey(row);

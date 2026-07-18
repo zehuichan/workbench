@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ElInput, ElSelectV2 } from 'element-plus';
 import { defineComponent } from 'vue';
-import { resolveEditor, typedCharToDraft } from './index';
+import { resolveEditor, typedCharToDraft } from '../../adapter';
 
 const ctx = { row: { id: 1 }, rowIndex: 0 };
 

@@ -13,7 +13,7 @@ import {
   type Component,
 } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useSaveHotkey, type UseSaveHotkeyOptions } from './use-save-hotkey';
+import { useSaveHotkey, type UseSaveHotkeyOptions } from '../../use-save-hotkey/use-save-hotkey';
 
 interface MountedHotkey {
   app: App;

@@ -23,7 +23,7 @@ import type { CellContext } from './table-column/defaults';
 defineOptions({ name: 'PlusTable', inheritAttrs: false });
 
 const props = withDefaults(defineProps<PlusTableProps<T>>(), {
-  editMode: 'cell',
+  mode: 'cell',
   validateEvent: true,
   cache: false,
   adaptive: false,

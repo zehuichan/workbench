@@ -30,7 +30,7 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
   const baseStates = {
     data: shallowRef<T[]>([]),
     rowKey: computed<RowKey<T>>(() => table.props.rowKey),
-    editMode: computed<EditMode>(() => table.props.editMode ?? 'cell'),
+    mode: computed<EditMode>(() => table.props.mode ?? 'cell'),
     validateEvent: computed<boolean>(() => table.props.validateEvent ?? true),
     history: computed<boolean>(() => !!table.props.history),
     dirtyTracking: computed<boolean>(() => !!table.props.dirtyTracking),

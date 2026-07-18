@@ -11,7 +11,7 @@ import {
   useAutoSave,
   type UseAutoSaveOptions,
   type UseAutoSaveReturn,
-} from './use-auto-save';
+} from '../../use-auto-save/use-auto-save';
 
 interface FormState {
   name: string;

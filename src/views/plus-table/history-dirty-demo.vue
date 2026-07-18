@@ -159,7 +159,7 @@ function handleResetTracking() {
         v-model:data="data"
         :columns="columns"
         row-key="id"
-        edit-mode="cell"
+        mode="cell"
         history
         dirty-tracking
         border

@@ -1,6 +1,6 @@
 import { nextTick } from 'vue';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createTestTable } from '../__tests__/helpers/create-test-table';
+import { createTestTable } from '../helpers/create-test-table';
 
 interface Row {
   id: number;

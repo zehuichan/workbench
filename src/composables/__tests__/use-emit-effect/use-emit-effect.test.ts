@@ -1,7 +1,7 @@
 import { effectScope, type EffectScope } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DocumentDraft, EmitEffectRules } from './emit-effect';
-import { useEmitEffect } from './use-emit-effect';
+import type { DocumentDraft, EmitEffectRules } from '../../use-emit-effect/emit-effect';
+import { useEmitEffect } from '../../use-emit-effect/use-emit-effect';
 
 const rules: EmitEffectRules = {
   sourceFields: ['warehouseId'],

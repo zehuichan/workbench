@@ -7,7 +7,7 @@ import {
   removeLineMutation,
   type DocumentDraft,
   type EmitEffectRules,
-} from './emit-effect';
+} from '../../use-emit-effect/emit-effect';
 
 const rules: EmitEffectRules = {
   sourceFields: ['warehouseId'],

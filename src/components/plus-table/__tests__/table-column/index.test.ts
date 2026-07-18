@@ -1,8 +1,8 @@
 import { createApp, h, nextTick, ref, type Slots } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PLUS_TABLE_INJECTION_KEY } from '../tokens';
-import type { PlusTable } from '../tokens';
-import type { ColumnNode } from './defaults';
+import { PLUS_TABLE_INJECTION_KEY } from '../../tokens';
+import type { PlusTable } from '../../tokens';
+import type { ColumnNode } from '../../table-column/defaults';
 
 const renderedProps = vi.hoisted(() => [] as Record<string, unknown>[]);
 
@@ -23,7 +23,7 @@ vi.mock('element-plus', async (importOriginal) => {
   };
 });
 
-import PlusTableColumnNode from './index';
+import PlusTableColumnNode from '../../table-column';
 
 describe('PlusTable column rendering', () => {
   const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =

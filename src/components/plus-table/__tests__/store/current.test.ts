@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   createTestTable,
   type TestTable,
-} from '../__tests__/helpers/create-test-table';
+} from '../helpers/create-test-table';
 
 interface Row {
   id: number;

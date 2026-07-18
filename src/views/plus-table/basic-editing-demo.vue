@@ -100,7 +100,7 @@ const columns = [
 <template>
   <DemoPage width="wide">
     <template #description>
-      展示 <code>editMode="cell"</code>：双击或
+      展示 <code>mode="cell"</code>：双击或
       <kbd>Enter</kbd
       >/<kbd>F2</kbd>/可打印字符进入编辑，方向键在格间移动。本页覆盖内置编辑器
       <code>input</code> / <code>input-number</code> / <code>select</code> /
@@ -125,7 +125,7 @@ const columns = [
           <td>必填。行唯一标识。</td>
         </tr>
         <tr>
-          <td><code>edit-mode</code></td>
+          <td><code>mode</code></td>
           <td><code>'none' | 'cell' | 'row' | 'table'</code></td>
           <td>默认 <code>cell</code>。本页为单元格进编。</td>
         </tr>
@@ -174,7 +174,7 @@ const columns = [
         v-model:data="data"
         :columns="columns"
         row-key="id"
-        edit-mode="cell"
+        mode="cell"
         border
       />
     </DemoBlock>

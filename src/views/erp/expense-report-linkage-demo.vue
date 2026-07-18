@@ -154,7 +154,7 @@ async function onRemoveLine(id: string) {
         :data="draft.lines"
         :columns="expenseReportColumns"
         row-key="id"
-        edit-mode="cell"
+        mode="cell"
         border
         @cell-change="onCellChange"
       >

@@ -180,7 +180,7 @@ function duplicateFirstOnPage() {
         :data="pageRows"
         :columns="columns"
         row-key="id"
-        edit-mode="cell"
+        mode="cell"
         border
         :total="allRows.length"
         :page="page"

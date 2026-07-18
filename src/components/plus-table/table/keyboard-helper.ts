@@ -168,7 +168,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
 
   /** 网格自身获得焦点时的 Tab / Esc 行为。 */
   function handleGlobalKey(event: KeyboardEvent): boolean {
-    const mode = table.store.states.editMode.value;
+    const mode = table.store.states.mode.value;
 
     if (event.key === 'Escape') {
       const cell = table.store.getCurrentCellLocation();
@@ -193,7 +193,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
 
   /** 非编辑态的导航 / 进编 / 撤销重做按键；焦点在编辑器控件内部时不接管 */
   function handleBuiltinNavigation(event: KeyboardEvent): boolean {
-    const mode = table.store.states.editMode.value;
+    const mode = table.store.states.mode.value;
     const ctrl = event.ctrlKey || event.metaKey;
     const cell = table.store.getCurrentCellLocation();
 
@@ -291,7 +291,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   function handleKeydown(event: KeyboardEvent) {
-    const mode = table.store.states.editMode.value;
+    const mode = table.store.states.mode.value;
     const [overrides, normals] = partition(
       getCustomHotkeys(),
       (h) => !!h.override,

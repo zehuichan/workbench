@@ -43,7 +43,7 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     _cell: HTMLElement,
     event: Event,
   ) {
-    const mode = table.store.states.editMode.value;
+    const mode = table.store.states.mode.value;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0 || colIndex < 0) return;
     table.store.commit('setCurrentCell', rowIndex, colIndex, false);
@@ -77,7 +77,7 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     column: { columnKey?: string },
     _cell: HTMLElement,
   ) {
-    const mode = table.store.states.editMode.value;
+    const mode = table.store.states.mode.value;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0) return;
     if (mode === 'cell' && colIndex >= 0) {

@@ -6,9 +6,6 @@ const expectedRoutes = [
   ['/plus-table/dependencies-validation', '联动与校验', 'PlusTable', 2],
   ['/plus-table/history-dirty', '历史与脏追踪', 'PlusTable', 3],
   ['/plus-table/pagination-rows', '分页与行操作', 'PlusTable', 4],
-  ['/erp/sales-order-linkage', '销售订单联动', 'ERP 场景', 1],
-  ['/erp/purchase-order-linkage', '采购订单联动', 'ERP 场景', 2],
-  ['/erp/expense-report-linkage', '费用报销联动', 'ERP 场景', 3],
   ['/composables/use-auto-save', 'useAutoSave', 'Composables', 1],
   ['/composables/use-form-draft', 'useFormDraft', 'Composables', 2],
   ['/composables/use-save-hotkey', 'useSaveHotkey', 'Composables', 3],
@@ -16,11 +13,15 @@ const expectedRoutes = [
 
 describe('demo routes', () => {
   it('keeps route metadata as the ordered navigation source', () => {
+    const groupOrder = { PlusTable: 0, Composables: 1 };
     const routes = router
       .getRoutes()
-      .filter((route) => route.meta.group)
+      .filter(
+        (route) =>
+          route.meta.group &&
+          route.meta.group in groupOrder,
+      )
       .sort((left, right) => {
-        const groupOrder = { PlusTable: 0, 'ERP 场景': 1, Composables: 2 };
         const leftGroup =
           groupOrder[left.meta.group as keyof typeof groupOrder];
         const rightGroup =

@@ -1,11 +1,11 @@
 import { createApp, h, nextTick } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('./table-column-settings/index.vue', () => ({
+vi.mock('../../table-column-settings/index.vue', () => ({
   default: { name: 'PlusTableColumnSettings', render: () => null },
 }));
 
-vi.mock('./table-column', () => ({
+vi.mock('../../table-column', () => ({
   default: { name: 'PlusTableColumnNode', render: () => null },
 }));
 
@@ -39,7 +39,7 @@ vi.mock('element-plus', async (importOriginal) => {
   };
 });
 
-import PlusTable from './table.vue';
+import PlusTable from '../../table.vue';
 
 describe('PlusTable title / summary slots', () => {
   const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =

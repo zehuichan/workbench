@@ -106,7 +106,7 @@ export function getEditorSlotProps<T extends RowData = RowData>(
     { table, row, rowIndex, rowKey, prop, isCellMode },
     false,
   );
-  const mode = table.store.states.editMode.value;
+  const mode = table.store.states.mode.value;
   const commit = () => {
     if (isCellMode) table.store.commitEdit();
     else if (mode === 'row') table.store.clearRowEditingCell(false);
@@ -138,7 +138,7 @@ export function getEditorBinding<T extends RowData = RowData>(
     { table, row, rowIndex, rowKey, prop, isCellMode },
     resolved.trigger === 'blur',
   );
-  const mode = table.store.states.editMode.value;
+  const mode = table.store.states.mode.value;
 
   const bind: Record<string, unknown> = {
     ...resolved.componentProps,
@@ -186,7 +186,7 @@ export function getCellView<T extends RowData = RowData>(
   const column = node.column;
   const prop = column.prop;
   const value = prop ? row[prop] : undefined;
-  const mode = table.store.states.editMode.value;
+  const mode = table.store.states.mode.value;
   const isCellMode = mode === 'cell';
 
   const inGrid = colIndex >= 0;
