@@ -22,7 +22,7 @@ jobs:
       - name: Build
         run: pnpm run build
         env:
-          BASE_PATH: /component-labs/
+          BASE_PATH: /workbench/
 
       # GitHub Pages 对深层路径会 404；用同内容的 404.html 兜住 SPA 刷新
       - name: SPA fallback
