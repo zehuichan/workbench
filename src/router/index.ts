@@ -4,6 +4,7 @@ import PlaygroundLayout from '@/layouts/playground-layout.vue';
 import UseAutoSaveDemo from '@/views/composables/use-auto-save-demo.vue';
 import UseFormDraftDemo from '@/views/composables/use-form-draft-demo.vue';
 import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
+import ErpApiOverview from '@/views/erp/api-overview.vue';
 import ExpenseReportLinkageDemo from '@/views/erp/expense-report-linkage-demo.vue';
 import PurchaseOrderLinkageDemo from '@/views/erp/purchase-order-linkage-demo.vue';
 import SalesOrderLinkageDemo from '@/views/erp/sales-order-linkage-demo.vue';
@@ -50,6 +51,12 @@ export const router = createRouter({
           name: 'plus-table-pagination-rows',
           component: PaginationRowsDemo,
           meta: { title: '分页与行操作', group: 'PlusTable', order: 4 },
+        },
+        {
+          path: 'erp/api-overview',
+          name: 'erp-api-overview',
+          component: ErpApiOverview,
+          meta: { title: 'API Overview', group: 'ERP 场景', order: 0 },
         },
         {
           path: 'erp/sales-order-linkage',
