@@ -1,11 +1,11 @@
-# 组件实验室（Component Labs）
+# Workbench
 
-基于 **Vue 3 + TypeScript + Vite 8** 的前端组件试验场。当前重心是围绕 **Element Plus `el-table`** 封装的增强表格 **PlusTable**。
+面向复杂业务数据录入与字段联动的 Vue 前端工作台。基于 **Vue 3 + TypeScript + Vite 8**，当前核心包括增强表格 **PlusTable**、表单 Composables 和 ERP 单据场景。
 
 ## 仓库结构
 
 ```
-component-labs/
+workbench/
 ├── src/
 │   ├── App.vue
 │   ├── main.ts

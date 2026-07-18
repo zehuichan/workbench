@@ -77,10 +77,98 @@ body {
 // ---------------------------------------------------------------------------
 .playground {
   display: flex;
+  flex-direction: column;
   height: 100%;
   overflow: hidden;
   background: $demo-bg;
   color: $demo-text;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    height: 60px;
+    flex-shrink: 0;
+    padding: 0 24px;
+    background: #fff;
+    border-bottom: 1px solid $demo-border;
+  }
+
+  &__brand {
+    flex-shrink: 0;
+    margin-right: 40px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: $demo-text;
+  }
+
+  &__categories {
+    display: flex;
+    align-items: stretch;
+    align-self: stretch;
+    min-width: 0;
+    gap: 28px;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  &__category {
+    position: relative;
+    flex-shrink: 0;
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    color: $demo-text-muted;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.15s ease;
+
+    &::after {
+      content: '';
+      position: absolute;
+      right: 2px;
+      bottom: 0;
+      left: 2px;
+      height: 2px;
+      border-radius: 2px 2px 0 0;
+      background: $demo-primary;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    &:hover:not(:disabled),
+    &.is-active {
+      color: $demo-primary;
+    }
+
+    &.is-active::after {
+      opacity: 1;
+    }
+
+    &:focus-visible {
+      outline: 2px solid $demo-primary;
+      outline-offset: -4px;
+      border-radius: $demo-radius;
+    }
+
+    &:disabled {
+      color: #a8abb2;
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
 
   &__nav {
     width: 240px;
@@ -97,14 +185,6 @@ body {
     &::-webkit-scrollbar {
       display: none;
     }
-  }
-
-  &__brand {
-    margin: 0 8px 28px;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: $demo-text;
   }
 
   &__group {
