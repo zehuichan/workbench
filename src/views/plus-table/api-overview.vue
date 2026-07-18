@@ -2,7 +2,7 @@
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 
-defineOptions({ name: 'ApiOverviewDemo' });
+defineOptions({ name: 'ApiOverview' });
 </script>
 
 <template>

@@ -7,7 +7,7 @@ import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
 import ExpenseReportLinkageDemo from '@/views/erp/expense-report-linkage-demo.vue';
 import PurchaseOrderLinkageDemo from '@/views/erp/purchase-order-linkage-demo.vue';
 import SalesOrderLinkageDemo from '@/views/erp/sales-order-linkage-demo.vue';
-import ApiOverviewDemo from '@/views/plus-table/api-overview-demo.vue';
+import ApiOverview from '@/views/plus-table/api-overview.vue';
 import BasicEditingDemo from '@/views/plus-table/basic-editing-demo.vue';
 import DependenciesValidationDemo from '@/views/plus-table/dependencies-validation-demo.vue';
 import HistoryDirtyDemo from '@/views/plus-table/history-dirty-demo.vue';
@@ -24,7 +24,7 @@ export const router = createRouter({
         {
           path: 'plus-table/api-overview',
           name: 'plus-table-api-overview',
-          component: ApiOverviewDemo,
+          component: ApiOverview,
           meta: { title: 'API Overview', group: 'PlusTable', order: 0 },
         },
         {
