@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { PlusTable } from '@/components/plus-table';
+import { PlusTable, type EditMode } from '@/components/plus-table';
 
 defineOptions({ name: 'BasicEditingDemo' });
 
@@ -15,6 +15,16 @@ interface Row {
   dueDate: string;
   enabled: boolean;
 }
+
+interface TableExpose {
+  startRowEdit: (rowIndex: number) => boolean;
+  commitRowEdit: (rowIndex: number) => Promise<boolean>;
+  cancelRowEdit: (rowIndex: number) => void;
+}
+
+const mode = ref<EditMode>('cell');
+const tableRef = ref<TableExpose>();
+const editingRowId = ref<number | null>(null);
 
 const data = ref<Row[]>([
   {
@@ -49,7 +59,7 @@ const statusOptions = [
   { label: '完成', value: 'done' },
 ];
 
-const columns = [
+const baseColumns = [
   { type: 'index', label: '#', width: 60 },
   {
     prop: 'name',
@@ -95,14 +105,66 @@ const columns = [
     component: 'switch',
   },
 ];
+
+const columns = computed(() =>
+  mode.value === 'row'
+    ? [
+        ...baseColumns,
+        {
+          prop: 'actions',
+          type: 'operation',
+          label: '操作',
+          width: 140,
+          fixed: 'right',
+        },
+      ]
+    : baseColumns,
+);
+
+const modeHints: Record<EditMode, string> = {
+  none: '当前为只读：不可进入编辑。',
+  cell: '单击选中格子 → 方向键移动；双击或按 Enter 进编；select / switch 选值后会自动提交并把焦点交回网格。',
+  row: '双击或点「编辑」进入整行；改完后点「保存」提交，或「取消」回滚。Escape 也可取消。',
+  table: '可编辑列常驻编辑器；改值后失焦或控件自身提交即写回。',
+};
+
+const hint = computed(() => modeHints[mode.value]);
+
+watch(mode, () => {
+  editingRowId.value = null;
+});
+
+function isEditingRow(row: Row) {
+  return editingRowId.value === row.id;
+}
+
+function handleEdit(row: Row, rowIndex: number) {
+  tableRef.value?.startRowEdit(rowIndex);
+  editingRowId.value = row.id;
+}
+
+async function handleSave(row: Row, rowIndex: number) {
+  const ok = await tableRef.value?.commitRowEdit(rowIndex);
+  if (ok) editingRowId.value = null;
+}
+
+function handleCancel(_row: Row, rowIndex: number) {
+  tableRef.value?.cancelRowEdit(rowIndex);
+  editingRowId.value = null;
+}
+
+function handleCellDblclick(row: Row) {
+  if (mode.value === 'row') editingRowId.value = row.id;
+}
 </script>
 
 <template>
   <DemoPage width="wide">
     <template #description>
-      展示 <code>mode="cell"</code>：双击或
-      <kbd>Enter</kbd
-      >/<kbd>F2</kbd>/可打印字符进入编辑，方向键在格间移动。本页覆盖内置编辑器
+      用 toolbar 切换
+      <code>mode</code>： <code>none</code>（只读）/
+      <code>cell</code>（单元格进编）/ <code>row</code>（整行进编，含操作列）/
+      <code>table</code>（全表常驻编辑器）。本页覆盖内置编辑器
       <code>input</code> / <code>input-number</code> / <code>select</code> /
       <code>date-picker</code> / <code>switch</code>。
     </template>
@@ -127,7 +189,7 @@ const columns = [
         <tr>
           <td><code>mode</code></td>
           <td><code>'none' | 'cell' | 'row' | 'table'</code></td>
-          <td>默认 <code>cell</code>。本页为单元格进编。</td>
+          <td>默认 <code>cell</code>。本页 toolbar 可切换四种。</td>
         </tr>
       </DemoApiTable>
 
@@ -167,16 +229,48 @@ const columns = [
 
     <DemoBlock>
       <template #hint>
-        单击选中格子 → 方向键移动；双击或按 Enter 进编；select / switch
-        选值后会自动提交并把焦点交回网格，可继续用方向键。
+        {{ hint }}
       </template>
       <PlusTable
+        ref="tableRef"
         v-model:data="data"
         :columns="columns"
         row-key="id"
-        mode="cell"
+        :mode="mode"
         border
-      />
+        @cell-dblclick="handleCellDblclick"
+      >
+        <template #toolbar>
+          <el-radio-group v-model="mode" size="small">
+            <el-radio-button value="none">none</el-radio-button>
+            <el-radio-button value="cell">cell</el-radio-button>
+            <el-radio-button value="row">row</el-radio-button>
+            <el-radio-button value="table">table</el-radio-button>
+          </el-radio-group>
+        </template>
+        <template #cell-actions="{ row, rowIndex }">
+          <template v-if="isEditingRow(row)">
+            <el-button
+              type="primary"
+              link
+              @click.stop="handleSave(row, rowIndex)"
+            >
+              保存
+            </el-button>
+            <el-button link @click.stop="handleCancel(row, rowIndex)">
+              取消
+            </el-button>
+          </template>
+          <el-button
+            v-else
+            type="primary"
+            link
+            @click.stop="handleEdit(row, rowIndex)"
+          >
+            编辑
+          </el-button>
+        </template>
+      </PlusTable>
     </DemoBlock>
   </DemoPage>
 </template>

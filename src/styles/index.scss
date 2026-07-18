@@ -101,7 +101,7 @@ body {
 
   &__brand {
     margin: 0 8px 28px;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
     letter-spacing: -0.01em;
     color: $demo-text;
@@ -115,7 +115,7 @@ body {
 
   &__group-title {
     margin: 0 8px 10px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -124,13 +124,13 @@ body {
 
   &__link {
     display: block;
-    margin-bottom: 2px;
-    padding: 9px 12px;
+    margin-bottom: 4px;
+    padding: 8px 12px;
     border-radius: $demo-radius;
     color: $demo-text-secondary;
     text-decoration: none;
-    font-size: 14px;
-    line-height: 1.4;
+    font-size: 13px;
+    line-height: 1.5;
     transition:
       background 0.15s ease,
       color 0.15s ease;

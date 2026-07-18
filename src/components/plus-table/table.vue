@@ -200,11 +200,7 @@ defineExpose(
       </el-table>
     </div>
 
-    <div
-      v-if="footerEnabled"
-      ref="paginationRef"
-      class="plus-table__footer"
-    >
+    <div v-if="footerEnabled" ref="paginationRef" class="plus-table__footer">
       <div v-if="$slots.summary" class="plus-table__summary">
         <slot name="summary" />
       </div>

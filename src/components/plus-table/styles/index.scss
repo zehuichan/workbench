@@ -44,11 +44,21 @@
     margin-right: auto;
   }
 
+  // flex + gap：子项 v-show=false（display:none）不会占位；ElSpace 的
+  // .el-space__item 包裹层做不到这一点，故 toolbar 不用 ElSpace。
   &__toolbar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
+    gap: 12px;
     margin-left: auto;
+    max-width: 100%;
+
+    // 间距交给 gap，清掉 EP 相邻按钮默认 margin，避免与 gap 叠成大缝
+    .el-button + .el-button {
+      margin-left: 0;
+    }
   }
 
   &__grid {
