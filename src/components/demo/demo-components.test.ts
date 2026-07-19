@@ -1,8 +1,10 @@
+import ElementPlus from 'element-plus';
 import { createApp, h, nextTick } from 'vue';
 import { createMemoryHistory, createRouter, type Router } from 'vue-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DemoApiTable from './demo-api-table.vue';
 import DemoBlock from './demo-block.vue';
+import DemoCode from './demo-code.vue';
 import DemoPage from './demo-page.vue';
 import { highlightCode, resolveLang } from './demo-highlighter';
 
@@ -17,6 +19,7 @@ describe('demo components', () => {
     const host = document.createElement('div');
     document.body.append(host);
     const app = createApp(component);
+    app.use(ElementPlus);
     if (router) app.use(router);
     app.mount(host);
     await nextTick();
@@ -98,6 +101,45 @@ describe('demo components', () => {
 
     expect(host.querySelectorAll('.demo__hint')).toHaveLength(1);
     expect(host.querySelector('.demo__hint code')?.textContent).toBe('value');
+  });
+
+  it('renders highlighted code with line spans', async () => {
+    const host = await mount({
+      render: () =>
+        h(DemoCode, { code: 'const a = 1\nconst b = 2', lang: 'ts' }),
+    });
+
+    await vi.waitFor(() => {
+      expect(host.querySelector('.shiki')).not.toBeNull();
+    });
+    expect(host.querySelectorAll('.line').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('copies the full source when the copy button is clicked', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      clipboard: { writeText },
+    });
+
+    const source = 'const hello = "world"';
+    const host = await mount({
+      render: () => h(DemoCode, { code: source, lang: 'ts' }),
+    });
+
+    await vi.waitFor(() => {
+      expect(host.querySelector('.shiki')).not.toBeNull();
+    });
+
+    const button = host.querySelector('button');
+    expect(button).not.toBeNull();
+    button!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await vi.waitFor(() => {
+      expect(writeText).toHaveBeenCalledWith(source);
+    });
+
+    vi.unstubAllGlobals();
   });
 });
 
