@@ -13,3 +13,24 @@ declare module '*.vue' {
 /** Allow side-effect style imports under noUncheckedSideEffectImports (TS 5.6+/6). */
 declare module '*.css' {}
 declare module '*.scss' {}
+
+interface ImportMetaEnv {
+  readonly VITE_WECHAT_APPID?: string;
+  readonly VITE_JSSDK_ENABLED?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+/** Minimal Weixin JSSDK surface used by useWeixin. */
+interface WeixinJsSdk {
+  config: (config: Record<string, unknown>) => void;
+  ready: (fn: () => void) => void;
+  error: (fn: (err: unknown) => void) => void;
+  scanQRCode?: (options: Record<string, unknown>) => void;
+}
+
+interface Window {
+  wx?: WeixinJsSdk;
+}
