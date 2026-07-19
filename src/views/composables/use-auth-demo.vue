@@ -1,8 +1,24 @@
 <script setup lang="ts">
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
+import DemoBlock from '@/components/demo/demo-block.vue';
+import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 
 defineOptions({ name: 'UseAuthDemo' });
+
+const codeDemo = `import { watch } from 'vue'
+import { useAuth } from '@/composables'
+
+const [code, authorize] = useAuth() // 或 useAuth('snsapi_base')
+
+// 跳转微信授权；可选 redirect 替换当前 pathname（History）
+authorize('/login')
+
+// 回调后 URL 带 ?code=...，code 自动同步
+watch(code, (value) => {
+  if (!value) return
+  // 用 code 换取 access_token / 登录态
+})`;
 </script>
 
 <template>
@@ -47,5 +63,13 @@ defineOptions({ name: 'UseAuthDemo' });
         </tr>
       </DemoApiTable>
     </template>
+
+    <DemoBlock title="代码演示">
+      <template #hint>
+        playground 无法真实跳转微信授权，此处仅展示用法。需在微信内置浏览器且配置
+        <code>VITE_WECHAT_APPID</code> 后使用。
+      </template>
+      <DemoCode :code="codeDemo" lang="ts" />
+    </DemoBlock>
   </DemoPage>
 </template>

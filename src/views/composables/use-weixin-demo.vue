@@ -1,8 +1,20 @@
 <script setup lang="ts">
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
+import DemoBlock from '@/components/demo/demo-block.vue';
+import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 
 defineOptions({ name: 'UseWeixinDemo' });
+
+const codeDemo = `import { watch } from 'vue'
+import { useWeixin } from '@/composables'
+
+const [ready, $wx] = useWeixin()
+
+watch(ready, (ok) => {
+  if (!ok) return
+  $wx?.scanQRCode?.({ needResult: 1, success: console.log })
+})`;
 </script>
 
 <template>
@@ -41,5 +53,14 @@ defineOptions({ name: 'UseWeixinDemo' });
         </tr>
       </DemoApiTable>
     </template>
+
+    <DemoBlock title="代码演示">
+      <template #hint>
+        playground 非微信环境且 JSSDK 配置仍为 stub，无法交互演示；此处仅展示用法。需微信内置浏览器、
+        <code>VITE_JSSDK_ENABLED=true</code>，并注入
+        <code>window.wx</code>。
+      </template>
+      <DemoCode :code="codeDemo" lang="ts" />
+    </DemoBlock>
   </DemoPage>
 </template>
