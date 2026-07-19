@@ -6,6 +6,7 @@ import UseAutoSaveDemo from '@/views/composables/use-auto-save-demo.vue';
 import UseFormDraftDemo from '@/views/composables/use-form-draft-demo.vue';
 import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
 import UseWeixinDemo from '@/views/composables/use-weixin-demo.vue';
+import UseWorkWeixinDemo from '@/views/composables/use-work-weixin-demo.vue';
 import ErpApiOverview from '@/views/erp/api-overview.vue';
 import ExpenseReportLinkageDemo from '@/views/erp/expense-report-linkage-demo.vue';
 import PurchaseOrderLinkageDemo from '@/views/erp/purchase-order-linkage-demo.vue';
@@ -82,31 +83,37 @@ export const router = createRouter({
           path: 'composables/use-auto-save',
           name: 'composables-use-auto-save',
           component: UseAutoSaveDemo,
-          meta: { title: 'useAutoSave', group: 'Composables', order: 1 },
+          meta: { title: 'use-auto-save', group: 'Form', order: 1 },
         },
         {
           path: 'composables/use-form-draft',
           name: 'composables-use-form-draft',
           component: UseFormDraftDemo,
-          meta: { title: 'useFormDraft', group: 'Composables', order: 2 },
+          meta: { title: 'use-form-draft', group: 'Form', order: 2 },
         },
         {
           path: 'composables/use-save-hotkey',
           name: 'composables-use-save-hotkey',
           component: UseSaveHotkeyDemo,
-          meta: { title: 'useSaveHotkey', group: 'Composables', order: 3 },
+          meta: { title: 'use-save-hotkey', group: 'Form', order: 3 },
         },
         {
           path: 'composables/use-auth',
           name: 'composables-use-auth',
           component: UseAuthDemo,
-          meta: { title: 'useAuth', group: 'Composables', order: 4 },
+          meta: { title: 'use-auth', group: 'WeChat', order: 1 },
         },
         {
           path: 'composables/use-weixin',
           name: 'composables-use-weixin',
           component: UseWeixinDemo,
-          meta: { title: 'useWeixin', group: 'Composables', order: 5 },
+          meta: { title: 'use-weixin', group: 'WeChat', order: 2 },
+        },
+        {
+          path: 'composables/use-work-weixin',
+          name: 'composables-use-work-weixin',
+          component: UseWorkWeixinDemo,
+          meta: { title: 'use-work-weixin', group: 'WeChat', order: 3 },
         },
       ],
     },
