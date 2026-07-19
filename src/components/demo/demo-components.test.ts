@@ -1,9 +1,10 @@
 import { createApp, h, nextTick } from 'vue';
 import { createMemoryHistory, createRouter, type Router } from 'vue-router';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import DemoApiTable from './demo-api-table.vue';
 import DemoBlock from './demo-block.vue';
 import DemoPage from './demo-page.vue';
+import { highlightCode, resolveLang } from './demo-highlighter';
 
 describe('demo components', () => {
   const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
@@ -97,5 +98,19 @@ describe('demo components', () => {
 
     expect(host.querySelectorAll('.demo__hint')).toHaveLength(1);
     expect(host.querySelector('.demo__hint code')?.textContent).toBe('value');
+  });
+});
+
+describe('demo-highlighter', () => {
+  it('resolves common language aliases', () => {
+    expect(resolveLang('ts')).toBe('typescript');
+    expect(resolveLang('js')).toBe('javascript');
+    expect(resolveLang('vue')).toBe('vue');
+  });
+
+  it('highlights typescript into shiki html with line spans', async () => {
+    const html = await highlightCode('const x = 1\nconst y = 2', 'ts');
+    expect(html).toContain('class="shiki');
+    expect(html.match(/class="line"/g)?.length).toBeGreaterThanOrEqual(2);
   });
 });
