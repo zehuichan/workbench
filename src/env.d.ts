@@ -17,17 +17,19 @@ declare module '*.scss' {}
 interface ImportMetaEnv {
   readonly VITE_WECHAT_APPID?: string;
   readonly VITE_JSSDK_ENABLED?: string;
+  readonly VITE_WW_JSSDK_ENABLED?: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-/** Minimal Weixin JSSDK surface used by useWeixin. */
+/** Minimal Weixin JSSDK surface used by useWeixin / useWorkWeixin. */
 interface WeixinJsSdk {
   config: (config: Record<string, unknown>) => void;
   ready: (fn: () => void) => void;
   error: (fn: (err: unknown) => void) => void;
+  agentConfig: (config: Record<string, unknown>) => void;
   scanQRCode?: (options: Record<string, unknown>) => void;
 }
 

@@ -4,4 +4,5 @@ export * from './use-emit-effect';
 export * from './use-form-draft';
 export * from './use-save-hotkey';
 export * from './use-weixin';
+export * from './use-work-weixin';
 
