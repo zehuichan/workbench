@@ -4,13 +4,13 @@ import { useAuth } from '../../use-auth/use-auth';
 
 describe('useAuth', () => {
   let scope: EffectScope;
-  let hrefSetter: ReturnType<typeof vi.fn>;
+  let hrefSetter: ReturnType<typeof vi.fn<(value: string) => void>>;
 
   beforeEach(() => {
     scope = effectScope();
     vi.stubEnv('VITE_WECHAT_APPID', 'wx-test-appid');
 
-    hrefSetter = vi.fn();
+    hrefSetter = vi.fn<(value: string) => void>();
     const locationMock = {
       protocol: 'https:',
       host: 'example.com',
@@ -23,7 +23,9 @@ describe('useAuth', () => {
     Object.defineProperty(locationMock, 'href', {
       configurable: true,
       get: () => 'https://example.com/app/home?from=demo',
-      set: hrefSetter,
+      set: (value: string) => {
+        hrefSetter(value);
+      },
     });
     vi.stubGlobal('location', locationMock);
 

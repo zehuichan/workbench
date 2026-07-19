@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
 import PlaygroundLayout from '@/layouts/playground-layout.vue';
+import UseAuthDemo from '@/views/composables/use-auth-demo.vue';
 import UseAutoSaveDemo from '@/views/composables/use-auto-save-demo.vue';
 import UseFormDraftDemo from '@/views/composables/use-form-draft-demo.vue';
 import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
+import UseWeixinDemo from '@/views/composables/use-weixin-demo.vue';
 import ErpApiOverview from '@/views/erp/api-overview.vue';
 import ExpenseReportLinkageDemo from '@/views/erp/expense-report-linkage-demo.vue';
 import PurchaseOrderLinkageDemo from '@/views/erp/purchase-order-linkage-demo.vue';
@@ -93,6 +95,18 @@ export const router = createRouter({
           name: 'composables-use-save-hotkey',
           component: UseSaveHotkeyDemo,
           meta: { title: 'useSaveHotkey', group: 'Composables', order: 3 },
+        },
+        {
+          path: 'composables/use-auth',
+          name: 'composables-use-auth',
+          component: UseAuthDemo,
+          meta: { title: 'useAuth', group: 'Composables', order: 4 },
+        },
+        {
+          path: 'composables/use-weixin',
+          name: 'composables-use-weixin',
+          component: UseWeixinDemo,
+          meta: { title: 'useWeixin', group: 'Composables', order: 5 },
         },
       ],
     },

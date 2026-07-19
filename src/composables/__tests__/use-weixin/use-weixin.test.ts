@@ -49,8 +49,7 @@ describe('useWeixin', () => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-    // @ts-expect-error test cleanup
-    delete window.wx;
+    window.wx = undefined;
   });
 
   it('does not initialize outside WeChat', async () => {
