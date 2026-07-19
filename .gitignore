@@ -31,3 +31,6 @@ dist-ssr
 
 # Superpowers SDD runtime workspace (ephemeral; keep docs/superpowers/ only)
 .superpowers/
+
+# Local git worktrees
+.worktrees/
