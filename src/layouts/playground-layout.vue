@@ -14,7 +14,7 @@ interface CategoryConfig {
 
 const categories: readonly CategoryConfig[] = [
   { key: 'components', groups: ['PlusTable', 'ERP 场景'] },
-  { key: 'composables', groups: ['Composables'] },
+  { key: 'composables', groups: ['Form', 'WeChat'] },
   { key: 'packages', groups: [] },
 ];
 

@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { getJsApiTicketMock } = vi.hoisted(() => ({
+  getJsApiTicketMock: vi.fn(),
+}));
+
+vi.mock('@/api/signature', () => ({
+  getJsApiTicket: getJsApiTicketMock,
+  getAppJsApiTicket: vi.fn(),
+}));
+
 async function loadUseWeixin() {
   return import('../../use-weixin/use-weixin');
 }
@@ -30,6 +39,7 @@ function mockWx(handlers?: {
 describe('useWeixin', () => {
   beforeEach(() => {
     vi.resetModules();
+    getJsApiTicketMock.mockReset();
     vi.stubEnv('VITE_JSSDK_ENABLED', 'true');
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 MicroMessenger/8.0.0',
@@ -39,13 +49,7 @@ describe('useWeixin', () => {
     });
   });
 
-  afterEach(async () => {
-    try {
-      const mod = await loadUseWeixin();
-      mod.resetFetchWxJsConfigImpl();
-    } catch {
-      // module may be absent in early failures
-    }
+  afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
@@ -56,15 +60,13 @@ describe('useWeixin', () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/120' });
     const wx = mockWx();
     const mod = await loadUseWeixin();
-    const fetchSpy = vi.fn().mockResolvedValue({ data: { appId: 'x' } });
-    mod.setFetchWxJsConfigImpl(fetchSpy);
 
     const [ready] = mod.useWeixin();
     await Promise.resolve();
     await Promise.resolve();
 
     expect(ready.value).toBe(false);
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(getJsApiTicketMock).not.toHaveBeenCalled();
     expect(wx.config).not.toHaveBeenCalled();
   });
 
@@ -72,25 +74,24 @@ describe('useWeixin', () => {
     vi.stubEnv('VITE_JSSDK_ENABLED', 'false');
     const wx = mockWx();
     const mod = await loadUseWeixin();
-    const fetchSpy = vi.fn().mockResolvedValue({ data: {} });
-    mod.setFetchWxJsConfigImpl(fetchSpy);
 
     const [ready] = mod.useWeixin();
     await Promise.resolve();
     await Promise.resolve();
 
     expect(ready.value).toBe(false);
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(getJsApiTicketMock).not.toHaveBeenCalled();
     expect(wx.config).not.toHaveBeenCalled();
   });
 
   it('configures wx and sets ready on success', async () => {
     const wx = mockWx({ readyMode: 'ready' });
+    getJsApiTicketMock.mockResolvedValue({
+      timestamp: 1,
+      nonceStr: 'n',
+      signature: 's',
+    });
     const mod = await loadUseWeixin();
-    const fetchSpy = vi
-      .fn()
-      .mockResolvedValue({ data: { appId: 'wx1', jsApiList: [] } });
-    mod.setFetchWxJsConfigImpl(fetchSpy);
 
     const [ready, sdk] = mod.useWeixin();
     await vi.waitFor(() => {
@@ -98,20 +99,23 @@ describe('useWeixin', () => {
     });
 
     expect(sdk).toBe(wx);
-    expect(fetchSpy).toHaveBeenCalledWith(
-      encodeURIComponent('https://example.com/page?x=1'),
-    );
+    expect(getJsApiTicketMock).toHaveBeenCalled();
     expect(wx.config).toHaveBeenCalledWith({
       debug: false,
-      appId: 'wx1',
-      jsApiList: [],
+      timestamp: 1,
+      nonceStr: 'n',
+      signature: 's',
     });
   });
 
   it('sets ready false when wx.error fires', async () => {
     const wx = mockWx({ readyMode: 'error' });
+    getJsApiTicketMock.mockResolvedValue({
+      timestamp: 0,
+      nonceStr: '',
+      signature: '',
+    });
     const mod = await loadUseWeixin();
-    mod.setFetchWxJsConfigImpl(async () => ({ data: {} }));
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const [ready] = mod.useWeixin();
@@ -122,12 +126,10 @@ describe('useWeixin', () => {
     errorSpy.mockRestore();
   });
 
-  it('sets ready false when fetchWxJsConfig rejects', async () => {
+  it('sets ready false when getJsApiTicket rejects', async () => {
     mockWx({ readyMode: 'ready' });
+    getJsApiTicketMock.mockRejectedValue(new Error('api down'));
     const mod = await loadUseWeixin();
-    mod.setFetchWxJsConfigImpl(async () => {
-      throw new Error('stub down');
-    });
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const [ready] = mod.useWeixin();

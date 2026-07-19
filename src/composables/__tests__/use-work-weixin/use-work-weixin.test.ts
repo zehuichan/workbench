@@ -1,214 +1,171 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { registerMock, getJsApiTicketMock, getAppJsApiTicketMock } = vi.hoisted(
+  () => ({
+    registerMock: vi.fn(),
+    getJsApiTicketMock: vi.fn(),
+    getAppJsApiTicketMock: vi.fn(),
+  }),
+);
+
+vi.mock('@wecom/jssdk', () => ({
+  register: registerMock,
+}));
+
+vi.mock('@/api/signature', () => ({
+  getJsApiTicket: getJsApiTicketMock,
+  getAppJsApiTicket: getAppJsApiTicketMock,
+}));
+
 async function loadUseWorkWeixin() {
   return import('../../use-work-weixin/use-work-weixin');
-}
-
-function mockWx(handlers?: {
-  onConfig?: (config: Record<string, unknown>) => void;
-  onAgentConfig?: (config: Record<string, unknown>) => void;
-  readyMode?: 'ready' | 'error';
-  agentMode?: 'success' | 'fail';
-  errorPayload?: unknown;
-}) {
-  const readyMode = handlers?.readyMode ?? 'ready';
-  const agentMode = handlers?.agentMode ?? 'success';
-  const wx = {
-    config: vi.fn((config: Record<string, unknown>) => {
-      handlers?.onConfig?.(config);
-    }),
-    ready: vi.fn((fn: () => void) => {
-      if (readyMode === 'ready') fn();
-    }),
-    error: vi.fn((fn: (err: unknown) => void) => {
-      if (readyMode === 'error')
-        fn(handlers?.errorPayload ?? new Error('wx error'));
-    }),
-    agentConfig: vi.fn((config: Record<string, unknown>) => {
-      handlers?.onAgentConfig?.(config);
-      if (agentMode === 'success') {
-        (config.success as (() => void) | undefined)?.();
-      } else {
-        (config.fail as ((err: unknown) => void) | undefined)?.(
-          handlers?.errorPayload ?? new Error('agent error'),
-        );
-      }
-    }),
-  };
-  vi.stubGlobal('wx', wx);
-  window.wx = wx;
-  return wx;
 }
 
 describe('useWorkWeixin', () => {
   beforeEach(() => {
     vi.resetModules();
+    registerMock.mockReset();
+    getJsApiTicketMock.mockReset();
+    getAppJsApiTicketMock.mockReset();
     vi.stubEnv('VITE_WW_JSSDK_ENABLED', 'true');
+    vi.stubEnv('VITE_WORK_WECHAT_CORP_ID', 'ww-corp-1');
+    vi.stubEnv('VITE_WORK_WECHAT_AGENT_ID', '1000001');
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 wxwork/4.0.0 MicroMessenger/7.0.1',
     });
-    vi.stubGlobal('location', {
-      href: 'https://example.com/page?x=1#/hash',
-    });
   });
 
-  afterEach(async () => {
-    try {
-      const mod = await loadUseWorkWeixin();
-      mod.resetFetchWwJsConfigImpl();
-      mod.resetFetchWwAgentConfigImpl();
-    } catch {
-      // module may be absent in early failures
-    }
+  afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-    window.wx = undefined;
   });
 
   it('does not initialize outside Work Weixin', async () => {
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 MicroMessenger/8.0.0',
     });
-    const wx = mockWx();
     const mod = await loadUseWorkWeixin();
-    const jsSpy = vi.fn().mockResolvedValue({ data: { appId: 'x' } });
-    const agentSpy = vi.fn().mockResolvedValue({ data: {} });
-    mod.setFetchWwJsConfigImpl(jsSpy);
-    mod.setFetchWwAgentConfigImpl(agentSpy);
 
     const [ready] = mod.useWorkWeixin();
     await Promise.resolve();
     await Promise.resolve();
 
     expect(ready.value).toBe(false);
-    expect(jsSpy).not.toHaveBeenCalled();
-    expect(agentSpy).not.toHaveBeenCalled();
-    expect(wx.config).not.toHaveBeenCalled();
-    expect(wx.agentConfig).not.toHaveBeenCalled();
+    expect(registerMock).not.toHaveBeenCalled();
+    expect(getJsApiTicketMock).not.toHaveBeenCalled();
   });
 
   it('does not initialize when VITE_WW_JSSDK_ENABLED is not true', async () => {
     vi.stubEnv('VITE_WW_JSSDK_ENABLED', 'false');
-    const wx = mockWx();
     const mod = await loadUseWorkWeixin();
-    const jsSpy = vi.fn().mockResolvedValue({ data: {} });
-    const agentSpy = vi.fn().mockResolvedValue({ data: {} });
-    mod.setFetchWwJsConfigImpl(jsSpy);
-    mod.setFetchWwAgentConfigImpl(agentSpy);
 
     const [ready] = mod.useWorkWeixin();
     await Promise.resolve();
     await Promise.resolve();
 
     expect(ready.value).toBe(false);
-    expect(jsSpy).not.toHaveBeenCalled();
-    expect(agentSpy).not.toHaveBeenCalled();
-    expect(wx.config).not.toHaveBeenCalled();
+    expect(registerMock).not.toHaveBeenCalled();
   });
 
-  it('configures wx + agentConfig and sets ready on success', async () => {
-    const wx = mockWx({ readyMode: 'ready', agentMode: 'success' });
-    const mod = await loadUseWorkWeixin();
-    const jsSpy = vi
-      .fn()
-      .mockResolvedValue({ data: { appId: 'ww1', jsApiList: [] } });
-    const agentSpy = vi.fn().mockResolvedValue({
-      data: { corpid: 'corp1', agentid: '1000001', jsApiList: [] },
+  it('registers via ww.register and sets ready on agentConfig success', async () => {
+    getJsApiTicketMock.mockResolvedValue({
+      timestamp: 1,
+      nonceStr: 'n1',
+      signature: 's1',
     });
-    mod.setFetchWwJsConfigImpl(jsSpy);
-    mod.setFetchWwAgentConfigImpl(agentSpy);
+    getAppJsApiTicketMock.mockResolvedValue({
+      timestamp: 2,
+      nonceStr: 'n2',
+      signature: 's2',
+    });
+    const mod = await loadUseWorkWeixin();
 
     const [ready, sdk] = mod.useWorkWeixin();
+    mod.useWorkWeixin();
+
+    await vi.waitFor(() => {
+      expect(registerMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(sdk.register).toBe(registerMock);
+    expect(registerMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        corpId: 'ww-corp-1',
+        agentId: '1000001',
+        jsApiList: [],
+        getConfigSignature: expect.any(Function),
+        getAgentConfigSignature: expect.any(Function),
+      }),
+    );
+
+    const options = registerMock.mock.calls[0]?.[0] as {
+      getConfigSignature: (url: string) => Promise<unknown>;
+      getAgentConfigSignature: (url: string) => Promise<unknown>;
+      onAgentConfigSuccess: () => void;
+    };
+
+    await expect(
+      options.getConfigSignature('https://example.com/page'),
+    ).resolves.toEqual({
+      timestamp: 1,
+      nonceStr: 'n1',
+      signature: 's1',
+    });
+    await expect(
+      options.getAgentConfigSignature('https://example.com/page'),
+    ).resolves.toEqual({
+      timestamp: 2,
+      nonceStr: 'n2',
+      signature: 's2',
+    });
+
+    expect(ready.value).toBe(false);
+    options.onAgentConfigSuccess();
     await vi.waitFor(() => {
       expect(ready.value).toBe(true);
     });
-
-    const expectedUrl = encodeURIComponent('https://example.com/page?x=1');
-    expect(sdk).toBe(wx);
-    expect(jsSpy).toHaveBeenCalledWith(expectedUrl);
-    expect(agentSpy).toHaveBeenCalledWith(expectedUrl);
-    expect(wx.config).toHaveBeenCalledWith({
-      debug: false,
-      appId: 'ww1',
-      jsApiList: [],
-    });
-    expect(wx.agentConfig).toHaveBeenCalledWith(
-      expect.objectContaining({
-        corpid: 'corp1',
-        agentid: '1000001',
-        jsApiList: [],
-        success: expect.any(Function),
-        fail: expect.any(Function),
-      }),
-    );
   });
 
-  it('sets ready false when wx.error fires', async () => {
-    const wx = mockWx({ readyMode: 'error' });
+  it('sets ready false when config fails', async () => {
     const mod = await loadUseWorkWeixin();
-    mod.setFetchWwJsConfigImpl(async () => ({ data: {} }));
-    mod.setFetchWwAgentConfigImpl(async () => ({ data: {} }));
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const [ready] = mod.useWorkWeixin();
     await vi.waitFor(() => {
-      expect(wx.error).toHaveBeenCalled();
+      expect(registerMock).toHaveBeenCalled();
     });
-    expect(ready.value).toBe(false);
-    expect(wx.agentConfig).not.toHaveBeenCalled();
+
+    const options = registerMock.mock.calls[0]?.[0] as {
+      onConfigFail: (err: unknown) => void;
+    };
+    options.onConfigFail(new Error('config fail'));
+
+    await vi.waitFor(() => {
+      expect(ready.value).toBe(false);
+    });
+    expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
 
   it('sets ready false when agentConfig fails', async () => {
-    const wx = mockWx({ readyMode: 'ready', agentMode: 'fail' });
     const mod = await loadUseWorkWeixin();
-    mod.setFetchWwJsConfigImpl(async () => ({ data: {} }));
-    mod.setFetchWwAgentConfigImpl(async () => ({ data: {} }));
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const [ready] = mod.useWorkWeixin();
     await vi.waitFor(() => {
-      expect(wx.agentConfig).toHaveBeenCalled();
+      expect(registerMock).toHaveBeenCalled();
     });
-    expect(ready.value).toBe(false);
-    errorSpy.mockRestore();
-  });
 
-  it('sets ready false when fetchWwJsConfig rejects', async () => {
-    const wx = mockWx({ readyMode: 'ready' });
-    const mod = await loadUseWorkWeixin();
-    mod.setFetchWwJsConfigImpl(async () => {
-      throw new Error('js stub down');
-    });
-    mod.setFetchWwAgentConfigImpl(async () => ({ data: {} }));
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const options = registerMock.mock.calls[0]?.[0] as {
+      onAgentConfigFail: (err: unknown) => void;
+    };
+    options.onAgentConfigFail(new Error('agent fail'));
 
-    const [ready] = mod.useWorkWeixin();
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalled();
+      expect(ready.value).toBe(false);
     });
-    expect(ready.value).toBe(false);
-    expect(wx.agentConfig).not.toHaveBeenCalled();
-    errorSpy.mockRestore();
-  });
-
-  it('sets ready false when fetchWwAgentConfig rejects', async () => {
-    const wx = mockWx({ readyMode: 'ready' });
-    const mod = await loadUseWorkWeixin();
-    mod.setFetchWwJsConfigImpl(async () => ({ data: {} }));
-    mod.setFetchWwAgentConfigImpl(async () => {
-      throw new Error('agent stub down');
-    });
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    const [ready] = mod.useWorkWeixin();
-    await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalled();
-    });
-    expect(ready.value).toBe(false);
-    expect(wx.config).toHaveBeenCalled();
-    expect(wx.agentConfig).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
 });

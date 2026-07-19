@@ -21,11 +21,9 @@ watch(ready, (ok) => {
   <DemoPage width="wide">
     <template #description>
       微信 JSSDK 初始化（<code>createGlobalState</code>，全局只
-      <code>wx.config</code> 一次）。签名 URL 取
-      <code>location.href.split('#')[0]</code>。非微信环境或
-      <code>VITE_JSSDK_ENABLED !== 'true'</code> 时跳过。当前
-      <code>fetchWxJsConfig</code> 为 stub（空
-      <code>data</code>），待接 <code>/wechat/jssdk/config</code>。
+      <code>wx.config</code> 一次）。非微信环境或
+      <code>VITE_JSSDK_ENABLED !== 'true'</code> 时跳过。签名暂走
+      <code>getJsApiTicket</code>。
     </template>
 
     <template #api>

@@ -1,66 +1,10 @@
 import { ref, type Ref } from 'vue';
 import { createGlobalState } from '@vueuse/core';
+import * as ww from '@wecom/jssdk';
+import { getAppJsApiTicket, getJsApiTicket } from '@/api/signature';
 
-export type FetchWwConfig = (
-  url: string,
-) => Promise<{ data: Record<string, unknown> }>;
-
-async function defaultFetchWwJsConfig(
-  _url: string,
-): Promise<{ data: Record<string, unknown> }> {
-  // TODO: replace with real GET /wechat/ww/jssdk/config (param REDIRECT_URI).
-  return { data: {} };
-}
-
-async function defaultFetchWwAgentConfig(
-  _url: string,
-): Promise<{ data: Record<string, unknown> }> {
-  // TODO: replace with real GET /wechat/ww/jssdk/agent-config (param REDIRECT_URI).
-  return { data: {} };
-}
-
-let fetchWwJsConfigImpl: FetchWwConfig = defaultFetchWwJsConfig;
-let fetchWwAgentConfigImpl: FetchWwConfig = defaultFetchWwAgentConfig;
-
-/**
- * Stub enterprise WeChat JSSDK config fetcher.
- * Do not re-export from @/composables.
- */
-export async function fetchWwJsConfig(
-  url: string,
-): Promise<{ data: Record<string, unknown> }> {
-  return fetchWwJsConfigImpl(url);
-}
-
-/**
- * Stub enterprise WeChat agentConfig fetcher.
- * Do not re-export from @/composables.
- */
-export async function fetchWwAgentConfig(
-  url: string,
-): Promise<{ data: Record<string, unknown> }> {
-  return fetchWwAgentConfigImpl(url);
-}
-
-/** @internal test helper — restore with `resetFetchWwJsConfigImpl`. */
-export function setFetchWwJsConfigImpl(fn: FetchWwConfig) {
-  fetchWwJsConfigImpl = fn;
-}
-
-/** @internal test helper */
-export function resetFetchWwJsConfigImpl() {
-  fetchWwJsConfigImpl = defaultFetchWwJsConfig;
-}
-
-/** @internal test helper — restore with `resetFetchWwAgentConfigImpl`. */
-export function setFetchWwAgentConfigImpl(fn: FetchWwConfig) {
-  fetchWwAgentConfigImpl = fn;
-}
-
-/** @internal test helper */
-export function resetFetchWwAgentConfigImpl() {
-  fetchWwAgentConfigImpl = defaultFetchWwAgentConfig;
-}
+/** Playground keeps an empty list; real apps pass the JSAPIs they need. */
+const jsApiList: string[] = [];
 
 function isWorkWeixinBrowser() {
   return (
@@ -69,30 +13,30 @@ function isWorkWeixinBrowser() {
 }
 
 /**
- * Work Weixin JSSDK bootstrap (global wx.config + wx.agentConfig).
+ * Work Weixin JSSDK bootstrap (single global `ww.register`).
  *
- * - Signature URL: `location.href.split('#')[0]`
- * - `ready` is true only after both configs succeed
- * - Skips when not Work Weixin / VITE_WW_JSSDK_ENABLED !== 'true' / no window.wx
+ * - Blueprint mirrors `useWeixin` (`createGlobalState` + pending setup)
+ * - Register shape follows `@wecom/jssdk` / checkin `work-weixin`
+ * - `ready` is true only after `onAgentConfigSuccess`
+ * - Skips when not Work Weixin / `VITE_WW_JSSDK_ENABLED !== 'true'`
  *
  * @example
- * const [ready, $wx] = useWorkWeixin()
+ * const [ready, $ww] = useWorkWeixin()
  * watch(ready, (ok) => {
  *   if (!ok) return
- *   $wx?.scanQRCode?.({ needResult: 1, success: console.log })
+ *   void $ww.getLocation({ type: 'gcj02' })
  * })
  */
 export const useWorkWeixin = createGlobalState((): [
   Ref<boolean>,
-  WeixinJsSdk | undefined,
+  typeof ww,
 ] => {
   const ready = ref(false);
-  const wx = typeof window !== 'undefined' ? window.wx : undefined;
   let pending: Promise<void> | null = null;
   const enabled = import.meta.env.VITE_WW_JSSDK_ENABLED === 'true';
 
   async function setup() {
-    if (!enabled || !wx || !isWorkWeixinBrowser()) {
+    if (!enabled || !isWorkWeixinBrowser()) {
       ready.value = false;
       return;
     }
@@ -100,33 +44,27 @@ export const useWorkWeixin = createGlobalState((): [
 
     pending = (async () => {
       try {
-        const url = encodeURIComponent(location.href.split('#')[0] ?? '');
-        const { data } = await fetchWwJsConfigImpl(url);
-
         await new Promise<void>((resolve, reject) => {
-          wx.config({ debug: false, ...data });
-          wx.ready(() => resolve());
-          wx.error((err) => {
-            ready.value = false;
-            pending = null;
-            console.error('[wx.config]', err);
-            reject(err);
-          });
-        });
-
-        const { data: agentData } = await fetchWwAgentConfigImpl(url);
-
-        await new Promise<void>((resolve, reject) => {
-          wx.agentConfig({
-            ...agentData,
-            success: () => {
+          ww.register({
+            corpId: import.meta.env.VITE_WORK_WECHAT_CORP_ID ?? '',
+            agentId: import.meta.env.VITE_WORK_WECHAT_AGENT_ID,
+            jsApiList,
+            getConfigSignature: async () => getJsApiTicket(),
+            getAgentConfigSignature: async () => getAppJsApiTicket(),
+            onConfigFail: (err) => {
+              ready.value = false;
+              pending = null;
+              console.error('[ww.config]', err);
+              reject(err);
+            },
+            onAgentConfigSuccess: () => {
               ready.value = true;
               resolve();
             },
-            fail: (err: unknown) => {
+            onAgentConfigFail: (err) => {
               ready.value = false;
               pending = null;
-              console.error('[wx.agentConfig]', err);
+              console.error('[ww.agentConfig]', err);
               reject(err);
             },
           });
@@ -134,7 +72,7 @@ export const useWorkWeixin = createGlobalState((): [
       } catch (e) {
         ready.value = false;
         pending = null;
-        console.error('[wx.agentConfig]', e);
+        console.error('[ww.register]', e);
       }
     })();
 
@@ -143,5 +81,5 @@ export const useWorkWeixin = createGlobalState((): [
 
   void setup();
 
-  return [ready, wx];
+  return [ready, ww];
 });

@@ -1,38 +1,6 @@
 import { ref, type Ref } from 'vue';
 import { createGlobalState } from '@vueuse/core';
-
-export type FetchWxJsConfig = (
-  url: string,
-) => Promise<{ data: Record<string, unknown> }>;
-
-async function defaultFetchWxJsConfig(
-  _url: string,
-): Promise<{ data: Record<string, unknown> }> {
-  // TODO: replace with real GET /wechat/jssdk/config (param REDIRECT_URI).
-  return { data: {} };
-}
-
-let fetchWxJsConfigImpl: FetchWxJsConfig = defaultFetchWxJsConfig;
-
-/**
- * Stub JSSDK config fetcher. Delegates to a replaceable impl for tests.
- * Do not re-export from @/composables.
- */
-export async function fetchWxJsConfig(
-  url: string,
-): Promise<{ data: Record<string, unknown> }> {
-  return fetchWxJsConfigImpl(url);
-}
-
-/** @internal test helper — restore with `resetFetchWxJsConfigImpl`. */
-export function setFetchWxJsConfigImpl(fn: FetchWxJsConfig) {
-  fetchWxJsConfigImpl = fn;
-}
-
-/** @internal test helper */
-export function resetFetchWxJsConfigImpl() {
-  fetchWxJsConfigImpl = defaultFetchWxJsConfig;
-}
+import { getJsApiTicket } from '@/api/signature';
 
 function isWeixinBrowser() {
   return (
@@ -44,7 +12,6 @@ function isWeixinBrowser() {
 /**
  * WeChat JSSDK bootstrap (single global wx.config).
  *
- * - Signature URL: `location.href.split('#')[0]`
  * - Skips when not WeChat / VITE_JSSDK_ENABLED !== 'true' / no window.wx
  *
  * @example
@@ -69,8 +36,7 @@ export const useWeixin = createGlobalState((): [
 
     pending = (async () => {
       try {
-        const url = encodeURIComponent(location.href.split('#')[0] ?? '');
-        const { data } = await fetchWxJsConfigImpl(url);
+        const data = await getJsApiTicket();
 
         await new Promise<void>((resolve, reject) => {
           wx.config({ debug: false, ...data });

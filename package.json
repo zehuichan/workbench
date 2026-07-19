@@ -17,6 +17,7 @@
   "dependencies": {
     "@vue/shared": "^3.5.30",
     "@vueuse/core": "^14.2.1",
+    "@wecom/jssdk": "^2.4.2",
     "async-validator": "^4.2.5",
     "element-plus": "^2.14.2",
     "es-toolkit": "^1.45.1",

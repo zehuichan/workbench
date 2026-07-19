@@ -18,18 +18,20 @@ interface ImportMetaEnv {
   readonly VITE_WECHAT_APPID?: string;
   readonly VITE_JSSDK_ENABLED?: string;
   readonly VITE_WW_JSSDK_ENABLED?: string;
+  readonly VITE_WORK_WECHAT_CORP_ID?: string;
+  readonly VITE_WORK_WECHAT_AGENT_ID?: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-/** Minimal Weixin JSSDK surface used by useWeixin / useWorkWeixin. */
+/** Minimal Weixin JSSDK surface used by useWeixin. */
 interface WeixinJsSdk {
   config: (config: Record<string, unknown>) => void;
   ready: (fn: () => void) => void;
   error: (fn: (err: unknown) => void) => void;
-  agentConfig: (config: Record<string, unknown>) => void;
+  agentConfig?: (config: Record<string, unknown>) => void;
   scanQRCode?: (options: Record<string, unknown>) => void;
 }
 
