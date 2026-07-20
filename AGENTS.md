@@ -1,72 +1,16 @@
-# Agent 行为准则
+# Repository Guidelines
 
-用于减少常见的大模型编程失误。内容源自 [Andrej Karpathy 的观察](https://x.com/karpathy/status/2015883857489522876)，经 [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) 归纳（原以 `CLAUDE.md` 形式提供）。可按需与项目专属说明合并。
+## Project Structure & Module Organization
+Workbench is a Vue 3 + TypeScript + Vite playground for complex business data entry and field linkage. Application code lives under `src/`: `components/plus-table/` (enhanced table), `composables/` (reusable hooks such as `useEmitEffect`, form draft/auto-save), `views/` (PlusTable, ERP, and composable demos), `layouts/` (playground shell), `ui/` (shadcn-vue / Reka UI primitives), `styles/` (Tailwind tokens + SCSS), `router/`, and `api/`. Brand assets and previews sit in `docs/brand/`; design-system source of truth is root [`DESIGN.md`](DESIGN.md). Shared scripts live in `scripts/`. Prefer extending the closest existing module; keep demo routes under `src/views/<area>/` and reusable logic under `src/composables/` or `src/components/`.
 
-**视觉与 UI：** 以仓库根目录 [`DESIGN.md`](DESIGN.md) 为设计系统真源（色板、字体、组件、明暗模式）。改 playground / 品牌 / 主题相关 UI 时先读它，并与 `src/styles/tailwind.css` token 保持一致。预览见 `docs/brand/preview.html`。
+## Build, Test, and Development Commands
+Use Node.js ≥20.19 and pnpm ≥10 (`packageManager` pins pnpm 10.33.4). Install with `pnpm install`. Run `pnpm dev` for the Vite playground (default http://localhost:8000). `pnpm build` type-checks then produces production assets; `pnpm preview` serves the build. `pnpm typecheck` runs `vue-tsc`. `pnpm test` runs Vitest (happy-dom). Format with `pnpm format`; check with `pnpm format:check`. `pnpm clean` / `pnpm reinstall` reset local installs.
 
-**取舍：** 这些准则偏向谨慎而非速度。对琐碎任务请自行把握力度。
+## Coding Style & Naming Conventions
+We write Vue SFCs and TypeScript. Prettier enforces semicolons, single quotes, and trailing commas (`pnpm format` before committing). Use `PascalCase` for components and classes, `camelCase` for variables/functions/composables (`useXxx`), and `SCREAMING_SNAKE_CASE` only for exported config constants. File names follow kebab-case (e.g., `use-auto-save.ts`, `playground-sidebar.vue`). Import via path aliases (`@/components`, `@/composables`, `@/ui`, `@/utils`) from `components.json`. For playground / brand / theme UI, read [`DESIGN.md`](DESIGN.md) first and keep tokens aligned with `src/styles/tailwind.css`; previews live at `docs/brand/preview.html`. Prefer existing shadcn-vue primitives under `src/ui/` over ad-hoc controls.
 
-## 1. 先想清楚再写代码
+## Testing Guidelines
+Unit tests use Vitest and live in colocated `__tests__` folders or `*.test.ts` files (e.g., `src/composables/__tests__/`, `src/components/plus-table/__tests__/`). Prefer descriptive names like `use-emit-effect.test.ts`. Cover new logic with `pnpm test`; include fixtures/helpers under `__tests__/helpers` when shared setup is needed. UI shell changes should update the matching layout tests under `src/layouts/__tests__/`.
 
-**不要默认假设。不要掩盖困惑。把取舍摊开说。**
-
-动手实现之前：
-
-- 明确写出你的假设；不确定就问，不要猜。
-- 若有多种理解方式，要列出来——不要悄悄选一种。
-- 若有更简单做法，要说出来；该反对时要反对。
-- 若仍不清楚，先停下：点名哪里困惑，再提问。
-
-## 2. 简单优先
-
-**用最少代码解决问题。不要写「可能用得着」的东西。**
-
-- 不要实现超出需求的功能。
-- 不要为只用一次的代码抽抽象。
-- 不要加未被要求的「灵活性」或「可配置性」。
-- 不要为不可能出现的场景写错误处理。
-- 若写了 200 行其实 50 行就够，应重写。
-
-自问：「资深工程师会不会觉得过度设计？」若是，就简化。
-
-## 3. 外科手术式修改
-
-**只动必须动的。只收拾自己造成的烂摊子。**
-
-编辑既有代码时：
-
-- 除非任务必需，不要「顺手优化」相邻代码、注释或格式。
-- 不要重构没坏的东西。
-- 匹配现有风格，即便你个人偏好不同。
-- 若发现与任务无关的死代码，可以提一句——不要擅自删除。
-
-当你的改动产生「孤儿」时：
-
-- 删除因**你的**改动而变得无用的 import、变量或函数。
-- 不要删除原本就存在的死代码，除非用户要求。
-
-**检验标准：** 每一行改动都应能直接追溯到用户的请求。
-
-## 4. 目标驱动执行
-
-**定义成功标准。循环执行直到可验证地达成。**
-
-把任务变成可验证目标：
-
-- 「加校验」→ 先为非法输入写测试，再让测试通过。
-- 「修 bug」→ 先写能复现的测试，再让测试通过。
-- 「重构 X」→ 重构前后测试都应通过。
-
-多步骤任务时，简要列出计划：
-
-```text
-1. [步骤] → 验证：[检查项]
-2. [步骤] → 验证：[检查项]
-3. [步骤] → 验证：[检查项]
-```
-
-成功标准越清晰，越能独立迭代；含糊的「能跑就行」会不断需要澄清。
-
----
-
-**这些准则在起作用时，你会看到：** diff 里无关改动更少、因过度设计返工更少，且澄清问题出现在实现之前，而不是踩坑之后。
+## Commit & Pull Request Guidelines
+Follow conventional commits (`type(scope): subject`) as seen in history (`feat(layouts): ...`, `feat(brand): ...`). Keep subjects imperative and ≤72 characters, with optional bodies for context. PRs must describe the change, link related issues/specs under `docs/superpowers/` when applicable, and attach before/after screenshots for UI updates. Confirm `pnpm typecheck` and `pnpm test` locally, note follow-ups, and keep diffs scoped to the request.
