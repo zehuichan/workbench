@@ -6,7 +6,6 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -32,17 +31,29 @@ const route = useRoute();
 </script>
 
 <template>
-  <Sidebar collapsible="none" class="h-svh border-r">
-    <SidebarHeader class="px-4 py-3">
-      <div class="text-sm font-bold tracking-tight">Workbench</div>
-    </SidebarHeader>
-    <SidebarContent>
-      <SidebarGroup v-for="group in groups" :key="group.name">
-        <SidebarGroupLabel>{{ group.name }}</SidebarGroupLabel>
+  <Sidebar
+    collapsible="none"
+    class="h-full shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
+  >
+    <SidebarContent class="scrollbar-thin gap-6 overflow-y-auto px-3 py-5">
+      <SidebarGroup
+        v-for="group in groups"
+        :key="group.name"
+        class="p-0"
+      >
+        <SidebarGroupLabel
+          class="mb-2 h-auto px-3 text-[13px] font-semibold text-foreground"
+        >
+          {{ group.name }}
+        </SidebarGroupLabel>
         <SidebarGroupContent>
-          <SidebarMenu>
+          <SidebarMenu class="gap-0.5">
             <SidebarMenuItem v-for="link in group.links" :key="link.to">
-              <SidebarMenuButton as-child :is-active="route.path === link.to">
+              <SidebarMenuButton
+                as-child
+                :is-active="route.path === link.to"
+                class="h-9 cursor-pointer rounded-md px-3 text-[13.5px] text-muted-foreground hover:bg-muted hover:text-foreground data-active:bg-transparent data-active:font-medium data-active:text-[var(--playground-accent)] data-active:hover:bg-muted data-active:hover:text-[var(--playground-accent)]"
+              >
                 <RouterLink :to="link.to">
                   <span>{{ link.label }}</span>
                 </RouterLink>

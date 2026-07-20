@@ -73,17 +73,19 @@ function selectCategory(key: string): void {
 </script>
 
 <template>
-  <SidebarProvider class="min-h-svh">
-    <PlaygroundSidebar :groups="navGroups" />
-    <SidebarInset class="min-w-0">
-      <PlaygroundHeader
-        :categories="[...categories]"
-        :active-category="activeCategory"
-        @select="selectCategory"
-      />
-      <div class="min-h-0 flex-1 overflow-auto px-10 pt-8 pb-16">
-        <router-view />
-      </div>
-    </SidebarInset>
-  </SidebarProvider>
+  <div class="flex h-svh flex-col overflow-hidden bg-background">
+    <PlaygroundHeader
+      :categories="[...categories]"
+      :active-category="activeCategory"
+      @select="selectCategory"
+    />
+    <SidebarProvider class="flex-1 overflow-hidden !min-h-0">
+      <PlaygroundSidebar :groups="navGroups" />
+      <SidebarInset class="min-h-0 min-w-0 overflow-hidden bg-background">
+        <div class="scrollbar-thin h-full overflow-y-auto px-10 pt-8 pb-16">
+          <router-view />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  </div>
 </template>

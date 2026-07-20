@@ -2,6 +2,8 @@
 
 用于减少常见的大模型编程失误。内容源自 [Andrej Karpathy 的观察](https://x.com/karpathy/status/2015883857489522876)，经 [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) 归纳（原以 `CLAUDE.md` 形式提供）。可按需与项目专属说明合并。
 
+**视觉与 UI：** 以仓库根目录 [`DESIGN.md`](DESIGN.md) 为设计系统真源（色板、字体、组件、明暗模式）。改 playground / 品牌 / 主题相关 UI 时先读它，并与 `src/styles/tailwind.css` token 保持一致。预览见 `docs/brand/preview.html`。
+
 **取舍：** 这些准则偏向谨慎而非速度。对琐碎任务请自行把握力度。
 
 ## 1. 先想清楚再写代码

@@ -57,7 +57,7 @@ describe('playground-sidebar', () => {
     }
   });
 
-  it('renders brand, group labels, and links', async () => {
+  it('renders group labels and links', async () => {
     const host = await mountWithRouter([
       {
         name: 'Form',
@@ -68,7 +68,6 @@ describe('playground-sidebar', () => {
       },
     ]);
 
-    expect(host.textContent).toContain('Workbench');
     expect(host.textContent).toContain('Form');
     expect(host.textContent).toContain('use-auto-save');
     expect(host.textContent).toContain('use-form-draft');

@@ -1,59 +1,18 @@
-// Playground documentation chrome (Element Plus docs–like, BEM)
+// Playground documentation chrome — tokens from DESIGN.md / CSS variables
 
-$demo-primary: #409eff;
-$demo-primary-soft: #ecf5ff;
-$demo-text: #141414;
-$demo-text-secondary: #333333;
-$demo-text-muted: #4e4e4e;
-$demo-border: #e4e7ed;
-$demo-border-light: #ebeef5;
-$demo-bg: #f5f7fa;
-$demo-bg-soft: #fafafa;
-$demo-code-bg: #f0f2f5;
-$demo-radius: 4px;
-$demo-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-
-// Layout shell (modern-normalize 已处理 box-sizing / body margin)
 html,
 body,
 #app {
   height: 100%;
 }
 
-body {
-  background: $demo-bg;
-  // modern-normalize 未含 CJK；补 Element Plus 同款无衬线栈，避免中文回退宋体
-  font-family:
-    'Helvetica Neue',
-    Helvetica,
-    'PingFang SC',
-    'Hiragino Sans GB',
-    'Microsoft YaHei',
-    '微软雅黑',
-    Arial,
-    sans-serif;
-}
-
-:root {
-  --demo-primary: #{$demo-primary};
-  --demo-primary-soft: #{$demo-primary-soft};
-  --demo-text: #{$demo-text};
-  --demo-text-secondary: #{$demo-text-secondary};
-  --demo-text-muted: #{$demo-text-muted};
-  --demo-border: #{$demo-border};
-  --demo-border-light: #{$demo-border-light};
-  --demo-bg: #{$demo-bg};
-  --demo-bg-soft: #{$demo-bg-soft};
-  --demo-code-bg: #{$demo-code-bg};
-}
-
 @mixin demo-code {
-  font-family: $demo-mono;
+  font-family: var(--font-mono);
   font-size: 12px;
   padding: 1px 5px;
-  background: $demo-code-bg;
+  background: var(--muted);
   border-radius: 3px;
-  color: $demo-text;
+  color: var(--foreground);
 }
 
 @mixin demo-heading-accent {
@@ -68,7 +27,7 @@ body {
     bottom: 0.25em;
     width: 3px;
     border-radius: 2px;
-    background: $demo-primary;
+    background: var(--brand);
   }
 }
 
@@ -76,7 +35,7 @@ body {
 // Block: demo (doc page)
 // ---------------------------------------------------------------------------
 .demo {
-  color: $demo-text;
+  color: var(--foreground);
 
   &--wide {
     max-width: none;
@@ -96,7 +55,7 @@ body {
   &__header {
     margin-bottom: 28px;
     padding-bottom: 20px;
-    border-bottom: 1px solid $demo-border-light;
+    border-bottom: 1px solid var(--border);
   }
 
   &__title {
@@ -104,24 +63,24 @@ body {
     font-size: 24px;
     font-weight: 600;
     line-height: 1.35;
-    color: $demo-text;
+    color: var(--foreground);
   }
 
   &__desc {
     margin: 0;
     font-size: 14px;
     line-height: 1.7;
-    color: $demo-text-secondary;
+    color: var(--ink-soft);
 
     code {
       @include demo-code;
     }
 
     kbd {
-      font-family: $demo-mono;
+      font-family: var(--font-mono);
       font-size: 11px;
       padding: 1px 5px;
-      border: 1px solid $demo-border;
+      border: 1px solid var(--border);
       border-bottom-width: 2px;
       border-radius: 3px;
       background: #fff;
@@ -147,7 +106,7 @@ body {
     margin: 0 0 12px;
     font-size: 16px;
     font-weight: 600;
-    color: $demo-text;
+    color: var(--foreground);
 
     & + .demo__table {
       margin-bottom: 20px;
@@ -159,23 +118,23 @@ body {
     border-collapse: collapse;
     font-size: 13px;
     background: #fff;
-    border: 1px solid $demo-border;
-    border-radius: $demo-radius;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
     overflow: hidden;
 
     th,
     td {
       padding: 12px 14px;
       text-align: left;
-      border-bottom: 1px solid $demo-border-light;
+      border-bottom: 1px solid var(--border);
       vertical-align: top;
-      color: $demo-text-secondary;
+      color: var(--ink-soft);
       line-height: 1.55;
     }
 
     th {
-      background: $demo-bg-soft;
-      color: $demo-text;
+      background: var(--muted);
+      color: var(--foreground);
       font-weight: 600;
       white-space: nowrap;
     }
@@ -184,7 +143,7 @@ body {
     td:first-child {
       width: 7.5rem;
       white-space: nowrap;
-      color: $demo-text;
+      color: var(--foreground);
       font-weight: 500;
     }
 
@@ -214,7 +173,7 @@ body {
     margin: 0 0 16px;
     font-size: 13px;
     line-height: 1.7;
-    color: $demo-text-muted;
+    color: var(--muted-foreground);
 
     &--tight {
       margin-bottom: 0;
@@ -228,7 +187,7 @@ body {
   &__meta {
     margin-left: 12px;
     font-size: 13px;
-    color: $demo-text-secondary;
+    color: var(--ink-soft);
   }
 
   &__toolbar {
@@ -244,13 +203,13 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    color: $demo-text-secondary;
+    color: var(--ink-soft);
   }
 
   &__status {
     margin: 0 0 16px;
     font-size: 13px;
-    color: $demo-text-secondary;
+    color: var(--ink-soft);
 
     code {
       @include demo-code;
@@ -268,9 +227,9 @@ body {
   &__snapshot,
   &__panel {
     padding: 18px 20px;
-    background: $demo-bg-soft;
-    border: 1px solid $demo-border-light;
-    border-radius: $demo-radius;
+    background: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
   }
 
   &__snapshot-title,
@@ -278,7 +237,7 @@ body {
     margin-bottom: 10px;
     font-size: 13px;
     font-weight: 600;
-    color: $demo-text;
+    color: var(--foreground);
   }
 
   &__snapshot pre,
@@ -286,7 +245,7 @@ body {
     margin: 0;
     font-size: 12px;
     line-height: 1.6;
-    color: $demo-text-secondary;
+    color: var(--ink-soft);
     white-space: pre-wrap;
     word-break: break-word;
   }
@@ -297,8 +256,8 @@ body {
 // ---------------------------------------------------------------------------
 .demo-block {
   margin-top: 8px;
-  border: 1px solid $demo-border;
-  border-radius: $demo-radius;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
   background: #fff;
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
@@ -312,7 +271,7 @@ body {
     margin: 0 0 12px;
     font-size: 16px;
     font-weight: 600;
-    color: $demo-text;
+    color: var(--foreground);
   }
 
   &__footer {
@@ -320,10 +279,10 @@ body {
     justify-content: flex-end;
     align-items: center;
     padding: 8px 14px;
-    border-top: 1px dashed $demo-border;
-    background: $demo-bg-soft;
+    border-top: 1px dashed var(--border);
+    background: var(--muted);
     font-size: 12px;
-    color: $demo-text-muted;
+    color: var(--muted-foreground);
   }
 
   .demo__form,
@@ -337,8 +296,8 @@ body {
 // Block: demo-code (Shiki snippet)
 // ---------------------------------------------------------------------------
 .demo-code {
-  border: 1px solid $demo-border;
-  border-radius: $demo-radius;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
   background: #fff;
   overflow: hidden;
 
@@ -348,14 +307,14 @@ body {
     justify-content: space-between;
     gap: 12px;
     padding: 6px 10px 6px 14px;
-    border-bottom: 1px solid $demo-border-light;
-    background: $demo-bg-soft;
+    border-bottom: 1px solid var(--border);
+    background: var(--muted);
   }
 
   &__label {
     font-size: 12px;
-    color: $demo-text-muted;
-    font-family: $demo-mono;
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
   }
 
   &__body {
@@ -380,7 +339,7 @@ body {
         width: 2.5rem;
         margin-right: 12px;
         padding-right: 12px;
-        border-right: 1px solid $demo-border-light;
+        border-right: 1px solid var(--border);
         text-align: right;
         color: #a8abb2;
         content: counter(demo-line);
@@ -393,10 +352,10 @@ body {
   &__fallback {
     margin: 0;
     padding: 14px 16px;
-    font-family: $demo-mono;
+    font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.65;
-    color: $demo-text-secondary;
+    color: var(--ink-soft);
     white-space: pre-wrap;
     word-break: break-word;
   }

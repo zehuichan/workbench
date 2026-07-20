@@ -1,5 +1,9 @@
 # Workbench
 
+<p align="left">
+  <img src="docs/brand/logo.svg" alt="Workbench" height="48" />
+</p>
+
 面向复杂业务数据录入与字段联动的 Vue 前端工作台。基于 **Vue 3 + TypeScript + Vite 8**，当前核心包括增强表格 **PlusTable**、表单 Composables 和 ERP 单据场景。
 
 ## 仓库结构

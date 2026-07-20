@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workbench · DESIGN.md Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #0b6e6e;
+        --accent: #0b6e6e;
+        --on-primary: #f2efe6;
+        --primary-hover: #095858;
+        --primary-soft: #d4ebea;
+        --ink: #14181f;
+        --ink-soft: #3a4250;
+        --ink-muted: #737373;
+        --canvas: #ffffff;
+        --surface-1: #fafafa;
+        --surface-2: #f4f4f5;
+        --hairline: #e5e5e5;
+        --paper: #f2efe6;
+        --code-bg: #1a1f28;
+        --radius: 8px;
+        --font: 'Geist', system-ui, sans-serif;
+        --mono: 'IBM Plex Mono', ui-monospace, monospace;
+        --brand: 'Sora', 'Geist', sans-serif;
+      }
+
+      html.dark {
+        --primary: #0b6e6e;
+        --accent: #2dd4bf;
+        --on-primary: #f2efe6;
+        --primary-hover: #0f766e;
+        --primary-soft: #0b6e6e40;
+        --ink: #f2efe6;
+        --ink-soft: #c9c3b4;
+        --ink-muted: #a39c8c;
+        --canvas: #14181f;
+        --surface-1: #1a1f28;
+        --surface-2: #222833;
+        --hairline: #ffffff1a;
+        --paper: #f2efe6;
+        --code-bg: #0f1218;
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--font);
+        color: var(--ink);
+        background: var(--surface-1);
+        line-height: 1.5;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+
+      .page {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 40px 0 72px;
+      }
+
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 36px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .lockup {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .lockup span {
+        font-family: var(--brand);
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.04em;
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .meta {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+
+      .theme-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 32px;
+        padding: 0 12px;
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .theme-toggle:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .swatch-grid-label {
+        margin: 0 0 10px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-muted);
+      }
+
+      .swatches + .swatch-grid-label {
+        margin-top: 18px;
+      }
+
+      .light-only {
+        display: block;
+      }
+
+      .dark-only {
+        display: none;
+      }
+
+      html.dark .light-only {
+        display: none;
+      }
+
+      html.dark .dark-only {
+        display: block;
+      }
+
+      h1 {
+        margin: 8px 0 0;
+        font-size: 28px;
+        letter-spacing: -0.5px;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-muted);
+      }
+
+      section {
+        margin-top: 32px;
+        padding: 22px;
+        border: 1px solid var(--hairline);
+        border-radius: 12px;
+        background: var(--canvas);
+      }
+
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+      }
+
+      .swatch {
+        border: 1px solid var(--hairline);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .swatch .chip {
+        height: 64px;
+      }
+
+      .swatch .info {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      .swatch code {
+        display: block;
+        margin-top: 2px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-muted);
+      }
+
+      .type-row {
+        display: grid;
+        gap: 14px;
+      }
+
+      .type-row article {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 12px;
+        align-items: baseline;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .type-row article:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .type-row .token {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-muted);
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 36px;
+        padding: 0 14px;
+        border-radius: var(--radius);
+        border: 1px solid transparent;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: default;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: var(--on-primary);
+      }
+
+      .btn-secondary {
+        background: var(--surface-2);
+        color: var(--ink);
+        border-color: var(--hairline);
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--ink-soft);
+      }
+
+      .badge {
+        display: inline-flex;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: 220px;
+        border: 1px solid var(--hairline);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .side {
+        padding: 14px 12px;
+        background: var(--surface-1);
+        border-right: 1px solid var(--hairline);
+      }
+
+      .side .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--hairline);
+        font-family: var(--brand);
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+      }
+
+      .group {
+        margin: 0 0 8px;
+        padding: 0 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .link {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        color: var(--ink-muted);
+        text-decoration: none;
+      }
+
+      .link.active {
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      .main {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .top {
+        display: flex;
+        gap: 4px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--hairline);
+      }
+
+      .cat {
+        position: relative;
+        padding: 8px 12px;
+        font-size: 13.5px;
+        color: var(--ink-muted);
+      }
+
+      .cat.active {
+        color: var(--accent);
+        font-weight: 500;
+      }
+
+      .cat.active::after {
+        content: '';
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 0;
+        height: 2px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .stage {
+        padding: 18px;
+      }
+
+      .demo {
+        padding: 16px;
+        border: 1px solid var(--hairline);
+        border-radius: 10px;
+      }
+
+      .demo h3 {
+        margin: 0 0 6px;
+        font-size: 16px;
+      }
+
+      .demo p {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: 14px;
+      }
+
+      .code {
+        margin-top: 12px;
+        padding: 14px 16px;
+        border-radius: 8px;
+        background: var(--code-bg);
+        color: var(--paper);
+        font-family: var(--mono);
+        font-size: 12.5px;
+      }
+
+      .marks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: end;
+      }
+
+      .mark-item {
+        text-align: center;
+      }
+
+      .mark-item small {
+        display: block;
+        margin-top: 8px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--ink-muted);
+      }
+
+      footer {
+        margin-top: 28px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+
+      footer a {
+        color: var(--accent);
+      }
+
+      @media (max-width: 720px) {
+        .shell,
+        .type-row article {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header>
+        <div>
+          <div class="lockup" aria-label="Workbench">
+            <svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+              <rect x="4" y="4" width="56" height="56" rx="14" fill="#0B6E6E" />
+              <rect x="14" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.95" />
+              <rect x="34" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+              <rect x="14" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+              <rect x="34" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.28" />
+              <rect x="18" y="18" width="8" height="2.5" rx="1.25" fill="#0B6E6E" />
+            </svg>
+            <span>Workbench</span>
+          </div>
+          <h1>DESIGN.md Preview</h1>
+        </div>
+        <div class="meta-row">
+          <div class="meta">Stitch-compatible · Dual mode · Engineering Teal</div>
+          <button type="button" class="theme-toggle" id="theme-toggle" aria-pressed="false">
+            <span class="light-only">Dark →</span>
+            <span class="dark-only">← Light</span>
+          </button>
+        </div>
+      </header>
+
+      <section>
+        <h2>Brand mark</h2>
+        <div class="marks">
+          <div class="mark-item">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+              <rect x="4" y="4" width="56" height="56" rx="14" fill="#0B6E6E" />
+              <rect x="14" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.95" />
+              <rect x="34" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+              <rect x="14" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+              <rect x="34" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.28" />
+              <rect x="18" y="18" width="8" height="2.5" rx="1.25" fill="#0B6E6E" />
+            </svg>
+            <small>64 · default</small>
+          </div>
+          <div class="mark-item">
+            <svg width="32" height="32" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+              <rect x="4" y="4" width="56" height="56" rx="14" fill="#0B6E6E" />
+              <rect x="14" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.95" />
+              <rect x="34" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+              <rect x="14" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+              <rect x="34" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.28" />
+              <rect x="18" y="18" width="8" height="2.5" rx="1.25" fill="#0B6E6E" />
+            </svg>
+            <small>32 · favicon</small>
+          </div>
+          <div class="mark-item">
+            <svg width="16" height="16" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+              <rect x="4" y="4" width="56" height="56" rx="14" fill="#0B6E6E" />
+              <rect x="14" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.95" />
+              <rect x="34" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+              <rect x="14" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+              <rect x="34" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.28" />
+            </svg>
+            <small>16 · no tick</small>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Color palette</h2>
+        <p class="swatch-grid-label light-only">Light</p>
+        <p class="swatch-grid-label dark-only">Dark</p>
+        <div class="swatches light-only">
+          <div class="swatch"><div class="chip" style="background: #0b6e6e"></div><div class="info">primary<code>#0B6E6E</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #f2efe6"></div><div class="info">on-primary / paper<code>#F2EFE6</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #d4ebea"></div><div class="info">primary-soft<code>#D4EBEA</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #14181f"></div><div class="info">ink<code>#14181F</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #ffffff; border-bottom: 1px solid #e5e5e5"></div><div class="info">canvas<code>#FFFFFF</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #fafafa; border-bottom: 1px solid #e5e5e5"></div><div class="info">sidebar<code>#FAFAFA</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #e5e5e5"></div><div class="info">hairline<code>#E5E5E5</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #1a1f28"></div><div class="info">code<code>#1A1F28</code></div></div>
+        </div>
+        <div class="swatches dark-only">
+          <div class="swatch"><div class="chip" style="background: #0b6e6e"></div><div class="info">button / mark<code>#0B6E6E</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #2dd4bf"></div><div class="info">active text<code>#2DD4BF</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #0b6e6e40"></div><div class="info">primary-soft<code>#0B6E6E40</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #f2efe6"></div><div class="info">ink<code>#F2EFE6</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #14181f"></div><div class="info">canvas<code>#14181F</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #1a1f28"></div><div class="info">sidebar / surface-1<code>#1A1F28</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #222833"></div><div class="info">surface-2<code>#222833</code></div></div>
+          <div class="swatch"><div class="chip" style="background: #0f1218"></div><div class="info">code<code>#0F1218</code></div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Typography</h2>
+        <div class="type-row">
+          <article>
+            <div class="token">display-lg</div>
+            <div style="font-size: 36px; font-weight: 600; letter-spacing: -0.8px">PlusTable workbench</div>
+          </article>
+          <article>
+            <div class="token">heading-2</div>
+            <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.3px">Field linkage demos</div>
+          </article>
+          <article>
+            <div class="token">body</div>
+            <div style="font-size: 14px; color: var(--ink-soft)">
+              Quiet engineering UI for complex business forms. Teal marks active work; neutrals carry the shell.
+            </div>
+          </article>
+          <article>
+            <div class="token">eyebrow / mono</div>
+            <div style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent)">
+              ERP · Composables · Table
+            </div>
+          </article>
+          <article>
+            <div class="token">code</div>
+            <div class="code">import { PlusTable } from '@/components/plus-table'</div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>Components</h2>
+        <div class="row" style="margin-bottom: 14px">
+          <span class="btn btn-primary">Primary</span>
+          <span class="btn btn-secondary">Secondary</span>
+          <span class="btn btn-ghost">Ghost</span>
+          <span class="badge">Recommended</span>
+        </div>
+        <div class="shell">
+          <aside class="side">
+            <div class="brand">
+              <svg width="22" height="22" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <rect x="4" y="4" width="56" height="56" rx="14" fill="#0B6E6E" />
+                <rect x="14" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.95" />
+                <rect x="34" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+                <rect x="14" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+                <rect x="34" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.28" />
+                <rect x="18" y="18" width="8" height="2.5" rx="1.25" fill="#0B6E6E" />
+              </svg>
+              Workbench
+            </div>
+            <div class="group">PlusTable</div>
+            <a class="link active" href="#">Basic editing</a>
+            <a class="link" href="#">Dependencies</a>
+            <a class="link" href="#">History / dirty</a>
+          </aside>
+          <div class="main">
+            <div class="top">
+              <div class="cat active">Components</div>
+              <div class="cat">ERP</div>
+              <div class="cat">Composables</div>
+            </div>
+            <div class="stage">
+              <div class="demo">
+                <h3>Demo block</h3>
+                <p>Hairline surface for interactive tables and forms. Primary actions use Workbench Teal.</p>
+                <div class="code light-only">--playground-accent: #0b6e6e;</div>
+                <div class="code dark-only">
+                  --playground-accent: #2dd4bf; /* text / focus */<br />
+                  --primary-fill: #0b6e6e; /* mark + buttons */
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Source of truth:
+        <a href="../../DESIGN.md">/DESIGN.md</a>
+        · Dark entry:
+        <a href="./preview-dark.html">preview-dark.html</a>
+        · Logo board:
+        <a href="./workbench-logo-spec.html">workbench-logo-spec.html</a>
+        · Format:
+        <a href="https://github.com/VoltAgent/awesome-design-md">awesome-design-md</a>
+      </footer>
+    </div>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var btn = document.getElementById('theme-toggle');
+        var params = new URLSearchParams(location.search);
+        var startDark =
+          params.get('theme') === 'dark' ||
+          location.pathname.endsWith('preview-dark.html');
+
+        function apply(dark) {
+          root.classList.toggle('dark', dark);
+          if (btn) btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+        }
+
+        apply(startDark);
+
+        if (btn) {
+          btn.addEventListener('click', function () {
+            apply(!root.classList.contains('dark'));
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
