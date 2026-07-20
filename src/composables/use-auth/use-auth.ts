@@ -6,6 +6,9 @@ export type WechatOAuthScope = 'snsapi_base' | 'snsapi_userinfo';
 /**
  * WeChat web OAuth helper (History mode redirect_uri).
  *
+ * `state` uses `crypto.randomUUID()` (unguessable, per RFC 6749 §10.12)
+ * instead of a timestamp. Validate it server-side when exchanging `code`.
+ *
  * @example
  * const [code, authorize] = useAuth()
  * authorize('/login')
@@ -33,7 +36,7 @@ export function useAuth(
     location.href =
       `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${appId}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=code&scope=${scope}&state=${Date.now()}#wechat_redirect`;
+      `&response_type=code&scope=${scope}&state=${crypto.randomUUID()}#wechat_redirect`;
   }
 
   return [code, authorize];

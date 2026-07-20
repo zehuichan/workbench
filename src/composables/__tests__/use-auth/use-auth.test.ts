@@ -77,6 +77,11 @@ describe('useAuth', () => {
     expect(url).toContain('scope=snsapi_base');
     expect(url).toContain('#wechat_redirect');
 
+    const state = url.match(/state=([^&#]+)/)?.[1];
+    expect(state).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
+
     const redirectUri = decodeURIComponent(
       url.match(/redirect_uri=([^&]+)/)?.[1] ?? '',
     );
