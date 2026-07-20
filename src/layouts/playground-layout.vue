@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { SidebarInset, SidebarProvider } from '@/ui/sidebar';
+import PlaygroundHeader from './playground-header.vue';
+import PlaygroundSidebar from './playground-sidebar.vue';
 import '@/styles/index.scss';
 
 defineOptions({ name: 'PlaygroundLayout' });
@@ -57,7 +60,10 @@ watch(
   { immediate: true },
 );
 
-function selectCategory(category: CategoryConfig): void {
+function selectCategory(key: string): void {
+  const category = categories.find((item) => item.key === key);
+  if (!category) return;
+
   const firstRoute = category.groups.flatMap(groupRoutes)[0];
   if (!firstRoute) return;
 
@@ -67,47 +73,17 @@ function selectCategory(category: CategoryConfig): void {
 </script>
 
 <template>
-  <div class="playground">
-    <header class="playground__header">
-      <div class="playground__brand">Workbench</div>
-      <nav class="playground__categories" aria-label="Playground categories">
-        <button
-          v-for="category in categories"
-          :key="category.key"
-          type="button"
-          class="playground__category"
-          :class="{ 'is-active': activeCategory === category.key }"
-          :aria-current="activeCategory === category.key ? 'page' : undefined"
-          :disabled="category.groups.length === 0"
-          @click="selectCategory(category)"
-        >
-          {{ category.key }}
-        </button>
-      </nav>
-    </header>
-
-    <div class="playground__body">
-      <aside class="playground__nav">
-        <div
-          v-for="group in navGroups"
-          :key="group.name"
-          class="playground__group"
-        >
-          <div class="playground__group-title">{{ group.name }}</div>
-          <router-link
-            v-for="link in group.links"
-            :key="link.to"
-            class="playground__link"
-            active-class="is-active"
-            :to="link.to"
-          >
-            {{ link.label }}
-          </router-link>
-        </div>
-      </aside>
-      <main class="playground__main">
+  <SidebarProvider class="min-h-svh">
+    <PlaygroundSidebar :groups="navGroups" />
+    <SidebarInset class="min-w-0">
+      <PlaygroundHeader
+        :categories="[...categories]"
+        :active-category="activeCategory"
+        @select="selectCategory"
+      />
+      <div class="min-h-0 flex-1 overflow-auto px-10 pt-8 pb-16">
         <router-view />
-      </main>
-    </div>
-  </div>
+      </div>
+    </SidebarInset>
+  </SidebarProvider>
 </template>
