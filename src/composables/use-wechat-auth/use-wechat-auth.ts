@@ -10,10 +10,10 @@ export type WechatOAuthScope = 'snsapi_base' | 'snsapi_userinfo';
  * instead of a timestamp. Validate it server-side when exchanging `code`.
  *
  * @example
- * const [code, authorize] = useAuth()
+ * const [code, authorize] = useWechatAuth()
  * authorize('/login')
  */
-export function useAuth(
+export function useWechatAuth(
   scope: WechatOAuthScope = 'snsapi_userinfo',
 ): [Ref<string | undefined>, (redirect?: string) => void] {
   const params = useUrlSearchParams('history');

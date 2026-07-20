@@ -1,8 +1,7 @@
-export * from './use-auth';
 export * from './use-auto-save';
 export * from './use-emit-effect';
 export * from './use-form-draft';
 export * from './use-save-hotkey';
-export * from './use-weixin';
-export * from './use-work-weixin';
-
+export * from './use-wechat';
+export * from './use-wechat-auth';
+export * from './use-wecom';

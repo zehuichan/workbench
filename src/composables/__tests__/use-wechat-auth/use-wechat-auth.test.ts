@@ -1,8 +1,8 @@
 import { effectScope, type EffectScope } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useAuth } from '../../use-auth/use-auth';
+import { useWechatAuth } from '../../use-wechat-auth/use-wechat-auth';
 
-describe('useAuth', () => {
+describe('useWechatAuth', () => {
   let scope: EffectScope;
   let hrefSetter: ReturnType<typeof vi.fn<(value: string) => void>>;
 
@@ -55,15 +55,15 @@ describe('useAuth', () => {
       '',
       '/app/home?code=oauth-code-1&from=demo',
     );
-    const pair = scope.run(() => useAuth());
-    if (!pair) throw new Error('scope did not return useAuth');
+    const pair = scope.run(() => useWechatAuth());
+    if (!pair) throw new Error('scope did not return useWechatAuth');
     const [code] = pair;
     expect(code.value).toBe('oauth-code-1');
   });
 
   it('authorize redirects with history redirect_uri (no hash path)', () => {
-    const pair = scope.run(() => useAuth('snsapi_base'));
-    if (!pair) throw new Error('scope did not return useAuth');
+    const pair = scope.run(() => useWechatAuth('snsapi_base'));
+    if (!pair) throw new Error('scope did not return useWechatAuth');
     const [, authorize] = pair;
     authorize();
 
@@ -90,8 +90,8 @@ describe('useAuth', () => {
   });
 
   it('authorize(redirect) replaces pathname', () => {
-    const pair = scope.run(() => useAuth());
-    if (!pair) throw new Error('scope did not return useAuth');
+    const pair = scope.run(() => useWechatAuth());
+    if (!pair) throw new Error('scope did not return useWechatAuth');
     const [, authorize] = pair;
     authorize('/login');
 

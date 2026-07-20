@@ -26,7 +26,7 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
-/** Minimal Weixin JSSDK surface used by useWeixin. */
+/** Minimal Weixin JSSDK surface used by useWechat. */
 interface WeixinJsSdk {
   config: (config: Record<string, unknown>) => void;
   ready: (fn: () => void) => void;

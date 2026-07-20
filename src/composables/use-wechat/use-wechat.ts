@@ -2,7 +2,7 @@ import { ref, type Ref } from 'vue';
 import { createGlobalState } from '@vueuse/core';
 import { getJsApiTicket } from '@/api/signature';
 
-function isWeixinBrowser() {
+function isWechatBrowser() {
   return (
     typeof navigator !== 'undefined' &&
     /MicroMessenger/i.test(navigator.userAgent)
@@ -15,10 +15,10 @@ function isWeixinBrowser() {
  * - Skips when not WeChat / VITE_JSSDK_ENABLED !== 'true' / no window.wx
  *
  * @example
- * const [ready, $wx] = useWeixin()
+ * const [ready, $wx] = useWechat()
  * $wx?.scanQRCode?.({ needResult: 1, success: console.log })
  */
-export const useWeixin = createGlobalState((): [
+export const useWechat = createGlobalState((): [
   Ref<boolean>,
   WeixinJsSdk | undefined,
 ] => {
@@ -28,7 +28,7 @@ export const useWeixin = createGlobalState((): [
   const enabled = import.meta.env.VITE_JSSDK_ENABLED === 'true';
 
   async function setup() {
-    if (!enabled || !wx || !isWeixinBrowser()) {
+    if (!enabled || !wx || !isWechatBrowser()) {
       ready.value = false;
       return;
     }

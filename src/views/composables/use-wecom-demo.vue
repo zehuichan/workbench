@@ -4,12 +4,12 @@ import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 
-defineOptions({ name: 'UseWorkWeixinDemo' });
+defineOptions({ name: 'UseWecomDemo' });
 
 const codeDemo = `import { watch } from 'vue'
-import { useWorkWeixin } from '@/composables'
+import { useWecom } from '@/composables'
 
-const [ready, $ww] = useWorkWeixin()
+const [ready, $ww] = useWecom()
 
 watch(ready, (ok) => {
   if (!ok) return
@@ -21,7 +21,7 @@ watch(ready, (ok) => {
   <DemoPage width="wide">
     <template #description>
       企微 JSSDK 初始化（结构对齐
-      <code>useWeixin</code>：<code>createGlobalState</code> + pending；配置走
+      <code>useWechat</code>：<code>createGlobalState</code> + pending；配置走
       <code>@wecom/jssdk</code> 的
       <code>ww.register</code>）。
       <code>ready</code> 仅在

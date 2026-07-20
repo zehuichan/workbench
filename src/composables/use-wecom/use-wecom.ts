@@ -6,37 +6,34 @@ import { getAppJsApiTicket, getJsApiTicket } from '@/api/signature';
 /** Playground keeps an empty list; real apps pass the JSAPIs they need. */
 const jsApiList: string[] = [];
 
-function isWorkWeixinBrowser() {
+function isWecomBrowser() {
   return (
     typeof navigator !== 'undefined' && /wxwork/i.test(navigator.userAgent)
   );
 }
 
 /**
- * Work Weixin JSSDK bootstrap (single global `ww.register`).
+ * WeCom JSSDK bootstrap (single global `ww.register`).
  *
- * - Blueprint mirrors `useWeixin` (`createGlobalState` + pending setup)
- * - Register shape follows `@wecom/jssdk` / checkin `work-weixin`
+ * - Blueprint mirrors `useWechat` (`createGlobalState` + pending setup)
+ * - Register shape follows `@wecom/jssdk`
  * - `ready` is true only after `onAgentConfigSuccess`
- * - Skips when not Work Weixin / `VITE_WW_JSSDK_ENABLED !== 'true'`
+ * - Skips when not WeCom / `VITE_WW_JSSDK_ENABLED !== 'true'`
  *
  * @example
- * const [ready, $ww] = useWorkWeixin()
+ * const [ready, $ww] = useWecom()
  * watch(ready, (ok) => {
  *   if (!ok) return
  *   void $ww.getLocation({ type: 'gcj02' })
  * })
  */
-export const useWorkWeixin = createGlobalState((): [
-  Ref<boolean>,
-  typeof ww,
-] => {
+export const useWecom = createGlobalState((): [Ref<boolean>, typeof ww] => {
   const ready = ref(false);
   let pending: Promise<void> | null = null;
   const enabled = import.meta.env.VITE_WW_JSSDK_ENABLED === 'true';
 
   async function setup() {
-    if (!enabled || !isWorkWeixinBrowser()) {
+    if (!enabled || !isWecomBrowser()) {
       ready.value = false;
       return;
     }

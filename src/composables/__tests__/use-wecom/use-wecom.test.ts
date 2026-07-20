@@ -17,11 +17,11 @@ vi.mock('@/api/signature', () => ({
   getAppJsApiTicket: getAppJsApiTicketMock,
 }));
 
-async function loadUseWorkWeixin() {
-  return import('../../use-work-weixin/use-work-weixin');
+async function loadUseWecom() {
+  return import('../../use-wecom/use-wecom');
 }
 
-describe('useWorkWeixin', () => {
+describe('useWecom', () => {
   beforeEach(() => {
     vi.resetModules();
     registerMock.mockReset();
@@ -41,13 +41,13 @@ describe('useWorkWeixin', () => {
     vi.restoreAllMocks();
   });
 
-  it('does not initialize outside Work Weixin', async () => {
+  it('does not initialize outside WeCom', async () => {
     vi.stubGlobal('navigator', {
       userAgent: 'Mozilla/5.0 MicroMessenger/8.0.0',
     });
-    const mod = await loadUseWorkWeixin();
+    const mod = await loadUseWecom();
 
-    const [ready] = mod.useWorkWeixin();
+    const [ready] = mod.useWecom();
     await Promise.resolve();
     await Promise.resolve();
 
@@ -58,9 +58,9 @@ describe('useWorkWeixin', () => {
 
   it('does not initialize when VITE_WW_JSSDK_ENABLED is not true', async () => {
     vi.stubEnv('VITE_WW_JSSDK_ENABLED', 'false');
-    const mod = await loadUseWorkWeixin();
+    const mod = await loadUseWecom();
 
-    const [ready] = mod.useWorkWeixin();
+    const [ready] = mod.useWecom();
     await Promise.resolve();
     await Promise.resolve();
 
@@ -79,10 +79,10 @@ describe('useWorkWeixin', () => {
       nonceStr: 'n2',
       signature: 's2',
     });
-    const mod = await loadUseWorkWeixin();
+    const mod = await loadUseWecom();
 
-    const [ready, sdk] = mod.useWorkWeixin();
-    mod.useWorkWeixin();
+    const [ready, sdk] = mod.useWecom();
+    mod.useWecom();
 
     await vi.waitFor(() => {
       expect(registerMock).toHaveBeenCalledTimes(1);
@@ -128,10 +128,10 @@ describe('useWorkWeixin', () => {
   });
 
   it('sets ready false when config fails', async () => {
-    const mod = await loadUseWorkWeixin();
+    const mod = await loadUseWecom();
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const [ready] = mod.useWorkWeixin();
+    const [ready] = mod.useWecom();
     await vi.waitFor(() => {
       expect(registerMock).toHaveBeenCalled();
     });
@@ -149,10 +149,10 @@ describe('useWorkWeixin', () => {
   });
 
   it('sets ready false when agentConfig fails', async () => {
-    const mod = await loadUseWorkWeixin();
+    const mod = await loadUseWecom();
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const [ready] = mod.useWorkWeixin();
+    const [ready] = mod.useWecom();
     await vi.waitFor(() => {
       expect(registerMock).toHaveBeenCalled();
     });

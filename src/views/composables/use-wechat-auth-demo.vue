@@ -4,12 +4,12 @@ import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 
-defineOptions({ name: 'UseAuthDemo' });
+defineOptions({ name: 'UseWechatAuthDemo' });
 
 const codeDemo = `import { watch } from 'vue'
-import { useAuth } from '@/composables'
+import { useWechatAuth } from '@/composables'
 
-const [code, authorize] = useAuth() // 或 useAuth('snsapi_base')
+const [code, authorize] = useWechatAuth() // 或 useWechatAuth('snsapi_base')
 
 // 跳转微信授权；可选 redirect 替换当前 pathname（History）
 authorize('/login')

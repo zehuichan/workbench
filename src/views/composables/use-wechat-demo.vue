@@ -4,12 +4,12 @@ import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
 
-defineOptions({ name: 'UseWeixinDemo' });
+defineOptions({ name: 'UseWechatDemo' });
 
 const codeDemo = `import { watch } from 'vue'
-import { useWeixin } from '@/composables'
+import { useWechat } from '@/composables'
 
-const [ready, $wx] = useWeixin()
+const [ready, $wx] = useWechat()
 
 watch(ready, (ok) => {
   if (!ok) return

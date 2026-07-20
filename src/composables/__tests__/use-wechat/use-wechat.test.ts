@@ -9,8 +9,8 @@ vi.mock('@/api/signature', () => ({
   getAppJsApiTicket: vi.fn(),
 }));
 
-async function loadUseWeixin() {
-  return import('../../use-weixin/use-weixin');
+async function loadUseWechat() {
+  return import('../../use-wechat/use-wechat');
 }
 
 function mockWx(handlers?: {
@@ -36,7 +36,7 @@ function mockWx(handlers?: {
   return wx;
 }
 
-describe('useWeixin', () => {
+describe('useWechat', () => {
   beforeEach(() => {
     vi.resetModules();
     getJsApiTicketMock.mockReset();
@@ -59,9 +59,9 @@ describe('useWeixin', () => {
   it('does not initialize outside WeChat', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/120' });
     const wx = mockWx();
-    const mod = await loadUseWeixin();
+    const mod = await loadUseWechat();
 
-    const [ready] = mod.useWeixin();
+    const [ready] = mod.useWechat();
     await Promise.resolve();
     await Promise.resolve();
 
@@ -73,9 +73,9 @@ describe('useWeixin', () => {
   it('does not initialize when VITE_JSSDK_ENABLED is not true', async () => {
     vi.stubEnv('VITE_JSSDK_ENABLED', 'false');
     const wx = mockWx();
-    const mod = await loadUseWeixin();
+    const mod = await loadUseWechat();
 
-    const [ready] = mod.useWeixin();
+    const [ready] = mod.useWechat();
     await Promise.resolve();
     await Promise.resolve();
 
@@ -91,9 +91,9 @@ describe('useWeixin', () => {
       nonceStr: 'n',
       signature: 's',
     });
-    const mod = await loadUseWeixin();
+    const mod = await loadUseWechat();
 
-    const [ready, sdk] = mod.useWeixin();
+    const [ready, sdk] = mod.useWechat();
     await vi.waitFor(() => {
       expect(ready.value).toBe(true);
     });
@@ -115,10 +115,10 @@ describe('useWeixin', () => {
       nonceStr: '',
       signature: '',
     });
-    const mod = await loadUseWeixin();
+    const mod = await loadUseWechat();
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const [ready] = mod.useWeixin();
+    const [ready] = mod.useWechat();
     await vi.waitFor(() => {
       expect(wx.error).toHaveBeenCalled();
     });
@@ -129,10 +129,10 @@ describe('useWeixin', () => {
   it('sets ready false when getJsApiTicket rejects', async () => {
     mockWx({ readyMode: 'ready' });
     getJsApiTicketMock.mockRejectedValue(new Error('api down'));
-    const mod = await loadUseWeixin();
+    const mod = await loadUseWechat();
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const [ready] = mod.useWeixin();
+    const [ready] = mod.useWechat();
     await vi.waitFor(() => {
       expect(errorSpy).toHaveBeenCalled();
     });

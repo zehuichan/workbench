@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
 import PlaygroundLayout from '@/layouts/playground-layout.vue';
-import UseAuthDemo from '@/views/composables/use-auth-demo.vue';
+import UseWechatAuthDemo from '@/views/composables/use-wechat-auth-demo.vue';
 import UseAutoSaveDemo from '@/views/composables/use-auto-save-demo.vue';
 import UseFormDraftDemo from '@/views/composables/use-form-draft-demo.vue';
 import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
-import UseWeixinDemo from '@/views/composables/use-weixin-demo.vue';
-import UseWorkWeixinDemo from '@/views/composables/use-work-weixin-demo.vue';
+import UseWechatDemo from '@/views/composables/use-wechat-demo.vue';
+import UseWecomDemo from '@/views/composables/use-wecom-demo.vue';
 import ErpApiOverview from '@/views/erp/api-overview.vue';
 import ExpenseReportLinkageDemo from '@/views/erp/expense-report-linkage-demo.vue';
 import PurchaseOrderLinkageDemo from '@/views/erp/purchase-order-linkage-demo.vue';
@@ -98,22 +98,22 @@ export const router = createRouter({
           meta: { title: 'use-save-hotkey', group: 'Form', order: 3 },
         },
         {
-          path: 'composables/use-auth',
-          name: 'composables-use-auth',
-          component: UseAuthDemo,
-          meta: { title: 'use-auth', group: 'WeChat', order: 1 },
+          path: 'composables/use-wechat-auth',
+          name: 'composables-use-wechat-auth',
+          component: UseWechatAuthDemo,
+          meta: { title: 'use-wechat-auth', group: 'WeChat', order: 1 },
         },
         {
-          path: 'composables/use-weixin',
-          name: 'composables-use-weixin',
-          component: UseWeixinDemo,
-          meta: { title: 'use-weixin', group: 'WeChat', order: 2 },
+          path: 'composables/use-wechat',
+          name: 'composables-use-wechat',
+          component: UseWechatDemo,
+          meta: { title: 'use-wechat', group: 'WeChat', order: 2 },
         },
         {
-          path: 'composables/use-work-weixin',
-          name: 'composables-use-work-weixin',
-          component: UseWorkWeixinDemo,
-          meta: { title: 'use-work-weixin', group: 'WeChat', order: 3 },
+          path: 'composables/use-wecom',
+          name: 'composables-use-wecom',
+          component: UseWecomDemo,
+          meta: { title: 'use-wecom', group: 'WeChat', order: 3 },
         },
       ],
     },
