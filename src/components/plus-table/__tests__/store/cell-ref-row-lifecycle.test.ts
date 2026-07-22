@@ -1,9 +1,6 @@
 import { nextTick, watch } from 'vue';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  createTestTable,
-  type TestTable,
-} from '../helpers/create-test-table';
+import { createTestTable, type TestTable } from '../helpers/create-test-table';
 
 interface Row {
   id: number;
@@ -164,9 +161,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
   it('rejects duplicate row identities before mutating state', () => {
     const { store, rows } = setup();
 
-    expect(() => store.commit('setData', [rows[0]!, { ...rows[0]! }])).toThrow(
-      /rowKey="1".*重复/,
-    );
+    expect(() => store.commit('setData', [rows[0]!, { ...rows[0]! }])).toThrow(/rowKey="1".*重复/);
     expect(store.states.data.value).toEqual(rows);
   });
 
@@ -452,9 +447,9 @@ describe('PlusTable cell identity and row lifecycle', () => {
     });
     const row = testTable.store.states.data.value[0]!;
 
-    expect(() =>
-      testTable.store.commit('setCellValue', row, 0, 'key', 'next'),
-    ).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.store.commit('setCellValue', row, 0, 'key', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.key).toBe('one');
     testTable.dispose();
   });
@@ -475,9 +470,9 @@ describe('PlusTable cell identity and row lifecycle', () => {
     });
     const row = testTable.store.states.data.value[0]!;
 
-    expect(() =>
-      testTable.store.commit('setCellValue', row, 0, 'code', 'next'),
-    ).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.store.commit('setCellValue', row, 0, 'code', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.code).toBe('one');
     testTable.dispose();
   });
@@ -501,9 +496,9 @@ describe('PlusTable cell identity and row lifecycle', () => {
     });
     const row = testTable.store.states.data.value[0]!;
 
-    expect(() =>
-      testTable.store.commit('setCellValue', row, 0, 'code', 'next'),
-    ).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.store.commit('setCellValue', row, 0, 'code', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.code).toBe('one');
     testTable.dispose();
   });
@@ -534,9 +529,9 @@ describe('PlusTable cell identity and row lifecycle', () => {
     });
     const row = testTable.store.states.data.value[0]!;
 
-    expect(() =>
-      testTable.store.commit('setCellValue', row, 0, 'code', 'next'),
-    ).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.store.commit('setCellValue', row, 0, 'code', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.code).toBe('one');
     testTable.dispose();
   });
@@ -567,9 +562,9 @@ describe('PlusTable cell identity and row lifecycle', () => {
     });
     const row = testTable.store.states.data.value[0]!;
 
-    expect(() =>
-      testTable.store.commit('setCellValue', row, 0, 'code', 'next'),
-    ).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.store.commit('setCellValue', row, 0, 'code', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.state.code).toBe('one');
     testTable.dispose();
   });
@@ -577,8 +572,6 @@ describe('PlusTable cell identity and row lifecycle', () => {
   it('skips automatic validation for writable fields without a column', async () => {
     const { store, rows } = setup();
 
-    await expect(
-      store.validateCell(rows[0]!, 0, 'derivedField'),
-    ).resolves.toBeNull();
+    await expect(store.validateCell(rows[0]!, 0, 'derivedField')).resolves.toBeNull();
   });
 });

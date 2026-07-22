@@ -38,9 +38,7 @@ function categoryForGroup(group: unknown): CategoryKey | undefined {
 }
 
 const navGroups = computed(() => {
-  const groups =
-    categories.find((category) => category.key === activeCategory.value)
-      ?.groups ?? [];
+  const groups = categories.find((category) => category.key === activeCategory.value)?.groups ?? [];
 
   return groups.map((group) => ({
     name: group,

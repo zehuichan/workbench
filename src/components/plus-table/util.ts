@@ -9,41 +9,27 @@ export const HISTORY_STACK_LIMIT = 50;
 
 const NATIVE_RENDER_COLUMN_TYPES = ['selection', 'index', 'expand'] as const;
 
-export const SPECIAL_COLUMN_TYPES = [
-  ...NATIVE_RENDER_COLUMN_TYPES,
-  'operation',
-] as const;
+export const SPECIAL_COLUMN_TYPES = [...NATIVE_RENDER_COLUMN_TYPES, 'operation'] as const;
 
 interface ColumnTypeLike {
   type?: string;
 }
 
 export function isSpecialColumn(column: ColumnTypeLike): boolean {
-  return (
-    !!column.type &&
-    (SPECIAL_COLUMN_TYPES as readonly string[]).includes(column.type)
-  );
+  return !!column.type && (SPECIAL_COLUMN_TYPES as readonly string[]).includes(column.type);
 }
 
 export function isNativeRenderColumn(column: ColumnTypeLike): boolean {
-  return (
-    !!column.type &&
-    (NATIVE_RENDER_COLUMN_TYPES as readonly string[]).includes(column.type)
-  );
+  return !!column.type && (NATIVE_RENDER_COLUMN_TYPES as readonly string[]).includes(column.type);
 }
 
 export function assertRowKey(rowKey: unknown): asserts rowKey is RowKey {
   if ((!isString(rowKey) || rowKey.length === 0) && !isFunction(rowKey)) {
-    throw new TypeError(
-      '[PlusTable] rowKey 必须是非空字段名或返回 string/number 的函数。',
-    );
+    throw new TypeError('[PlusTable] rowKey 必须是非空字段名或返回 string/number 的函数。');
   }
 }
 
-export function getRowIdentity<T extends RowData = RowData>(
-  row: T,
-  rowKey: RowKey<T>,
-): string {
+export function getRowIdentity<T extends RowData = RowData>(row: T, rowKey: RowKey<T>): string {
   assertRowKey(rowKey);
   const raw = isFunction(rowKey) ? rowKey(row) : row[rowKey];
   if (raw === undefined || raw === null || raw === '') {
@@ -107,24 +93,15 @@ export const FOCUSABLE_EDITOR_SELECTOR =
   ':not(input[type="hidden"])' +
   ':not(label)';
 
-export function isControl(
-  target: EventTarget | null,
-  boundary?: EventTarget | null,
-): boolean {
+export function isControl(target: EventTarget | null, boundary?: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
   const control = target.closest(CONTROL_SELECTOR);
   if (!control) return false;
   if (boundary === undefined) return true;
-  return (
-    boundary instanceof Element &&
-    control !== boundary &&
-    boundary.contains(control)
-  );
+  return boundary instanceof Element && control !== boundary && boundary.contains(control);
 }
 
-function isTextInput(
-  el: HTMLElement,
-): el is HTMLInputElement | HTMLTextAreaElement {
+function isTextInput(el: HTMLElement): el is HTMLInputElement | HTMLTextAreaElement {
   return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
 }
 

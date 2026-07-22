@@ -28,10 +28,7 @@ export const EXPENSE_TYPE_OPTIONS: SelectOption[] = [
   { label: '业务招待费', value: 'entertainment' },
 ];
 
-function recalculateExpenseLine(
-  line: DocumentLine,
-  header: Record<string, unknown>,
-): DocumentLine {
+function recalculateExpenseLine(line: DocumentLine, header: Record<string, unknown>): DocumentLine {
   const next: DocumentLine = {
     ...line,
     fieldSources: { ...line.fieldSources },
@@ -48,9 +45,7 @@ function recalculateExpenseLine(
   const deductible = money(next.deductibleTax);
   next.amount = original;
   next.deductibleTax = deductible;
-  next.localAmount = money(
-    Math.max(original - deductible, 0) * Number(header.exchangeRate ?? 0),
-  );
+  next.localAmount = money(Math.max(original - deductible, 0) * Number(header.exchangeRate ?? 0));
   return next;
 }
 
@@ -151,8 +146,7 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: EXPENSE_TYPE_OPTIONS },
-    formatter: (row: DocumentLine) =>
-      optionLabel(EXPENSE_TYPE_OPTIONS, row.expenseType),
+    formatter: (row: DocumentLine) => optionLabel(EXPENSE_TYPE_OPTIONS, row.expenseType),
   },
   {
     prop: 'departmentId',
@@ -161,8 +155,7 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: EXPENSE_DEPARTMENT_OPTIONS },
-    formatter: (row: DocumentLine) =>
-      optionLabel(EXPENSE_DEPARTMENT_OPTIONS, row.departmentId),
+    formatter: (row: DocumentLine) => optionLabel(EXPENSE_DEPARTMENT_OPTIONS, row.departmentId),
   },
   {
     prop: 'projectId',
@@ -171,16 +164,14 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: EXPENSE_PROJECT_OPTIONS },
-    formatter: (row: DocumentLine) =>
-      optionLabel(EXPENSE_PROJECT_OPTIONS, row.projectId),
+    formatter: (row: DocumentLine) => optionLabel(EXPENSE_PROJECT_OPTIONS, row.projectId),
   },
   {
     prop: 'currency',
     label: '币种',
     width: 110,
     editable: false,
-    formatter: (row: DocumentLine) =>
-      optionLabel(CURRENCY_OPTIONS, row.currency),
+    formatter: (row: DocumentLine) => optionLabel(CURRENCY_OPTIONS, row.currency),
   },
   {
     prop: 'amount',

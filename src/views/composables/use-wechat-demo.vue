@@ -22,8 +22,7 @@ watch(ready, (ok) => {
     <template #description>
       微信 JSSDK 初始化（<code>createGlobalState</code>，全局只
       <code>wx.config</code> 一次）。非微信环境或
-      <code>VITE_JSSDK_ENABLED !== 'true'</code> 时跳过。签名暂走
-      <code>getJsApiTicket</code>。
+      <code>VITE_JSSDK_ENABLED !== 'true'</code> 时跳过。签名暂走 <code>getJsApiTicket</code>。
     </template>
 
     <template #api>
@@ -36,10 +35,7 @@ watch(ready, (ok) => {
         <tr>
           <td><code>[1] wx</code></td>
           <td><code>WeixinJsSdk | undefined</code></td>
-          <td>
-            <code>window.wx</code> 引用；未注入脚本时为
-            <code>undefined</code>。
-          </td>
+          <td><code>window.wx</code> 引用；未注入脚本时为 <code>undefined</code>。</td>
         </tr>
       </DemoApiTable>
 
@@ -54,9 +50,9 @@ watch(ready, (ok) => {
 
     <DemoBlock title="代码演示">
       <template #hint>
-        playground 非微信环境且 JSSDK 配置仍为 stub，无法交互演示；此处仅展示用法。需微信内置浏览器、
-        <code>VITE_JSSDK_ENABLED=true</code>，并注入
-        <code>window.wx</code>。
+        playground 非微信环境且 JSSDK 配置仍为
+        stub，无法交互演示；此处仅展示用法。需微信内置浏览器、
+        <code>VITE_JSSDK_ENABLED=true</code>，并注入 <code>window.wx</code>。
       </template>
       <DemoCode :code="codeDemo" lang="ts" />
     </DemoBlock>

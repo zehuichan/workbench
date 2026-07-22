@@ -21,24 +21,26 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `src/components/plus-table/table.vue` | `defineSlots` + header/footer 模板；`footerEnabled`；`paginationRef` → footer |
-| `src/components/plus-table/styles/index.scss` | `__header` / `__title` / `__footer` / `__summary`；调整 `__toolbar` / `__pagination` |
-| `src/components/plus-table/table-slots.test.ts` | 挂载测 title/summary/footer 可见性 |
-| `src/views/plus-table/pagination-rows-demo.vue` | 演示两插槽 + API 表补充 |
-| `src/views/demo-content.test.ts` | 同步行数与内容指纹 |
+| 路径                                            | 职责                                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `src/components/plus-table/table.vue`           | `defineSlots` + header/footer 模板；`footerEnabled`；`paginationRef` → footer        |
+| `src/components/plus-table/styles/index.scss`   | `__header` / `__title` / `__footer` / `__summary`；调整 `__toolbar` / `__pagination` |
+| `src/components/plus-table/table-slots.test.ts` | 挂载测 title/summary/footer 可见性                                                   |
+| `src/views/plus-table/pagination-rows-demo.vue` | 演示两插槽 + API 表补充                                                              |
+| `src/views/demo-content.test.ts`                | 同步行数与内容指纹                                                                   |
 
 ---
 
 ### Task 1: 组件插槽壳层 + 样式 + 挂载测试
 
 **Files:**
+
 - Create: `src/components/plus-table/table-slots.test.ts`
 - Modify: `src/components/plus-table/table.vue`
 - Modify: `src/components/plus-table/styles/index.scss`
 
 **Interfaces:**
+
 - Consumes: 现有 `paginationEnabled`（`props.total !== undefined`）、`PlusTableColumnSettings`、`ElPagination`
 - Produces:
   - slots: `title?: () => unknown`、`summary?: () => unknown`（无作用域）
@@ -85,8 +87,7 @@ vi.mock('element-plus', async (importOriginal) => {
 import PlusTable from './table.vue';
 
 describe('PlusTable title / summary slots', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
-    [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
 
   async function mount(
     slots: Record<string, () => unknown> = {},
@@ -128,26 +129,17 @@ describe('PlusTable title / summary slots', () => {
 
     const header = host.querySelector('.plus-table__header');
     expect(header).toBeTruthy();
-    expect(header!.querySelector('.plus-table__title')?.textContent).toBe(
-      '任务列表',
-    );
+    expect(header!.querySelector('.plus-table__title')?.textContent).toBe('任务列表');
     expect(header!.querySelector('.plus-table__toolbar')).toBeTruthy();
-    expect(host.querySelector('.plus-table__title')?.parentElement).toBe(
-      header,
-    );
+    expect(host.querySelector('.plus-table__title')?.parentElement).toBe(header);
   });
 
   it('shows summary with pagination on the same footer row', async () => {
-    const host = await mount(
-      { summary: () => '已选 3 项' },
-      { total: 20, page: 1, pageSize: 5 },
-    );
+    const host = await mount({ summary: () => '已选 3 项' }, { total: 20, page: 1, pageSize: 5 });
 
     const footer = host.querySelector('.plus-table__footer');
     expect(footer).toBeTruthy();
-    expect(footer!.querySelector('.plus-table__summary')?.textContent).toBe(
-      '已选 3 项',
-    );
+    expect(footer!.querySelector('.plus-table__summary')?.textContent).toBe('已选 3 项');
     expect(footer!.querySelector('.plus-table__pagination')).toBeTruthy();
     expect(footer!.querySelector('.mock-el-pagination')).toBeTruthy();
   });
@@ -157,9 +149,7 @@ describe('PlusTable title / summary slots', () => {
 
     const footer = host.querySelector('.plus-table__footer');
     expect(footer).toBeTruthy();
-    expect(footer!.querySelector('.plus-table__summary')?.textContent).toBe(
-      '合计 10',
-    );
+    expect(footer!.querySelector('.plus-table__summary')?.textContent).toBe('合计 10');
     expect(footer!.querySelector('.plus-table__pagination')).toBeNull();
   });
 
@@ -199,9 +189,7 @@ defineSlots<{
 After `paginationEnabled`:
 
 ```ts
-const footerEnabled = computed(
-  () => !!slots.summary || paginationEnabled.value,
-);
+const footerEnabled = computed(() => !!slots.summary || paginationEnabled.value);
 ```
 
 Replace the root template body (inside `.plus-table`) with:
@@ -323,10 +311,12 @@ EOF
 ### Task 2: 分页 demo 演示插槽 + content contract
 
 **Files:**
+
 - Modify: `src/views/plus-table/pagination-rows-demo.vue`
 - Modify: `src/views/demo-content.test.ts`
 
 **Interfaces:**
+
 - Consumes: Task 1 的 `#title` / `#summary` 插槽
 - Produces: demo 源码含 `#title`、`#summary`；API 表增加 Slots 小节；`demo-content.test.ts` 指纹同步
 
@@ -417,15 +407,15 @@ EOF
 
 ## Spec coverage (self-review)
 
-| Spec 要求 | Task |
-|-----------|------|
-| title 与 toolbar 同一行 | Task 1 template `__header` |
-| summary 可与分页同行；无 total 仍可显示 | Task 1 `footerEnabled` + tests |
-| `defineSlots` 声明 | Task 1 |
-| header/footer flex 样式 | Task 1 SCSS |
-| 无字符串 prop | Global Constraints；未改 `defaults.ts` |
-| pagination demo + API | Task 2 |
-| content contract | Task 2 |
-| `paginationRef` 与 adaptive | Task 1 挂到 `__footer` |
+| Spec 要求                               | Task                                   |
+| --------------------------------------- | -------------------------------------- |
+| title 与 toolbar 同一行                 | Task 1 template `__header`             |
+| summary 可与分页同行；无 total 仍可显示 | Task 1 `footerEnabled` + tests         |
+| `defineSlots` 声明                      | Task 1                                 |
+| header/footer flex 样式                 | Task 1 SCSS                            |
+| 无字符串 prop                           | Global Constraints；未改 `defaults.ts` |
+| pagination demo + API                   | Task 2                                 |
+| content contract                        | Task 2                                 |
+| `paginationRef` 与 adaptive             | Task 1 挂到 `__footer`                 |
 
 无 TBD / 占位步骤；插槽与 DOM class 名前后一致。

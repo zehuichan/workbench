@@ -17,9 +17,7 @@ export function useRows<T extends RowData = RowData>(table: PlusTable<T>) {
       (current) => getRowIdentity(current, table.props.rowKey) === key,
     );
     if (duplicated) {
-      throw new Error(
-        `[PlusTable] insertRow 失败：rowKey="${key}" 已存在，不能插入重复行。`,
-      );
+      throw new Error(`[PlusTable] insertRow 失败：rowKey="${key}" 已存在，不能插入重复行。`);
     }
   }
 

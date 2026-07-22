@@ -1,9 +1,6 @@
 import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import {
-  createTestTable,
-  type TestTable,
-} from '../helpers/create-test-table';
+import { createTestTable, type TestTable } from '../helpers/create-test-table';
 
 interface Row {
   id: number;
@@ -47,15 +44,8 @@ describe('PlusTable columns', () => {
       { type: 'operation', label: '操作' },
     ]);
 
-    expect(store.states.originColumns.value.map((node) => node.id)).toEqual([
-      '#',
-      'Group',
-      '操作',
-    ]);
-    expect(store.states.columns.value.map((node) => node.id)).toEqual([
-      'a-primary',
-      'a-secondary',
-    ]);
+    expect(store.states.originColumns.value.map((node) => node.id)).toEqual(['#', 'Group', '操作']);
+    expect(store.states.columns.value.map((node) => node.id)).toEqual(['a-primary', 'a-secondary']);
     expect(store.states.allColumns.value.map((node) => node.id)).toEqual([
       'a-primary',
       'a-secondary',
@@ -83,25 +73,16 @@ describe('PlusTable columns', () => {
     store.toggleColumnVisible('Group', false);
 
     expect(store.states.columns.value.map((node) => node.id)).toEqual(['c']);
-    expect(store.states.allColumns.value.map((node) => node.id)).toEqual([
-      'a',
-      'b',
-      'c',
-    ]);
-    expect(
-      store.settingItems.value.find((item) => item.id === 'Group'),
-    ).toEqual(
+    expect(store.states.allColumns.value.map((node) => node.id)).toEqual(['a', 'b', 'c']);
+    expect(store.settingItems.value.find((item) => item.id === 'Group')).toEqual(
       expect.objectContaining({ checked: false, indeterminate: false }),
     );
 
     store.toggleColumnVisible('a', true);
-    expect(store.states.columns.value.map((node) => node.id)).toEqual([
-      'a',
-      'c',
-    ]);
-    expect(
-      store.settingItems.value.find((item) => item.id === 'Group'),
-    ).toEqual(expect.objectContaining({ checked: false, indeterminate: true }));
+    expect(store.states.columns.value.map((node) => node.id)).toEqual(['a', 'c']);
+    expect(store.settingItems.value.find((item) => item.id === 'Group')).toEqual(
+      expect.objectContaining({ checked: false, indeterminate: true }),
+    );
   });
 
   it('reorders configurable siblings without moving special-column anchors', () => {
@@ -120,10 +101,7 @@ describe('PlusTable columns', () => {
       'a',
       '操作',
     ]);
-    expect(store.states.columns.value.map((node) => node.id)).toEqual([
-      'b',
-      'a',
-    ]);
+    expect(store.states.columns.value.map((node) => node.id)).toEqual(['b', 'a']);
   });
 
   it.each(['before', 'after'] as const)(
@@ -137,16 +115,8 @@ describe('PlusTable columns', () => {
 
       store.updateColumnOrder('c', 'missing', position);
 
-      expect(store.states.originColumns.value.map((node) => node.id)).toEqual([
-        'a',
-        'b',
-        'c',
-      ]);
-      expect(store.states.columns.value.map((node) => node.id)).toEqual([
-        'a',
-        'b',
-        'c',
-      ]);
+      expect(store.states.originColumns.value.map((node) => node.id)).toEqual(['a', 'b', 'c']);
+      expect(store.states.columns.value.map((node) => node.id)).toEqual(['a', 'b', 'c']);
       expect(store.states.orderMap.value).toEqual({});
     },
   );
@@ -158,16 +128,8 @@ describe('PlusTable columns', () => {
       { prop: 'c', label: 'C', fixed: 'left' },
     ]);
 
-    expect(store.states.originColumns.value.map((node) => node.id)).toEqual([
-      'c',
-      'a',
-      'b',
-    ]);
-    expect(store.states.columns.value.map((node) => node.id)).toEqual([
-      'c',
-      'a',
-      'b',
-    ]);
+    expect(store.states.originColumns.value.map((node) => node.id)).toEqual(['c', 'a', 'b']);
+    expect(store.states.columns.value.map((node) => node.id)).toEqual(['c', 'a', 'b']);
     expect(store.getColumnIndex('a')).toBe(1);
   });
 
@@ -178,11 +140,7 @@ describe('PlusTable columns', () => {
       { prop: 'c', label: 'C', fixed: 'right' },
     ]);
 
-    expect(store.states.columns.value.map((node) => node.id)).toEqual([
-      'b',
-      'a',
-      'c',
-    ]);
+    expect(store.states.columns.value.map((node) => node.id)).toEqual(['b', 'a', 'c']);
   });
 
   it('allocates collision-free ids including reserved parent ids', () => {
@@ -262,9 +220,7 @@ describe('PlusTable columns', () => {
     ]);
 
     expect([...store.states.hiddenIds.value]).toEqual(['a']);
-    expect(
-      store.settingItems.value.find((item) => item.id === 'Group'),
-    ).toEqual(
+    expect(store.settingItems.value.find((item) => item.id === 'Group')).toEqual(
       expect.objectContaining({ checked: false, indeterminate: false }),
     );
     expect(store.states.originColumns.value).toHaveLength(1);
@@ -279,10 +235,7 @@ describe('PlusTable columns', () => {
 
     expect(store.states.columns.value.map((node) => node.id)).toEqual(['b']);
     store.toggleColumnVisible('a', true);
-    expect(store.states.columns.value.map((node) => node.id)).toEqual([
-      'a',
-      'b',
-    ]);
+    expect(store.states.columns.value.map((node) => node.id)).toEqual(['a', 'b']);
     store.resetSettings();
     expect(store.states.columns.value.map((node) => node.id)).toEqual(['b']);
   });
@@ -300,9 +253,7 @@ describe('PlusTable columns', () => {
     first.store.setColumnWidth('a', 120.6);
     await nextTick();
 
-    expect(
-      JSON.parse(localStorage.getItem('plus-table:settings:columns-test')!),
-    ).toEqual({
+    expect(JSON.parse(localStorage.getItem('plus-table:settings:columns-test')!)).toEqual({
       hidden: ['b'],
       order: { __root: ['b', 'a'] },
       widths: { a: 121 },
@@ -316,9 +267,7 @@ describe('PlusTable columns', () => {
       ],
       { cache: true, id: 'columns-test' },
     );
-    expect(second.store.states.columns.value.map((node) => node.id)).toEqual([
-      'a',
-    ]);
+    expect(second.store.states.columns.value.map((node) => node.id)).toEqual(['a']);
     expect(second.store.states.widthMap.value).toEqual({ a: 121 });
   });
 
@@ -355,9 +304,7 @@ describe('PlusTable columns', () => {
     ];
     await nextTick();
 
-    expect(table.store.states.columns.value.map((node) => node.id)).toEqual([
-      'c',
-    ]);
+    expect(table.store.states.columns.value.map((node) => node.id)).toEqual(['c']);
     expect(table.store.states.hiddenIds.value).toEqual(new Set(['b']));
     expect(table.store.states.widthMap.value).toEqual({});
   });
@@ -438,9 +385,7 @@ describe('PlusTable columns', () => {
     });
     store.setColumnWidth('a', 120);
     await nextTick();
-    expect(
-      localStorage.getItem('plus-table:settings:reset-test'),
-    ).not.toBeNull();
+    expect(localStorage.getItem('plus-table:settings:reset-test')).not.toBeNull();
 
     store.resetSettings();
     await nextTick();
@@ -458,11 +403,11 @@ describe('PlusTable columns', () => {
     store.setColumnWidth('a', 140);
     await nextTick();
 
-    expect(
-      JSON.parse(
-        localStorage.getItem('plus-table:settings:reset-follow-up-test')!,
-      ),
-    ).toEqual({ hidden: [], order: {}, widths: { a: 140 } });
+    expect(JSON.parse(localStorage.getItem('plus-table:settings:reset-follow-up-test')!)).toEqual({
+      hidden: [],
+      order: {},
+      widths: { a: 140 },
+    });
   });
 
   it('validates hidden data columns', async () => {

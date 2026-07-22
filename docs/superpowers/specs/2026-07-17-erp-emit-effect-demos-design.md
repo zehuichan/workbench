@@ -116,12 +116,11 @@ interface EmitEffectRules<H = Record<string, unknown>, L = DocumentLine> {
 ### `useEmitEffect`
 
 ```ts
-const { draft, changeHeader, changeCell, addLine, removeLine, reset } =
-  useEmitEffect({
-    rules,
-    initialDraft,
-    confirm: async (confirmation) => boolean,
-  });
+const { draft, changeHeader, changeCell, addLine, removeLine, reset } = useEmitEffect({
+  rules,
+  initialDraft,
+  confirm: async (confirmation) => boolean,
+});
 ```
 
 - 不内置保存、版本、服务端

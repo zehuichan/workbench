@@ -79,22 +79,14 @@ describe('emit-effect', () => {
     const source = initialDraft();
     const mutation = buildHeaderMutation(rules, source, 'currency', 'USD');
 
-    expect(mutation.nextDraft.lines.map((line) => line.currency)).toEqual([
-      'USD',
-      'USD',
-    ]);
+    expect(mutation.nextDraft.lines.map((line) => line.currency)).toEqual(['USD', 'USD']);
     expect(source.lines[0]?.currency).toBe('CNY');
     expect(mutation.confirmation?.affectedCount).toBe(2);
     expect(mutation.confirmation?.fields).toContain('currency');
   });
 
   it('preserves manual inherited fields', () => {
-    const mutation = buildHeaderMutation(
-      rules,
-      initialDraft(),
-      'warehouseId',
-      'WH-SZ',
-    );
+    const mutation = buildHeaderMutation(rules, initialDraft(), 'warehouseId', 'WH-SZ');
 
     expect(mutation.nextDraft.lines[0]?.warehouseId).toBe('WH-SZ');
     expect(mutation.nextDraft.lines[1]?.warehouseId).toBe('WH-B');
@@ -103,12 +95,7 @@ describe('emit-effect', () => {
   });
 
   it('recalculates derived amounts from header context', () => {
-    const mutation = buildHeaderMutation(
-      rules,
-      initialDraft(),
-      'multiplier',
-      3,
-    );
+    const mutation = buildHeaderMutation(rules, initialDraft(), 'multiplier', 3);
 
     expect(mutation.nextDraft.lines.map((line) => line.amount)).toEqual([6, 9]);
     expect(mutation.nextDraft.summary.total).toBe(15);
@@ -124,9 +111,7 @@ describe('emit-effect', () => {
     });
 
     expect(mutation.nextDraft.lines[0]?.warehouseId).toBe('WH-BJ');
-    expect(mutation.nextDraft.lines[0]?.fieldSources.warehouseId).toBe(
-      'manual',
-    );
+    expect(mutation.nextDraft.lines[0]?.fieldSources.warehouseId).toBe('manual');
     expect(mutation.nextDraft.dirty).toBe(true);
   });
 

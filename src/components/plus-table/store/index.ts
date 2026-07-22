@@ -47,10 +47,7 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
       const raw = toRaw(row);
       let descriptorOwner: object | null = raw;
       while (descriptorOwner) {
-        const descriptor = Object.getOwnPropertyDescriptor(
-          descriptorOwner,
-          prop,
-        );
+        const descriptor = Object.getOwnPropertyDescriptor(descriptorOwner, prop);
         if (descriptor) {
           if (!('value' in descriptor)) {
             throw new Error(
@@ -65,10 +62,7 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
         PropertyKey,
         PropertyDescriptor
       >;
-      const candidate = Object.create(
-        Object.getPrototypeOf(raw),
-        descriptors,
-      ) as T;
+      const candidate = Object.create(Object.getPrototypeOf(raw), descriptors) as T;
       Reflect.set(candidate, prop, value);
       if (getRowIdentity(candidate, watcher.states.rowKey.value) !== rowKey) {
         throw new Error(
@@ -95,11 +89,7 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
       watcher.toggleColumnVisible(id, visible);
     },
 
-    updateColumnOrder(
-      dragId: string,
-      targetId: string,
-      position: 'before' | 'after',
-    ) {
+    updateColumnOrder(dragId: string, targetId: string, position: 'before' | 'after') {
       watcher.updateColumnOrder(dragId, targetId, position);
     },
 
@@ -110,22 +100,14 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
 
   type Mutations = typeof mutations;
 
-  function commit<K extends keyof Mutations>(
-    name: K,
-    ...args: Parameters<Mutations[K]>
-  ): void {
-    const mutation = mutations[name] as (
-      ...args: Parameters<Mutations[K]>
-    ) => void;
+  function commit<K extends keyof Mutations>(name: K, ...args: Parameters<Mutations[K]>): void {
+    const mutation = mutations[name] as (...args: Parameters<Mutations[K]>) => void;
     mutation(...args);
   }
 
   /** 撤销 / 重做：只回滚 row[prop] 并重新对比脏基线、emit('cell-change')、按需重新校验；
    * 不重新触发 dependencies.trigger，避免联动副作用在历史回放时被重复执行 */
-  function applyHistoryChanges(
-    applied: AppliedHistoryChange<T>[],
-    direction: 'undo' | 'redo',
-  ) {
+  function applyHistoryChanges(applied: AppliedHistoryChange<T>[], direction: 'undo' | 'redo') {
     for (const change of applied) {
       watcher.markDirty(change.rowKey, change.prop);
       const value = direction === 'undo' ? change.oldValue : change.newValue;
@@ -168,9 +150,7 @@ function useStore<T extends RowData = RowData>(table: PlusTable<T>) {
 
 export default useStore;
 
-export type InternalStore<T extends RowData = RowData> = ReturnType<
-  typeof useStore<T>
->;
+export type InternalStore<T extends RowData = RowData> = ReturnType<typeof useStore<T>>;
 
 type InternalStoreKey =
   | 'cleanCurrent'
@@ -204,11 +184,7 @@ export type Store<T extends RowData = RowData> = Omit<
 > & {
   states: Omit<
     InternalStore<T>['states'],
-    | 'columnIndexMap'
-    | 'currentCell'
-    | 'editingCell'
-    | 'validationSchema'
-    | 'visibleColumnsById'
+    'columnIndexMap' | 'currentCell' | 'editingCell' | 'validationSchema' | 'visibleColumnsById'
   > & {
     currentCell: WritableComputedRef<CellPosition | null>;
     editingCell: WritableComputedRef<CellPosition | null>;

@@ -150,9 +150,7 @@ export function syncExchangeRateIfStillDefault(
   nextHeader.exchangeRate = defaultExchangeRate(nextHeader.currency);
 }
 
-export function forceCurrencyWithRate(
-  requiresConfirmation = true,
-): HeaderEmitRule {
+export function forceCurrencyWithRate(requiresConfirmation = true): HeaderEmitRule {
   return {
     policy: 'force',
     requiresConfirmation,
@@ -208,30 +206,15 @@ Replace/extend `src/views/erp/sales-order-linkage.test.ts` so it includes (keep 
 ```ts
 import { describe, expect, it } from 'vitest';
 import { buildHeaderMutation } from '@/composables';
-import {
-  createSalesOrderDraft,
-  salesOrderRules,
-} from './sales-order-linkage';
+import { createSalesOrderDraft, salesOrderRules } from './sales-order-linkage';
 
 describe('sales-order-linkage rules', () => {
   it('forces currency and preserves manual warehouse', () => {
     const draft = createSalesOrderDraft();
-    const currency = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'currency',
-      'USD',
-    );
-    expect(
-      currency.nextDraft.lines.every((line) => line.currency === 'USD'),
-    ).toBe(true);
+    const currency = buildHeaderMutation(salesOrderRules, draft, 'currency', 'USD');
+    expect(currency.nextDraft.lines.every((line) => line.currency === 'USD')).toBe(true);
 
-    const warehouse = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'warehouseId',
-      'WH-SZ',
-    );
+    const warehouse = buildHeaderMutation(salesOrderRules, draft, 'warehouseId', 'WH-SZ');
     const manual = warehouse.nextDraft.lines.find(
       (line) => line.fieldSources.warehouseId === 'manual',
     );
@@ -240,31 +223,17 @@ describe('sales-order-linkage rules', () => {
 
   it('reprices inherited unit prices when customer changes', () => {
     const draft = createSalesOrderDraft();
-    const mutation = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'customerId',
-      'customer-channel',
-    );
-    expect(mutation.nextDraft.lines[0]?.unitPrice).not.toBe(
-      draft.lines[0]?.unitPrice,
-    );
+    const mutation = buildHeaderMutation(salesOrderRules, draft, 'customerId', 'customer-channel');
+    expect(mutation.nextDraft.lines[0]?.unitPrice).not.toBe(draft.lines[0]?.unitPrice);
   });
 
   it('sets default exchange rate and local amounts when currency changes from default', () => {
     const draft = createSalesOrderDraft();
     expect(draft.header.exchangeRate).toBe(1);
     const beforeLocal = draft.summary.totalLocalAmount;
-    const mutation = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'currency',
-      'USD',
-    );
+    const mutation = buildHeaderMutation(salesOrderRules, draft, 'currency', 'USD');
     expect(mutation.nextDraft.header.exchangeRate).toBe(7.2);
-    expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(
-      beforeLocal!,
-    );
+    expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(beforeLocal!);
     for (const line of mutation.nextDraft.lines) {
       expect(line.localAmount).toBe(
         Math.round((Number(line.amount) * 7.2 + Number.EPSILON) * 100) / 100,
@@ -274,34 +243,17 @@ describe('sales-order-linkage rules', () => {
 
   it('keeps manual exchange rate when currency changes', () => {
     const draft = createSalesOrderDraft();
-    const withRate = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'exchangeRate',
-      6.5,
-    );
-    const mutation = buildHeaderMutation(
-      salesOrderRules,
-      withRate.nextDraft,
-      'currency',
-      'USD',
-    );
+    const withRate = buildHeaderMutation(salesOrderRules, draft, 'exchangeRate', 6.5);
+    const mutation = buildHeaderMutation(salesOrderRules, withRate.nextDraft, 'currency', 'USD');
     expect(mutation.nextDraft.header.exchangeRate).toBe(6.5);
   });
 
   it('recalculates local amounts when exchange rate changes', () => {
     const draft = createSalesOrderDraft();
     const before = draft.summary.totalLocalAmount;
-    const mutation = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'exchangeRate',
-      8,
-    );
+    const mutation = buildHeaderMutation(salesOrderRules, draft, 'exchangeRate', 8);
     expect(mutation.nextDraft.summary.totalLocalAmount).not.toBe(before);
-    expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(
-      before!,
-    );
+    expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(before!);
   });
 });
 ```
@@ -318,9 +270,7 @@ Expected: FAIL (`exchangeRate` / `totalLocalAmount` / `localAmount` missing or r
 2. In `recalculateSalesLine`, after computing `amount`:
 
 ```ts
-next.localAmount = money(
-  Number(next.amount) * Number(header.exchangeRate ?? 0),
-);
+next.localAmount = money(Number(next.amount) * Number(header.exchangeRate ?? 0));
 ```
 
 3. Header in `createSalesOrderDraft`:
@@ -434,56 +384,32 @@ EOF
 Extend `src/views/erp/purchase-order-linkage.test.ts` with the same three currency/rate cases as sales (swap imports to `createPurchaseOrderDraft` / `purchaseOrderRules`). Keep existing force/warehouse/supplier tests.
 
 ```ts
-  it('sets default exchange rate and local amounts when currency changes from default', () => {
-    const draft = createPurchaseOrderDraft();
-    const beforeLocal = draft.summary.totalLocalAmount;
-    const mutation = buildHeaderMutation(
-      purchaseOrderRules,
-      draft,
-      'currency',
-      'USD',
+it('sets default exchange rate and local amounts when currency changes from default', () => {
+  const draft = createPurchaseOrderDraft();
+  const beforeLocal = draft.summary.totalLocalAmount;
+  const mutation = buildHeaderMutation(purchaseOrderRules, draft, 'currency', 'USD');
+  expect(mutation.nextDraft.header.exchangeRate).toBe(7.2);
+  expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(beforeLocal!);
+  for (const line of mutation.nextDraft.lines) {
+    expect(line.localAmount).toBe(
+      Math.round((Number(line.amount) * 7.2 + Number.EPSILON) * 100) / 100,
     );
-    expect(mutation.nextDraft.header.exchangeRate).toBe(7.2);
-    expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(
-      beforeLocal!,
-    );
-    for (const line of mutation.nextDraft.lines) {
-      expect(line.localAmount).toBe(
-        Math.round((Number(line.amount) * 7.2 + Number.EPSILON) * 100) / 100,
-      );
-    }
-  });
+  }
+});
 
-  it('keeps manual exchange rate when currency changes', () => {
-    const draft = createPurchaseOrderDraft();
-    const withRate = buildHeaderMutation(
-      purchaseOrderRules,
-      draft,
-      'exchangeRate',
-      6.5,
-    );
-    const mutation = buildHeaderMutation(
-      purchaseOrderRules,
-      withRate.nextDraft,
-      'currency',
-      'USD',
-    );
-    expect(mutation.nextDraft.header.exchangeRate).toBe(6.5);
-  });
+it('keeps manual exchange rate when currency changes', () => {
+  const draft = createPurchaseOrderDraft();
+  const withRate = buildHeaderMutation(purchaseOrderRules, draft, 'exchangeRate', 6.5);
+  const mutation = buildHeaderMutation(purchaseOrderRules, withRate.nextDraft, 'currency', 'USD');
+  expect(mutation.nextDraft.header.exchangeRate).toBe(6.5);
+});
 
-  it('recalculates local amounts when exchange rate changes', () => {
-    const draft = createPurchaseOrderDraft();
-    const before = draft.summary.totalLocalAmount;
-    const mutation = buildHeaderMutation(
-      purchaseOrderRules,
-      draft,
-      'exchangeRate',
-      8,
-    );
-    expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(
-      before!,
-    );
-  });
+it('recalculates local amounts when exchange rate changes', () => {
+  const draft = createPurchaseOrderDraft();
+  const before = draft.summary.totalLocalAmount;
+  const mutation = buildHeaderMutation(purchaseOrderRules, draft, 'exchangeRate', 8);
+  expect(mutation.nextDraft.summary.totalLocalAmount).toBeGreaterThan(before!);
+});
 ```
 
 Note: the “keeps manual rate” case must call `buildHeaderMutation(..., 'exchangeRate', 6.5)` first so the draft used for currency change already has `exchangeRate: 6.5` in header (do not only mutate the object without going through rules if `createPurchaseOrderDraft` lacks the field until Task 3 Step 3 — after implementation, either path works; prefer mutation chain as above).
@@ -546,37 +472,20 @@ EOF
 Add to `src/views/erp/expense-report-linkage.test.ts` (keep existing three tests):
 
 ```ts
-  it('sets default exchange rate when currency changes from default', () => {
-    const draft = createExpenseReportDraft();
-    const beforeLocal = draft.summary.localAmount;
-    const mutation = buildHeaderMutation(
-      expenseReportRules,
-      draft,
-      'currency',
-      'USD',
-    );
-    expect(mutation.nextDraft.header.exchangeRate).toBe(7.2);
-    expect(mutation.nextDraft.summary.localAmount).toBeGreaterThan(
-      beforeLocal!,
-    );
-  });
+it('sets default exchange rate when currency changes from default', () => {
+  const draft = createExpenseReportDraft();
+  const beforeLocal = draft.summary.localAmount;
+  const mutation = buildHeaderMutation(expenseReportRules, draft, 'currency', 'USD');
+  expect(mutation.nextDraft.header.exchangeRate).toBe(7.2);
+  expect(mutation.nextDraft.summary.localAmount).toBeGreaterThan(beforeLocal!);
+});
 
-  it('keeps manual exchange rate when currency changes', () => {
-    const draft = createExpenseReportDraft();
-    const withRate = buildHeaderMutation(
-      expenseReportRules,
-      draft,
-      'exchangeRate',
-      6.5,
-    );
-    const mutation = buildHeaderMutation(
-      expenseReportRules,
-      withRate.nextDraft,
-      'currency',
-      'USD',
-    );
-    expect(mutation.nextDraft.header.exchangeRate).toBe(6.5);
-  });
+it('keeps manual exchange rate when currency changes', () => {
+  const draft = createExpenseReportDraft();
+  const withRate = buildHeaderMutation(expenseReportRules, draft, 'exchangeRate', 6.5);
+  const mutation = buildHeaderMutation(expenseReportRules, withRate.nextDraft, 'currency', 'USD');
+  expect(mutation.nextDraft.header.exchangeRate).toBe(6.5);
+});
 ```
 
 - [ ] **Step 2: Run expense tests to verify new cases fail**
@@ -625,14 +534,14 @@ EOF
 
 ## Spec Coverage Checklist
 
-| Spec requirement | Task |
-| ---------------- | ---- |
-| Shared defaults + sync helpers + `forceCurrencyWithRate` | Task 1 |
-| Sales `exchangeRate` / `localAmount` / `totalLocalAmount` + UI | Task 2 |
-| Purchase same | Task 3 |
-| Expense currency→default rate (keep existing local calc) | Task 4 |
-| Overwrite only when rate still old default | Tasks 1–4 tests |
-| Manual rate preserved on currency change | Tasks 2–4 tests |
-| `exchangeRate` recalculate local amounts | Tasks 2–3 (expense already) |
-| No composable API change | Global constraint |
-| Demo rates CNY/USD/EUR | Task 1 |
+| Spec requirement                                               | Task                        |
+| -------------------------------------------------------------- | --------------------------- |
+| Shared defaults + sync helpers + `forceCurrencyWithRate`       | Task 1                      |
+| Sales `exchangeRate` / `localAmount` / `totalLocalAmount` + UI | Task 2                      |
+| Purchase same                                                  | Task 3                      |
+| Expense currency→default rate (keep existing local calc)       | Task 4                      |
+| Overwrite only when rate still old default                     | Tasks 1–4 tests             |
+| Manual rate preserved on currency change                       | Tasks 2–4 tests             |
+| `exchangeRate` recalculate local amounts                       | Tasks 2–3 (expense already) |
+| No composable API change                                       | Global constraint           |
+| Demo rates CNY/USD/EUR                                         | Task 1                      |

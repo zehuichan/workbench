@@ -8,15 +8,15 @@ Date: 2026-07-18
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 形态 | Playground 新路由页，非 VitePress / Markdown 文档站 |
-| 覆盖粒度 | 完整公开面（Props / Events / Slots / Expose / Column / dependencies） |
-| 交互 | 纯文档：无 `DemoBlock`、无 `PlusTable` 实例 |
-| 侧栏位置 | PlusTable 分组第一项（`order: 0`） |
-| 默认落地 | `/` 仍重定向到 `/plus-table/basic-editing` |
-| 实现方式 | 单页手写多张 `DemoApiTable`（与现有 demo 风格一致） |
-| 场景页 API | 各页「本页用到」子集 **保留**，不抽共享片段 |
+| 项         | 选择                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| 形态       | Playground 新路由页，非 VitePress / Markdown 文档站                   |
+| 覆盖粒度   | 完整公开面（Props / Events / Slots / Expose / Column / dependencies） |
+| 交互       | 纯文档：无 `DemoBlock`、无 `PlusTable` 实例                           |
+| 侧栏位置   | PlusTable 分组第一项（`order: 0`）                                    |
+| 默认落地   | `/` 仍重定向到 `/plus-table/basic-editing`                            |
+| 实现方式   | 单页手写多张 `DemoApiTable`（与现有 demo 风格一致）                   |
+| 场景页 API | 各页「本页用到」子集 **保留**，不抽共享片段                           |
 
 ## Out of Scope
 
@@ -27,8 +27,8 @@ Date: 2026-07-18
 
 ## Routes & Files
 
-| 路径 | 组件 | meta |
-|------|------|------|
+| 路径                       | 组件                                         | meta                                                      |
+| -------------------------- | -------------------------------------------- | --------------------------------------------------------- |
 | `/plus-table/api-overview` | `src/views/plus-table/api-overview-demo.vue` | `{ title: 'API Overview', group: 'PlusTable', order: 0 }` |
 
 - 组件名：`ApiOverviewDemo`
@@ -50,19 +50,19 @@ DemoPage (width="wide")
 
 文案以类型定义与现有场景页为准，可合并同义行（如 `undo`/`redo`），不扩写教程。
 
-| # | 标题 | 覆盖 |
-|---|------|------|
-| 1 | Props | `PlusTableProps` 全量：`data`/`columns`/`rowKey`/`mode`/`validateEvent`/`cache`/`id`/`adaptive`/`total`/`page`/`pageSize`/`pageSizes`/`history`/`dirtyTracking`/`hotkeys`/`hotkeyEnabled` |
-| 2 | Events | `update:data`、`cell-change`、`update:page`、`update:pageSize`、`page-change` |
-| 3 | Slots | `title` / `toolbar` / `summary` / `empty`；动态 `cell-*` / `header-*` / `editor-*` |
-| 4 | Expose · 校验 | `validate` / `clearValidate` / `getErrors` |
-| 5 | Expose · 行操作 | `insertRow` / `removeRow` / `moveRow` / `duplicateRow` |
-| 6 | Expose · 编辑 | `startEdit` / `cancelEdit` / `startRowEdit` / `commitRowEdit` / `cancelRowEdit` / `setActiveCell` |
-| 7 | Expose · 列设置 | `resetColumnSettings` / `setColumnWidth` |
-| 8 | Expose · 历史 | `undo` / `redo` / `canUndo` / `canRedo` / `clearHistory` |
-| 9 | Expose · 脏追踪 | `getModifiedRows` / `getDirtyCells` / `isCellDirty` / `isRowDirty` / `resetTracking` / `clearDirty` |
-| 10 | Column | `prop`/`type`/`editable`/`component`/`componentProps`/`modelProp`/`required`/`rules`/`render`/`visible`/`children`；注明 el-table-column 常用字段可直通 |
-| 11 | dependencies | `triggerFields` / `disabled` / `required` / `rules` / `componentProps` / `trigger` |
+| #   | 标题            | 覆盖                                                                                                                                                                                      |
+| --- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Props           | `PlusTableProps` 全量：`data`/`columns`/`rowKey`/`mode`/`validateEvent`/`cache`/`id`/`adaptive`/`total`/`page`/`pageSize`/`pageSizes`/`history`/`dirtyTracking`/`hotkeys`/`hotkeyEnabled` |
+| 2   | Events          | `update:data`、`cell-change`、`update:page`、`update:pageSize`、`page-change`                                                                                                             |
+| 3   | Slots           | `title` / `toolbar` / `summary` / `empty`；动态 `cell-*` / `header-*` / `editor-*`                                                                                                        |
+| 4   | Expose · 校验   | `validate` / `clearValidate` / `getErrors`                                                                                                                                                |
+| 5   | Expose · 行操作 | `insertRow` / `removeRow` / `moveRow` / `duplicateRow`                                                                                                                                    |
+| 6   | Expose · 编辑   | `startEdit` / `cancelEdit` / `startRowEdit` / `commitRowEdit` / `cancelRowEdit` / `setActiveCell`                                                                                         |
+| 7   | Expose · 列设置 | `resetColumnSettings` / `setColumnWidth`                                                                                                                                                  |
+| 8   | Expose · 历史   | `undo` / `redo` / `canUndo` / `canRedo` / `clearHistory`                                                                                                                                  |
+| 9   | Expose · 脏追踪 | `getModifiedRows` / `getDirtyCells` / `isCellDirty` / `isRowDirty` / `resetTracking` / `clearDirty`                                                                                       |
+| 10  | Column          | `prop`/`type`/`editable`/`component`/`componentProps`/`modelProp`/`required`/`rules`/`render`/`visible`/`children`；注明 el-table-column 常用字段可直通                                   |
+| 11  | dependencies    | `triggerFields` / `disabled` / `required` / `rules` / `componentProps` / `trigger`                                                                                                        |
 
 Source of truth for signatures:
 

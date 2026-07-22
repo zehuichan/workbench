@@ -6,11 +6,7 @@ import DemoPage from '@/components/demo/demo-page.vue';
 import { PlusTable } from '@/components/plus-table';
 import type { CellChangePayload } from '@/components/plus-table';
 import { useEmitEffect, type DocumentLine } from '@/composables';
-import {
-  CURRENCY_OPTIONS,
-  WAREHOUSE_OPTIONS,
-  formatSource,
-} from './emit-helpers';
+import { CURRENCY_OPTIONS, WAREHOUSE_OPTIONS, formatSource } from './emit-helpers';
 import {
   PURCHASE_SUPPLIER_OPTIONS,
   createPurchaseOrderDraft,
@@ -84,7 +80,8 @@ async function onRemoveLine(id: string) {
     <template #description>
       采购订单演示表头→明细副作用：币种
       <code>force</code>（默认汇率时改币种会带出新汇率）、仓库/税率
-      <code>inherit</code>、供应商/汇率 <code>recalculate</code>。明细改仓库/税率/单价后标记为人工值；本位币
+      <code>inherit</code>、供应商/汇率
+      <code>recalculate</code>。明细改仓库/税率/单价后标记为人工值；本位币
       <code>amount × exchangeRate</code>。手改汇率后改币种不覆盖。
     </template>
 
@@ -190,9 +187,7 @@ async function onRemoveLine(id: string) {
         class="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 border-t border-[var(--el-border-color-lighter)] pt-3"
       >
         <div class="min-w-28">
-          <div class="text-xs text-[var(--el-text-color-secondary)]">
-            数量合计
-          </div>
+          <div class="text-xs text-[var(--el-text-color-secondary)]">数量合计</div>
           <div
             class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-text-color-primary)]"
           >
@@ -200,9 +195,7 @@ async function onRemoveLine(id: string) {
           </div>
         </div>
         <div class="min-w-28">
-          <div class="text-xs text-[var(--el-text-color-secondary)]">
-            价税合计
-          </div>
+          <div class="text-xs text-[var(--el-text-color-secondary)]">价税合计</div>
           <div
             class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-text-color-primary)]"
           >
@@ -210,9 +203,7 @@ async function onRemoveLine(id: string) {
           </div>
         </div>
         <div class="min-w-28">
-          <div class="text-xs text-[var(--el-text-color-secondary)]">
-            本位币合计
-          </div>
+          <div class="text-xs text-[var(--el-text-color-secondary)]">本位币合计</div>
           <div
             class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-color-primary)]"
           >

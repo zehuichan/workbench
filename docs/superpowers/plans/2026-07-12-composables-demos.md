@@ -16,20 +16,21 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `src/layouts/playground-layout.vue` | 增加 Composables 侧栏分组 |
-| `src/router/index.ts` | 注册三条 `/composables/...` 路由 |
-| `src/views/composables/use-auto-save-demo.vue` | 自动保存场景 |
-| `src/views/composables/use-form-draft-demo.vue` | localStorage 草稿场景 |
-| `src/views/composables/use-save-hotkey-demo.vue` | Ctrl/Cmd+S 主页 |
-| `src/views/composables/save-hotkey-dialog-panel.vue` | 对话框内嵌套热键（更深优先） |
+| 路径                                                 | 职责                             |
+| ---------------------------------------------------- | -------------------------------- |
+| `src/layouts/playground-layout.vue`                  | 增加 Composables 侧栏分组        |
+| `src/router/index.ts`                                | 注册三条 `/composables/...` 路由 |
+| `src/views/composables/use-auto-save-demo.vue`       | 自动保存场景                     |
+| `src/views/composables/use-form-draft-demo.vue`      | localStorage 草稿场景            |
+| `src/views/composables/use-save-hotkey-demo.vue`     | Ctrl/Cmd+S 主页                  |
+| `src/views/composables/save-hotkey-dialog-panel.vue` | 对话框内嵌套热键（更深优先）     |
 
 ---
 
 ### Task 1: 路由 + 侧栏
 
 **Files:**
+
 - Modify: `src/router/index.ts`
 - Modify: `src/layouts/playground-layout.vue`
 - Create: 三个 demo 文件的空壳（可在本任务只加路由占位，或与 Task 2–4 一并创建完整页）
@@ -92,11 +93,13 @@ git commit -m "feat(playground): add composables nav and routes"
 ### Task 2: use-auto-save-demo
 
 **Files:**
+
 - Create: `src/views/composables/use-auto-save-demo.vue`
 
 - [ ] **Step 1: 实现页面**
 
 要点：
+
 - `form = ref({ title, note })` 作为 `source`
 - `serverSnapshot = ref(...)`；`save` 内 `await delay(400)` 后 `structuredClone` 写入 snapshot
 - `enabled`、`debounceMs`（500 | 1500）为 ref，传给 `useAutoSave`
@@ -176,11 +179,13 @@ Expected: 通过（可与后续页一并跑）。
 ### Task 3: use-form-draft-demo
 
 **Files:**
+
 - Create: `src/views/composables/use-form-draft-demo.vue`
 
 - [ ] **Step 1: 实现页面**
 
 要点：
+
 - `DRAFT_KEY = 'composables-demo:form-draft'`
 - `defaults = { name: '', email: '', remark: '' }`
 - `form = ref({ ...defaults })`
@@ -191,14 +196,7 @@ Expected: 通过（可与后续页一并跑）。
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue';
-import {
-  ElButton,
-  ElForm,
-  ElFormItem,
-  ElInput,
-  ElSwitch,
-  ElMessage,
-} from 'element-plus';
+import { ElButton, ElForm, ElFormItem, ElInput, ElSwitch, ElMessage } from 'element-plus';
 import { useFormDraft } from '@/composables';
 
 defineOptions({ name: 'UseFormDraftDemo' });
@@ -245,11 +243,13 @@ function handleFlush() {
 ### Task 4: use-save-hotkey-demo
 
 **Files:**
+
 - Create: `src/views/composables/use-save-hotkey-demo.vue`
 
 - [ ] **Step 1: 实现页面（含子组件）**
 
 要点：
+
 - 父组件：`enabled` / `active` 开关；`saveCount`；`useSaveHotkey({ handler, enabled, active })`；保存按钮与热键同一 handler（`ElMessage` + 计数）
 - 对话框：独立子组件 `save-hotkey-dialog-panel.vue` 内再 `useSaveHotkey`，保证树深度 > 父级
 - 打开 `el-dialog` 时挂载子组件；关闭后回到主 handler
@@ -264,10 +264,10 @@ Expected: exit 0。
 
 - [ ] **Step 3: 手动验收（对照 spec）**
 
-1. 侧栏 Composables 三路由可切换  
-2. auto-save：编辑后 status 变化；Flush / withPaused / enabled 可观察  
-3. form-draft：Flush 后刷新，Restore 能回填；Clear 后 Restore 提示无草稿  
-4. save-hotkey：主页面与对话框 Ctrl/Cmd+S 分别计数；enabled/active 关闭后主热键不响应  
+1. 侧栏 Composables 三路由可切换
+2. auto-save：编辑后 status 变化；Flush / withPaused / enabled 可观察
+3. form-draft：Flush 后刷新，Restore 能回填；Clear 后 Restore 提示无草稿
+4. save-hotkey：主页面与对话框 Ctrl/Cmd+S 分别计数；enabled/active 关闭后主热键不响应
 
 - [ ] **Step 4: Commit**
 
@@ -280,11 +280,11 @@ git commit -m "feat(playground): add composables demos"
 
 ## Spec Coverage
 
-| Spec 项 | Task |
-|---------|------|
-| 三条路由 + 侧栏分组 | 1 |
-| use-auto-save 场景 | 2 |
-| use-form-draft 场景 | 3 |
-| use-save-hotkey + dialog 优先 | 4 |
-| typecheck | 2–4 |
+| Spec 项                                 | Task     |
+| --------------------------------------- | -------- |
+| 三条路由 + 侧栏分组                     | 1        |
+| use-auto-save 场景                      | 2        |
+| use-form-draft 场景                     | 3        |
+| use-save-hotkey + dialog 优先           | 4        |
+| typecheck                               | 2–4      |
 | 不做真实后端 / PlusTable / 测试 / shell | 全程遵守 |

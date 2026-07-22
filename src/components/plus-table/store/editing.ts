@@ -25,9 +25,7 @@ export function useEditing<T extends RowData = RowData>(
         return isEqual(previous, next) ? (previous ?? null) : next;
       },
       set: (next) => {
-        setEditingCell(
-          next ? table.store.toCellRef(next.rowIndex, next.colIndex) : null,
-        );
+        setEditingCell(next ? table.store.toCellRef(next.rowIndex, next.colIndex) : null);
       },
     }),
     /** row 模式：当前编辑行 key */
@@ -48,10 +46,7 @@ export function useEditing<T extends RowData = RowData>(
     const current = editingRef.value;
     if (
       current === next ||
-      (current &&
-        next &&
-        current.rowKey === next.rowKey &&
-        current.colId === next.colId)
+      (current && next && current.rowKey === next.rowKey && current.colId === next.colId)
     ) {
       return;
     }
@@ -65,10 +60,7 @@ export function useEditing<T extends RowData = RowData>(
     return ref ? table.store.locateCellRef(ref) : null;
   }
 
-  function getDraft(
-    rowKey: string,
-    prop: string,
-  ): { has: boolean; value: unknown } {
+  function getDraft(rowKey: string, prop: string): { has: boolean; value: unknown } {
     const rowDrafts = drafts.get(rowKey);
     return {
       has: rowDrafts?.has(prop) ?? false,
@@ -119,12 +111,7 @@ export function useEditing<T extends RowData = RowData>(
   }
 
   /** 失焦提交：把缓冲的草稿经 setCellValue 流水线写回，随后清掉草稿位（row/table 模式文本类编辑器用） */
-  function flushDraft(
-    row: T,
-    rowIndex: number,
-    rowKey: string,
-    prop: string,
-  ): void {
+  function flushDraft(row: T, rowIndex: number, rowKey: string, prop: string): void {
     const draft = getDraft(rowKey, prop);
     if (!draft.has) return;
     deleteDraft(rowKey, prop);
@@ -182,8 +169,7 @@ export function useEditing<T extends RowData = RowData>(
     return (
       table.store.states.mode.value !== 'none' &&
       resolveEditable(cell.row, cell.rowIndex, cell.node.column) &&
-      !table.store.getDependencyState(cell.row, cell.rowIndex, cell.node.column)
-        .disabled
+      !table.store.getDependencyState(cell.row, cell.rowIndex, cell.node.column).disabled
     );
   }
 
@@ -240,11 +226,7 @@ export function useEditing<T extends RowData = RowData>(
     if (!cell || !isLocatedCellEditable(cell)) return false;
     if (editingRef.value) commitEdit();
     const hasInitial = 'defaultValue' in opts;
-    setDraft(
-      cell.rowKey,
-      cell.prop,
-      hasInitial ? opts.defaultValue : cell.row[cell.prop],
-    );
+    setDraft(cell.rowKey, cell.prop, hasInitial ? opts.defaultValue : cell.row[cell.prop]);
     setEditingCell(ref);
     table.store.setCurrentCell(rowIndex, colIndex);
     void focusEditor(ref, hasInitial);
@@ -265,13 +247,7 @@ export function useEditing<T extends RowData = RowData>(
     const draft = getDraft(cell.rowKey, cell.prop);
     if (!draft.has) return;
     deleteDraft(cell.rowKey, cell.prop);
-    table.store.commit(
-      'setCellValue',
-      cell.row,
-      cell.rowIndex,
-      cell.prop,
-      draft.value,
-    );
+    table.store.commit('setCellValue', cell.row, cell.rowIndex, cell.prop, draft.value);
   }
 
   function cancelEdit(): void {
@@ -286,8 +262,7 @@ export function useEditing<T extends RowData = RowData>(
     const current = editingRef.value;
     if (!current || table.store.states.mode.value !== 'row') return;
     const cell = table.store.locateCellRef(current);
-    if (flush && cell)
-      flushDraft(cell.row, cell.rowIndex, cell.rowKey, cell.prop);
+    if (flush && cell) flushDraft(cell.row, cell.rowIndex, cell.rowKey, cell.prop);
     setEditingCell(null);
     deleteRefDraft(current);
   }

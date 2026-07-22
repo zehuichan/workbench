@@ -46,9 +46,7 @@ describe('resolveEditor', () => {
     );
     expect(resolved.component).toBe(ElSelectV2);
     expect(resolved.trigger).toBe('change');
-    expect(resolved.componentProps.options).toEqual([
-      { label: 'A', value: 'a' },
-    ]);
+    expect(resolved.componentProps.options).toEqual([{ label: 'A', value: 'a' }]);
   });
 
   it('accepts a Vue component and custom modelProp', () => {
@@ -75,9 +73,9 @@ describe('resolveEditor', () => {
   });
 
   it('rejects unknown builtin component name', () => {
-    expect(() =>
-      resolveEditor({ component: 'not-a-editor' as 'input' }, ctx),
-    ).toThrow(/未知的 component/);
+    expect(() => resolveEditor({ component: 'not-a-editor' as 'input' }, ctx)).toThrow(
+      /未知的 component/,
+    );
   });
 });
 

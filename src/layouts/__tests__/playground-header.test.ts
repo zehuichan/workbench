@@ -3,8 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import PlaygroundHeader from '../playground-header.vue';
 
 describe('playground-header', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
-    [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
 
   async function mountHeader(
     props: {

@@ -26,8 +26,7 @@ vi.mock('element-plus', async (importOriginal) => {
 import PlusTableColumnNode from '../../table-column';
 
 describe('PlusTable column rendering', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
-    [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
 
   afterEach(() => {
     renderedProps.length = 0;
@@ -61,8 +60,6 @@ describe('PlusTable column rendering', () => {
     mounted.push({ app, host });
     await nextTick();
 
-    expect(renderedProps.at(-1)).toEqual(
-      expect.objectContaining({ columnKey: '#', width: 88 }),
-    );
+    expect(renderedProps.at(-1)).toEqual(expect.objectContaining({ columnKey: '#', width: 88 }));
   });
 });

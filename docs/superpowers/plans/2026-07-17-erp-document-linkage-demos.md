@@ -92,9 +92,7 @@ const scenario: ScenarioConfig = {
   headerFields: [],
   columns: [],
   sourceFields: [{ prop: 'warehouseId', label: '仓库' }],
-  summaryFields: [
-    { prop: 'total', label: '合计', format: (value) => String(value) },
-  ],
+  summaryFields: [{ prop: 'total', label: '合计', format: (value) => String(value) }],
   headerRules: {
     currency: {
       policy: 'force',
@@ -168,25 +166,14 @@ describe('document linkage', () => {
   it('forces values to every line without mutating the source draft', () => {
     const source = initialDraft();
     const mutation = buildHeaderMutation(scenario, source, 'currency', 'USD');
-    expect(mutation.nextDraft.lines.map((line) => line.currency)).toEqual([
-      'USD',
-      'USD',
-    ]);
+    expect(mutation.nextDraft.lines.map((line) => line.currency)).toEqual(['USD', 'USD']);
     expect(mutation.confirmation?.affectedCount).toBe(2);
     expect(source.header.currency).toBe('CNY');
   });
 
   it('updates inherited values and preserves manual overrides', () => {
-    const mutation = buildHeaderMutation(
-      scenario,
-      initialDraft(),
-      'warehouseId',
-      'WH-C',
-    );
-    expect(mutation.nextDraft.lines.map((line) => line.warehouseId)).toEqual([
-      'WH-C',
-      'WH-B',
-    ]);
+    const mutation = buildHeaderMutation(scenario, initialDraft(), 'warehouseId', 'WH-C');
+    expect(mutation.nextDraft.lines.map((line) => line.warehouseId)).toEqual(['WH-C', 'WH-B']);
     expect(mutation.record.preservedLineIds).toEqual(['2']);
   });
 
@@ -210,9 +197,7 @@ describe('document linkage', () => {
       value: 'WH-X',
       oldValue: 'WH-A',
     });
-    expect(mutation.nextDraft.lines[0]?.fieldSources.warehouseId).toBe(
-      'manual',
-    );
+    expect(mutation.nextDraft.lines[0]?.fieldSources.warehouseId).toBe('manual');
   });
 
   it('adds and removes rows through the same recalculate-aggregate pipeline', () => {
@@ -335,14 +320,8 @@ export interface ScenarioConfig {
   headerRules: Record<string, HeaderLinkageRule>;
   createInitialDraft: () => DocumentDraft;
   createLine: (draft: DocumentDraft, id: string) => DocumentLine;
-  recalculateLine: (
-    line: DocumentLine,
-    header: Record<string, unknown>,
-  ) => DocumentLine;
-  summarize: (
-    lines: DocumentLine[],
-    header: Record<string, unknown>,
-  ) => DocumentSummary;
+  recalculateLine: (line: DocumentLine, header: Record<string, unknown>) => DocumentLine;
+  summarize: (lines: DocumentLine[], header: Record<string, unknown>) => DocumentSummary;
   validate: (draft: DocumentDraft) => DocumentIssue[];
 }
 
@@ -390,19 +369,12 @@ import type {
 
 function changedFields(before: DocumentLine, after: DocumentLine): string[] {
   return [...new Set([...Object.keys(before), ...Object.keys(after)])].filter(
-    (field) =>
-      field !== 'fieldSources' && !isEqual(before[field], after[field]),
+    (field) => field !== 'fieldSources' && !isEqual(before[field], after[field]),
   );
 }
 
-function finalize(
-  config: ScenarioConfig,
-  draft: DocumentDraft,
-  dirty: boolean,
-): DocumentDraft {
-  const lines = draft.lines.map((line) =>
-    config.recalculateLine(cloneDeep(line), draft.header),
-  );
+function finalize(config: ScenarioConfig, draft: DocumentDraft, dirty: boolean): DocumentDraft {
+  const lines = draft.lines.map((line) => config.recalculateLine(cloneDeep(line), draft.header));
   return {
     ...draft,
     lines,
@@ -411,10 +383,7 @@ function finalize(
   };
 }
 
-export function normalizeDraft(
-  config: ScenarioConfig,
-  source: DocumentDraft,
-): DocumentDraft {
+export function normalizeDraft(config: ScenarioConfig, source: DocumentDraft): DocumentDraft {
   return finalize(config, cloneDeep(source), source.dirty);
 }
 
@@ -439,8 +408,7 @@ export function buildHeaderMutation(
     Object.assign(line, effect.patch);
     Object.assign(line.fieldSources, effect.sourcePatch);
     const recalculated = config.recalculateLine(line, working.header);
-    if (changedFields(before, recalculated).length > 0)
-      affectedLineIds.push(line.id);
+    if (changedFields(before, recalculated).length > 0) affectedLineIds.push(line.id);
     if (effect.preservedFields?.length) preservedLineIds.push(line.id);
     return recalculated;
   });
@@ -575,26 +543,15 @@ Expected: linkage tests PASS; typecheck PASS.
 ```ts
 import { describe, expect, it } from 'vitest';
 import { buildHeaderMutation, applyDetailMutation } from '../document-linkage';
-import {
-  expenseReportScenario,
-  purchaseOrderScenario,
-  salesOrderScenario,
-} from '.';
+import { expenseReportScenario, purchaseOrderScenario, salesOrderScenario } from '.';
 
 describe('ERP scenarios', () => {
   it('reprices inherited sales prices and preserves manual prices', () => {
     const source = salesOrderScenario.createInitialDraft();
     source.lines[1]!.fieldSources.unitPrice = 'manual';
     source.lines[1]!.unitPrice = 999;
-    const mutation = buildHeaderMutation(
-      salesOrderScenario,
-      source,
-      'priceListId',
-      'wholesale',
-    );
-    expect(mutation.nextDraft.lines[0]?.unitPrice).not.toBe(
-      source.lines[0]?.unitPrice,
-    );
+    const mutation = buildHeaderMutation(salesOrderScenario, source, 'priceListId', 'wholesale');
+    expect(mutation.nextDraft.lines[0]?.unitPrice).not.toBe(source.lines[0]?.unitPrice);
     expect(mutation.nextDraft.lines[1]?.unitPrice).toBe(999);
     expect(mutation.record.preservedLineIds).toContain(source.lines[1]!.id);
   });
@@ -607,12 +564,9 @@ describe('ERP scenarios', () => {
       value: 10,
       oldValue: source.lines[0]!.quantity,
     });
-    expect(mutation.nextDraft.summary.totalQuantity).toBeGreaterThan(
-      source.summary.totalQuantity,
-    );
+    expect(mutation.nextDraft.summary.totalQuantity).toBeGreaterThan(source.summary.totalQuantity);
     expect(mutation.nextDraft.summary.grossAmount).toBe(
-      mutation.nextDraft.summary.netAmount +
-        mutation.nextDraft.summary.taxAmount,
+      mutation.nextDraft.summary.netAmount + mutation.nextDraft.summary.taxAmount,
     );
   });
 
@@ -620,32 +574,17 @@ describe('ERP scenarios', () => {
     const source = expenseReportScenario.createInitialDraft();
     source.lines[1]!.fieldSources.projectId = 'manual';
     source.lines[1]!.projectId = 'internal';
-    const mutation = buildHeaderMutation(
-      expenseReportScenario,
-      source,
-      'projectId',
-      'phoenix',
-    );
+    const mutation = buildHeaderMutation(expenseReportScenario, source, 'projectId', 'phoenix');
     expect(mutation.nextDraft.lines[0]?.projectId).toBe('phoenix');
     expect(mutation.nextDraft.lines[1]?.projectId).toBe('internal');
   });
 
   it('recalculates every expense local amount when exchange rate changes', () => {
     const source = expenseReportScenario.createInitialDraft();
-    const mutation = buildHeaderMutation(
-      expenseReportScenario,
-      source,
-      'exchangeRate',
-      8,
-    );
-    expect(mutation.nextDraft.lines[0]?.localAmount).not.toBe(
-      source.lines[0]?.localAmount,
-    );
+    const mutation = buildHeaderMutation(expenseReportScenario, source, 'exchangeRate', 8);
+    expect(mutation.nextDraft.lines[0]?.localAmount).not.toBe(source.lines[0]?.localAmount);
     expect(mutation.nextDraft.summary.localAmount).toBe(
-      mutation.nextDraft.lines.reduce(
-        (sum, line) => sum + Number(line.localAmount),
-        0,
-      ),
+      mutation.nextDraft.lines.reduce((sum, line) => sum + Number(line.localAmount), 0),
     );
   });
 
@@ -702,13 +641,10 @@ export function money(value: unknown): number {
 }
 
 export function formatMoney(value: number, draft: DocumentDraft): string {
-  return `${String(draft.header.currency ?? 'CNY')} ${value.toLocaleString(
-    'zh-CN',
-    {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    },
-  )}`;
+  return `${String(draft.header.currency ?? 'CNY')} ${value.toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 export function forceField(
@@ -725,10 +661,7 @@ export function forceField(
   };
 }
 
-export function inheritField(
-  headerField: string,
-  lineField: string,
-): HeaderLinkageRule {
+export function inheritField(headerField: string, lineField: string): HeaderLinkageRule {
   return {
     policy: 'inherit',
     apply: (line, nextHeader) =>
@@ -765,9 +698,7 @@ export function validateRequired(
 }
 
 export function sum(lines: DocumentLine[], field: string): number {
-  return money(
-    lines.reduce((total, line) => total + Number(line[field] ?? 0), 0),
-  );
+  return money(lines.reduce((total, line) => total + Number(line[field] ?? 0), 0));
 }
 ```
 
@@ -980,10 +911,7 @@ function wait(delayMs: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, delayMs));
 }
 
-function collectCorrections(
-  client: DocumentDraft,
-  server: DocumentDraft,
-): Correction[] {
+function collectCorrections(client: DocumentDraft, server: DocumentDraft): Correction[] {
   const corrections: Correction[] = [];
   for (const [field, value] of Object.entries(server.summary)) {
     if (!isEqual(client.summary[field], value)) {
@@ -1166,10 +1094,7 @@ Each editor must forward `field.componentProps`; select options come from `field
 const props = defineProps<{ scenario: ScenarioConfig }>();
 const draft = ref(props.scenario.createInitialDraft());
 const lastSynced = ref(cloneDeep(draft.value));
-const server = createMockDocumentServer(
-  props.scenario,
-  props.scenario.createInitialDraft(),
-);
+const server = createMockDocumentServer(props.scenario, props.scenario.createInitialDraft());
 const records = ref<LinkageRecord[]>([]);
 const issues = ref<DocumentIssue[]>([]);
 const conflictDraft = ref<DocumentDraft>();
@@ -1284,13 +1209,10 @@ const erpDemos = [
   [expenseReport, 'expenseReportScenario'],
 ] as const;
 
-it.each(erpDemos)(
-  'connects an ERP route wrapper to its scenario',
-  (source, scenario) => {
-    expect(source).toContain('ErpDocumentDemo');
-    expect(source).toContain(scenario);
-  },
-);
+it.each(erpDemos)('connects an ERP route wrapper to its scenario', (source, scenario) => {
+  expect(source).toContain('ErpDocumentDemo');
+  expect(source).toContain(scenario);
+});
 ```
 
 - [ ] **Step 2: Run route/content tests in the red state**

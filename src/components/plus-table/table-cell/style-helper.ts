@@ -10,8 +10,7 @@ export function getCellClasses(view: CellView) {
       'ptbl-cell--editing-focus': view.editing && view.mode === 'cell',
       // row 模式整行进编：编辑器平时无边框，仅聚焦格高亮
       'ptbl-cell--editing-quiet': view.editing && view.mode === 'row',
-      'ptbl-cell--editable':
-        view.editable && !view.editing && view.mode === 'cell',
+      'ptbl-cell--editable': view.editable && !view.editing && view.mode === 'cell',
       'ptbl-cell--disabled': view.disabled,
       'ptbl-cell--error': !!view.error,
       'ptbl-cell--required': view.required,

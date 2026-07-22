@@ -8,16 +8,16 @@ Date: 2026-07-19
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 范围 | 仅 JSSDK 双 config 初始化（不含 OAuth、业务 JSAPI 封装） |
-| 实现策略 | 镜像 `useWeixin` 独立 composable（方案 1）；不抽共享内核、不改 `useWeixin` |
-| 环境检测 | 仅企微 UA：`/wxwork/i` |
-| `ready` 语义 | `wx.config` **且** `wx.agentConfig` 都成功后为 `true` |
-| 开关 | 独立 `VITE_WW_JSSDK_ENABLED === 'true'`（不复用 `VITE_JSSDK_ENABLED`） |
-| 签名拉取 | 两个可替换 stub：`fetchWwJsConfig` + `fetchWwAgentConfig` |
-| Demo | API 文档页（描述 + API 表 + 代码块），无真实交互 |
-| 测试 | vitest + happy-dom，放在 `composables/__tests__/use-work-weixin/` |
+| 项           | 选择                                                                       |
+| ------------ | -------------------------------------------------------------------------- |
+| 范围         | 仅 JSSDK 双 config 初始化（不含 OAuth、业务 JSAPI 封装）                   |
+| 实现策略     | 镜像 `useWeixin` 独立 composable（方案 1）；不抽共享内核、不改 `useWeixin` |
+| 环境检测     | 仅企微 UA：`/wxwork/i`                                                     |
+| `ready` 语义 | `wx.config` **且** `wx.agentConfig` 都成功后为 `true`                      |
+| 开关         | 独立 `VITE_WW_JSSDK_ENABLED === 'true'`（不复用 `VITE_JSSDK_ENABLED`）     |
+| 签名拉取     | 两个可替换 stub：`fetchWwJsConfig` + `fetchWwAgentConfig`                  |
+| Demo         | API 文档页（描述 + API 表 + 代码块），无真实交互                           |
+| 测试         | vitest + happy-dom，放在 `composables/__tests__/use-work-weixin/`          |
 
 ## Out of scope
 
@@ -46,18 +46,18 @@ src/env.d.ts                            # VITE_WW_JSSDK_ENABLED + agentConfig
 ## Public API
 
 ```ts
-const useWorkWeixin: () => [Ref<boolean>, WeixinJsSdk | undefined]
+const useWorkWeixin: () => [Ref<boolean>, WeixinJsSdk | undefined];
 ```
 
-| 项 | 约定 |
-|----|------|
-| 返回值 | `[ready, wx]`，与 `useWeixin` 同形 |
-| `ready` | 双 config 成功后为 `true`；任一步失败保持 `false`，并清空 `pending` 以便重试 |
-| `wx` | `window.wx`；未注入则为 `undefined` |
-| 公开入口 | `@/composables` 只导出 `useWorkWeixin` |
+| 项        | 约定                                                                           |
+| --------- | ------------------------------------------------------------------------------ |
+| 返回值    | `[ready, wx]`，与 `useWeixin` 同形                                             |
+| `ready`   | 双 config 成功后为 `true`；任一步失败保持 `false`，并清空 `pending` 以便重试   |
+| `wx`      | `window.wx`；未注入则为 `undefined`                                            |
+| 公开入口  | `@/composables` 只导出 `useWorkWeixin`                                         |
 | 内部 stub | `fetchWwJsConfig` / `fetchWwAgentConfig` + `set/reset*Impl`；**不进根 barrel** |
-| Env | `VITE_WW_JSSDK_ENABLED === 'true'` 才初始化 |
-| UA | 仅 `/wxwork/i` |
+| Env       | `VITE_WW_JSSDK_ENABLED === 'true'` 才初始化                                    |
+| UA        | 仅 `/wxwork/i`                                                                 |
 
 ### Types (`src/env.d.ts`)
 
@@ -128,12 +128,12 @@ agentConfig success → ready = true
 
 ## Error handling
 
-| 场景 | 行为 |
-|------|------|
-| 非企微 / 开关关 / 无 `wx` | 静默跳过，`ready = false` |
-| fetch 抛错 | `ready = false`，`pending = null`，`console.error` |
-| `wx.error` | 同上，不继续 `agentConfig` |
-| `agentConfig` fail | `ready = false`，`pending = null`，`console.error` |
+| 场景                      | 行为                                               |
+| ------------------------- | -------------------------------------------------- |
+| 非企微 / 开关关 / 无 `wx` | 静默跳过，`ready = false`                          |
+| fetch 抛错                | `ready = false`，`pending = null`，`console.error` |
+| `wx.error`                | 同上，不继续 `agentConfig`                         |
+| `agentConfig` fail        | `ready = false`，`pending = null`，`console.error` |
 
 ## Success criteria
 

@@ -1,0 +1,64 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+dist-ssr
+coverage
+
+# Lockfiles
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# Local / env
+*.local
+
+# Logs
+logs
+*.log
+
+# Caches
+.cache
+.vite
+
+# IDE / OS
+.idea
+.vscode
+.DS_Store
+
+# Public static
+public
+
+# Binary / static assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.bmp
+*.avif
+*.svg
+*.woff
+*.woff2
+*.ttf
+*.otf
+*.eot
+*.mp3
+*.mp4
+*.webm
+*.wav
+*.pdf
+*.zip
+*.gz
+*.tgz
+*.7z
+*.rar
+*.exe
+*.dll
+*.so
+*.dylib
+*.bin
+*.wasm

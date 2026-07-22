@@ -8,14 +8,14 @@ Date: 2026-07-17
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 分包粒度 | 每个 `useXxx` 一个文件夹（含其私有实现与测试） |
-| 共享工具 | `shared/watch-readable.ts`（被 form-draft / auto-save 共用） |
-| 公共 API | 根 `index.ts` 继续导出全部现有公共符号 |
-| 夹内 barrel | 各夹 `index.ts` 只 re-export 该夹公开面 |
-| 深路径消费 | 不做；不鼓励 `@/composables/use-xxx` 直引（YAGNI） |
-| 行为 / API 语义 | 不改；纯搬家 + 更新相对 import |
+| 项              | 选择                                                         |
+| --------------- | ------------------------------------------------------------ |
+| 分包粒度        | 每个 `useXxx` 一个文件夹（含其私有实现与测试）               |
+| 共享工具        | `shared/watch-readable.ts`（被 form-draft / auto-save 共用） |
+| 公共 API        | 根 `index.ts` 继续导出全部现有公共符号                       |
+| 夹内 barrel     | 各夹 `index.ts` 只 re-export 该夹公开面                      |
+| 深路径消费      | 不做；不鼓励 `@/composables/use-xxx` 直引（YAGNI）           |
+| 行为 / API 语义 | 不改；纯搬家 + 更新相对 import                               |
 
 ## Target structure
 
@@ -49,12 +49,12 @@ src/composables/
 
 根 `src/composables/index.ts` 继续导出：
 
-| 来源夹 | 导出 |
-|--------|------|
-| `use-auto-save` | `useAutoSave` + 相关 types |
+| 来源夹            | 导出                                                                                                |
+| ----------------- | --------------------------------------------------------------------------------------------------- |
+| `use-auto-save`   | `useAutoSave` + 相关 types                                                                          |
 | `use-emit-effect` | `useEmitEffect` + 相关 types；以及 `emit-effect` 的 mutation helpers / document types（ERP 已依赖） |
-| `use-form-draft` | `useFormDraft` + 相关 types |
-| `use-save-hotkey` | `useSaveHotkey` + 相关 types |
+| `use-form-draft`  | `useFormDraft` + 相关 types                                                                         |
+| `use-save-hotkey` | `useSaveHotkey` + 相关 types                                                                        |
 
 明确**不**从根 barrel 导出：
 
@@ -65,13 +65,13 @@ src/composables/
 
 ## Internal imports
 
-| 文件 | 改为 |
-|------|------|
-| `use-auto-save.ts` / `use-form-draft.ts` → `watch-readable` | `../shared/watch-readable` |
-| `use-emit-effect.ts` → `emit-effect` | `./emit-effect`（同夹） |
-| `use-save-hotkey.ts` → `save-hotkey-registry` | `./save-hotkey-registry`（同夹） |
-| 各 `*.test.ts` | 跟随被测文件进同夹，相对路径同步更新 |
-| 根 `index.ts` | `./use-auto-save` 等指向各夹（经夹内 `index.ts` 或目录入口） |
+| 文件                                                        | 改为                                                         |
+| ----------------------------------------------------------- | ------------------------------------------------------------ |
+| `use-auto-save.ts` / `use-form-draft.ts` → `watch-readable` | `../shared/watch-readable`                                   |
+| `use-emit-effect.ts` → `emit-effect`                        | `./emit-effect`（同夹）                                      |
+| `use-save-hotkey.ts` → `save-hotkey-registry`               | `./save-hotkey-registry`（同夹）                             |
+| 各 `*.test.ts`                                              | 跟随被测文件进同夹，相对路径同步更新                         |
+| 根 `index.ts`                                               | `./use-auto-save` 等指向各夹（经夹内 `index.ts` 或目录入口） |
 
 ## Out of scope
 

@@ -1,8 +1,8 @@
-import { fileURLToPath, URL } from 'node:url'
+import { fileURLToPath, URL } from 'node:url';
 
-import tailwindcss from '@tailwindcss/vite'
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite';
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
@@ -15,4 +15,4 @@ export default defineConfig({
   server: {
     port: 8000,
   },
-})
+});

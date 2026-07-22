@@ -1,11 +1,4 @@
-import {
-  createApp,
-  effectScope,
-  ref,
-  watch,
-  type EffectScope,
-  type Ref,
-} from 'vue';
+import { createApp, effectScope, ref, watch, type EffectScope, type Ref } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   useFormDraft,

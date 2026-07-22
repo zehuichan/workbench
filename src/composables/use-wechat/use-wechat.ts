@@ -3,10 +3,7 @@ import { createGlobalState } from '@vueuse/core';
 import { getJsApiTicket } from '@/api/signature';
 
 function isWechatBrowser() {
-  return (
-    typeof navigator !== 'undefined' &&
-    /MicroMessenger/i.test(navigator.userAgent)
-  );
+  return typeof navigator !== 'undefined' && /MicroMessenger/i.test(navigator.userAgent);
 }
 
 /**
@@ -18,10 +15,7 @@ function isWechatBrowser() {
  * const [ready, $wx] = useWechat()
  * $wx?.scanQRCode?.({ needResult: 1, success: console.log })
  */
-export const useWechat = createGlobalState((): [
-  Ref<boolean>,
-  WeixinJsSdk | undefined,
-] => {
+export const useWechat = createGlobalState((): [Ref<boolean>, WeixinJsSdk | undefined] => {
   const ready = ref(false);
   const wx = typeof window !== 'undefined' ? window.wx : undefined;
   let pending: Promise<void> | null = null;

@@ -11,9 +11,7 @@ export interface HistoryChangeRecord {
 }
 
 /** undo/redo 后实际生效的变更，带上现场解析出的行引用与下标，供外层 emit cell-change / markDirty */
-export interface AppliedHistoryChange<
-  T extends RowData = RowData,
-> extends HistoryChangeRecord {
+export interface AppliedHistoryChange<T extends RowData = RowData> extends HistoryChangeRecord {
   row: T;
   rowIndex: number;
 }
@@ -30,21 +28,15 @@ export function useHistory<T extends RowData = RowData>(table: PlusTable<T>) {
     redoStack: ref<HistoryEntry[]>([]),
   };
 
-  const canUndo = computed(
-    () => enabled() && states.undoStack.value.length > 0,
-  );
-  const canRedo = computed(
-    () => enabled() && states.redoStack.value.length > 0,
-  );
+  const canUndo = computed(() => enabled() && states.undoStack.value.length > 0);
+  const canRedo = computed(() => enabled() && states.redoStack.value.length > 0);
 
   function enabled(): boolean {
     return !!table.store.states.history.value;
   }
 
   /** 记一条变更；row 模式一次提交可传多条，作为一个原子撤销单元 */
-  function pushChange(
-    change: HistoryChangeRecord | HistoryChangeRecord[],
-  ): void {
+  function pushChange(change: HistoryChangeRecord | HistoryChangeRecord[]): void {
     if (!enabled()) return;
     const entries = Array.isArray(change) ? change : [change];
     if (entries.length === 0) return;

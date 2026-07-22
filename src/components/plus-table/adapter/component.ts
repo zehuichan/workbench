@@ -44,5 +44,4 @@ export const EDITOR_REGISTRY = {
 export type BuiltinEditorType = keyof typeof EDITOR_REGISTRY;
 
 /** satisfies 会保留每个条目各自的窄类型（如无 componentProps），这里收敛成统一形状供查表用 */
-export const TYPED_REGISTRY: Record<BuiltinEditorType, EditorAdapter> =
-  EDITOR_REGISTRY;
+export const TYPED_REGISTRY: Record<BuiltinEditorType, EditorAdapter> = EDITOR_REGISTRY;

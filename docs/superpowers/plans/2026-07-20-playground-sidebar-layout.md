@@ -23,28 +23,30 @@
 
 ## File Structure
 
-| File | Responsibility |
-|------|----------------|
-| `src/lib/utils.ts` | Ensure `cn` exists for CLI-generated UI (restore if missing) |
-| `src/ui/sidebar/*` | shadcn Sidebar primitives (CLI) |
-| `src/ui/navigation-menu/*` | shadcn Navigation Menu primitives (CLI) |
-| `src/layouts/playground-sidebar.vue` | Brand + grouped `SidebarMenu` links |
-| `src/layouts/playground-header.vue` | Category NavigationMenu |
-| `src/layouts/playground-layout.vue` | State + assemble shell |
-| `src/styles/index.scss` | Delete `.playground` block only |
-| `src/layouts/__tests__/playground-sidebar.test.ts` | Sidebar render / active link |
-| `src/layouts/__tests__/playground-header.test.ts` | Category select / disabled |
+| File                                               | Responsibility                                               |
+| -------------------------------------------------- | ------------------------------------------------------------ |
+| `src/lib/utils.ts`                                 | Ensure `cn` exists for CLI-generated UI (restore if missing) |
+| `src/ui/sidebar/*`                                 | shadcn Sidebar primitives (CLI)                              |
+| `src/ui/navigation-menu/*`                         | shadcn Navigation Menu primitives (CLI)                      |
+| `src/layouts/playground-sidebar.vue`               | Brand + grouped `SidebarMenu` links                          |
+| `src/layouts/playground-header.vue`                | Category NavigationMenu                                      |
+| `src/layouts/playground-layout.vue`                | State + assemble shell                                       |
+| `src/styles/index.scss`                            | Delete `.playground` block only                              |
+| `src/layouts/__tests__/playground-sidebar.test.ts` | Sidebar render / active link                                 |
+| `src/layouts/__tests__/playground-header.test.ts`  | Category select / disabled                                   |
 
 ---
 
 ### Task 1: Ensure `cn` utils + install shadcn UI
 
 **Files:**
+
 - Create/restore: `src/lib/utils.ts`
 - Create (CLI): `src/ui/sidebar/**`, `src/ui/navigation-menu/**` (+ CLI transitive deps)
 - Verify: `components.json` aliases unchanged
 
 **Interfaces:**
+
 - Consumes: existing `components.json` (`aliases.utils` → `@/lib/utils`, `aliases.ui` → `@/ui`)
 - Produces: `export function cn(...inputs: ClassValue[]): string` at `@/lib/utils`; importable `@/ui/sidebar` and `@/ui/navigation-menu`
 
@@ -53,12 +55,12 @@
 If `src/lib/utils.ts` does not exist (e.g. working tree moved `cn` to `src/utils`), recreate:
 
 ```ts
-import type { ClassValue } from 'clsx'
-import { clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
+import type { ClassValue } from 'clsx';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 ```
 
@@ -102,20 +104,22 @@ Only stage files the CLI actually touched. Do not stage unrelated dirty files.
 ### Task 2: `playground-sidebar.vue` (TDD)
 
 **Files:**
+
 - Create: `src/layouts/playground-sidebar.vue`
 - Test: `src/layouts/__tests__/playground-sidebar.test.ts`
 
 **Interfaces:**
+
 - Consumes: `@/ui/sidebar` (`Sidebar`, `SidebarHeader`, `SidebarContent`, `SidebarGroup`, `SidebarGroupLabel`, `SidebarGroupContent`, `SidebarMenu`, `SidebarMenuItem`, `SidebarMenuButton`)
 - Produces: component props:
 
 ```ts
-type NavLink = { to: string; label: string }
-type NavGroup = { name: string; links: NavLink[] }
+type NavLink = { to: string; label: string };
+type NavGroup = { name: string; links: NavLink[] };
 
 defineProps<{
-  groups: NavGroup[]
-}>()
+  groups: NavGroup[];
+}>();
 ```
 
 - [ ] **Step 1: Write the failing test**
@@ -123,19 +127,13 @@ defineProps<{
 Create `src/layouts/__tests__/playground-sidebar.test.ts`:
 
 ```ts
-import { createApp, h, nextTick } from 'vue'
-import {
-  createMemoryHistory,
-  createRouter,
-  RouterLink,
-  type Router,
-} from 'vue-router'
-import { afterEach, describe, expect, it } from 'vitest'
-import PlaygroundSidebar from '../playground-sidebar.vue'
+import { createApp, h, nextTick } from 'vue';
+import { createMemoryHistory, createRouter, RouterLink, type Router } from 'vue-router';
+import { afterEach, describe, expect, it } from 'vitest';
+import PlaygroundSidebar from '../playground-sidebar.vue';
 
 describe('playground-sidebar', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
-    []
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
 
   async function mountWithRouter(
     groups: { name: string; links: { to: string; label: string }[] }[],
@@ -154,29 +152,29 @@ describe('playground-sidebar', () => {
           component: { template: '<div />' },
         },
       ],
-    })
-    await router.push(initialPath)
-    await router.isReady()
+    });
+    await router.push(initialPath);
+    await router.isReady();
 
-    const host = document.createElement('div')
-    document.body.append(host)
+    const host = document.createElement('div');
+    document.body.append(host);
     const app = createApp({
       render: () => h(PlaygroundSidebar, { groups }),
-    })
-    app.use(router)
-    app.component('RouterLink', RouterLink)
-    app.mount(host)
-    await nextTick()
-    mounted.push({ app, host })
-    return host
+    });
+    app.use(router);
+    app.component('RouterLink', RouterLink);
+    app.mount(host);
+    await nextTick();
+    mounted.push({ app, host });
+    return host;
   }
 
   afterEach(() => {
     for (const { app, host } of mounted.splice(0)) {
-      app.unmount()
-      host.remove()
+      app.unmount();
+      host.remove();
     }
-  })
+  });
 
   it('renders brand, group labels, and links', async () => {
     const host = await mountWithRouter([
@@ -187,13 +185,13 @@ describe('playground-sidebar', () => {
           { to: '/composables/use-form-draft', label: 'use-form-draft' },
         ],
       },
-    ])
+    ]);
 
-    expect(host.textContent).toContain('Workbench')
-    expect(host.textContent).toContain('Form')
-    expect(host.textContent).toContain('use-auto-save')
-    expect(host.textContent).toContain('use-form-draft')
-  })
+    expect(host.textContent).toContain('Workbench');
+    expect(host.textContent).toContain('Form');
+    expect(host.textContent).toContain('use-auto-save');
+    expect(host.textContent).toContain('use-form-draft');
+  });
 
   it('marks the current route link active', async () => {
     const host = await mountWithRouter(
@@ -207,12 +205,14 @@ describe('playground-sidebar', () => {
         },
       ],
       '/composables/use-auto-save',
-    )
+    );
 
-    const active = host.querySelector('[data-active="true"], [data-state="active"], .is-active, a.router-link-active')
-    expect(active?.textContent).toContain('use-auto-save')
-  })
-})
+    const active = host.querySelector(
+      '[data-active="true"], [data-state="active"], .is-active, a.router-link-active',
+    );
+    expect(active?.textContent).toContain('use-auto-save');
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -229,7 +229,7 @@ Expected: FAIL (module not found or component missing).
 
 ```vue
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { useRoute } from 'vue-router';
 import {
   Sidebar,
   SidebarContent,
@@ -240,25 +240,25 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/ui/sidebar'
+} from '@/ui/sidebar';
 
-defineOptions({ name: 'PlaygroundSidebar' })
+defineOptions({ name: 'PlaygroundSidebar' });
 
 export interface PlaygroundNavLink {
-  to: string
-  label: string
+  to: string;
+  label: string;
 }
 
 export interface PlaygroundNavGroup {
-  name: string
-  links: PlaygroundNavLink[]
+  name: string;
+  links: PlaygroundNavLink[];
 }
 
 defineProps<{
-  groups: PlaygroundNavGroup[]
-}>()
+  groups: PlaygroundNavGroup[];
+}>();
 
-const route = useRoute()
+const route = useRoute();
 </script>
 
 <template>
@@ -272,10 +272,7 @@ const route = useRoute()
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem v-for="link in group.links" :key="link.to">
-              <SidebarMenuButton
-                as-child
-                :is-active="route.path === link.to"
-              >
+              <SidebarMenuButton as-child :is-active="route.path === link.to">
                 <RouterLink :to="link.to">
                   <span>{{ link.label }}</span>
                 </RouterLink>
@@ -317,22 +314,24 @@ EOF
 ### Task 3: `playground-header.vue` (TDD)
 
 **Files:**
+
 - Create: `src/layouts/playground-header.vue`
 - Test: `src/layouts/__tests__/playground-header.test.ts`
 
 **Interfaces:**
+
 - Consumes: `@/ui/navigation-menu`
 - Produces:
 
 ```ts
 defineProps<{
-  categories: { key: string; groups: readonly string[] }[]
-  activeCategory: string
-}>()
+  categories: { key: string; groups: readonly string[] }[];
+  activeCategory: string;
+}>();
 
 const emit = defineEmits<{
-  select: [key: string]
-}>()
+  select: [key: string];
+}>();
 ```
 
 - [ ] **Step 1: Write the failing test**
@@ -340,87 +339,86 @@ const emit = defineEmits<{
 Create `src/layouts/__tests__/playground-header.test.ts`:
 
 ```ts
-import { createApp, h, nextTick } from 'vue'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import PlaygroundHeader from '../playground-header.vue'
+import { createApp, h, nextTick } from 'vue';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import PlaygroundHeader from '../playground-header.vue';
 
 describe('playground-header', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
-    []
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
 
   async function mountHeader(
     props: {
-      categories: { key: string; groups: readonly string[] }[]
-      activeCategory: string
+      categories: { key: string; groups: readonly string[] }[];
+      activeCategory: string;
     },
     onSelect = vi.fn(),
   ) {
-    const host = document.createElement('div')
-    document.body.append(host)
+    const host = document.createElement('div');
+    document.body.append(host);
     const app = createApp({
       render: () =>
         h(PlaygroundHeader, {
           ...props,
           onSelect: (key: string) => onSelect(key),
         }),
-    })
-    app.mount(host)
-    await nextTick()
-    mounted.push({ app, host })
-    return { host, onSelect }
+    });
+    app.mount(host);
+    await nextTick();
+    mounted.push({ app, host });
+    return { host, onSelect };
   }
 
   afterEach(() => {
     for (const { app, host } of mounted.splice(0)) {
-      app.unmount()
-      host.remove()
+      app.unmount();
+      host.remove();
     }
-  })
+  });
 
   const categories = [
     { key: 'components', groups: ['PlusTable'] },
     { key: 'composables', groups: ['Form'] },
     { key: 'packages', groups: [] as string[] },
-  ] as const
+  ] as const;
 
   it('renders category labels', async () => {
     const { host } = await mountHeader({
       categories: [...categories],
       activeCategory: 'composables',
-    })
-    expect(host.textContent).toContain('components')
-    expect(host.textContent).toContain('composables')
-    expect(host.textContent).toContain('packages')
-  })
+    });
+    expect(host.textContent).toContain('components');
+    expect(host.textContent).toContain('composables');
+    expect(host.textContent).toContain('packages');
+  });
 
   it('emits select when an enabled category is clicked', async () => {
     const { host, onSelect } = await mountHeader({
       categories: [...categories],
       activeCategory: 'composables',
-    })
+    });
     const buttons = [...host.querySelectorAll('button, a')].filter((el) =>
       el.textContent?.includes('components'),
-    )
-    expect(buttons[0]).toBeTruthy()
-    ;(buttons[0] as HTMLElement).click()
-    await nextTick()
-    expect(onSelect).toHaveBeenCalledWith('components')
-  })
+    );
+    expect(buttons[0]).toBeTruthy();
+    (buttons[0] as HTMLElement).click();
+    await nextTick();
+    expect(onSelect).toHaveBeenCalledWith('components');
+  });
 
   it('does not emit select for empty-groups category', async () => {
     const { host, onSelect } = await mountHeader({
       categories: [...categories],
       activeCategory: 'composables',
-    })
+    });
     const packagesEl = [...host.querySelectorAll('button, a')].find((el) =>
       el.textContent?.includes('packages'),
-    ) as HTMLElement | undefined
-    expect(packagesEl).toBeTruthy()
-    packagesEl!.click()
-    await nextTick()
-    expect(onSelect).not.toHaveBeenCalled()
-  })
-})
+    ) as HTMLElement | undefined;
+    expect(packagesEl).toBeTruthy();
+    packagesEl!.click();
+    await nextTick();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -443,36 +441,31 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   navigationMenuTriggerStyle,
-} from '@/ui/navigation-menu'
-import { cn } from '@/lib/utils'
+} from '@/ui/navigation-menu';
+import { cn } from '@/lib/utils';
 
-defineOptions({ name: 'PlaygroundHeader' })
+defineOptions({ name: 'PlaygroundHeader' });
 
 const props = defineProps<{
-  categories: { key: string; groups: readonly string[] }[]
-  activeCategory: string
-}>()
+  categories: { key: string; groups: readonly string[] }[];
+  activeCategory: string;
+}>();
 
 const emit = defineEmits<{
-  select: [key: string]
-}>()
+  select: [key: string];
+}>();
 
 function onSelect(key: string, disabled: boolean) {
-  if (disabled) return
-  emit('select', key)
+  if (disabled) return;
+  emit('select', key);
 }
 </script>
 
 <template>
-  <header
-    class="flex h-14 shrink-0 items-center border-b bg-background px-4"
-  >
+  <header class="flex h-14 shrink-0 items-center border-b bg-background px-4">
     <NavigationMenu :viewport="false" class="max-w-none">
       <NavigationMenuList class="gap-6">
-        <NavigationMenuItem
-          v-for="category in categories"
-          :key="category.key"
-        >
+        <NavigationMenuItem v-for="category in categories" :key="category.key">
           <NavigationMenuLink
             as-child
             :class="
@@ -480,14 +473,11 @@ function onSelect(key: string, disabled: boolean) {
                 navigationMenuTriggerStyle(),
                 'cursor-pointer bg-transparent',
                 activeCategory === category.key && 'text-primary',
-                category.groups.length === 0 &&
-                  'pointer-events-none opacity-50',
+                category.groups.length === 0 && 'pointer-events-none opacity-50',
               )
             "
             :data-active="activeCategory === category.key || undefined"
-            :aria-current="
-              activeCategory === category.key ? 'page' : undefined
-            "
+            :aria-current="activeCategory === category.key ? 'page' : undefined"
             :aria-disabled="category.groups.length === 0 || undefined"
           >
             <button
@@ -533,11 +523,13 @@ EOF
 ### Task 4: Assemble `playground-layout.vue` + remove shell SCSS
 
 **Files:**
+
 - Modify: `src/layouts/playground-layout.vue`
 - Modify: `src/styles/index.scss` (delete `.playground { ... }` block through its closing `}` before `// Block: demo`)
 - Keep: router logic already in layout (`categories`, `navGroups`, `selectCategory`, watch)
 
 **Interfaces:**
+
 - Consumes: `PlaygroundSidebar` props `groups`; `PlaygroundHeader` props `categories` / `activeCategory` and `@select`
 - Produces: full-page shell wrapping `<router-view />`
 
@@ -547,48 +539,46 @@ Keep the existing script logic for categories and routes; replace template and a
 
 ```vue
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { SidebarInset, SidebarProvider } from '@/ui/sidebar'
-import PlaygroundHeader from './playground-header.vue'
-import PlaygroundSidebar from './playground-sidebar.vue'
-import '@/styles/index.scss'
+import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { SidebarInset, SidebarProvider } from '@/ui/sidebar';
+import PlaygroundHeader from './playground-header.vue';
+import PlaygroundSidebar from './playground-sidebar.vue';
+import '@/styles/index.scss';
 
-defineOptions({ name: 'PlaygroundLayout' })
+defineOptions({ name: 'PlaygroundLayout' });
 
-type CategoryKey = 'components' | 'composables' | 'packages'
+type CategoryKey = 'components' | 'composables' | 'packages';
 
 interface CategoryConfig {
-  key: CategoryKey
-  groups: readonly string[]
+  key: CategoryKey;
+  groups: readonly string[];
 }
 
 const categories: readonly CategoryConfig[] = [
   { key: 'components', groups: ['PlusTable', 'ERP 场景'] },
   { key: 'composables', groups: ['Form', 'WeChat'] },
   { key: 'packages', groups: [] },
-]
+];
 
-const route = useRoute()
-const router = useRouter()
-const activeCategory = ref<CategoryKey>('components')
+const route = useRoute();
+const router = useRouter();
+const activeCategory = ref<CategoryKey>('components');
 
 function groupRoutes(group: string) {
   return router
     .getRoutes()
     .filter((item) => item.meta.group === group)
-    .sort((left, right) => Number(left.meta.order) - Number(right.meta.order))
+    .sort((left, right) => Number(left.meta.order) - Number(right.meta.order));
 }
 
 function categoryForGroup(group: unknown): CategoryKey | undefined {
-  if (typeof group !== 'string') return undefined
-  return categories.find((category) => category.groups.includes(group))?.key
+  if (typeof group !== 'string') return undefined;
+  return categories.find((category) => category.groups.includes(group))?.key;
 }
 
 const navGroups = computed(() => {
-  const groups =
-    categories.find((category) => category.key === activeCategory.value)
-      ?.groups ?? []
+  const groups = categories.find((category) => category.key === activeCategory.value)?.groups ?? [];
 
   return groups.map((group) => ({
     name: group,
@@ -596,27 +586,27 @@ const navGroups = computed(() => {
       to: item.path,
       label: String(item.meta.title),
     })),
-  }))
-})
+  }));
+});
 
 watch(
   () => route.meta.group,
   (group) => {
-    const category = categoryForGroup(group)
-    if (category) activeCategory.value = category
+    const category = categoryForGroup(group);
+    if (category) activeCategory.value = category;
   },
   { immediate: true },
-)
+);
 
 function selectCategory(key: string): void {
-  const category = categories.find((item) => item.key === key)
-  if (!category) return
+  const category = categories.find((item) => item.key === key);
+  if (!category) return;
 
-  const firstRoute = category.groups.flatMap(groupRoutes)[0]
-  if (!firstRoute) return
+  const firstRoute = category.groups.flatMap(groupRoutes)[0];
+  if (!firstRoute) return;
 
-  activeCategory.value = category.key
-  if (route.path !== firstRoute.path) void router.push(firstRoute.path)
+  activeCategory.value = category.key;
+  if (route.path !== firstRoute.path) void router.push(firstRoute.path);
 }
 </script>
 
@@ -679,17 +669,17 @@ EOF
 
 ## Spec Coverage Check
 
-| Spec requirement | Task |
-|------------------|------|
-| Full Sidebar shell (`Provider` + `Sidebar` + `Inset`) | 4 |
-| Grouped menu, no Collapsible | 2 |
-| `collapsible="none"` | 2 |
-| Top NavigationMenu, no dropdown | 3 |
-| Files under `layouts/` peer assembly | 2, 3, 4 |
-| Keep meta.group / selectCategory logic | 4 |
-| Install sidebar + navigation-menu into `src/ui` | 1 |
-| Remove `.playground*` SCSS | 4 |
-| typecheck + browsable routes | 4 |
+| Spec requirement                                      | Task    |
+| ----------------------------------------------------- | ------- |
+| Full Sidebar shell (`Provider` + `Sidebar` + `Inset`) | 4       |
+| Grouped menu, no Collapsible                          | 2       |
+| `collapsible="none"`                                  | 2       |
+| Top NavigationMenu, no dropdown                       | 3       |
+| Files under `layouts/` peer assembly                  | 2, 3, 4 |
+| Keep meta.group / selectCategory logic                | 4       |
+| Install sidebar + navigation-menu into `src/ui`       | 1       |
+| Remove `.playground*` SCSS                            | 4       |
+| typecheck + browsable routes                          | 4       |
 
 ## Placeholder / Consistency Review
 

@@ -8,17 +8,17 @@ Date: 2026-07-20
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 范围 | 仅基建（init + 依赖 + CSS variables + `components.json`）；不加 button 等组件 |
-| 与 Element Plus | 双轨并存；`main.ts` 继续全局注册 Element Plus |
-| UI 目录 | `src/ui`（与 `src/components` 平级） |
-| 基础色 | Neutral |
-| 主题方式 | CSS variables（CLI 默认） |
-| style / preset | CLI 最新默认（不手写旧版 `new-york` 等过时假设） |
-| 工具函数 | CLI 默认 `src/lib`（含 `cn`） |
-| composables 别名 | 指向现有 `@/composables` |
-| 暗色模式开关 | 不做（YAGNI；theme CSS 变量可保留 `.dark` 若 CLI 写入） |
+| 项               | 选择                                                                          |
+| ---------------- | ----------------------------------------------------------------------------- |
+| 范围             | 仅基建（init + 依赖 + CSS variables + `components.json`）；不加 button 等组件 |
+| 与 Element Plus  | 双轨并存；`main.ts` 继续全局注册 Element Plus                                 |
+| UI 目录          | `src/ui`（与 `src/components` 平级）                                          |
+| 基础色           | Neutral                                                                       |
+| 主题方式         | CSS variables（CLI 默认）                                                     |
+| style / preset   | CLI 最新默认（不手写旧版 `new-york` 等过时假设）                              |
+| 工具函数         | CLI 默认 `src/lib`（含 `cn`）                                                 |
+| composables 别名 | 指向现有 `@/composables`                                                      |
+| 暗色模式开关     | 不做（YAGNI；theme CSS 变量可保留 `.dark` 若 CLI 写入）                       |
 
 ## Architecture
 

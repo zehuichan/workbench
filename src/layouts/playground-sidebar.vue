@@ -36,14 +36,8 @@ const route = useRoute();
     class="h-full shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground"
   >
     <SidebarContent class="scrollbar-thin gap-6 overflow-y-auto px-3 py-5">
-      <SidebarGroup
-        v-for="group in groups"
-        :key="group.name"
-        class="p-0"
-      >
-        <SidebarGroupLabel
-          class="mb-2 h-auto px-3 text-[13px] font-semibold text-foreground"
-        >
+      <SidebarGroup v-for="group in groups" :key="group.name" class="p-0">
+        <SidebarGroupLabel class="mb-2 h-auto px-3 text-[13px] font-semibold text-foreground">
           {{ group.name }}
         </SidebarGroupLabel>
         <SidebarGroupContent>

@@ -89,8 +89,7 @@ function duplicateFirstOnPage() {
 <template>
   <DemoPage width="wide">
     <template #description>
-      传入 <code>total</code> 即启用分页
-      UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
+      传入 <code>total</code> 即启用分页 UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
       <code>data</code>（服务端分页同理）。本页用内存全量 +
       <code>computed</code> 切片演示。行增删改请改全量源，不要对当前页数组调
       <code>insertRow</code>（否则只动这一页）。
@@ -133,10 +132,7 @@ function duplicateFirstOnPage() {
         </tr>
       </DemoApiTable>
 
-      <DemoApiTable
-        title="Expose（行操作，作用于传入的 data）"
-        :headers="['名称', '说明']"
-      >
+      <DemoApiTable title="Expose（行操作，作用于传入的 data）" :headers="['名称', '说明']">
         <tr>
           <td><code>insertRow(row, index?)</code></td>
           <td>插入行并 <code>update:data</code>。</td>
@@ -172,8 +168,7 @@ function duplicateFirstOnPage() {
 
     <DemoBlock>
       <template #hint>
-        翻页 / 改
-        pageSize；「新增」追加到全量末尾并跳到末页；删除/复制针对当前页首行，改的是
+        翻页 / 改 pageSize；「新增」追加到全量末尾并跳到末页；删除/复制针对当前页首行，改的是
         <code>allRows</code>。
       </template>
       <PlusTable
@@ -197,7 +192,9 @@ function duplicateFirstOnPage() {
           <el-button @click="duplicateFirstOnPage">复制当前页首行</el-button>
         </template>
         <template #summary>
-          <span class="demo__meta">共 {{ allRows.length }} 行 · 当前页 {{ pageRows.length }} 条</span>
+          <span class="demo__meta"
+            >共 {{ allRows.length }} 行 · 当前页 {{ pageRows.length }} 条</span
+          >
         </template>
       </PlusTable>
     </DemoBlock>

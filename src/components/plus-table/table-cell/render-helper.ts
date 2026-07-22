@@ -90,8 +90,7 @@ export function getCellBinding<T extends RowData = RowData>(
     else table.store.commit('setCellValue', row, rowIndex, prop, next);
   };
   const flush = () => {
-    if (!isCellMode && useBuffer)
-      table.store.flushDraft(row, rowIndex, rowKey, prop);
+    if (!isCellMode && useBuffer) table.store.flushDraft(row, rowIndex, rowKey, prop);
   };
   return { value, setValue, flush };
 }
@@ -196,8 +195,7 @@ export function getCellView<T extends RowData = RowData>(
   const depState = column.dependencies
     ? table.store.getDependencyState(row, rowIndex, column)
     : undefined;
-  const rawEditable =
-    mode !== 'none' && !!prop && resolveEditable(row, rowIndex, column);
+  const rawEditable = mode !== 'none' && !!prop && resolveEditable(row, rowIndex, column);
   const disabled = rawEditable && !!depState?.disabled;
   const editable = inGrid && rawEditable && !disabled;
   const editing =

@@ -29,9 +29,7 @@ export interface ColumnDependencies<T extends RowData = RowData> {
 }
 
 /** 单元格级上下文：render 回调参数，在行上下文基础上附带列与当前值 */
-export interface CellContext<
-  T extends RowData = RowData,
-> extends RowContext<T> {
+export interface CellContext<T extends RowData = RowData> extends RowContext<T> {
   column: PlusTableColumn<T>;
   value: unknown;
 }
@@ -42,8 +40,7 @@ export interface CellContext<
  * 编辑控件字段（component / componentProps / modelProp）对齐 vben FormSchema。
  */
 export interface PlusTableColumn<T extends RowData = RowData>
-  extends Partial<Omit<TableColumnCtx<T>, 'children' | 'prop' | 'type'>>,
-    EditorColumnFields<T> {
+  extends Partial<Omit<TableColumnCtx<T>, 'children' | 'prop' | 'type'>>, EditorColumnFields<T> {
   prop?: keyof T & string;
   type?: 'index' | 'selection' | 'expand' | 'operation';
   /** 多级表头，组节点只需 label */

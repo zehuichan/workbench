@@ -25,21 +25,22 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `src/env.d.ts` | `VITE_WW_JSSDK_ENABLED` + `WeixinJsSdk.agentConfig` |
-| `src/composables/use-work-weixin/use-work-weixin.ts` | 双 config 全局初始化 + stubs |
-| `src/composables/use-work-weixin/index.ts` | 夹内 barrel（只导出 `useWorkWeixin`） |
-| `src/composables/index.ts` | 根 barrel re-export |
-| `src/composables/__tests__/use-work-weixin/use-work-weixin.test.ts` | 单测 |
-| `src/views/composables/use-work-weixin-demo.vue` | API 文档页 |
-| `src/router/index.ts` | 注册路由（WeChat 组，order 3） |
+| 路径                                                                | 职责                                                |
+| ------------------------------------------------------------------- | --------------------------------------------------- |
+| `src/env.d.ts`                                                      | `VITE_WW_JSSDK_ENABLED` + `WeixinJsSdk.agentConfig` |
+| `src/composables/use-work-weixin/use-work-weixin.ts`                | 双 config 全局初始化 + stubs                        |
+| `src/composables/use-work-weixin/index.ts`                          | 夹内 barrel（只导出 `useWorkWeixin`）               |
+| `src/composables/index.ts`                                          | 根 barrel re-export                                 |
+| `src/composables/__tests__/use-work-weixin/use-work-weixin.test.ts` | 单测                                                |
+| `src/views/composables/use-work-weixin-demo.vue`                    | API 文档页                                          |
+| `src/router/index.ts`                                               | 注册路由（WeChat 组，order 3）                      |
 
 ---
 
 ### Task 1: `useWorkWeixin`（TDD）
 
 **Files:**
+
 - Modify: `src/env.d.ts`
 - Create: `src/composables/use-work-weixin/use-work-weixin.ts`
 - Create: `src/composables/use-work-weixin/index.ts`
@@ -47,6 +48,7 @@
 - Modify: `src/composables/index.ts`
 
 **Interfaces:**
+
 - Consumes: `vue` (`ref`)、`@vueuse/core` (`createGlobalState`)、`import.meta.env.VITE_WW_JSSDK_ENABLED`、`window.wx`
 - Produces:
   - `export type FetchWwConfig = (url: string) => Promise<{ data: Record<string, unknown> }>`
@@ -117,8 +119,7 @@ function mockWx(handlers?: {
       if (readyMode === 'ready') fn();
     }),
     error: vi.fn((fn: (err: unknown) => void) => {
-      if (readyMode === 'error')
-        fn(handlers?.errorPayload ?? new Error('wx error'));
+      if (readyMode === 'error') fn(handlers?.errorPayload ?? new Error('wx error'));
     }),
     agentConfig: vi.fn((config: Record<string, unknown>) => {
       handlers?.onAgentConfig?.(config);
@@ -206,9 +207,7 @@ describe('useWorkWeixin', () => {
   it('configures wx + agentConfig and sets ready on success', async () => {
     const wx = mockWx({ readyMode: 'ready', agentMode: 'success' });
     const mod = await loadUseWorkWeixin();
-    const jsSpy = vi
-      .fn()
-      .mockResolvedValue({ data: { appId: 'ww1', jsApiList: [] } });
+    const jsSpy = vi.fn().mockResolvedValue({ data: { appId: 'ww1', jsApiList: [] } });
     const agentSpy = vi.fn().mockResolvedValue({
       data: { corpid: 'corp1', agentid: '1000001', jsApiList: [] },
     });
@@ -326,20 +325,14 @@ Expected: FAIL（模块不存在或导出缺失）
 import { ref, type Ref } from 'vue';
 import { createGlobalState } from '@vueuse/core';
 
-export type FetchWwConfig = (
-  url: string,
-) => Promise<{ data: Record<string, unknown> }>;
+export type FetchWwConfig = (url: string) => Promise<{ data: Record<string, unknown> }>;
 
-async function defaultFetchWwJsConfig(
-  _url: string,
-): Promise<{ data: Record<string, unknown> }> {
+async function defaultFetchWwJsConfig(_url: string): Promise<{ data: Record<string, unknown> }> {
   // TODO: replace with real GET /wechat/ww/jssdk/config (param REDIRECT_URI).
   return { data: {} };
 }
 
-async function defaultFetchWwAgentConfig(
-  _url: string,
-): Promise<{ data: Record<string, unknown> }> {
+async function defaultFetchWwAgentConfig(_url: string): Promise<{ data: Record<string, unknown> }> {
   // TODO: replace with real GET /wechat/ww/jssdk/agent-config (param REDIRECT_URI).
   return { data: {} };
 }
@@ -351,9 +344,7 @@ let fetchWwAgentConfigImpl: FetchWwConfig = defaultFetchWwAgentConfig;
  * Stub enterprise WeChat JSSDK config fetcher.
  * Do not re-export from @/composables.
  */
-export async function fetchWwJsConfig(
-  url: string,
-): Promise<{ data: Record<string, unknown> }> {
+export async function fetchWwJsConfig(url: string): Promise<{ data: Record<string, unknown> }> {
   return fetchWwJsConfigImpl(url);
 }
 
@@ -361,9 +352,7 @@ export async function fetchWwJsConfig(
  * Stub enterprise WeChat agentConfig fetcher.
  * Do not re-export from @/composables.
  */
-export async function fetchWwAgentConfig(
-  url: string,
-): Promise<{ data: Record<string, unknown> }> {
+export async function fetchWwAgentConfig(url: string): Promise<{ data: Record<string, unknown> }> {
   return fetchWwAgentConfigImpl(url);
 }
 
@@ -388,9 +377,7 @@ export function resetFetchWwAgentConfigImpl() {
 }
 
 function isWorkWeixinBrowser() {
-  return (
-    typeof navigator !== 'undefined' && /wxwork/i.test(navigator.userAgent)
-  );
+  return typeof navigator !== 'undefined' && /wxwork/i.test(navigator.userAgent);
 }
 
 /**
@@ -407,10 +394,7 @@ function isWorkWeixinBrowser() {
  *   $wx?.scanQRCode?.({ needResult: 1, success: console.log })
  * })
  */
-export const useWorkWeixin = createGlobalState((): [
-  Ref<boolean>,
-  WeixinJsSdk | undefined,
-] => {
+export const useWorkWeixin = createGlobalState((): [Ref<boolean>, WeixinJsSdk | undefined] => {
   const ready = ref(false);
   const wx = typeof window !== 'undefined' ? window.wx : undefined;
   let pending: Promise<void> | null = null;
@@ -513,10 +497,12 @@ git commit -m "feat(composables): add useWorkWeixin with dual jssdk config"
 ### Task 2: Playground 文档页 + 路由
 
 **Files:**
+
 - Create: `src/views/composables/use-work-weixin-demo.vue`
 - Modify: `src/router/index.ts`
 
 **Interfaces:**
+
 - Consumes: `DemoPage` / `DemoApiTable` / `DemoBlock` / `DemoCode`、Task 1 的公开 API 形态
 - Produces: 路由 `composables-use-work-weixin`（`group: 'WeChat'`, `order: 3`）
 
@@ -549,13 +535,10 @@ watch(ready, (ok) => {
     <template #description>
       企微 JSSDK 初始化（<code>createGlobalState</code>，全局
       <code>wx.config</code> + <code>wx.agentConfig</code> 各一次）。
-      <code>ready</code> 仅在双配置都成功后为
-      <code>true</code>。签名 URL 取
+      <code>ready</code> 仅在双配置都成功后为 <code>true</code>。签名 URL 取
       <code>location.href.split('#')[0]</code>。非企微环境或
-      <code>VITE_WW_JSSDK_ENABLED !== 'true'</code> 时跳过。当前
-      <code>fetchWwJsConfig</code> /
-      <code>fetchWwAgentConfig</code> 为 stub（空
-      <code>data</code>），待接后端签名接口。
+      <code>VITE_WW_JSSDK_ENABLED !== 'true'</code> 时跳过。当前 <code>fetchWwJsConfig</code> /
+      <code>fetchWwAgentConfig</code> 为 stub（空 <code>data</code>），待接后端签名接口。
     </template>
 
     <template #api>
@@ -564,18 +547,13 @@ watch(ready, (ok) => {
           <td><code>[0] ready</code></td>
           <td><code>Ref&lt;boolean&gt;</code></td>
           <td>
-            <code>wx.config</code> 与
-            <code>wx.agentConfig</code> 都成功后为
-            <code>true</code>。
+            <code>wx.config</code> 与 <code>wx.agentConfig</code> 都成功后为 <code>true</code>。
           </td>
         </tr>
         <tr>
           <td><code>[1] wx</code></td>
           <td><code>WeixinJsSdk | undefined</code></td>
-          <td>
-            <code>window.wx</code> 引用；未注入脚本时为
-            <code>undefined</code>。
-          </td>
+          <td><code>window.wx</code> 引用；未注入脚本时为 <code>undefined</code>。</td>
         </tr>
       </DemoApiTable>
 
@@ -590,9 +568,9 @@ watch(ready, (ok) => {
 
     <DemoBlock title="代码演示">
       <template #hint>
-        playground 非企微环境且 JSSDK 配置仍为 stub，无法交互演示；此处仅展示用法。需企微内置浏览器（UA 含
-        <code>wxwork</code>）、
-        <code>VITE_WW_JSSDK_ENABLED=true</code>，并注入
+        playground 非企微环境且 JSSDK 配置仍为
+        stub，无法交互演示；此处仅展示用法。需企微内置浏览器（UA 含
+        <code>wxwork</code>）、 <code>VITE_WW_JSSDK_ENABLED=true</code>，并注入
         <code>window.wx</code>。
       </template>
       <DemoCode :code="codeDemo" lang="ts" />
@@ -641,15 +619,15 @@ git commit -m "docs(playground): add useWorkWeixin API page"
 
 ## Spec coverage checklist
 
-| Spec 要求 | Task |
-|-----------|------|
-| `useWorkWeixin` → `[ready, wx]` | Task 1 |
-| `wx.config` + `wx.agentConfig` 顺序 | Task 1 |
-| `ready` 仅双成功后 true | Task 1 |
-| 仅 `wxwork` UA | Task 1 |
-| `VITE_WW_JSSDK_ENABLED` | Task 1 |
-| 双 stub + 测试 helper，不进根 barrel | Task 1 |
-| 签名 URL 去 hash | Task 1 |
-| 单测 7 场景 | Task 1 |
-| Demo + 路由 WeChat order 3 | Task 2 |
+| Spec 要求                                | Task              |
+| ---------------------------------------- | ----------------- |
+| `useWorkWeixin` → `[ready, wx]`          | Task 1            |
+| `wx.config` + `wx.agentConfig` 顺序      | Task 1            |
+| `ready` 仅双成功后 true                  | Task 1            |
+| 仅 `wxwork` UA                           | Task 1            |
+| `VITE_WW_JSSDK_ENABLED`                  | Task 1            |
+| 双 stub + 测试 helper，不进根 barrel     | Task 1            |
+| 签名 URL 去 hash                         | Task 1            |
+| 单测 7 场景                              | Task 1            |
+| Demo + 路由 WeChat order 3               | Task 2            |
 | 不改 `useWeixin` / 无 OAuth / 无业务封装 | 全计划未包含 = OK |

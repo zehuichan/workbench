@@ -19,9 +19,7 @@ export interface UseEmitEffectOptions<
 > {
   rules: EmitEffectRules<H, L>;
   initialDraft: DocumentDraft<H, L>;
-  confirm?: (
-    confirmation: EmitEffectConfirmation,
-  ) => boolean | Promise<boolean>;
+  confirm?: (confirmation: EmitEffectConfirmation) => boolean | Promise<boolean>;
 }
 
 export interface UseEmitEffectReturn<
@@ -56,15 +54,18 @@ export function useEmitEffect<
     draft,
     changeHeader: (field, value) =>
       commit(buildHeaderMutation(options.rules, draft.value, field, value)),
-    changeCell: (command) =>
-      commit(applyDetailMutation(options.rules, draft.value, command)),
+    changeCell: (command) => commit(applyDetailMutation(options.rules, draft.value, command)),
     addLine: (id) => {
-      draft.value = addLineMutation(options.rules, draft.value, id)
-        .nextDraft as DocumentDraft<H, L>;
+      draft.value = addLineMutation(options.rules, draft.value, id).nextDraft as DocumentDraft<
+        H,
+        L
+      >;
     },
     removeLine: (id) => {
-      draft.value = removeLineMutation(options.rules, draft.value, id)
-        .nextDraft as DocumentDraft<H, L>;
+      draft.value = removeLineMutation(options.rules, draft.value, id).nextDraft as DocumentDraft<
+        H,
+        L
+      >;
     },
     reset: (next) => {
       draft.value = cloneDeep(next ?? initial);

@@ -27,8 +27,7 @@ function mockWx(handlers?: {
       if (readyMode === 'ready') fn();
     }),
     error: vi.fn((fn: (err: unknown) => void) => {
-      if (readyMode === 'error')
-        fn(handlers?.errorPayload ?? new Error('wx error'));
+      if (readyMode === 'error') fn(handlers?.errorPayload ?? new Error('wx error'));
     }),
   };
   vi.stubGlobal('wx', wx);

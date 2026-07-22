@@ -30,9 +30,7 @@ const { error, isPending, restore, clear, flush } = useFormDraft({
 
 const errorLabel = computed(() => {
   if (error.value == null) return '—';
-  return error.value instanceof Error
-    ? error.value.message
-    : String(error.value);
+  return error.value instanceof Error ? error.value.message : String(error.value);
 });
 
 function handleRestore() {
@@ -130,8 +128,8 @@ function handleFlush() {
 
     <DemoBlock>
       <template #hint>
-        编辑表单 → 等 debounce 或点 Flush → 刷新页面 → 点 Restore 回填。Clear 后
-        Restore 会提示无草稿。当前 key：
+        编辑表单 → 等 debounce 或点 Flush → 刷新页面 → 点 Restore 回填。Clear 后 Restore
+        会提示无草稿。当前 key：
         <code>{{ DRAFT_KEY }}</code>
       </template>
 
@@ -140,9 +138,7 @@ function handleFlush() {
           <span>enabled</span>
           <el-switch v-model="enabled" />
         </label>
-        <el-button size="small" type="primary" @click="handleRestore">
-          Restore
-        </el-button>
+        <el-button size="small" type="primary" @click="handleRestore"> Restore </el-button>
         <el-button size="small" @click="handleFlush">Flush</el-button>
         <el-button size="small" @click="handleClear">Clear</el-button>
       </div>

@@ -7,9 +7,7 @@ import { getAppJsApiTicket, getJsApiTicket } from '@/api/signature';
 const jsApiList: string[] = [];
 
 function isWecomBrowser() {
-  return (
-    typeof navigator !== 'undefined' && /wxwork/i.test(navigator.userAgent)
-  );
+  return typeof navigator !== 'undefined' && /wxwork/i.test(navigator.userAgent);
 }
 
 /**

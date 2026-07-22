@@ -26,11 +26,7 @@ export function useWechatAuth(
 
   function authorize(redirect?: string) {
     const { protocol, host, pathname, search } = location;
-    const nextPath = redirect
-      ? redirect.startsWith('/')
-        ? redirect
-        : `/${redirect}`
-      : pathname;
+    const nextPath = redirect ? (redirect.startsWith('/') ? redirect : `/${redirect}`) : pathname;
     const redirectUri = `${protocol}//${host}${nextPath}${search}`;
     const appId = import.meta.env.VITE_WECHAT_APPID ?? '';
     location.href =

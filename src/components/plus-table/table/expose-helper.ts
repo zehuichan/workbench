@@ -7,10 +7,7 @@ export function createTableExpose<Local extends object, Table extends object>(
 ): Local & Table {
   type Method = (...args: unknown[]) => unknown;
   let boundTable: Table | undefined;
-  const boundMethods = new Map<
-    PropertyKey,
-    { source: Method; bound: Method }
-  >();
+  const boundMethods = new Map<PropertyKey, { source: Method; bound: Method }>();
 
   return new Proxy(local, {
     get(target, property, receiver) {
@@ -34,8 +31,7 @@ export function createTableExpose<Local extends object, Table extends object>(
     },
     has(target, property) {
       return (
-        Reflect.has(target, property) ||
-        (!!tableRef.value && Reflect.has(tableRef.value, property))
+        Reflect.has(target, property) || (!!tableRef.value && Reflect.has(tableRef.value, property))
       );
     },
   }) as Local & Table;

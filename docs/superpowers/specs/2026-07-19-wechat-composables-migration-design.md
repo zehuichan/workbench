@@ -8,22 +8,22 @@ Date: 2026-07-19
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 迁移策略 | 忠实迁移 + 最小适配（方案 1） |
-| `wxconfig` | 同文件内 stub + `TODO`，后续再接真实 API |
-| OAuth `redirect_uri` | History 模式（适配 workbench `createWebHistory`） |
-| Demo | 仅 API 文档展示（`DemoPage` + `DemoApiTable`），无交互块 |
-| 测试 | vitest + happy-dom，放在 `composables/__tests__/` |
-| 环境变量解析 | 不迁 `wrapperEnv`；`VITE_JSSDK_ENABLED === 'true'` 即开启 |
+| 项                   | 选择                                                      |
+| -------------------- | --------------------------------------------------------- |
+| 迁移策略             | 忠实迁移 + 最小适配（方案 1）                             |
+| `wxconfig`           | 同文件内 stub + `TODO`，后续再接真实 API                  |
+| OAuth `redirect_uri` | History 模式（适配 workbench `createWebHistory`）         |
+| Demo                 | 仅 API 文档展示（`DemoPage` + `DemoApiTable`），无交互块  |
+| 测试                 | vitest + happy-dom，放在 `composables/__tests__/`         |
+| 环境变量解析         | 不迁 `wrapperEnv`；`VITE_JSSDK_ENABLED === 'true'` 即开启 |
 
 ## Source → Target
 
-| 源（gd-holen-front-wap） | 目标（workbench） |
-|--------------------------|-------------------|
-| `src/hooks/core/useAuth.js` | `src/composables/use-auth/use-auth.ts` |
+| 源（gd-holen-front-wap）      | 目标（workbench）                          |
+| ----------------------------- | ------------------------------------------ |
+| `src/hooks/core/useAuth.js`   | `src/composables/use-auth/use-auth.ts`     |
 | `src/hooks/core/useWeixin.js` | `src/composables/use-weixin/use-weixin.ts` |
-| `@/api/wechat` `wxconfig` | stub（不新建 `src/api/`） |
+| `@/api/wechat` `wxconfig`     | stub（不新建 `src/api/`）                  |
 
 ## Target structure
 
@@ -51,11 +51,11 @@ src/env.d.ts                       # VITE_WECHAT_* + window.wx 最小声明
 ### `useAuth`
 
 ```ts
-type WechatOAuthScope = 'snsapi_base' | 'snsapi_userinfo'
+type WechatOAuthScope = 'snsapi_base' | 'snsapi_userinfo';
 
 function useAuth(
   scope?: WechatOAuthScope, // default 'snsapi_userinfo'
-): [Ref<string | undefined>, (redirect?: string) => void]
+): [Ref<string | undefined>, (redirect?: string) => void];
 ```
 
 行为：
@@ -70,7 +70,7 @@ function useAuth(
 ### `useWeixin`
 
 ```ts
-const useWeixin: () => [Ref<boolean>, typeof window.wx | undefined]
+const useWeixin: () => [Ref<boolean>, typeof window.wx | undefined];
 ```
 
 行为（`createGlobalState`，全局只配一次）：
@@ -91,12 +91,12 @@ const useWeixin: () => [Ref<boolean>, typeof window.wx | undefined]
 
 ```ts
 interface ImportMetaEnv {
-  readonly VITE_WECHAT_APPID?: string
-  readonly VITE_JSSDK_ENABLED?: string
+  readonly VITE_WECHAT_APPID?: string;
+  readonly VITE_JSSDK_ENABLED?: string;
 }
 
 interface Window {
-  wx?: WeixinJsSdk // 最小声明即可，或宽松 any 别名
+  wx?: WeixinJsSdk; // 最小声明即可，或宽松 any 别名
 }
 ```
 
@@ -127,10 +127,10 @@ interface Window {
 
 路由（`group: 'Composables'`）：
 
-| path | name | title | order |
-|------|------|-------|-------|
-| `composables/use-auth` | `composables-use-auth` | `useAuth` | 接在现有之后 |
-| `composables/use-weixin` | `composables-use-weixin` | `useWeixin` | 再后一位 |
+| path                     | name                     | title       | order        |
+| ------------------------ | ------------------------ | ----------- | ------------ |
+| `composables/use-auth`   | `composables-use-auth`   | `useAuth`   | 接在现有之后 |
+| `composables/use-weixin` | `composables-use-weixin` | `useWeixin` | 再后一位     |
 
 ## Out of scope
 

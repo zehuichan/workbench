@@ -8,13 +8,13 @@ Date: 2026-07-12
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 视觉参考 | Element Plus 文档风（白侧栏、蓝激活、API 表 + Demo 卡片） |
-| 结构深度 | 样式 + Demo 卡片壳；**不做** Show Code |
+| 项       | 选择                                                        |
+| -------- | ----------------------------------------------------------- |
+| 视觉参考 | Element Plus 文档风（白侧栏、蓝激活、API 表 + Demo 卡片）   |
+| 结构深度 | 样式 + Demo 卡片壳；**不做** Show Code                      |
 | 内容宽度 | 按页面类型自适应：`wide`（表格）/ `readable`（composables） |
-| 实现方式 | 薄壳组件 `DemoPage` / `DemoBlock` + 单一共享 CSS |
-| 明确不做 | VitePress、暗色主题、多语言、源码展开、改 demo 业务逻辑 |
+| 实现方式 | 薄壳组件 `DemoPage` / `DemoBlock` + 单一共享 CSS            |
+| 明确不做 | VitePress、暗色主题、多语言、源码展开、改 demo 业务逻辑     |
 
 ## Page Skeleton
 
@@ -34,9 +34,9 @@ Date: 2026-07-12
 - Prop `width`: `'wide' | 'readable'`（默认 `'readable'`）
 - Default slot：整页内容
 
-| 页面 | `width` |
-|------|---------|
-| PlusTable ×4 | `wide` |
+| 页面           | `width`                                 |
+| -------------- | --------------------------------------- |
+| PlusTable ×4   | `wide`                                  |
 | Composables ×3 | `wide`（与 PlusTable 同一通栏文档排版） |
 
 ### DemoBlock

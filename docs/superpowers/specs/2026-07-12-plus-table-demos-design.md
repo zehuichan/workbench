@@ -9,26 +9,26 @@ Updated: 2026-07-12（引入 vue-router 与可扩展 playground shell）
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 路由 | vue-router；一段一路由 |
-| 布局 | 左侧分组导航 + 右侧 `router-view` |
-| 目录 | `src/views/plus-table/`（页面）、`src/layouts/`、`src/router/` |
-| 文件命名 | kebab-case（如 `basic-editing-demo.vue`） |
-| 实现风格 | 各 demo 自包含 data/columns/toolbar |
-| 本期范围 | router + layout + PlusTable 四页 |
-| 明确不做（本期） | composables 页面内容、多语言、真实后端、单元测试、文档站 |
-| Composables 导航 | 本期不出现；有页面后再加分组 |
+| 项               | 选择                                                           |
+| ---------------- | -------------------------------------------------------------- |
+| 路由             | vue-router；一段一路由                                         |
+| 布局             | 左侧分组导航 + 右侧 `router-view`                              |
+| 目录             | `src/views/plus-table/`（页面）、`src/layouts/`、`src/router/` |
+| 文件命名         | kebab-case（如 `basic-editing-demo.vue`）                      |
+| 实现风格         | 各 demo 自包含 data/columns/toolbar                            |
+| 本期范围         | router + layout + PlusTable 四页                               |
+| 明确不做（本期） | composables 页面内容、多语言、真实后端、单元测试、文档站       |
+| Composables 导航 | 本期不出现；有页面后再加分组                                   |
 
 ## Routes
 
-| 路径 | 组件 |
-|------|------|
-| `/` | 重定向 → `/plus-table/basic-editing` |
-| `/plus-table/basic-editing` | `basic-editing-demo.vue` |
-| `/plus-table/dependencies-validation` | `dependencies-validation-demo.vue` |
-| `/plus-table/history-dirty` | `history-dirty-demo.vue` |
-| `/plus-table/pagination-rows` | `pagination-rows-demo.vue` |
+| 路径                                  | 组件                                 |
+| ------------------------------------- | ------------------------------------ |
+| `/`                                   | 重定向 → `/plus-table/basic-editing` |
+| `/plus-table/basic-editing`           | `basic-editing-demo.vue`             |
+| `/plus-table/dependencies-validation` | `dependencies-validation-demo.vue`   |
+| `/plus-table/history-dirty`           | `history-dirty-demo.vue`             |
+| `/plus-table/pagination-rows`         | `pagination-rows-demo.vue`           |
 
 后续约定（不实现）：`/composables/<name>`，如 `/composables/use-auto-save`。
 

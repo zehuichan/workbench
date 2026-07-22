@@ -17,10 +17,7 @@ const pageTitle = computed(() => props.title ?? String(route.meta.title ?? ''));
 </script>
 
 <template>
-  <section
-    class="demo"
-    :class="width === 'wide' ? 'demo--wide' : 'demo--readable'"
-  >
+  <section class="demo" :class="width === 'wide' ? 'demo--wide' : 'demo--readable'">
     <header class="demo__header">
       <h1 class="demo__title">{{ pageTitle }}</h1>
       <p v-if="$slots.description" class="demo__desc">

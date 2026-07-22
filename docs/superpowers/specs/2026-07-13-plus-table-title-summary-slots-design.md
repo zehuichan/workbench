@@ -8,13 +8,13 @@ Date: 2026-07-13
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| title 与 toolbar | 同一行：左 title，右 toolbar + 列设置 |
-| summary 与分页 | 有分页时同一行（左 summary、右分页）；无分页时 summary 仍可单独占底栏 |
-| 插槽参数 | 无作用域参数 |
-| 默认内容 prop | 不做（YAGNI） |
-| Demo | 在 `pagination-rows-demo` 演示，并补 API 说明 |
+| 项               | 选择                                                                  |
+| ---------------- | --------------------------------------------------------------------- |
+| title 与 toolbar | 同一行：左 title，右 toolbar + 列设置                                 |
+| summary 与分页   | 有分页时同一行（左 summary、右分页）；无分页时 summary 仍可单独占底栏 |
+| 插槽参数         | 无作用域参数                                                          |
+| 默认内容 prop    | 不做（YAGNI）                                                         |
+| Demo             | 在 `pagination-rows-demo` 演示，并补 API 说明                         |
 
 ## Structure
 
@@ -31,13 +31,13 @@ Date: 2026-07-13
 
 ### Visibility rules
 
-| 区域 | 显示条件 |
-|------|----------|
-| `__header` | 始终显示（列设置按钮一直在）；与现有 toolbar 行行为一致 |
-| `__title` | `$slots.title` 存在 |
-| `__footer` | `$slots.summary` 或 `total !== undefined` |
-| `__summary` | `$slots.summary` 存在 |
-| `__pagination` | `total !== undefined` |
+| 区域           | 显示条件                                                |
+| -------------- | ------------------------------------------------------- |
+| `__header`     | 始终显示（列设置按钮一直在）；与现有 toolbar 行行为一致 |
+| `__title`      | `$slots.title` 存在                                     |
+| `__footer`     | `$slots.summary` 或 `total !== undefined`               |
+| `__summary`    | `$slots.summary` 存在                                   |
+| `__pagination` | `total !== undefined`                                   |
 
 无 title 时 header 仍右对齐工具区；无 summary 仅有分页时 footer 右对齐分页；仅有 summary 无分页时 footer 只显示左侧汇总。
 
@@ -73,12 +73,12 @@ empty?: () => unknown;
 
 ## Files to change
 
-| 文件 | 变更 |
-|------|------|
-| `src/components/plus-table/table.vue` | 模板结构、`defineSlots` |
-| `src/components/plus-table/styles/index.scss` | header / title / footer / summary 样式 |
-| `src/views/plus-table/pagination-rows-demo.vue` | 使用插槽 + API 表补充 |
-| `src/views/demo-content.test.ts` | 若 API 表行数/指纹变化则同步 |
+| 文件                                            | 变更                                   |
+| ----------------------------------------------- | -------------------------------------- |
+| `src/components/plus-table/table.vue`           | 模板结构、`defineSlots`                |
+| `src/components/plus-table/styles/index.scss`   | header / title / footer / summary 样式 |
+| `src/views/plus-table/pagination-rows-demo.vue` | 使用插槽 + API 表补充                  |
+| `src/views/demo-content.test.ts`                | 若 API 表行数/指纹变化则同步           |
 
 ## Out of scope
 

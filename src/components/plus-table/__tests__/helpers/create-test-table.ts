@@ -1,19 +1,9 @@
-import {
-  effectScope,
-  reactive,
-  shallowRef,
-  type EffectScope,
-  type Slots,
-} from 'vue';
+import { effectScope, reactive, shallowRef, type EffectScope, type Slots } from 'vue';
 import { vi } from 'vitest';
 import { createStore } from '../../store/helper';
 import type { InternalStore } from '../../store';
 import type { PlusTable } from '../../tokens';
-import type {
-  PlusTableEmits,
-  PlusTableProps,
-  RowData,
-} from '../../table/defaults';
+import type { PlusTableEmits, PlusTableProps, RowData } from '../../table/defaults';
 import type { PlusTableColumnDef } from '../../table-column/defaults';
 
 export interface TestTable<T extends RowData> {

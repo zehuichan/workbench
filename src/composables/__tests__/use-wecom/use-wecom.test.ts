@@ -1,12 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { registerMock, getJsApiTicketMock, getAppJsApiTicketMock } = vi.hoisted(
-  () => ({
-    registerMock: vi.fn(),
-    getJsApiTicketMock: vi.fn(),
-    getAppJsApiTicketMock: vi.fn(),
-  }),
-);
+const { registerMock, getJsApiTicketMock, getAppJsApiTicketMock } = vi.hoisted(() => ({
+  registerMock: vi.fn(),
+  getJsApiTicketMock: vi.fn(),
+  getAppJsApiTicketMock: vi.fn(),
+}));
 
 vi.mock('@wecom/jssdk', () => ({
   register: registerMock,
@@ -105,16 +103,12 @@ describe('useWecom', () => {
       onAgentConfigSuccess: () => void;
     };
 
-    await expect(
-      options.getConfigSignature('https://example.com/page'),
-    ).resolves.toEqual({
+    await expect(options.getConfigSignature('https://example.com/page')).resolves.toEqual({
       timestamp: 1,
       nonceStr: 'n1',
       signature: 's1',
     });
-    await expect(
-      options.getAgentConfigSignature('https://example.com/page'),
-    ).resolves.toEqual({
+    await expect(options.getAgentConfigSignature('https://example.com/page')).resolves.toEqual({
       timestamp: 2,
       nonceStr: 'n2',
       signature: 's2',

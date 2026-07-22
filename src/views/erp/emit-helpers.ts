@@ -1,7 +1,4 @@
-import type {
-  DocumentLine,
-  HeaderEmitRule,
-} from '@/composables';
+import type { DocumentLine, HeaderEmitRule } from '@/composables';
 
 export interface SelectOption {
   label: string;
@@ -33,9 +30,7 @@ export function syncExchangeRateIfStillDefault(
   nextHeader.exchangeRate = defaultExchangeRate(nextHeader.currency);
 }
 
-export function forceCurrencyWithRate(
-  requiresConfirmation = true,
-): HeaderEmitRule {
+export function forceCurrencyWithRate(requiresConfirmation = true): HeaderEmitRule {
   return {
     policy: 'force',
     requiresConfirmation,
@@ -57,9 +52,7 @@ export function money(value: unknown): number {
 }
 
 export function optionLabel(options: SelectOption[], value: unknown): string {
-  return (
-    options.find((option) => option.value === value)?.label ?? String(value)
-  );
+  return options.find((option) => option.value === value)?.label ?? String(value);
 }
 
 export function forceField(
@@ -76,10 +69,7 @@ export function forceField(
   };
 }
 
-export function inheritField(
-  headerField: string,
-  lineField: string,
-): HeaderEmitRule {
+export function inheritField(headerField: string, lineField: string): HeaderEmitRule {
   return {
     policy: 'inherit',
     apply: (line, nextHeader) =>
@@ -104,9 +94,7 @@ export function repriceInheritedField(
 }
 
 export function sum(lines: DocumentLine[], field: string): number {
-  return money(
-    lines.reduce((total, line) => total + Number(line[field] ?? 0), 0),
-  );
+  return money(lines.reduce((total, line) => total + Number(line[field] ?? 0), 0));
 }
 
 export function formatSource(line: DocumentLine, props: string[]): string {

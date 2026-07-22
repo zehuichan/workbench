@@ -59,17 +59,8 @@ const onSettled = (task: Promise<unknown>, cleanup: () => void): void => {
  * Local drafts and save hotkeys remain separate concerns. A save callback that
  * requires an immutable payload should provide a getter that creates one.
  */
-export function useAutoSave<T>(
-  options: UseAutoSaveOptions<T>,
-): UseAutoSaveReturn {
-  const {
-    source,
-    save,
-    enabled = true,
-    debounceMs = 2000,
-    onSuccess,
-    onError,
-  } = options;
+export function useAutoSave<T>(options: UseAutoSaveOptions<T>): UseAutoSaveReturn {
+  const { source, save, enabled = true, debounceMs = 2000, onSuccess, onError } = options;
 
   const status = ref<AutoSaveStatus>('idle');
   const lastSavedAt = ref<number | null>(null);
@@ -153,10 +144,7 @@ export function useAutoSave<T>(
         try {
           onSuccess(value);
         } catch (onSuccessFailure) {
-          console.error(
-            '[useAutoSave] Success handler failed.',
-            onSuccessFailure,
-          );
+          console.error('[useAutoSave] Success handler failed.', onSuccessFailure);
         }
       }
       if (disposed) throw createDisposedError();
@@ -200,8 +188,7 @@ export function useAutoSave<T>(
     automatic = false,
     generation?: number,
   ): Promise<void> => {
-    const isComplete = () =>
-      (automatic ? handledRevision : savedRevision) >= targetRevision;
+    const isComplete = () => (automatic ? handledRevision : savedRevision) >= targetRevision;
 
     const stopIfDisposed = (): boolean => {
       if (!disposed) return false;
@@ -320,18 +307,14 @@ export function useAutoSave<T>(
     if (disposed) return Promise.reject(createDisposedError());
 
     if (invokingSaveSynchronously) {
-      const failure = new Error(
-        '[useAutoSave] flush cannot be called from the save callback.',
-      );
+      const failure = new Error('[useAutoSave] flush cannot be called from the save callback.');
       reportError(failure);
       return Promise.reject(failure);
     }
 
     cancelScheduledSave();
     if (pauseDepth > 0) {
-      const failure = new Error(
-        '[useAutoSave] Cannot flush while auto-save is paused.',
-      );
+      const failure = new Error('[useAutoSave] Cannot flush while auto-save is paused.');
       reportError(failure);
       return Promise.reject(failure);
     }
@@ -366,8 +349,7 @@ export function useAutoSave<T>(
       if (activeFlushes.size > 0) {
         const results = await Promise.allSettled([...activeFlushes]);
         const rejected = results.find(
-          (result): result is PromiseRejectedResult =>
-            result.status === 'rejected',
+          (result): result is PromiseRejectedResult => result.status === 'rejected',
         );
         if (rejected) {
           throw rejected.reason;

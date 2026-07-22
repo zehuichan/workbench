@@ -22,21 +22,23 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `src/views/plus-table/api-overview-demo.vue` | 新建：完整 API 参考页 |
-| `src/router/index.ts` | 注册 `/plus-table/api-overview`（`order: 0`） |
-| `src/views/demo-content.test.ts` | 扩展 docs-only 合同 + Overview case |
+| 路径                                         | 职责                                          |
+| -------------------------------------------- | --------------------------------------------- |
+| `src/views/plus-table/api-overview-demo.vue` | 新建：完整 API 参考页                         |
+| `src/router/index.ts`                        | 注册 `/plus-table/api-overview`（`order: 0`） |
+| `src/views/demo-content.test.ts`             | 扩展 docs-only 合同 + Overview case           |
 
 ---
 
 ### Task 1: 扩展合同测试（先红）
 
 **Files:**
+
 - Create: `src/views/plus-table/api-overview-demo.vue`（最小可导入桩）
 - Modify: `src/views/demo-content.test.ts`
 
 **Interfaces:**
+
 - Consumes: 现有 `demos` 数组形状
 - Produces: `docsOnly?: boolean`；Overview 条目期望 `sections: 11`、`rows: 64`
 
@@ -126,13 +128,7 @@ const demos = [
     source: paginationRows,
     sections: 4,
     rows: 12,
-    content: [
-      'PlusTable Props（分页）',
-      'Events',
-      'Slots',
-      '#title',
-      '#summary',
-    ],
+    content: ['PlusTable Props（分页）', 'Events', 'Slots', '#title', '#summary'],
   },
   {
     path: './composables/use-auto-save-demo.vue',
@@ -205,9 +201,11 @@ EOF
 ### Task 2: 实现完整 API Overview 页
 
 **Files:**
+
 - Modify: `src/views/plus-table/api-overview-demo.vue`（完整替换）
 
 **Interfaces:**
+
 - Consumes: `DemoPage`、`DemoApiTable`；类型真相见 `table/defaults.ts`、`table.vue`、`table-column/defaults.ts`
 - Produces: 11 张表、恰好 64 个 `<tr>`；无 `DemoBlock` / `PlusTable` / `#hint`
 
@@ -225,9 +223,8 @@ defineOptions({ name: 'ApiOverviewDemo' });
   <DemoPage width="wide">
     <template #description>
       PlusTable 完整公开 API 参考。交互与场景说明见侧栏其它 demo。未列出的
-      <code>el-table</code> 属性经 <code>$attrs</code> 透传；列上
-      <code>width</code> / <code>align</code> / <code>fixed</code> /
-      <code>sortable</code> / <code>formatter</code> 等
+      <code>el-table</code> 属性经 <code>$attrs</code> 透传；列上 <code>width</code> /
+      <code>align</code> / <code>fixed</code> / <code>sortable</code> / <code>formatter</code> 等
       <code>el-table-column</code> 字段可直通。
     </template>
 
@@ -256,17 +253,14 @@ defineOptions({ name: 'ApiOverviewDemo' });
         <tr>
           <td><code>validate-event</code></td>
           <td><code>boolean</code></td>
-          <td>
-            默认 <code>true</code>。为 false 时仅
-            <code>ref.validate()</code> 触发校验。
-          </td>
+          <td>默认 <code>true</code>。为 false 时仅 <code>ref.validate()</code> 触发校验。</td>
         </tr>
         <tr>
           <td><code>cache</code></td>
           <td><code>boolean</code></td>
           <td>
-            默认 <code>false</code>。缓存列设置（显隐 / 顺序 /
-            列宽）；为 true 时需同时传 <code>id</code>。
+            默认 <code>false</code>。缓存列设置（显隐 / 顺序 / 列宽）；为 true 时需同时传
+            <code>id</code>。
           </td>
         </tr>
         <tr>
@@ -379,8 +373,7 @@ defineOptions({ name: 'ApiOverviewDemo' });
           <td><code>#editor-&#123;prop&#125;</code></td>
           <td>
             编辑态插槽；参数含
-            <code>value</code> / <code>setValue</code> /
-            <code>commit</code> / <code>cancel</code>。
+            <code>value</code> / <code>setValue</code> / <code>commit</code> / <code>cancel</code>。
           </td>
         </tr>
       </DemoApiTable>
@@ -403,10 +396,7 @@ defineOptions({ name: 'ApiOverviewDemo' });
         </tr>
       </DemoApiTable>
 
-      <DemoApiTable
-        title="Expose · 行操作"
-        :headers="['名称', '说明']"
-      >
+      <DemoApiTable title="Expose · 行操作" :headers="['名称', '说明']">
         <tr>
           <td><code>insertRow(row, index?)</code></td>
           <td>插入行并 <code>update:data</code>。</td>
@@ -433,8 +423,7 @@ defineOptions({ name: 'ApiOverviewDemo' });
         </tr>
         <tr>
           <td>
-            <code>startRowEdit</code> /
-            <code>commitRowEdit</code> /
+            <code>startRowEdit</code> / <code>commitRowEdit</code> /
             <code>cancelRowEdit</code>
           </td>
           <td>行编辑 API</td>
@@ -531,11 +520,9 @@ defineOptions({ name: 'ApiOverviewDemo' });
           <td><code>component</code></td>
           <td><code>BuiltinEditorType | Component</code></td>
           <td>
-            编辑控件。内置：<code>input</code> /
-            <code>textarea</code> / <code>input-number</code> /
-            <code>select</code> / <code>date-picker</code> /
-            <code>time-picker</code> / <code>switch</code> /
-            <code>checkbox</code>。
+            编辑控件。内置：<code>input</code> / <code>textarea</code> / <code>input-number</code> /
+            <code>select</code> / <code>date-picker</code> / <code>time-picker</code> /
+            <code>switch</code> / <code>checkbox</code>。
           </td>
         </tr>
         <tr>
@@ -654,9 +641,11 @@ EOF
 ### Task 3: 注册路由
 
 **Files:**
+
 - Modify: `src/router/index.ts`
 
 **Interfaces:**
+
 - Consumes: `ApiOverviewDemo` 默认导出
 - Produces: 路由 `plus-table/api-overview`，`meta.order: 0`，标题 `API Overview`
 
@@ -730,11 +719,11 @@ EOF
 
 ## Spec Coverage Checklist
 
-| Spec 要求 | Task |
-|-----------|------|
-| `/plus-table/api-overview` + `ApiOverviewDemo` | 2, 3 |
-| `order: 0`，默认重定向不变 | 3 |
-| 纯文档、11 张表、完整公开面 | 2 |
-| 场景页 API 不动、不改组件源码 | 全局约束 |
-| `demo-content` 合同（含 docs-only） | 1, 2 |
-| 验收：侧栏第一项 / 无表格实例 / 测试过 | 2, 3 |
+| Spec 要求                                      | Task     |
+| ---------------------------------------------- | -------- |
+| `/plus-table/api-overview` + `ApiOverviewDemo` | 2, 3     |
+| `order: 0`，默认重定向不变                     | 3        |
+| 纯文档、11 张表、完整公开面                    | 2        |
+| 场景页 API 不动、不改组件源码                  | 全局约束 |
+| `demo-content` 合同（含 docs-only）            | 1, 2     |
+| 验收：侧栏第一项 / 无表格实例 / 测试过         | 2, 3     |

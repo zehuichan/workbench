@@ -37,8 +37,7 @@ function delay(ms: number, signal?: AbortSignal): Promise<void> {
     }
 
     const abortReason = () =>
-      signal.reason ??
-      new DOMException('The operation was aborted.', 'AbortError');
+      signal.reason ?? new DOMException('The operation was aborted.', 'AbortError');
     if (signal.aborted) return reject(abortReason());
 
     const handleAbort = () => {
@@ -75,9 +74,7 @@ const lastSavedLabel = computed(() => {
 
 const errorLabel = computed(() => {
   if (error.value == null) return '—';
-  return error.value instanceof Error
-    ? error.value.message
-    : String(error.value);
+  return error.value instanceof Error ? error.value.message : String(error.value);
 });
 
 async function handleFlush() {
@@ -113,10 +110,7 @@ async function handlePausedEdit() {
         <tr>
           <td><code>save</code></td>
           <td>
-            <code
-              >(value: T, signal: AbortSignal) =&gt; void |
-              Promise&lt;void&gt;</code
-            >
+            <code>(value: T, signal: AbortSignal) =&gt; void | Promise&lt;void&gt;</code>
           </td>
           <td>
             必填。真正落盘/请求；销毁时 signal 会中止。回调内不要调用本实例的
@@ -178,9 +172,8 @@ async function handlePausedEdit() {
 
     <DemoBlock>
       <template #hint>
-        改标题/备注 → 看 <code>status</code> 从 pending → saving → saved；点
-        Flush 跳过等待；点 withPaused 编辑时备注会变但不会触发自动保存。
-        <code>save</code> 目前用
+        改标题/备注 → 看 <code>status</code> 从 pending → saving → saved；点 Flush 跳过等待；点
+        withPaused 编辑时备注会变但不会触发自动保存。 <code>save</code> 目前用
         <code>localStorage</code> 模拟服务端，刷新后快照仍在。
       </template>
 
@@ -196,17 +189,13 @@ async function handlePausedEdit() {
             <el-radio-button :value="1500">1500</el-radio-button>
           </el-radio-group>
         </label>
-        <el-button size="small" type="primary" @click="handleFlush">
-          Flush
-        </el-button>
-        <el-button size="small" @click="handlePausedEdit">
-          withPaused 编辑
-        </el-button>
+        <el-button size="small" type="primary" @click="handleFlush"> Flush </el-button>
+        <el-button size="small" @click="handlePausedEdit"> withPaused 编辑 </el-button>
       </div>
 
       <p class="demo__status">
-        status: <strong>{{ status }}</strong> · lastSavedAt:
-        {{ lastSavedLabel }} · error: {{ errorLabel }}
+        status: <strong>{{ status }}</strong> · lastSavedAt: {{ lastSavedLabel }} · error:
+        {{ errorLabel }}
       </p>
 
       <div class="demo__panels">
@@ -224,11 +213,7 @@ async function handlePausedEdit() {
             服务端快照（localStorage · <code>{{ SERVER_KEY }}</code
             >）
           </div>
-          <pre>{{
-            serverSnapshot
-              ? JSON.stringify(serverSnapshot, null, 2)
-              : '（尚未保存）'
-          }}</pre>
+          <pre>{{ serverSnapshot ? JSON.stringify(serverSnapshot, null, 2) : '（尚未保存）' }}</pre>
         </div>
       </div>
     </DemoBlock>

@@ -1,8 +1,5 @@
 import type { RuleItem } from 'async-validator';
-import type {
-  PlusTableColumn,
-  PlusTableColumnDef,
-} from '../table-column/defaults';
+import type { PlusTableColumn, PlusTableColumnDef } from '../table-column/defaults';
 
 export type RowData = Record<string, any>;
 

@@ -28,7 +28,7 @@ Related: `docs/superpowers/specs/2026-07-17-erp-emit-effect-demos-design.md`
 ### Shared defaults (`emit-helpers`)
 
 ```ts
-DEFAULT_EXCHANGE_RATES = { CNY: 1, USD: 7.2, EUR: 7.8 }
+DEFAULT_EXCHANGE_RATES = { CNY: 1, USD: 7.2, EUR: 7.8 };
 ```
 
 Helpers:
@@ -42,30 +42,30 @@ Helpers:
 
 ### Header (all three drafts)
 
-| Field           | Role                                      |
-| --------------- | ----------------------------------------- |
-| `currency`      | 结算/报销币种；强制同步到明细             |
-| `exchangeRate`  | 原币→本位币汇率；可手改；改币种时条件覆盖 |
+| Field          | Role                                      |
+| -------------- | ----------------------------------------- |
+| `currency`     | 结算/报销币种；强制同步到明细             |
+| `exchangeRate` | 原币→本位币汇率；可手改；改币种时条件覆盖 |
 
 初始值：三单据均为 `currency: 'CNY'`，`exchangeRate: 1`。
 
 ### Line + summary
 
-| Scene     | Original amount                         | Local amount                         | Summary keys                                      |
-| --------- | --------------------------------------- | ------------------------------------ | ------------------------------------------------- |
-| Sales     | `amount = qty × unitPrice × (1+taxRate)` | `localAmount = amount × exchangeRate` | `totalQty`, `totalAmount`, `totalLocalAmount`     |
-| Purchase  | same as sales                           | same                                 | `totalQty`, `totalAmount`, `totalLocalAmount`     |
-| Expense   | `amount`, `deductibleTax` (unchanged)   | `max(amount - deductibleTax, 0) × exchangeRate` | `originalAmount`, `deductibleTax`, `localAmount` |
+| Scene    | Original amount                          | Local amount                                    | Summary keys                                     |
+| -------- | ---------------------------------------- | ----------------------------------------------- | ------------------------------------------------ |
+| Sales    | `amount = qty × unitPrice × (1+taxRate)` | `localAmount = amount × exchangeRate`           | `totalQty`, `totalAmount`, `totalLocalAmount`    |
+| Purchase | same as sales                            | same                                            | `totalQty`, `totalAmount`, `totalLocalAmount`    |
+| Expense  | `amount`, `deductibleTax` (unchanged)    | `max(amount - deductibleTax, 0) × exchangeRate` | `originalAmount`, `deductibleTax`, `localAmount` |
 
 金额均经现有 `money()` 两位小数规整。
 
 ## Header Rules
 
-| Field           | Policy         | Confirm | Behavior                                                                 |
-| --------------- | -------------- | ------- | ------------------------------------------------------------------------ |
-| `currency`      | force (+ rate) | yes     | Force line currency；条件同步表头汇率；`recalculateLine` 重算本位币     |
-| `exchangeRate`  | recalculate    | yes     | `apply` 返回空补丁；靠 `recalculateLine` 用新汇率更新 `localAmount`     |
-| other fields    | unchanged      | —       | 销售/采购：客户/供应商 reprice、仓库/税率 inherit；费用：部门/项目 inherit |
+| Field          | Policy         | Confirm | Behavior                                                                   |
+| -------------- | -------------- | ------- | -------------------------------------------------------------------------- |
+| `currency`     | force (+ rate) | yes     | Force line currency；条件同步表头汇率；`recalculateLine` 重算本位币        |
+| `exchangeRate` | recalculate    | yes     | `apply` 返回空补丁；靠 `recalculateLine` 用新汇率更新 `localAmount`        |
+| other fields   | unchanged      | —       | 销售/采购：客户/供应商 reprice、仓库/税率 inherit；费用：部门/项目 inherit |
 
 币种规则通过 mutate 共享 `nextHeader` 写回汇率：在单次 `changeHeader('currency', …)` 内原子完成，避免两次确认。`sync` 对每行 `apply` 调用均幂等。
 

@@ -31,12 +31,7 @@ export default defineComponent({
         return column.render({ row, rowIndex, column, value });
       }
       if (column.formatter) {
-        return column.formatter(
-          row,
-          column as TableColumnCtx<RowData>,
-          value,
-          rowIndex,
-        );
+        return column.formatter(row, column as TableColumnCtx<RowData>, value, rowIndex);
       }
       return value == null ? '' : String(value);
     }
@@ -72,11 +67,7 @@ export default defineComponent({
       const children: VNodeChild[] = [content];
       if (view.error) {
         children.push(
-          h(
-            'span',
-            { id: errorId, class: 'ptbl-visually-hidden' },
-            view.error.message,
-          ),
+          h('span', { id: errorId, class: 'ptbl-visually-hidden' }, view.error.message),
         );
       }
 
@@ -98,8 +89,7 @@ export default defineComponent({
             ElTooltip,
             { content: view.error.message, placement: 'top', effect: 'dark' },
             {
-              default: () =>
-                h('div', { class: 'ptbl-cell-tooltip-trigger' }, [cell]),
+              default: () => h('div', { class: 'ptbl-cell-tooltip-trigger' }, [cell]),
             },
           )
         : cell;

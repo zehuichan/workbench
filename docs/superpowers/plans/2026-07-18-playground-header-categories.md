@@ -29,9 +29,11 @@
 ### Task 1: Header 分类行为与模板
 
 **Files:**
+
 - Modify: `src/layouts/playground-layout.vue:1-50`
 
 **Interfaces:**
+
 - Consumes: 现有路由 `meta.group`、`meta.order`、`meta.title`。
 - Produces: `categories` 一级分类配置、`activeCategory` 活动态、过滤后的 `navGroups`。
 
@@ -68,9 +70,7 @@ function groupRoutes(group: string) {
   return router
     .getRoutes()
     .filter((item) => item.meta.group === group)
-    .sort(
-      (left, right) => Number(left.meta.order) - Number(right.meta.order),
-    );
+    .sort((left, right) => Number(left.meta.order) - Number(right.meta.order));
 }
 
 function categoryForGroup(group: unknown): CategoryKey | undefined {
@@ -79,9 +79,7 @@ function categoryForGroup(group: unknown): CategoryKey | undefined {
 }
 
 const navGroups = computed(() => {
-  const groups =
-    categories.find((category) => category.key === activeCategory.value)
-      ?.groups ?? [];
+  const groups = categories.find((category) => category.key === activeCategory.value)?.groups ?? [];
 
   return groups.map((group) => ({
     name: group,
@@ -132,11 +130,7 @@ function selectCategory(category: CategoryConfig): void {
 
     <div class="playground__body">
       <aside class="playground__nav">
-        <div
-          v-for="group in navGroups"
-          :key="group.name"
-          class="playground__group"
-        >
+        <div v-for="group in navGroups" :key="group.name" class="playground__group">
           <div class="playground__group-title">{{ group.name }}</div>
           <router-link
             v-for="link in group.links"
@@ -174,9 +168,11 @@ Expected: PASS，无 TypeScript 或 Vue 模板错误。
 ### Task 2: Header 与主体布局样式
 
 **Files:**
+
 - Modify: `src/styles/index.scss:78-158`
 
 **Interfaces:**
+
 - Consumes: Task 1 生成的 `playground__header`、`playground__categories`、`playground__category`、`playground__body` 类名。
 - Produces: 固定 header、可滚动分类栏、独立滚动的侧栏与主内容。
 
@@ -365,10 +361,12 @@ Expected: `vue-tsc -b` 与 `vite build` 均 PASS。
 ### Task 3: 浏览器验收
 
 **Files:**
+
 - Verify only: `src/layouts/playground-layout.vue`
 - Verify only: `src/styles/index.scss`
 
 **Interfaces:**
+
 - Consumes: Tasks 1–2 的完整实现。
 - Produces: 分类导航、路由同步和布局滚动行为的验收结果。
 
@@ -383,6 +381,7 @@ Expected: Vite 启动成功并给出本地访问地址。
 打开 `/plus-table/basic-editing`。
 
 Expected:
+
 - header 中 `components` 为活动项。
 - 侧栏只显示 `PlusTable` 与 `ERP 场景`。
 - 点击 `components` 后进入 `/plus-table/api-overview`。
@@ -392,6 +391,7 @@ Expected:
 点击 `composables`。
 
 Expected:
+
 - 跳转到 `/composables/use-auto-save`。
 - header 中 `composables` 为活动项。
 - 侧栏只显示 `Composables`。
@@ -401,12 +401,14 @@ Expected:
 直接打开 `/erp/sales-order-linkage`，然后观察 `packages`。
 
 Expected:
+
 - `components` 自动恢复为活动项。
 - `packages` 可见、禁用且不能获得活动态。
 
 - [ ] **Step 5: 检查滚动与最终状态**
 
 Expected:
+
 - header 不随主内容滚动。
 - 侧栏与主内容可独立纵向滚动。
 - 浏览器控制台无新增错误。

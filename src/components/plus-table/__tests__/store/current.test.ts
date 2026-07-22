@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-  createTestTable,
-  type TestTable,
-} from '../helpers/create-test-table';
+import { createTestTable, type TestTable } from '../helpers/create-test-table';
 
 interface Row {
   id: number;

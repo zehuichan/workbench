@@ -29,19 +29,13 @@ const BASE_PRICES: Record<string, number> = {
   service: 1200,
 };
 
-function resolveSalesPrice(
-  line: DocumentLine,
-  header: Record<string, unknown>,
-): number {
+function resolveSalesPrice(line: DocumentLine, header: Record<string, unknown>): number {
   const base = BASE_PRICES[String(line.productId)] ?? 0;
   const customerFactor = header.customerId === 'customer-channel' ? 0.95 : 1;
   return money(base * customerFactor);
 }
 
-function recalculateSalesLine(
-  line: DocumentLine,
-  header: Record<string, unknown>,
-): DocumentLine {
+function recalculateSalesLine(line: DocumentLine, header: Record<string, unknown>): DocumentLine {
   const next: DocumentLine = {
     ...line,
     fieldSources: { ...line.fieldSources },
@@ -63,9 +57,7 @@ function recalculateSalesLine(
   const unitPrice = Number(next.unitPrice ?? 0);
   const taxRate = Number(next.taxRate ?? 0);
   next.amount = money(quantity * unitPrice * (1 + taxRate));
-  next.localAmount = money(
-    Number(next.amount) * Number(header.exchangeRate ?? 0),
-  );
+  next.localAmount = money(Number(next.amount) * Number(header.exchangeRate ?? 0));
   return next;
 }
 
@@ -168,8 +160,7 @@ export const salesOrderColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: SALES_PRODUCT_OPTIONS },
-    formatter: (row: DocumentLine) =>
-      optionLabel(SALES_PRODUCT_OPTIONS, row.productId),
+    formatter: (row: DocumentLine) => optionLabel(SALES_PRODUCT_OPTIONS, row.productId),
   },
   {
     prop: 'quantity',
@@ -184,8 +175,7 @@ export const salesOrderColumns: PlusTableColumnDef[] = [
     label: '币种',
     width: 110,
     editable: false,
-    formatter: (row: DocumentLine) =>
-      optionLabel(CURRENCY_OPTIONS, row.currency),
+    formatter: (row: DocumentLine) => optionLabel(CURRENCY_OPTIONS, row.currency),
   },
   {
     prop: 'warehouseId',
@@ -194,8 +184,7 @@ export const salesOrderColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: WAREHOUSE_OPTIONS },
-    formatter: (row: DocumentLine) =>
-      optionLabel(WAREHOUSE_OPTIONS, row.warehouseId),
+    formatter: (row: DocumentLine) => optionLabel(WAREHOUSE_OPTIONS, row.warehouseId),
   },
   {
     prop: 'unitPrice',

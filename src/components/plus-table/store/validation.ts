@@ -3,20 +3,13 @@ import Schema from 'async-validator';
 import { isString } from 'es-toolkit';
 import type { ValidateError } from 'async-validator';
 import type { PlusTable } from '../tokens';
-import type {
-  CellError,
-  CellRule,
-  RowData,
-  ValidateResult,
-} from '../table/defaults';
+import type { CellError, CellRule, RowData, ValidateResult } from '../table/defaults';
 import type { ColumnNode } from '../table-column/defaults';
 
 const staleValidation = Symbol('stale-validation');
 type CellValidationResult = CellError | null | typeof staleValidation;
 
-export function useValidation<T extends RowData = RowData>(
-  table: PlusTable<T>,
-) {
+export function useValidation<T extends RowData = RowData>(table: PlusTable<T>) {
   /** rowKey -> prop -> 单元格错误 */
   const errors = reactive(new Map<string, Map<string, CellError>>());
 
@@ -37,11 +30,7 @@ export function useValidation<T extends RowData = RowData>(
     return next;
   }
 
-  function isLatestVersion(
-    rowKey: string,
-    prop: string,
-    version: number,
-  ): boolean {
+  function isLatestVersion(rowKey: string, prop: string, version: number): boolean {
     return versions.get(rowKey)?.get(prop) === version;
   }
 
@@ -73,11 +62,7 @@ export function useValidation<T extends RowData = RowData>(
     return result;
   }
 
-  function buildRules(
-    row: T,
-    rowIndex: number,
-    node: ColumnNode<T>,
-  ): CellRule[] {
+  function buildRules(row: T, rowIndex: number, node: ColumnNode<T>): CellRule[] {
     const column = node.column;
     const depState = table.store.getDependencyState(row, rowIndex, column);
     const rules: CellRule[] = [];
@@ -104,8 +89,7 @@ export function useValidation<T extends RowData = RowData>(
     const rules = nodes.flatMap((node) => buildRules(row, rowIndex, node));
 
     /** 非最新版本（被后一次输入触发的校验抢先）或该行已被移除时，结果作废；否则返回校验时行的最新下标 */
-    const resolveCurrentRowIndex = ():
-      number | null | typeof staleValidation => {
+    const resolveCurrentRowIndex = (): number | null | typeof staleValidation => {
       if (!isLatestVersion(rowKey, prop, version)) return staleValidation;
       const location = table.store.states.keysMap.value.get(rowKey);
       return location?.row === row ? location.rowIndex : null;
@@ -145,18 +129,9 @@ export function useValidation<T extends RowData = RowData>(
     }
   }
 
-  async function validateCell(
-    row: T,
-    rowIndex: number,
-    prop: string,
-  ): Promise<CellError | null> {
-    if (
-      !Number.isInteger(rowIndex) ||
-      table.store.states.data.value[rowIndex] !== row
-    ) {
-      throw new RangeError(
-        `[PlusTable] validateCell 失败：第 ${rowIndex} 行与当前数据不匹配。`,
-      );
+  async function validateCell(row: T, rowIndex: number, prop: string): Promise<CellError | null> {
+    if (!Number.isInteger(rowIndex) || table.store.states.data.value[rowIndex] !== row) {
+      throw new RangeError(`[PlusTable] validateCell 失败：第 ${rowIndex} 行与当前数据不匹配。`);
     }
     const nodes = table.store.getColumnsByProp(prop);
     if (!nodes.length) return null;
@@ -175,32 +150,23 @@ export function useValidation<T extends RowData = RowData>(
       );
       const results = await Promise.all(
         [...props].map((prop) =>
-          validateCellNodes(
-            row,
-            currentIndex,
-            table.store.getColumnsByProp(prop),
-          ),
+          validateCellNodes(row, currentIndex, table.store.getColumnsByProp(prop)),
         ),
       );
       if (results.includes(staleValidation)) continue;
       return results.filter(
-        (result): result is CellError =>
-          result !== null && result !== staleValidation,
+        (result): result is CellError => result !== null && result !== staleValidation,
       );
     }
   }
 
   async function validateRow(rowIndex: number): Promise<CellError[]> {
     if (!Number.isInteger(rowIndex)) {
-      throw new RangeError(
-        `[PlusTable] validateRow 失败：行下标 ${rowIndex} 不是整数。`,
-      );
+      throw new RangeError(`[PlusTable] validateRow 失败：行下标 ${rowIndex} 不是整数。`);
     }
     const row = table.store.states.data.value[rowIndex];
     if (!row) {
-      throw new RangeError(
-        `[PlusTable] validateRow 失败：行下标 ${rowIndex} 超出有效范围。`,
-      );
+      throw new RangeError(`[PlusTable] validateRow 失败：行下标 ${rowIndex} 超出有效范围。`);
     }
 
     const previous = rowValidationTails.get(row);

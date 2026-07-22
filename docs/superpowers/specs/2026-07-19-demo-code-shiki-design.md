@@ -8,15 +8,15 @@ Date: 2026-07-19
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 高亮库 | `shiki`（客户端 `createHighlighter` 单例） |
-| 主题 | 仅 `github-light`（贴合现有 playground 浅色） |
-| 行号 | Shiki 输出的 `.line` + CSS `counter`（VitePress 同款） |
-| 复制 | 工具栏按钮；`navigator.clipboard.writeText`；短暂「已复制」反馈 |
-| 降级 | highlighter 未就绪 / 失败时渲染纯文本 `<pre>` |
-| 首批接入 | `use-auth-demo.vue`、`use-weixin-demo.vue` |
-| 明确不做 | 暗色主题切换、构建期预渲染、全站 demo 源码迁移 |
+| 项       | 选择                                                            |
+| -------- | --------------------------------------------------------------- |
+| 高亮库   | `shiki`（客户端 `createHighlighter` 单例）                      |
+| 主题     | 仅 `github-light`（贴合现有 playground 浅色）                   |
+| 行号     | Shiki 输出的 `.line` + CSS `counter`（VitePress 同款）          |
+| 复制     | 工具栏按钮；`navigator.clipboard.writeText`；短暂「已复制」反馈 |
+| 降级     | highlighter 未就绪 / 失败时渲染纯文本 `<pre>`                   |
+| 首批接入 | `use-auth-demo.vue`、`use-weixin-demo.vue`                      |
+| 明确不做 | 暗色主题切换、构建期预渲染、全站 demo 源码迁移                  |
 
 ## Public API
 

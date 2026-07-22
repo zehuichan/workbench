@@ -29,15 +29,11 @@ describe('PlusTable rows', () => {
     table.store.insertRow({ id: 4, name: 'last' }, 100);
     await nextTick();
 
-    expect(table.store.states.data.value.map((row) => row.id)).toEqual([
-      3, 1, 2, 4,
-    ]);
+    expect(table.store.states.data.value.map((row) => row.id)).toEqual([3, 1, 2, 4]);
     expect(table.store.removeRow(-1)).toBeUndefined();
     expect(table.store.duplicateRow(100, { id: 5 })).toBeUndefined();
     expect(table.store.moveRow(-1, 1)).toBe(false);
     expect(table.store.moveRow(0, 100)).toBe(false);
-    expect(table.store.states.data.value.map((row) => row.id)).toEqual([
-      3, 1, 2, 4,
-    ]);
+    expect(table.store.states.data.value.map((row) => row.id)).toEqual([3, 1, 2, 4]);
   });
 });

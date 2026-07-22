@@ -60,7 +60,9 @@
         color: var(--ink);
         background: var(--surface-1);
         line-height: 1.5;
-        transition: background 0.2s ease, color 0.2s ease;
+        transition:
+          background 0.2s ease,
+          color 0.2s ease;
       }
 
       .page {
@@ -501,24 +503,72 @@
         <p class="swatch-grid-label light-only">Light</p>
         <p class="swatch-grid-label dark-only">Dark</p>
         <div class="swatches light-only">
-          <div class="swatch"><div class="chip" style="background: #0b6e6e"></div><div class="info">primary<code>#0B6E6E</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #f2efe6"></div><div class="info">on-primary / paper<code>#F2EFE6</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #d4ebea"></div><div class="info">primary-soft<code>#D4EBEA</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #14181f"></div><div class="info">ink<code>#14181F</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #ffffff; border-bottom: 1px solid #e5e5e5"></div><div class="info">canvas<code>#FFFFFF</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #fafafa; border-bottom: 1px solid #e5e5e5"></div><div class="info">sidebar<code>#FAFAFA</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #e5e5e5"></div><div class="info">hairline<code>#E5E5E5</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #1a1f28"></div><div class="info">code<code>#1A1F28</code></div></div>
+          <div class="swatch">
+            <div class="chip" style="background: #0b6e6e"></div>
+            <div class="info">primary<code>#0B6E6E</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #f2efe6"></div>
+            <div class="info">on-primary / paper<code>#F2EFE6</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #d4ebea"></div>
+            <div class="info">primary-soft<code>#D4EBEA</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #14181f"></div>
+            <div class="info">ink<code>#14181F</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #ffffff; border-bottom: 1px solid #e5e5e5"></div>
+            <div class="info">canvas<code>#FFFFFF</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #fafafa; border-bottom: 1px solid #e5e5e5"></div>
+            <div class="info">sidebar<code>#FAFAFA</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #e5e5e5"></div>
+            <div class="info">hairline<code>#E5E5E5</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #1a1f28"></div>
+            <div class="info">code<code>#1A1F28</code></div>
+          </div>
         </div>
         <div class="swatches dark-only">
-          <div class="swatch"><div class="chip" style="background: #0b6e6e"></div><div class="info">button / mark<code>#0B6E6E</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #2dd4bf"></div><div class="info">active text<code>#2DD4BF</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #0b6e6e40"></div><div class="info">primary-soft<code>#0B6E6E40</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #f2efe6"></div><div class="info">ink<code>#F2EFE6</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #14181f"></div><div class="info">canvas<code>#14181F</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #1a1f28"></div><div class="info">sidebar / surface-1<code>#1A1F28</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #222833"></div><div class="info">surface-2<code>#222833</code></div></div>
-          <div class="swatch"><div class="chip" style="background: #0f1218"></div><div class="info">code<code>#0F1218</code></div></div>
+          <div class="swatch">
+            <div class="chip" style="background: #0b6e6e"></div>
+            <div class="info">button / mark<code>#0B6E6E</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #2dd4bf"></div>
+            <div class="info">active text<code>#2DD4BF</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #0b6e6e40"></div>
+            <div class="info">primary-soft<code>#0B6E6E40</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #f2efe6"></div>
+            <div class="info">ink<code>#F2EFE6</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #14181f"></div>
+            <div class="info">canvas<code>#14181F</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #1a1f28"></div>
+            <div class="info">sidebar / surface-1<code>#1A1F28</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #222833"></div>
+            <div class="info">surface-2<code>#222833</code></div>
+          </div>
+          <div class="swatch">
+            <div class="chip" style="background: #0f1218"></div>
+            <div class="info">code<code>#0F1218</code></div>
+          </div>
         </div>
       </section>
 
@@ -527,21 +577,34 @@
         <div class="type-row">
           <article>
             <div class="token">display-lg</div>
-            <div style="font-size: 36px; font-weight: 600; letter-spacing: -0.8px">PlusTable workbench</div>
+            <div style="font-size: 36px; font-weight: 600; letter-spacing: -0.8px">
+              PlusTable workbench
+            </div>
           </article>
           <article>
             <div class="token">heading-2</div>
-            <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.3px">Field linkage demos</div>
+            <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.3px">
+              Field linkage demos
+            </div>
           </article>
           <article>
             <div class="token">body</div>
             <div style="font-size: 14px; color: var(--ink-soft)">
-              Quiet engineering UI for complex business forms. Teal marks active work; neutrals carry the shell.
+              Quiet engineering UI for complex business forms. Teal marks active work; neutrals
+              carry the shell.
             </div>
           </article>
           <article>
             <div class="token">eyebrow / mono</div>
-            <div style="font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent)">
+            <div
+              style="
+                font-family: var(--mono);
+                font-size: 11px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--accent);
+              "
+            >
               ERP · Composables · Table
             </div>
           </article>
@@ -587,7 +650,10 @@
             <div class="stage">
               <div class="demo">
                 <h3>Demo block</h3>
-                <p>Hairline surface for interactive tables and forms. Primary actions use Workbench Teal.</p>
+                <p>
+                  Hairline surface for interactive tables and forms. Primary actions use Workbench
+                  Teal.
+                </p>
                 <div class="code light-only">--playground-accent: #0b6e6e;</div>
                 <div class="code dark-only">
                   --playground-accent: #2dd4bf; /* text / focus */<br />
@@ -616,8 +682,7 @@
         var btn = document.getElementById('theme-toggle');
         var params = new URLSearchParams(location.search);
         var startDark =
-          params.get('theme') === 'dark' ||
-          location.pathname.endsWith('preview-dark.html');
+          params.get('theme') === 'dark' || location.pathname.endsWith('preview-dark.html');
 
         function apply(dark) {
           root.classList.toggle('dark', dark);

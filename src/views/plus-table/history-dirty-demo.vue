@@ -151,8 +151,7 @@ function handleResetTracking() {
 
     <DemoBlock>
       <template #hint>
-        改名称/金额 → 脏行数增加 → Undo/Redo；点 Reset tracking
-        后脏行清零（数据保留）。
+        改名称/金额 → 脏行数增加 → Undo/Redo；点 Reset tracking 后脏行清零（数据保留）。
       </template>
       <PlusTable
         ref="tableRef"

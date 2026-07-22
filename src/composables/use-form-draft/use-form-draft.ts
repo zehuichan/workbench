@@ -11,9 +11,7 @@ import { defaultWindow, useTimeoutFn } from '@vueuse/core';
 import { isPlainObject, isString } from 'es-toolkit';
 import { watchReadable } from '../shared/watch-readable';
 
-export interface UseFormDraftOptions<
-  T extends object = Record<string, unknown>,
-> {
+export interface UseFormDraftOptions<T extends object = Record<string, unknown>> {
   /** Mutable form state persisted as one JSON object. */
   form: Ref<T>;
   /** Complete localStorage key. Key changes never restore or migrate data. */
@@ -51,20 +49,12 @@ export interface UseFormDraftReturn {
 export function useFormDraft<T extends object = Record<string, unknown>>(
   options: UseFormDraftOptions<T>,
 ): UseFormDraftReturn {
-  const {
-    form,
-    key,
-    enabled = true,
-    defaults,
-    debounceMs = 500,
-    onError,
-  } = options;
+  const { form, key, enabled = true, defaults, debounceMs = 500, onError } = options;
 
   const error = shallowRef<unknown | null>(null);
   let pauseDepth = 0;
   let disposed = false;
-  const createDisposedError = (): Error =>
-    new Error('[useFormDraft] Scope was disposed.');
+  const createDisposedError = (): Error => new Error('[useFormDraft] Scope was disposed.');
 
   const reportError = (failure: unknown): false => {
     if (disposed) return false;
@@ -96,9 +86,7 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
   const resolveKey = (): string => {
     const value = readValue(key);
     if (!isString(value) || value.trim().length === 0) {
-      return reportAndThrow(
-        new TypeError('[useFormDraft] "key" must be a non-empty string.'),
-      );
+      return reportAndThrow(new TypeError('[useFormDraft] "key" must be a non-empty string.'));
     }
     return value.trim();
   };
@@ -118,9 +106,7 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
 
   const serializeForm = (): string => {
     if (!isPlainObject(form.value)) {
-      return reportAndThrow(
-        new TypeError('[useFormDraft] Form value must be a plain object.'),
-      );
+      return reportAndThrow(new TypeError('[useFormDraft] Form value must be a plain object.'));
     }
     let serialized: string | undefined;
     try {
@@ -129,9 +115,7 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
       return reportAndThrow(failure);
     }
     if (serialized === undefined) {
-      return reportAndThrow(
-        new TypeError('[useFormDraft] Form cannot be serialized as JSON.'),
-      );
+      return reportAndThrow(new TypeError('[useFormDraft] Form cannot be serialized as JSON.'));
     }
     return serialized;
   };
@@ -231,16 +215,12 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
       return reportError(failure);
     }
     if (!isPlainObject(draft)) {
-      return reportError(
-        new TypeError('[useFormDraft] Stored draft must be a plain object.'),
-      );
+      return reportError(new TypeError('[useFormDraft] Stored draft must be a plain object.'));
     }
 
     const fallback = defaults === undefined ? {} : readValue(defaults);
     if (!isPlainObject(fallback)) {
-      return reportAndThrow(
-        new TypeError('[useFormDraft] "defaults" must be a plain object.'),
-      );
+      return reportAndThrow(new TypeError('[useFormDraft] "defaults" must be a plain object.'));
     }
 
     pauseDepth += 1;

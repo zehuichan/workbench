@@ -159,22 +159,14 @@ describe('emit-effect', () => {
     const source = initialDraft();
     const mutation = buildHeaderMutation(rules, source, 'currency', 'USD');
 
-    expect(mutation.nextDraft.lines.map((line) => line.currency)).toEqual([
-      'USD',
-      'USD',
-    ]);
+    expect(mutation.nextDraft.lines.map((line) => line.currency)).toEqual(['USD', 'USD']);
     expect(source.lines[0]?.currency).toBe('CNY');
     expect(mutation.confirmation?.affectedCount).toBe(2);
     expect(mutation.confirmation?.fields).toContain('currency');
   });
 
   it('preserves manual inherited fields', () => {
-    const mutation = buildHeaderMutation(
-      rules,
-      initialDraft(),
-      'warehouseId',
-      'WH-SZ',
-    );
+    const mutation = buildHeaderMutation(rules, initialDraft(), 'warehouseId', 'WH-SZ');
 
     expect(mutation.nextDraft.lines[0]?.warehouseId).toBe('WH-SZ');
     expect(mutation.nextDraft.lines[1]?.warehouseId).toBe('WH-B');
@@ -183,12 +175,7 @@ describe('emit-effect', () => {
   });
 
   it('recalculates derived amounts from header context', () => {
-    const mutation = buildHeaderMutation(
-      rules,
-      initialDraft(),
-      'multiplier',
-      3,
-    );
+    const mutation = buildHeaderMutation(rules, initialDraft(), 'multiplier', 3);
 
     expect(mutation.nextDraft.lines.map((line) => line.amount)).toEqual([6, 9]);
     expect(mutation.nextDraft.summary.total).toBe(15);
@@ -204,9 +191,7 @@ describe('emit-effect', () => {
     });
 
     expect(mutation.nextDraft.lines[0]?.warehouseId).toBe('WH-BJ');
-    expect(mutation.nextDraft.lines[0]?.fieldSources.warehouseId).toBe(
-      'manual',
-    );
+    expect(mutation.nextDraft.lines[0]?.fieldSources.warehouseId).toBe('manual');
     expect(mutation.nextDraft.dirty).toBe(true);
   });
 
@@ -332,7 +317,7 @@ export interface DetailChangeCommand {
 Confirmation message format (Chinese):
 
 ```ts
-`将更新 ${affectedCount} 行字段（${fields.join('、')}），保留 ${preservedCount} 行人工值。`
+`将更新 ${affectedCount} 行字段（${fields.join('、')}），保留 ${preservedCount} 行人工值。`;
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -401,10 +386,7 @@ Create `src/composables/use-emit-effect.test.ts` (follow `use-auto-save.test.ts`
 ```ts
 import { effectScope, type EffectScope } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  type DocumentDraft,
-  type EmitEffectRules,
-} from './emit-effect';
+import { type DocumentDraft, type EmitEffectRules } from './emit-effect';
 import { useEmitEffect } from './use-emit-effect';
 
 // Reuse the same minimal `rules` + `initialDraft()` as emit-effect.test.ts
@@ -422,9 +404,7 @@ describe('useEmitEffect', () => {
   });
 
   it('applies header mutations that need no confirmation', async () => {
-    const api = scope.run(() =>
-      useEmitEffect({ rules, initialDraft: initialDraft() }),
-    )!;
+    const api = scope.run(() => useEmitEffect({ rules, initialDraft: initialDraft() }))!;
 
     const ok = await api.changeHeader('multiplier', 3);
     expect(ok).toBe(true);
@@ -460,15 +440,11 @@ describe('useEmitEffect', () => {
 
     const ok = await api.changeHeader('currency', 'USD');
     expect(ok).toBe(true);
-    expect(api.draft.value.lines.every((line) => line.currency === 'USD')).toBe(
-      true,
-    );
+    expect(api.draft.value.lines.every((line) => line.currency === 'USD')).toBe(true);
   });
 
   it('resets to the initial snapshot', async () => {
-    const api = scope.run(() =>
-      useEmitEffect({ rules, initialDraft: initialDraft() }),
-    )!;
+    const api = scope.run(() => useEmitEffect({ rules, initialDraft: initialDraft() }))!;
     await api.changeHeader('multiplier', 3);
     api.reset();
     expect(api.draft.value.summary.total).toBe(10);
@@ -506,9 +482,7 @@ export interface UseEmitEffectOptions<
 > {
   rules: EmitEffectRules<H, L>;
   initialDraft: DocumentDraft<H, L>;
-  confirm?: (
-    confirmation: EmitEffectConfirmation,
-  ) => boolean | Promise<boolean>;
+  confirm?: (confirmation: EmitEffectConfirmation) => boolean | Promise<boolean>;
 }
 
 export interface UseEmitEffectReturn<
@@ -530,9 +504,7 @@ export function useEmitEffect<
   const initial = cloneDeep(options.initialDraft);
   const draft = ref(cloneDeep(initial)) as Ref<DocumentDraft<H, L>>;
 
-  async function commit(
-    mutation: ReturnType<typeof buildHeaderMutation>,
-  ): Promise<boolean> {
+  async function commit(mutation: ReturnType<typeof buildHeaderMutation>): Promise<boolean> {
     if (mutation.confirmation) {
       const accepted = await (options.confirm?.(mutation.confirmation) ?? true);
       if (!accepted) return false;
@@ -545,15 +517,18 @@ export function useEmitEffect<
     draft,
     changeHeader: (field, value) =>
       commit(buildHeaderMutation(options.rules, draft.value, field, value)),
-    changeCell: (command) =>
-      commit(applyDetailMutation(options.rules, draft.value, command)),
+    changeCell: (command) => commit(applyDetailMutation(options.rules, draft.value, command)),
     addLine: (id) => {
-      draft.value = addLineMutation(options.rules, draft.value, id)
-        .nextDraft as DocumentDraft<H, L>;
+      draft.value = addLineMutation(options.rules, draft.value, id).nextDraft as DocumentDraft<
+        H,
+        L
+      >;
     },
     removeLine: (id) => {
-      draft.value = removeLineMutation(options.rules, draft.value, id)
-        .nextDraft as DocumentDraft<H, L>;
+      draft.value = removeLineMutation(options.rules, draft.value, id).nextDraft as DocumentDraft<
+        H,
+        L
+      >;
     },
     reset: (next) => {
       draft.value = cloneDeep(next ?? initial);
@@ -589,10 +564,7 @@ export type {
 } from './emit-effect';
 
 export { useEmitEffect } from './use-emit-effect';
-export type {
-  UseEmitEffectOptions,
-  UseEmitEffectReturn,
-} from './use-emit-effect';
+export type { UseEmitEffectOptions, UseEmitEffectReturn } from './use-emit-effect';
 ```
 
 - [ ] **Step 5: Run tests**
@@ -649,31 +621,16 @@ summary.totalAmount = sum(amount)
 ```ts
 import { describe, expect, it } from 'vitest';
 import { buildHeaderMutation, applyDetailMutation } from '@/composables';
-import {
-  createSalesOrderDraft,
-  salesOrderRules,
-} from './sales-order-linkage';
+import { createSalesOrderDraft, salesOrderRules } from './sales-order-linkage';
 
 describe('sales-order-linkage rules', () => {
   it('forces currency and preserves manual warehouse', () => {
     const draft = createSalesOrderDraft();
     // ensure line 2 warehouse is manual in factory
-    const currency = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'currency',
-      'USD',
-    );
-    expect(
-      currency.nextDraft.lines.every((line) => line.currency === 'USD'),
-    ).toBe(true);
+    const currency = buildHeaderMutation(salesOrderRules, draft, 'currency', 'USD');
+    expect(currency.nextDraft.lines.every((line) => line.currency === 'USD')).toBe(true);
 
-    const warehouse = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'warehouseId',
-      'WH-SZ',
-    );
+    const warehouse = buildHeaderMutation(salesOrderRules, draft, 'warehouseId', 'WH-SZ');
     const manual = warehouse.nextDraft.lines.find(
       (line) => line.fieldSources.warehouseId === 'manual',
     );
@@ -682,15 +639,8 @@ describe('sales-order-linkage rules', () => {
 
   it('reprices inherited unit prices when customer changes', () => {
     const draft = createSalesOrderDraft();
-    const mutation = buildHeaderMutation(
-      salesOrderRules,
-      draft,
-      'customerId',
-      'customer-channel',
-    );
-    expect(mutation.nextDraft.lines[0]?.unitPrice).not.toBe(
-      draft.lines[0]?.unitPrice,
-    );
+    const mutation = buildHeaderMutation(salesOrderRules, draft, 'customerId', 'customer-channel');
+    expect(mutation.nextDraft.lines[0]?.unitPrice).not.toBe(draft.lines[0]?.unitPrice);
   });
 });
 ```
@@ -882,19 +832,16 @@ const erpDemos = [
 ] as const;
 
 // inside describe:
-it.each(erpDemos)(
-  'keeps ERP demo self-contained with useEmitEffect in %s',
-  (source) => {
-    expect(source).toContain('useEmitEffect');
-    expect(source).not.toContain('ErpDocumentDemo');
-    expect(source).not.toContain('erp-document-demo');
-    expect(source).not.toContain('createMockDocumentServer');
-    expect(source).not.toContain('模拟并发');
-    expect(source).toContain('<template #description>');
-    expect(source).toContain('DemoPage');
-    expect(source).toContain('PlusTable');
-  },
-);
+it.each(erpDemos)('keeps ERP demo self-contained with useEmitEffect in %s', (source) => {
+  expect(source).toContain('useEmitEffect');
+  expect(source).not.toContain('ErpDocumentDemo');
+  expect(source).not.toContain('erp-document-demo');
+  expect(source).not.toContain('createMockDocumentServer');
+  expect(source).not.toContain('模拟并发');
+  expect(source).toContain('<template #description>');
+  expect(source).toContain('DemoPage');
+  expect(source).toContain('PlusTable');
+});
 ```
 
 Fix the `it.each` title/args to match vitest’s callback signature (path string second arg if needed).
@@ -960,7 +907,7 @@ Plan complete and saved to `docs/superpowers/plans/2026-07-17-erp-emit-effect-de
 
 **Two execution options:**
 
-1. **Subagent-Driven (recommended)** — fresh subagent per task, review between tasks  
-2. **Inline Execution** — execute tasks in this session with checkpoints  
+1. **Subagent-Driven (recommended)** — fresh subagent per task, review between tasks
+2. **Inline Execution** — execute tasks in this session with checkpoints
 
 Which approach?

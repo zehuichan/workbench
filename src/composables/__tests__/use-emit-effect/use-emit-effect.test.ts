@@ -80,9 +80,7 @@ describe('useEmitEffect', () => {
   });
 
   it('applies header mutations that need no confirmation', async () => {
-    const api = scope.run(() =>
-      useEmitEffect({ rules, initialDraft: initialDraft() }),
-    )!;
+    const api = scope.run(() => useEmitEffect({ rules, initialDraft: initialDraft() }))!;
 
     const ok = await api.changeHeader('multiplier', 3);
     expect(ok).toBe(true);
@@ -118,15 +116,11 @@ describe('useEmitEffect', () => {
 
     const ok = await api.changeHeader('currency', 'USD');
     expect(ok).toBe(true);
-    expect(api.draft.value.lines.every((line) => line.currency === 'USD')).toBe(
-      true,
-    );
+    expect(api.draft.value.lines.every((line) => line.currency === 'USD')).toBe(true);
   });
 
   it('resets to the initial snapshot', async () => {
-    const api = scope.run(() =>
-      useEmitEffect({ rules, initialDraft: initialDraft() }),
-    )!;
+    const api = scope.run(() => useEmitEffect({ rules, initialDraft: initialDraft() }))!;
     await api.changeHeader('multiplier', 3);
     api.reset();
     expect(api.draft.value.summary.total).toBe(10);

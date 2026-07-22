@@ -59,11 +59,7 @@ function collectRenderedElements(
   const collectChildren = isTeleport || (collectRoot && !element);
 
   collectRenderedElements(vnode.component?.subTree, result, collectChildren);
-  collectRenderedElements(
-    vnode.suspense?.activeBranch,
-    result,
-    collectChildren,
-  );
+  collectRenderedElements(vnode.suspense?.activeBranch, result, collectChildren);
   if (Array.isArray(vnode.children)) {
     for (const child of vnode.children) {
       collectRenderedElements(child, result, collectChildren);
@@ -103,9 +99,7 @@ export function useSaveHotkey(options: UseSaveHotkeyOptions): void {
     getCurrentScope() !== Reflect.get(instance, 'scope') ||
     typeof Reflect.get(instance, 'render') === 'function'
   ) {
-    throw new Error(
-      '[useSaveHotkey] must be called synchronously during component setup.',
-    );
+    throw new Error('[useSaveHotkey] must be called synchronously during component setup.');
   }
   const owner = instance.appContext.app;
 
@@ -158,10 +152,8 @@ export function useSaveHotkey(options: UseSaveHotkeyOptions): void {
   activeValue = readActive().value;
 
   const resolveAppScope = (): Node | null => {
-    const container = (instance.appContext.app as { _container?: unknown })
-      ._container;
-    const root =
-      asNode(instance.root.subTree?.el) ?? asNode(instance.root.vnode.el);
+    const container = (instance.appContext.app as { _container?: unknown })._container;
+    const root = asNode(instance.root.subTree?.el) ?? asNode(instance.root.vnode.el);
     return asAppScope(container) ?? asAppScope(root?.parentNode);
   };
 

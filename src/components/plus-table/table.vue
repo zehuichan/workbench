@@ -13,10 +13,7 @@ import PlusTableColumnNode from './table-column';
 import type { TableInstance } from 'element-plus';
 import type { PlusTable } from './tokens';
 import type { InternalStore } from './store';
-import type {
-  EditorSlotProps,
-  HeaderSlotProps,
-} from './table-cell/render-helper';
+import type { EditorSlotProps, HeaderSlotProps } from './table-cell/render-helper';
 import type { PlusTableEmits, PlusTableProps, RowData } from './table/defaults';
 import type { CellContext } from './table-column/defaults';
 
@@ -63,10 +60,8 @@ function idPart(value: string): string {
 const idPrefix = `ptbl-${idPart(useId())}`;
 const ids = {
   description: `${idPrefix}-description`,
-  cell: (rowKey: string, colId: string) =>
-    `${idPrefix}-cell-${idPart(rowKey)}_${idPart(colId)}`,
-  error: (rowKey: string, colId: string) =>
-    `${idPrefix}-error-${idPart(rowKey)}_${idPart(colId)}`,
+  cell: (rowKey: string, colId: string) => `${idPrefix}-cell-${idPart(rowKey)}_${idPart(colId)}`,
+  error: (rowKey: string, colId: string) => `${idPrefix}-error-${idPart(rowKey)}_${idPart(colId)}`,
 };
 
 const gridRef = ref<HTMLElement>();
@@ -99,15 +94,11 @@ const activeCellId = computed(() => {
 });
 
 // el-table 的 row-key 类型签名比本组件窄（函数变体只接受返回 string），做一次适配
-const rowKeyProp = computed(
-  () => props.rowKey as string | ((row: T) => string),
-);
+const rowKeyProp = computed(() => props.rowKey as string | ((row: T) => string));
 
 const paginationEnabled = computed(() => props.total !== undefined);
 
-const footerEnabled = computed(
-  () => !!slots.summary || paginationEnabled.value,
-);
+const footerEnabled = computed(() => !!slots.summary || paginationEnabled.value);
 
 defineExpose(
   createTableExpose(
@@ -153,10 +144,7 @@ defineExpose(
 </script>
 
 <template>
-  <div
-    class="plus-table"
-    :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }"
-  >
+  <div class="plus-table" :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }">
     <div class="plus-table__header">
       <div v-if="$slots.title" class="plus-table__title">
         <slot name="title" />
@@ -176,8 +164,7 @@ defineExpose(
       @keydown="keyboard.handleKeydown"
     >
       <span :id="ids.description" class="ptbl-visually-hidden">
-        使用方向键或 Tab 在数据单元格间移动；按 Enter 或 F2 开始编辑，编辑时按
-        Escape 取消。
+        使用方向键或 Tab 在数据单元格间移动；按 Enter 或 F2 开始编辑，编辑时按 Escape 取消。
       </span>
       <el-table
         ref="tableRef"

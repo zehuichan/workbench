@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from 'vue'
+import type { HTMLAttributes } from 'vue';
 
-import { PanelLeftIcon } from '@lucide/vue'
-import { cn } from '@/utils'
-import { Button } from '@/ui/button'
-import { useSidebar } from './utils'
+import { PanelLeftIcon } from '@lucide/vue';
+import { cn } from '@/utils';
+import { Button } from '@/ui/button';
+import { useSidebar } from './utils';
 
 const props = defineProps<{
-  class?: HTMLAttributes['class']
-}>()
+  class?: HTMLAttributes['class'];
+}>();
 
-const { toggleSidebar } = useSidebar()
+const { toggleSidebar } = useSidebar();
 </script>
 
 <template>

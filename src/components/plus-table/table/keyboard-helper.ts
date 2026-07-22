@@ -23,11 +23,7 @@ function isIme(event: KeyboardEvent): boolean {
 
 function isPrintableKey(event: KeyboardEvent): boolean {
   return (
-    !isIme(event) &&
-    event.key.length === 1 &&
-    !event.ctrlKey &&
-    !event.metaKey &&
-    !event.altKey
+    !isIme(event) && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey
   );
 }
 
@@ -37,9 +33,7 @@ function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
     .toLowerCase()
     .split('+')
     .map((s) => s.trim());
-  const mainKey = parts.find(
-    (p) => !['ctrl', 'shift', 'alt', 'meta'].includes(p),
-  );
+  const mainKey = parts.find((p) => !['ctrl', 'shift', 'alt', 'meta'].includes(p));
   if (!mainKey) return false;
   return (
     event.ctrlKey === parts.includes('ctrl') &&
@@ -69,21 +63,14 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
       prop: cell?.prop,
       column,
       data: table.store.states.data.value,
-      navigate: (rowDelta, colDelta) =>
-        table.store.moveCurrent(rowDelta, colDelta),
+      navigate: (rowDelta, colDelta) => table.store.moveCurrent(rowDelta, colDelta),
       startEdit: () => {
         if (cell) table.store.startEdit(cell.rowIndex, cell.colIndex);
       },
       cancelEdit: () => table.store.cancelEdit(),
       setValue: (value) => {
         if (!cell) return;
-        table.store.commit(
-          'setCellValue',
-          cell.row,
-          cell.rowIndex,
-          cell.prop,
-          value,
-        );
+        table.store.commit('setCellValue', cell.row, cell.rowIndex, cell.prop, value);
       },
       undo: table.store.undo,
       redo: table.store.redo,
@@ -95,10 +82,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
     return table.props.hotkeys ?? [];
   }
 
-  function runHotkeyBindings(
-    bindings: HotkeyBinding<T>[],
-    event: KeyboardEvent,
-  ): boolean {
+  function runHotkeyBindings(bindings: HotkeyBinding<T>[], event: KeyboardEvent): boolean {
     for (const binding of bindings) {
       if (!matchesHotkey(event, binding.key)) continue;
       const ctx = buildContext(event);
@@ -113,16 +97,11 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
 
   function isTextAreaLineBreak(event: KeyboardEvent): boolean {
     const target = event.target as HTMLElement | null;
-    return (
-      target instanceof HTMLTextAreaElement && (event.shiftKey || event.altKey)
-    );
+    return target instanceof HTMLTextAreaElement && (event.shiftKey || event.altKey);
   }
 
   /** cell / row 模式编辑器打开期间的按键 */
-  function handleActiveEditorKeydown(
-    event: KeyboardEvent,
-    actions: ActiveEditorKeyActions,
-  ) {
+  function handleActiveEditorKeydown(event: KeyboardEvent, actions: ActiveEditorKeyActions) {
     switch (event.key) {
       case 'Escape': {
         actions.cancel();
@@ -212,10 +191,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
       table.store.undo();
       return handled();
     }
-    if (
-      ctrl &&
-      ((event.shiftKey && key === 'z') || (!event.shiftKey && key === 'y'))
-    ) {
+    if (ctrl && ((event.shiftKey && key === 'z') || (!event.shiftKey && key === 'y'))) {
       if (!table.store.canRedo.value) return false;
       table.store.redo();
       return handled();
@@ -239,10 +215,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
       }
       case 'Enter': {
         if (isIme(event) || !cell) return false;
-        if (
-          mode === 'cell' &&
-          table.store.canEditCell(cell.rowIndex, cell.colIndex)
-        ) {
+        if (mode === 'cell' && table.store.canEditCell(cell.rowIndex, cell.colIndex)) {
           table.store.startEdit(cell.rowIndex, cell.colIndex);
         } else {
           table.store.moveCurrent(1, 0);
@@ -292,10 +265,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
 
   function handleKeydown(event: KeyboardEvent) {
     const mode = table.store.states.mode.value;
-    const [overrides, normals] = partition(
-      getCustomHotkeys(),
-      (h) => !!h.override,
-    );
+    const [overrides, normals] = partition(getCustomHotkeys(), (h) => !!h.override);
 
     // 1. 用户 override 热键：先于任何内置行为判定，任何编辑态 / 焦点位置都生效
     if (runHotkeyBindings(overrides, event)) return;
@@ -308,8 +278,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
           colId: editingLocation.node.id,
         })
       : null;
-    const fromActiveEditor =
-      event.target instanceof Node && !!editingCell?.contains(event.target);
+    const fromActiveEditor = event.target instanceof Node && !!editingCell?.contains(event.target);
     if (mode === 'cell' && editingLocation && fromActiveEditor) {
       handleActiveEditorKeydown(event, {
         cancel: table.store.cancelEdit,
@@ -328,10 +297,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTable<T>) {
     }
 
     // 3. 非活动编辑器中的真实控件保留原生键盘行为；其余内置按键只在 grid 自身接管
-    if (
-      isControl(event.target, event.currentTarget) ||
-      event.target !== event.currentTarget
-    ) {
+    if (isControl(event.target, event.currentTarget) || event.target !== event.currentTarget) {
       runHotkeyBindings(normals, event);
       return;
     }

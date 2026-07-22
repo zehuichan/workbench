@@ -17,9 +17,7 @@ function handleToggle(id: string, checked: boolean | string | number) {
 }
 
 function siblings(item: SettingItem): SettingItem[] {
-  return items.value.filter(
-    (candidate) => candidate.parentId === item.parentId,
-  );
+  return items.value.filter((candidate) => candidate.parentId === item.parentId);
 }
 
 function canMove(item: SettingItem, direction: -1 | 1): boolean {
@@ -34,12 +32,7 @@ function move(item: SettingItem, direction: -1 | 1) {
   const index = list.findIndex((candidate) => candidate.id === item.id);
   const target = list[index + direction];
   if (index < 0 || !target || item.disabled) return;
-  table.store.commit(
-    'updateColumnOrder',
-    item.id,
-    target.id,
-    direction < 0 ? 'before' : 'after',
-  );
+  table.store.commit('updateColumnOrder', item.id, target.id, direction < 0 ? 'before' : 'after');
 }
 
 const dragItem = ref<SettingItem | null>(null);
@@ -74,20 +67,14 @@ function handleDragOver(event: DragEvent, item: SettingItem) {
   event.preventDefault();
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-  dropPosition.value =
-    event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+  dropPosition.value = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
   dropTargetId.value = item.id;
 }
 
 function handleDrop(event: DragEvent, item: SettingItem) {
   if (!canDropOn(item)) return;
   event.preventDefault();
-  table.store.commit(
-    'updateColumnOrder',
-    dragItem.value!.id,
-    item.id,
-    dropPosition.value,
-  );
+  table.store.commit('updateColumnOrder', dragItem.value!.id, item.id, dropPosition.value);
   handleDragEnd();
 }
 
@@ -110,10 +97,8 @@ function handleDragEnd() {
           class="ptbl-column-settings__item"
           :class="{
             'is-dragging': dragItem?.id === item.id,
-            'is-drop-before':
-              dropTargetId === item.id && dropPosition === 'before',
-            'is-drop-after':
-              dropTargetId === item.id && dropPosition === 'after',
+            'is-drop-before': dropTargetId === item.id && dropPosition === 'before',
+            'is-drop-after': dropTargetId === item.id && dropPosition === 'after',
             'is-disabled': item.disabled,
           }"
           :style="{ paddingLeft: `${item.level * 16}px` }"
@@ -123,9 +108,7 @@ function handleDragEnd() {
           @drop="handleDrop($event, item)"
           @dragend="handleDragEnd"
         >
-          <span class="ptbl-column-settings__handle" aria-hidden="true">
-            ⠿
-          </span>
+          <span class="ptbl-column-settings__handle" aria-hidden="true"> ⠿ </span>
           <el-checkbox
             :model-value="item.checked"
             :indeterminate="item.indeterminate"
@@ -161,9 +144,7 @@ function handleDragEnd() {
         </li>
       </ul>
       <div class="ptbl-column-settings__actions">
-        <el-button text size="small" @click="table.store.resetSettings()">
-          重置
-        </el-button>
+        <el-button text size="small" @click="table.store.resetSettings()"> 重置 </el-button>
       </div>
     </div>
   </el-popover>

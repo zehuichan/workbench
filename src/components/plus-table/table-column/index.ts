@@ -40,20 +40,13 @@ export default defineComponent({
     const table = usePlusTable();
 
     function renderHeader(column: PlusTableColumn): VNodeChild {
-      const headerSlot = column.prop
-        ? table.slots[`header-${column.prop}`]
-        : undefined;
+      const headerSlot = column.prop ? table.slots[`header-${column.prop}`] : undefined;
       return h(
         'span',
         {
-          class: [
-            'ptbl-header-cell',
-            { 'ptbl-header-cell--required': column.required },
-          ],
+          class: ['ptbl-header-cell', { 'ptbl-header-cell--required': column.required }],
         },
-        headerSlot
-          ? headerSlot({ column })
-          : (column.label ?? column.prop ?? ''),
+        headerSlot ? headerSlot({ column }) : (column.label ?? column.prop ?? ''),
       );
     }
 
@@ -80,8 +73,7 @@ export default defineComponent({
           },
           {
             header: () => renderHeader(column),
-            default: () =>
-              node.children!.map((child, i) => renderNode(child, i)),
+            default: () => node.children!.map((child, i) => renderNode(child, i)),
           },
         );
       }

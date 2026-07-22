@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-} from '@/ui/navigation-menu';
+import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from '@/ui/navigation-menu';
 import { cn } from '@/utils';
 
 defineOptions({ name: 'PlaygroundHeader' });
@@ -27,9 +23,7 @@ function onSelect(key: string, disabled: boolean) {
   <header
     class="z-20 flex h-14 shrink-0 items-stretch justify-between border-b border-border bg-background px-6"
   >
-    <div
-      class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-foreground"
-    >
+    <div class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-foreground">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 64 64"
@@ -40,50 +34,11 @@ function onSelect(key: string, disabled: boolean) {
         aria-hidden="true"
       >
         <rect x="4" y="4" width="56" height="56" rx="14" fill="#0B6E6E" />
-        <rect
-          x="14"
-          y="14"
-          width="16"
-          height="16"
-          rx="3.5"
-          fill="#F2EFE6"
-          opacity="0.95"
-        />
-        <rect
-          x="34"
-          y="14"
-          width="16"
-          height="16"
-          rx="3.5"
-          fill="#F2EFE6"
-          opacity="0.55"
-        />
-        <rect
-          x="14"
-          y="34"
-          width="16"
-          height="16"
-          rx="3.5"
-          fill="#F2EFE6"
-          opacity="0.55"
-        />
-        <rect
-          x="34"
-          y="34"
-          width="16"
-          height="16"
-          rx="3.5"
-          fill="#F2EFE6"
-          opacity="0.28"
-        />
-        <rect
-          x="18"
-          y="18"
-          width="8"
-          height="2.5"
-          rx="1.25"
-          fill="#0B6E6E"
-        />
+        <rect x="14" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.95" />
+        <rect x="34" y="14" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+        <rect x="14" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.55" />
+        <rect x="34" y="34" width="16" height="16" rx="3.5" fill="#F2EFE6" opacity="0.28" />
+        <rect x="18" y="18" width="8" height="2.5" rx="1.25" fill="#0B6E6E" />
       </svg>
       <span>Workbench</span>
     </div>
@@ -106,14 +61,11 @@ function onSelect(key: string, disabled: boolean) {
                 activeCategory === category.key
                   ? 'font-medium text-[var(--playground-accent)]'
                   : 'text-muted-foreground hover:text-foreground',
-                category.groups.length === 0 &&
-                  'cursor-not-allowed pointer-events-none opacity-40',
+                category.groups.length === 0 && 'cursor-not-allowed pointer-events-none opacity-40',
               )
             "
             :data-active="activeCategory === category.key || undefined"
-            :aria-current="
-              activeCategory === category.key ? 'page' : undefined
-            "
+            :aria-current="activeCategory === category.key ? 'page' : undefined"
             :disabled="category.groups.length === 0"
             @click="onSelect(category.key, category.groups.length === 0)"
           >

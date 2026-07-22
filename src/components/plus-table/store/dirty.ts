@@ -80,9 +80,7 @@ export function useDirty<T extends RowData = RowData>(table: PlusTable<T>) {
 
   function getModifiedRows(): T[] {
     const map = states.dirtyCells.value;
-    return table.store.states.data.value.filter((row: T) =>
-      map.has(table.store.getRowKey(row)),
-    );
+    return table.store.states.data.value.filter((row: T) => map.has(table.store.getRowKey(row)));
   }
 
   function clearDirty(rowKey?: string, prop?: string): void {

@@ -24,15 +24,15 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `tsconfig.json` | 补 `baseUrl` + `paths`，供 shadcn CLI 解析 `@/*` |
-| `components.json` | shadcn-vue 项目配置；`aliases.ui` → `@/ui` |
-| `package.json` / `pnpm-lock.yaml` | CLI 写入的 `reka-ui` 及配套依赖 |
-| `src/styles/tailwind.css` | 保留 Tailwind 入口 + CLI 写入的 theme / CSS variables |
-| `src/lib/utils.ts`（或 CLI 实际路径） | `cn` 等工具（CLI 生成） |
-| `src/ui/` | shadcn 原子组件落点（本次无组件文件；可用 `.gitkeep` 占位） |
-| `src/main.ts` | **只读核对**：Element Plus 仍在；不改业务逻辑 |
+| 路径                                  | 职责                                                        |
+| ------------------------------------- | ----------------------------------------------------------- |
+| `tsconfig.json`                       | 补 `baseUrl` + `paths`，供 shadcn CLI 解析 `@/*`            |
+| `components.json`                     | shadcn-vue 项目配置；`aliases.ui` → `@/ui`                  |
+| `package.json` / `pnpm-lock.yaml`     | CLI 写入的 `reka-ui` 及配套依赖                             |
+| `src/styles/tailwind.css`             | 保留 Tailwind 入口 + CLI 写入的 theme / CSS variables       |
+| `src/lib/utils.ts`（或 CLI 实际路径） | `cn` 等工具（CLI 生成）                                     |
+| `src/ui/`                             | shadcn 原子组件落点（本次无组件文件；可用 `.gitkeep` 占位） |
+| `src/main.ts`                         | **只读核对**：Element Plus 仍在；不改业务逻辑               |
 
 不修改（除非 CLI 误改需回滚）：`src/components/plus-table/**`、`src/views/**`、`src/router/**`、playground SCSS。
 
@@ -41,9 +41,11 @@
 ### Task 1: 为 CLI 补齐根 `tsconfig` 路径别名
 
 **Files:**
+
 - Modify: `tsconfig.json`
 
 **Interfaces:**
+
 - Consumes: 现有 `tsconfig.app.json` 已有 `"@/*": ["./src/*"]`
 - Produces: 根 `tsconfig.json` 含相同 `baseUrl` / `paths`，供 `shadcn-vue` CLI 读取
 
@@ -54,10 +56,7 @@
 ```json
 {
   "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -96,6 +95,7 @@ EOF
 ### Task 2: 运行 shadcn-vue init（neutral + 最新默认）
 
 **Files:**
+
 - Create: `components.json`
 - Modify: `package.json` / `pnpm-lock.yaml`（via CLI）
 - Modify: `src/styles/tailwind.css`（CLI 注入 theme）
@@ -103,6 +103,7 @@ EOF
 - Possibly create: 其它 CLI 默认辅助文件（以实际输出为准；勿手删）
 
 **Interfaces:**
+
 - Consumes: Task 1 的 `@/*` 路径；已有 Tailwind v4 + `@tailwindcss/vite`
 - Produces: 已初始化的 shadcn-vue 工程骨架与 `reka-ui` 依赖
 
@@ -123,6 +124,7 @@ pnpm dlx shadcn-vue@latest init --base-color neutral --css-variables --template 
 ```
 
 说明：
+
 - 不传 `--style` / `--preset`，使用 CLI 最新默认
 - 若 CLI 交互询问 CSS 路径，选择 / 填入 `src/styles/tailwind.css`
 - 若 CLI 询问 components 路径且无法指定 `src/ui`，先接受默认，Task 3 再改 `aliases.ui`
@@ -140,18 +142,18 @@ Expected: `main.ts` 仍 import / `use(ElementPlus, …)`；`package.json` 仍有
 若被 CLI 改掉，立即恢复为：
 
 ```ts
-import { createApp } from 'vue'
+import { createApp } from 'vue';
 
-import ElementPlus from 'element-plus'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
-import 'modern-normalize/modern-normalize.css'
-import 'element-plus/dist/index.css'
-import './styles/tailwind.css'
+import ElementPlus from 'element-plus';
+import zhCn from 'element-plus/es/locale/lang/zh-cn';
+import 'modern-normalize/modern-normalize.css';
+import 'element-plus/dist/index.css';
+import './styles/tailwind.css';
 
-import App from './App.vue'
-import { router } from './router'
+import App from './App.vue';
+import { router } from './router';
 
-createApp(App).use(router).use(ElementPlus, { locale: zhCn }).mount('#app')
+createApp(App).use(router).use(ElementPlus, { locale: zhCn }).mount('#app');
 ```
 
 - [x] **Step 4: 确认 `cn` utils 存在**
@@ -178,10 +180,12 @@ EOF
 ### Task 3: 将 UI 别名固定为 `src/ui` 并占位目录
 
 **Files:**
+
 - Modify: `components.json`
 - Create: `src/ui/.gitkeep`
 
 **Interfaces:**
+
 - Consumes: Task 2 生成的 `components.json`
 - Produces: 后续 `pnpm dlx shadcn-vue@latest add …` 写入 `src/ui`
 
@@ -208,6 +212,7 @@ EOF
 ```
 
 注意：
+
 - 若 CLI 生成的 `aliases.utils` 不是 `@/lib/utils`，以实际文件路径为准，只强制改 `ui` → `@/ui`，并保证 `tailwind.css` / `baseColor` / `cssVariables` 符合上表
 - **不要**把 `ui` 留成 `@/components/ui`
 
@@ -259,9 +264,11 @@ EOF
 ### Task 4: 验证 typecheck / build
 
 **Files:**
+
 - 无新文件；只读验证
 
 **Interfaces:**
+
 - Consumes: Tasks 1–3 完成后的工程状态
 - Produces: 可合并的基建状态（满足 spec success criteria）
 
@@ -305,15 +312,15 @@ Expected: 无业务组件文件（空输出或仅说明性文件）。若出现 
 
 ## Spec coverage (self-review)
 
-| Spec 要求 | 对应 Task |
-|-----------|-----------|
-| CLI init + 最新依赖 / reka-ui | Task 2 |
-| `aliases.ui` → `@/ui` | Task 3 |
-| baseColor `neutral` + CSS variables | Task 2 + Task 3 |
-| `tsconfig` paths 供 CLI | Task 1 |
-| theme 写入 `src/styles/tailwind.css` | Task 2 / Task 3 核对 |
-| Element Plus 双轨并存 | Task 2 Step 3 + Task 4 |
-| 不加组件 / 不加 demo | Global Constraints + Task 4 Step 4 |
-| `pnpm typecheck`（及 build） | Task 4 |
+| Spec 要求                            | 对应 Task                          |
+| ------------------------------------ | ---------------------------------- |
+| CLI init + 最新依赖 / reka-ui        | Task 2                             |
+| `aliases.ui` → `@/ui`                | Task 3                             |
+| baseColor `neutral` + CSS variables  | Task 2 + Task 3                    |
+| `tsconfig` paths 供 CLI              | Task 1                             |
+| theme 写入 `src/styles/tailwind.css` | Task 2 / Task 3 核对               |
+| Element Plus 双轨并存                | Task 2 Step 3 + Task 4             |
+| 不加组件 / 不加 demo                 | Global Constraints + Task 4 Step 4 |
+| `pnpm typecheck`（及 build）         | Task 4                             |
 
 无 TBD / 占位步骤；commit 步骤仅在用户明确要求提交时执行。

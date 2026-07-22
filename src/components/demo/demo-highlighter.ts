@@ -21,10 +21,7 @@ function getHighlighter(): Promise<Highlighter> {
   return highlighterPromise;
 }
 
-export async function highlightCode(
-  code: string,
-  lang = 'ts',
-): Promise<string> {
+export async function highlightCode(code: string, lang = 'ts'): Promise<string> {
   const highlighter = await getHighlighter();
   return highlighter.codeToHtml(code, {
     lang: resolveLang(lang),

@@ -20,7 +20,4 @@ export type {
 } from './emit-effect';
 
 export { useEmitEffect } from './use-emit-effect';
-export type {
-  UseEmitEffectOptions,
-  UseEmitEffectReturn,
-} from './use-emit-effect';
+export type { UseEmitEffectOptions, UseEmitEffectReturn } from './use-emit-effect';

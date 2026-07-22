@@ -8,15 +8,15 @@ Date: 2026-07-17
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 范围 | 只搭链路（依赖 + Vite 插件 + 入口 CSS）；现有 SCSS / Element Plus 不动 |
-| 版本 | Tailwind CSS v4 |
-| 集成方式 | `@tailwindcss/vite`（不用 PostCSS 经典链路） |
-| 入口文件 | 独立 `src/styles/tailwind.css`（不与 `index.scss` 混写） |
-| 挂载点 | `main.ts` import（与 `modern-normalize` / Element Plus CSS 同级） |
-| Preflight | 先保持默认开启；若与 Element Plus / playground 冲突，再在同一入口关掉 |
-| 验证页 / 样式迁移 | 不做（YAGNI） |
+| 项                | 选择                                                                   |
+| ----------------- | ---------------------------------------------------------------------- |
+| 范围              | 只搭链路（依赖 + Vite 插件 + 入口 CSS）；现有 SCSS / Element Plus 不动 |
+| 版本              | Tailwind CSS v4                                                        |
+| 集成方式          | `@tailwindcss/vite`（不用 PostCSS 经典链路）                           |
+| 入口文件          | 独立 `src/styles/tailwind.css`（不与 `index.scss` 混写）               |
+| 挂载点            | `main.ts` import（与 `modern-normalize` / Element Plus CSS 同级）      |
+| Preflight         | 先保持默认开启；若与 Element Plus / playground 冲突，再在同一入口关掉  |
+| 验证页 / 样式迁移 | 不做（YAGNI）                                                          |
 
 ## Architecture
 

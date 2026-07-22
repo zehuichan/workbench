@@ -19,8 +19,7 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     _oldWidth: number,
     column: { columnKey?: string },
   ) {
-    if (column.columnKey)
-      table.store.commit('setColumnWidth', column.columnKey, newWidth);
+    if (column.columnKey) table.store.commit('setColumnWidth', column.columnKey, newWidth);
   }
 
   /**
@@ -29,11 +28,8 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
    */
   function getCellPosition(row: T, column: { columnKey?: string }) {
     const rowKey = table.store.getRowKey(row);
-    const rowIndex =
-      table.store.states.keysMap.value.get(rowKey)?.rowIndex ?? -1;
-    const colIndex = column.columnKey
-      ? table.store.getColumnIndex(column.columnKey)
-      : -1;
+    const rowIndex = table.store.states.keysMap.value.get(rowKey)?.rowIndex ?? -1;
+    const colIndex = column.columnKey ? table.store.getColumnIndex(column.columnKey) : -1;
     return { rowIndex, colIndex };
   }
 
@@ -52,11 +48,7 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     if (mode === 'row' && table.store.isRowEditing(row)) {
       if (table.store.canEditCell(rowIndex, colIndex)) {
         const editing = table.store.getEditingCellLocation();
-        if (
-          !fromControl ||
-          editing?.rowIndex !== rowIndex ||
-          editing.colIndex !== colIndex
-        ) {
+        if (!fromControl || editing?.rowIndex !== rowIndex || editing.colIndex !== colIndex) {
           table.store.setRowEditingCell(rowIndex, colIndex);
         }
       } else {
@@ -72,11 +64,7 @@ export function useEvents<T extends RowData = RowData>(table: PlusTable<T>) {
     else table.store.focusGrid();
   }
 
-  function handleCellDblclick(
-    row: T,
-    column: { columnKey?: string },
-    _cell: HTMLElement,
-  ) {
+  function handleCellDblclick(row: T, column: { columnKey?: string }, _cell: HTMLElement) {
     const mode = table.store.states.mode.value;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0) return;

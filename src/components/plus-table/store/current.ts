@@ -54,10 +54,7 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     const current = currentRef.value;
     if (
       current === next ||
-      (current &&
-        next &&
-        current.rowKey === next.rowKey &&
-        current.colId === next.colId)
+      (current && next && current.rowKey === next.rowKey && current.colId === next.colId)
     ) {
       return;
     }
@@ -95,9 +92,7 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
   function getCellElRef(ref: CellRef): HTMLElement | null {
     const grid = table.gridRef.value;
     if (!grid) return null;
-    return grid.querySelector<HTMLElement>(
-      `#${CSS.escape(table.ids.cell(ref.rowKey, ref.colId))}`,
-    );
+    return grid.querySelector<HTMLElement>(`#${CSS.escape(table.ids.cell(ref.rowKey, ref.colId))}`);
   }
 
   function getCellEl(rowIndex: number, colIndex: number): HTMLElement | null {
@@ -175,11 +170,7 @@ export function useCurrent<T extends RowData = RowData>(table: PlusTable<T>) {
     if (total === 0 || cols === 0) return;
     const position = resolveMoveOrigin();
     if (!position) return;
-    const flat = clamp(
-      position.rowIndex * cols + position.colIndex + delta,
-      0,
-      total - 1,
-    );
+    const flat = clamp(position.rowIndex * cols + position.colIndex + delta, 0, total - 1);
     setCurrentCell(Math.floor(flat / cols), flat % cols);
   }
 

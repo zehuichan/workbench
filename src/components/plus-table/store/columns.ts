@@ -37,10 +37,7 @@ function isOrderMap(value: unknown): value is Record<string, string[]> {
 function isWidthMap(value: unknown): value is Record<string, number> {
   return (
     isPlainObject(value) &&
-    Object.values(value).every(
-      (width) =>
-        isNumber(width) && Number.isFinite(width) && width > 0,
-    )
+    Object.values(value).every((width) => isNumber(width) && Number.isFinite(width) && width > 0)
   );
 }
 
@@ -82,9 +79,7 @@ interface ColumnView<T extends RowData> {
   siblingIdsByParent: Map<string, readonly string[]>;
 }
 
-function normalize<T extends RowData>(
-  columns: PlusTableColumn<T>[],
-): NormalizedColumns<T> {
+function normalize<T extends RowData>(columns: PlusTableColumn<T>[]): NormalizedColumns<T> {
   const nextSuffix = new Map<string, number>();
   const usedIds = new Set([ROOT_ID]);
   const firstColumnKeyByProp = new Map<string, string | null>();
@@ -96,17 +91,11 @@ function normalize<T extends RowData>(
   const allDataColumns: ColumnNode<T>[] = [];
   const defaultHiddenIds = new Set<string>();
 
-  const walk = (
-    list: PlusTableColumn<T>[],
-    path: string,
-    parentId: string,
-  ): ColumnNode<T>[] =>
+  const walk = (list: PlusTableColumn<T>[], path: string, parentId: string): ColumnNode<T>[] =>
     list.map((column, index) => {
       assertColumnDependencies(column);
       const explicitId =
-        isString(column.columnKey) && column.columnKey.length > 0
-          ? column.columnKey
-          : null;
+        isString(column.columnKey) && column.columnKey.length > 0 ? column.columnKey : null;
       if (!column.children?.length && !isSpecialColumn(column) && column.prop) {
         if (
           firstColumnKeyByProp.has(column.prop) &&
@@ -121,17 +110,11 @@ function normalize<T extends RowData>(
         }
       }
       const base =
-        explicitId ??
-        column.prop ??
-        column.label ??
-        column.type ??
-        `col-${path}${index}`;
+        explicitId ?? column.prop ?? column.label ?? column.type ?? `col-${path}${index}`;
       let id = explicitId;
       if (id) {
         if (usedIds.has(id)) {
-          throw new Error(
-            `[PlusTable] columnKey="${id}" 重复或与内部保留标识冲突。`,
-          );
+          throw new Error(`[PlusTable] columnKey="${id}" 重复或与内部保留标识冲突。`);
         }
       } else {
         let suffix = nextSuffix.get(base) ?? 0;
@@ -148,9 +131,7 @@ function normalize<T extends RowData>(
         ? children.flatMap((child) => leafIdsById.get(child.id) ?? [])
         : [id];
       const configurableLeafIds = children
-        ? children.flatMap(
-            (child) => configurableLeafIdsById.get(child.id) ?? [],
-          )
+        ? children.flatMap((child) => configurableLeafIdsById.get(child.id) ?? [])
         : isSpecialColumn(column)
           ? []
           : [id];
@@ -210,9 +191,7 @@ function orderSiblings<T extends RowData>(
     }
   });
   const position = new Map(order.map((id, index) => [id, index]));
-  const sorted = sortBy(orderable, [
-    (node) => position.get(node.id) ?? order.length,
-  ]);
+  const sorted = sortBy(orderable, [(node) => position.get(node.id) ?? order.length]);
   const result = [...nodes];
   orderableIndexes.forEach((originalIndex, index) => {
     result[originalIndex] = sorted[index]!;
@@ -229,11 +208,7 @@ function buildColumnView<T extends RowData>(
   const settingById = new Map<string, SettingItem>();
   const siblingIdsByParent = new Map<string, readonly string[]>();
 
-  const visible = (
-    nodes: ColumnNode<T>[],
-    parentId: string,
-    level: number,
-  ): ColumnNode<T>[] => {
+  const visible = (nodes: ColumnNode<T>[], parentId: string, level: number): ColumnNode<T>[] => {
     const ordered = orderSiblings(nodes, parentId, orderMap);
     siblingIdsByParent.set(
       parentId,
@@ -243,11 +218,8 @@ function buildColumnView<T extends RowData>(
 
     for (const node of ordered) {
       if (!isSpecialColumn(node.column)) {
-        const configurableIds =
-          normalized.configurableLeafIdsById.get(node.id) ?? [];
-        const visibleCount = configurableIds.filter(
-          (id) => !hiddenIds.has(id),
-        ).length;
+        const configurableIds = normalized.configurableLeafIdsById.get(node.id) ?? [];
+        const visibleCount = configurableIds.filter((id) => !hiddenIds.has(id)).length;
         const item: SettingItem = {
           id: node.id,
           parentId,
@@ -255,8 +227,7 @@ function buildColumnView<T extends RowData>(
           level,
           isGroup: !!node.children?.length,
           checked: visibleCount === configurableIds.length,
-          indeterminate:
-            visibleCount > 0 && visibleCount < configurableIds.length,
+          indeterminate: visibleCount > 0 && visibleCount < configurableIds.length,
           disabled: configurableIds.length === 0,
         };
         settingItems.push(item);
@@ -312,20 +283,11 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
   };
 
   const storageKey = computed(() =>
-    table.props.cache && table.props.id
-      ? `${SETTINGS_STORAGE_PREFIX}${table.props.id}`
-      : null,
+    table.props.cache && table.props.id ? `${SETTINGS_STORAGE_PREFIX}${table.props.id}` : null,
   );
 
-  function reportStorageError(
-    action: '读取' | '写入' | '重置',
-    key: string,
-    error: unknown,
-  ): void {
-    console.error(
-      `[PlusTable] 列设置缓存${action}失败（key="${key}"）。`,
-      error,
-    );
+  function reportStorageError(action: '读取' | '写入' | '重置', key: string, error: unknown): void {
+    console.error(`[PlusTable] 列设置缓存${action}失败（key="${key}"）。`, error);
   }
 
   function getSettingsStorage(): Storage {
@@ -354,15 +316,11 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
     settings: PersistedSettings,
     model = normalized.value,
   ): PersistedSettings {
-    const configurableIds = new Set(
-      model.allDataColumns.map((column) => column.id),
-    );
+    const configurableIds = new Set(model.allDataColumns.map((column) => column.id));
     const order: Record<string, string[]> = {};
     for (const [parentId, ids] of Object.entries(settings.order)) {
       if (parentId !== ROOT_ID && !model.byId.has(parentId)) continue;
-      const retained = ids.filter(
-        (id) => model.parentById.get(id) === parentId,
-      );
+      const retained = ids.filter((id) => model.parentById.get(id) === parentId);
       if (retained.length) order[parentId] = retained;
     }
     return {
@@ -430,11 +388,7 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
    * 只在 props.columns 变化时重建。
    */
   const columnView = computed(() =>
-    buildColumnView(
-      normalized.value,
-      states.hiddenIds.value,
-      states.orderMap.value,
-    ),
+    buildColumnView(normalized.value, states.hiddenIds.value, states.orderMap.value),
   );
   const originColumns = computed(() => columnView.value.originColumns);
   const columns = computed(() => columnView.value.columns);
@@ -488,16 +442,11 @@ export function useColumns<T extends RowData = RowData>(table: PlusTable<T>) {
   }
 
   /** 列设置拖拽排序：把 dragId 放到同级 targetId 的前 / 后（跨级拖拽不生效） */
-  function updateColumnOrder(
-    dragId: string,
-    targetId: string,
-    position: 'before' | 'after',
-  ) {
+  function updateColumnOrder(dragId: string, targetId: string, position: 'before' | 'after') {
     if (dragId === targetId) return;
     const drag = getSettingItem(dragId);
     const target = getSettingItem(targetId);
-    if (!drag || drag.disabled || !target || drag.parentId !== target.parentId)
-      return;
+    if (!drag || drag.disabled || !target || drag.parentId !== target.parentId) return;
     const ids = getSiblingIds(drag.parentId).filter((id) => id !== dragId);
     const targetIndex = ids.indexOf(targetId);
     if (targetIndex < 0) return;

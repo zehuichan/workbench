@@ -34,24 +34,14 @@ export function assertColumnDependencies<T extends RowData = RowData>(
   if (!isPlainObject(dependencies)) {
     throw new TypeError('[PlusTable] column.dependencies 必须是配置对象。');
   }
-  if (
-    !column.prop ||
-    isSpecialColumn(column) ||
-    Boolean(column.children?.length)
-  ) {
-    throw new TypeError(
-      '[PlusTable] dependencies 只能配置在具有非空 prop 的叶子数据列上。',
-    );
+  if (!column.prop || isSpecialColumn(column) || Boolean(column.children?.length)) {
+    throw new TypeError('[PlusTable] dependencies 只能配置在具有非空 prop 的叶子数据列上。');
   }
   if (
     !Array.isArray(dependencies.triggerFields) ||
-    dependencies.triggerFields.some(
-      (field) => !isString(field) || field.length === 0,
-    )
+    dependencies.triggerFields.some((field) => !isString(field) || field.length === 0)
   ) {
-    throw new TypeError(
-      '[PlusTable] dependencies.triggerFields 必须是字段名数组。',
-    );
+    throw new TypeError('[PlusTable] dependencies.triggerFields 必须是字段名数组。');
   }
   for (const key of DEPENDENCY_CALLBACK_KEYS) {
     const callback = dependencies[key];
@@ -61,9 +51,7 @@ export function assertColumnDependencies<T extends RowData = RowData>(
   }
 }
 
-export function useDependencies<T extends RowData = RowData>(
-  table: PlusTable<T>,
-) {
+export function useDependencies<T extends RowData = RowData>(table: PlusTable<T>) {
   function requireProp(column: PlusTableColumn<T>): string {
     assertColumnDependencies(column);
     return column.prop!;
@@ -94,24 +82,16 @@ export function useDependencies<T extends RowData = RowData>(
     const rules = dep.rules?.(row, api);
     const componentProps = dep.componentProps?.(row, api);
     if (disabled !== undefined && !isBoolean(disabled)) {
-      throw new TypeError(
-        '[PlusTable] dependencies.disabled 必须返回 boolean。',
-      );
+      throw new TypeError('[PlusTable] dependencies.disabled 必须返回 boolean。');
     }
     if (required !== undefined && !isBoolean(required)) {
-      throw new TypeError(
-        '[PlusTable] dependencies.required 必须返回 boolean。',
-      );
+      throw new TypeError('[PlusTable] dependencies.required 必须返回 boolean。');
     }
     if (rules !== undefined && rules !== null && !Array.isArray(rules)) {
-      throw new TypeError(
-        '[PlusTable] dependencies.rules 必须返回规则数组、null 或 undefined。',
-      );
+      throw new TypeError('[PlusTable] dependencies.rules 必须返回规则数组、null 或 undefined。');
     }
     if (componentProps !== undefined && !isPlainObject(componentProps)) {
-      throw new TypeError(
-        '[PlusTable] dependencies.componentProps 必须返回普通对象或 undefined。',
-      );
+      throw new TypeError('[PlusTable] dependencies.componentProps 必须返回普通对象或 undefined。');
     }
     return {
       disabled: disabled ?? false,

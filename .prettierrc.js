@@ -1,5 +1,10 @@
+/** @type {import('prettier').Config} */
 export default {
-  endOfLine: 'auto',
+  endOfLine: 'lf',
+  printWidth: 100,
+  semi: true,
+  singleQuote: true,
+  trailingComma: 'all',
   overrides: [
     {
       files: ['*.json5'],
@@ -9,8 +14,4 @@ export default {
       },
     },
   ],
-  proseWrap: 'never',
-  semi: true,
-  singleQuote: true,
-  trailingComma: 'all',
 };

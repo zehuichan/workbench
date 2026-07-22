@@ -17,9 +17,7 @@ export interface RowLocation<T extends RowData = RowData> {
   rowIndex: number;
 }
 
-export interface CellLocation<
-  T extends RowData = RowData,
-> extends RowLocation<T> {
+export interface CellLocation<T extends RowData = RowData> extends RowLocation<T> {
   node: ColumnNode<T>;
   colIndex: number;
   prop: string;
@@ -93,18 +91,12 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
     columns.states.visibleColumnsById,
     (next, previous) => {
       const nextProps = new Set(
-        [...next.values()]
-          .map((node) => node.column.prop)
-          .filter((prop): prop is string => !!prop),
+        [...next.values()].map((node) => node.column.prop).filter((prop): prop is string => !!prop),
       );
       const removedProps = new Set<string>();
       for (const [id, node] of previous) {
         const prop = node.column.prop;
-        if (
-          prop &&
-          next.get(id)?.column.prop !== prop &&
-          !nextProps.has(prop)
-        ) {
+        if (prop && next.get(id)?.column.prop !== prop && !nextProps.has(prop)) {
           removedProps.add(prop);
         }
       }
@@ -129,10 +121,7 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
   );
 
   function getRowKey(row: T): string {
-    return (
-      states.rowKeyMap.value.get(row) ??
-      getRowIdentity(row, states.rowKey.value)
-    );
+    return states.rowKeyMap.value.get(row) ?? getRowIdentity(row, states.rowKey.value);
   }
 
   /** 按最新行列顺序把稳定身份解析为完整单元格上下文。 */
@@ -147,10 +136,7 @@ export function useWatcher<T extends RowData = RowData>(table: PlusTable<T>) {
     return { row, rowIndex, node, colIndex, prop, rowKey: ref.rowKey };
   }
 
-  function locateCell(
-    rowIndex: number,
-    colIndex: number,
-  ): CellLocation<T> | null {
+  function locateCell(rowIndex: number, colIndex: number): CellLocation<T> | null {
     const ref = current.toCellRef(rowIndex, colIndex);
     return ref ? locateCellRef(ref) : null;
   }

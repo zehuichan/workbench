@@ -8,8 +8,8 @@ defineOptions({ name: 'ErpApiOverview' });
 <template>
   <DemoPage width="wide">
     <template #description>
-      <code>useEmitEffect</code> 公开 API 参考。用于单据草稿：表头变更驱动明细副作用，再汇总。交互与场景见侧栏其它
-      demo。
+      <code>useEmitEffect</code> 公开 API
+      参考。用于单据草稿：表头变更驱动明细副作用，再汇总。交互与场景见侧栏其它 demo。
     </template>
 
     <template #api>
@@ -22,7 +22,9 @@ defineOptions({ name: 'ErpApiOverview' });
         <tr>
           <td><code>initialDraft</code></td>
           <td><code>DocumentDraft&lt;H, L&gt;</code></td>
-          <td>必填。初始草稿；内部会 <code>cloneDeep</code>，作为 <code>reset()</code> 默认基线。</td>
+          <td>
+            必填。初始草稿；内部会 <code>cloneDeep</code>，作为 <code>reset()</code> 默认基线。
+          </td>
         </tr>
         <tr>
           <td><code>confirm</code></td>
@@ -47,8 +49,7 @@ defineOptions({ name: 'ErpApiOverview' });
           <td><code>(field, value) =&gt; Promise&lt;boolean&gt;</code></td>
           <td>
             改表头并跑
-            <code>headerRules[field]</code>；确认取消时返回
-            <code>false</code>，草稿不变。
+            <code>headerRules[field]</code>；确认取消时返回 <code>false</code>，草稿不变。
           </td>
         </tr>
         <tr>
@@ -58,8 +59,7 @@ defineOptions({ name: 'ErpApiOverview' });
           </td>
           <td>
             改明细格；若
-            <code>prop</code> 在
-            <code>sourceFields</code> 内，标记为
+            <code>prop</code> 在 <code>sourceFields</code> 内，标记为
             <code>manual</code> 后重算该行。
           </td>
         </tr>
@@ -78,8 +78,7 @@ defineOptions({ name: 'ErpApiOverview' });
           <td><code>(next?: DocumentDraft) =&gt; void</code></td>
           <td>
             重置为
-            <code>next</code> 或初始
-            <code>initialDraft</code>（深拷贝）。
+            <code>next</code> 或初始 <code>initialDraft</code>（深拷贝）。
           </td>
         </tr>
       </DemoApiTable>
@@ -109,9 +108,7 @@ defineOptions({ name: 'ErpApiOverview' });
         <tr>
           <td><code>recalculateLine</code></td>
           <td><code>(line, header) =&gt; L</code></td>
-          <td>
-            单行派生重算（金额、本币等）；表头 / 明细变更与增删行后都会走到。
-          </td>
+          <td>单行派生重算（金额、本币等）；表头 / 明细变更与增删行后都会走到。</td>
         </tr>
         <tr>
           <td><code>summarize</code></td>
@@ -124,17 +121,14 @@ defineOptions({ name: 'ErpApiOverview' });
         <tr>
           <td><code>policy</code></td>
           <td><code>EmitEffectPolicy</code></td>
-          <td>
-            <code>'force' | 'inherit' | 'recalculate'</code>，见下表。
-          </td>
+          <td><code>'force' | 'inherit' | 'recalculate'</code>，见下表。</td>
         </tr>
         <tr>
           <td><code>requiresConfirmation</code></td>
           <td><code>boolean</code></td>
           <td>
             可选。为 true 且有受影响行时生成
-            <code>EmitEffectConfirmation</code>，走
-            <code>confirm</code>。
+            <code>EmitEffectConfirmation</code>，走 <code>confirm</code>。
           </td>
         </tr>
         <tr>
@@ -142,10 +136,7 @@ defineOptions({ name: 'ErpApiOverview' });
           <td>
             <code>(line, nextHeader, previousHeader) =&gt; HeaderLineEffect</code>
           </td>
-          <td>
-            对每一明细行产出 patch /
-            sourcePatch / preservedFields。
-          </td>
+          <td>对每一明细行产出 patch / sourcePatch / preservedFields。</td>
         </tr>
       </DemoApiTable>
 
@@ -179,8 +170,7 @@ defineOptions({ name: 'ErpApiOverview' });
           <td><code>inherit</code></td>
           <td>
             仅同步
-            <code>inherited</code> 行；
-            <code>manual</code> 行保留并记入
+            <code>inherited</code> 行； <code>manual</code> 行保留并记入
             <code>preservedFields</code>。
           </td>
         </tr>

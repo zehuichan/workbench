@@ -29,10 +29,7 @@ const BASE_PRICES: Record<string, number> = {
   package: 18,
 };
 
-function resolvePurchasePrice(
-  line: DocumentLine,
-  header: Record<string, unknown>,
-): number {
+function resolvePurchasePrice(line: DocumentLine, header: Record<string, unknown>): number {
   const base = BASE_PRICES[String(line.materialId)] ?? 0;
   const supplierFactor = header.supplierId === 'supplier-material' ? 0.94 : 1;
   return money(base * supplierFactor);
@@ -63,9 +60,7 @@ function recalculatePurchaseLine(
   const unitPrice = Number(next.unitPrice ?? 0);
   const taxRate = Number(next.taxRate ?? 0);
   next.amount = money(quantity * unitPrice * (1 + taxRate));
-  next.localAmount = money(
-    Number(next.amount) * Number(header.exchangeRate ?? 0),
-  );
+  next.localAmount = money(Number(next.amount) * Number(header.exchangeRate ?? 0));
   return next;
 }
 
@@ -168,8 +163,7 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: PURCHASE_MATERIAL_OPTIONS },
-    formatter: (row: DocumentLine) =>
-      optionLabel(PURCHASE_MATERIAL_OPTIONS, row.materialId),
+    formatter: (row: DocumentLine) => optionLabel(PURCHASE_MATERIAL_OPTIONS, row.materialId),
   },
   {
     prop: 'quantity',
@@ -184,8 +178,7 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
     label: '币种',
     width: 110,
     editable: false,
-    formatter: (row: DocumentLine) =>
-      optionLabel(CURRENCY_OPTIONS, row.currency),
+    formatter: (row: DocumentLine) => optionLabel(CURRENCY_OPTIONS, row.currency),
   },
   {
     prop: 'warehouseId',
@@ -194,8 +187,7 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: WAREHOUSE_OPTIONS },
-    formatter: (row: DocumentLine) =>
-      optionLabel(WAREHOUSE_OPTIONS, row.warehouseId),
+    formatter: (row: DocumentLine) => optionLabel(WAREHOUSE_OPTIONS, row.warehouseId),
   },
   {
     prop: 'unitPrice',

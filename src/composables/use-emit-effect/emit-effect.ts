@@ -74,22 +74,16 @@ export interface DetailChangeCommand {
 
 function changedFields(before: DocumentLine, after: DocumentLine): string[] {
   return [...new Set([...Object.keys(before), ...Object.keys(after)])].filter(
-    (field) =>
-      field !== 'fieldSources' && !isEqual(before[field], after[field]),
+    (field) => field !== 'fieldSources' && !isEqual(before[field], after[field]),
   );
 }
 
-function finalize<
-  H extends Record<string, unknown>,
-  L extends DocumentLine,
->(
+function finalize<H extends Record<string, unknown>, L extends DocumentLine>(
   rules: EmitEffectRules<H, L>,
   draft: DocumentDraft<H, L>,
   dirty: boolean,
 ): DocumentDraft<H, L> {
-  const lines = draft.lines.map((line) =>
-    rules.recalculateLine(cloneDeep(line), draft.header),
-  );
+  const lines = draft.lines.map((line) => rules.recalculateLine(cloneDeep(line), draft.header));
   return {
     ...draft,
     lines,
@@ -98,20 +92,14 @@ function finalize<
   };
 }
 
-export function normalizeDraft<
-  H extends Record<string, unknown>,
-  L extends DocumentLine,
->(
+export function normalizeDraft<H extends Record<string, unknown>, L extends DocumentLine>(
   rules: EmitEffectRules<H, L>,
   source: DocumentDraft<H, L>,
 ): DocumentDraft<H, L> {
   return finalize(rules, cloneDeep(source), source.dirty);
 }
 
-export function buildHeaderMutation<
-  H extends Record<string, unknown>,
-  L extends DocumentLine,
->(
+export function buildHeaderMutation<H extends Record<string, unknown>, L extends DocumentLine>(
   rules: EmitEffectRules<H, L>,
   source: DocumentDraft<H, L>,
   field: string,
@@ -129,20 +117,14 @@ export function buildHeaderMutation<
 
   working.lines = working.lines.map((line) => {
     const before = cloneDeep(line);
-    const effect = rule.apply(
-      line,
-      working.header as Record<string, unknown>,
-      previousHeader,
-    );
+    const effect = rule.apply(line, working.header as Record<string, unknown>, previousHeader);
     Object.assign(line, effect.patch);
     Object.assign(line.fieldSources, effect.sourcePatch);
     const recalculated = rules.recalculateLine(line, working.header);
     const lineChangedFields = changedFields(before, recalculated);
     if (lineChangedFields.length > 0) {
       affectedLineIds.push(line.id);
-      lineChangedFields.forEach((changedField) =>
-        affectedFields.add(changedField),
-      );
+      lineChangedFields.forEach((changedField) => affectedFields.add(changedField));
     }
     if (effect.preservedFields?.length) preservedLineIds.push(line.id);
     return recalculated;
@@ -170,10 +152,7 @@ export function buildHeaderMutation<
   return mutation;
 }
 
-export function applyDetailMutation<
-  H extends Record<string, unknown>,
-  L extends DocumentLine,
->(
+export function applyDetailMutation<H extends Record<string, unknown>, L extends DocumentLine>(
   rules: EmitEffectRules<H, L>,
   source: DocumentDraft<H, L>,
   command: DetailChangeCommand,
@@ -199,10 +178,7 @@ export function applyDetailMutation<
   };
 }
 
-export function addLineMutation<
-  H extends Record<string, unknown>,
-  L extends DocumentLine,
->(
+export function addLineMutation<H extends Record<string, unknown>, L extends DocumentLine>(
   rules: EmitEffectRules<H, L>,
   source: DocumentDraft<H, L>,
   id: string,
@@ -218,10 +194,7 @@ export function addLineMutation<
   };
 }
 
-export function removeLineMutation<
-  H extends Record<string, unknown>,
-  L extends DocumentLine,
->(
+export function removeLineMutation<H extends Record<string, unknown>, L extends DocumentLine>(
   rules: EmitEffectRules<H, L>,
   source: DocumentDraft<H, L>,
   id: string,

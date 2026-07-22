@@ -23,25 +23,26 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `src/env.d.ts` | `VITE_WECHAT_*` + `Window.wx` 最小类型 |
-| `src/composables/use-auth/use-auth.ts` | 微信网页授权 |
-| `src/composables/use-auth/index.ts` | 夹内 barrel |
-| `src/composables/use-weixin/use-weixin.ts` | JSSDK 全局配置 + stub |
-| `src/composables/use-weixin/index.ts` | 夹内 barrel（只导出 `useWeixin`） |
-| `src/composables/index.ts` | 根 barrel re-export |
-| `src/composables/__tests__/use-auth/use-auth.test.ts` | useAuth 单测 |
-| `src/composables/__tests__/use-weixin/use-weixin.test.ts` | useWeixin 单测 |
-| `src/views/composables/use-auth-demo.vue` | API 文档页 |
-| `src/views/composables/use-weixin-demo.vue` | API 文档页 |
-| `src/router/index.ts` | 注册路由（layout 按 `meta.group` / `order` 自动侧栏） |
+| 路径                                                      | 职责                                                  |
+| --------------------------------------------------------- | ----------------------------------------------------- |
+| `src/env.d.ts`                                            | `VITE_WECHAT_*` + `Window.wx` 最小类型                |
+| `src/composables/use-auth/use-auth.ts`                    | 微信网页授权                                          |
+| `src/composables/use-auth/index.ts`                       | 夹内 barrel                                           |
+| `src/composables/use-weixin/use-weixin.ts`                | JSSDK 全局配置 + stub                                 |
+| `src/composables/use-weixin/index.ts`                     | 夹内 barrel（只导出 `useWeixin`）                     |
+| `src/composables/index.ts`                                | 根 barrel re-export                                   |
+| `src/composables/__tests__/use-auth/use-auth.test.ts`     | useAuth 单测                                          |
+| `src/composables/__tests__/use-weixin/use-weixin.test.ts` | useWeixin 单测                                        |
+| `src/views/composables/use-auth-demo.vue`                 | API 文档页                                            |
+| `src/views/composables/use-weixin-demo.vue`               | API 文档页                                            |
+| `src/router/index.ts`                                     | 注册路由（layout 按 `meta.group` / `order` 自动侧栏） |
 
 ---
 
 ### Task 1: `useAuth`（TDD）
 
 **Files:**
+
 - Modify: `src/env.d.ts`
 - Create: `src/composables/use-auth/use-auth.ts`
 - Create: `src/composables/use-auth/index.ts`
@@ -49,6 +50,7 @@
 - Modify: `src/composables/index.ts`
 
 **Interfaces:**
+
 - Consumes: `vue` (`ref`, `watchEffect`)、`@vueuse/core` (`useUrlSearchParams`)、`import.meta.env.VITE_WECHAT_APPID`
 - Produces:
   - `export type WechatOAuthScope = 'snsapi_base' | 'snsapi_userinfo'`
@@ -148,9 +150,7 @@ describe('useAuth', () => {
     expect(url).toContain('scope=snsapi_base');
     expect(url).toContain('#wechat_redirect');
 
-    const redirectUri = decodeURIComponent(
-      url.match(/redirect_uri=([^&]+)/)?.[1] ?? '',
-    );
+    const redirectUri = decodeURIComponent(url.match(/redirect_uri=([^&]+)/)?.[1] ?? '');
     expect(redirectUri).toBe('https://example.com/app/home?from=demo');
     expect(redirectUri.includes('#')).toBe(false);
   });
@@ -162,9 +162,7 @@ describe('useAuth', () => {
     authorize('/login');
 
     const url = String(hrefSetter.mock.calls[0]?.[0]);
-    const redirectUri = decodeURIComponent(
-      url.match(/redirect_uri=([^&]+)/)?.[1] ?? '',
-    );
+    const redirectUri = decodeURIComponent(url.match(/redirect_uri=([^&]+)/)?.[1] ?? '');
     expect(redirectUri).toBe('https://example.com/login?from=demo');
   });
 });
@@ -206,11 +204,7 @@ export function useAuth(
 
   function authorize(redirect?: string) {
     const { protocol, host, pathname, search } = location;
-    const nextPath = redirect
-      ? redirect.startsWith('/')
-        ? redirect
-        : `/${redirect}`
-      : pathname;
+    const nextPath = redirect ? (redirect.startsWith('/') ? redirect : `/${redirect}`) : pathname;
     const redirectUri = `${protocol}//${host}${nextPath}${search}`;
     const appId = import.meta.env.VITE_WECHAT_APPID ?? '';
     location.href =
@@ -256,12 +250,14 @@ git commit -m "feat(composables): add useAuth with history OAuth redirect"
 ### Task 2: `useWeixin`（TDD）
 
 **Files:**
+
 - Create: `src/composables/use-weixin/use-weixin.ts`
 - Create: `src/composables/use-weixin/index.ts`
 - Create: `src/composables/__tests__/use-weixin/use-weixin.test.ts`
 - Modify: `src/composables/index.ts`
 
 **Interfaces:**
+
 - Consumes: `vue` (`ref`)、`@vueuse/core` (`createGlobalState`)、`import.meta.env.VITE_JSSDK_ENABLED`、`window.wx`
 - Produces:
   - `export async function fetchWxJsConfig(url: string): Promise<{ data: Record<string, unknown> }>`（stub；**不要**从根 barrel 导出）
@@ -324,9 +320,7 @@ describe('useWeixin', () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/120' });
     const wx = mockWx();
     const mod = await loadUseWeixin();
-    const fetchSpy = vi
-      .spyOn(mod, 'fetchWxJsConfig')
-      .mockResolvedValue({ data: { appId: 'x' } });
+    const fetchSpy = vi.spyOn(mod, 'fetchWxJsConfig').mockResolvedValue({ data: { appId: 'x' } });
 
     const [ready] = mod.useWeixin();
     await Promise.resolve();
@@ -341,9 +335,7 @@ describe('useWeixin', () => {
     vi.stubEnv('VITE_JSSDK_ENABLED', 'false');
     const wx = mockWx();
     const mod = await loadUseWeixin();
-    const fetchSpy = vi
-      .spyOn(mod, 'fetchWxJsConfig')
-      .mockResolvedValue({ data: {} });
+    const fetchSpy = vi.spyOn(mod, 'fetchWxJsConfig').mockResolvedValue({ data: {} });
 
     const [ready] = mod.useWeixin();
     await Promise.resolve();
@@ -367,9 +359,7 @@ describe('useWeixin', () => {
     });
 
     expect(sdk).toBe(wx);
-    expect(fetchSpy).toHaveBeenCalledWith(
-      encodeURIComponent('https://example.com/page?x=1'),
-    );
+    expect(fetchSpy).toHaveBeenCalledWith(encodeURIComponent('https://example.com/page?x=1'));
     expect(wx.config).toHaveBeenCalledWith({
       debug: false,
       appId: 'wx1',
@@ -427,16 +417,12 @@ import { createGlobalState } from '@vueuse/core';
  * TODO: replace with real GET /wechat/jssdk/config (param REDIRECT_URI).
  * Kept exported for unit-test spies; do not re-export from @/composables.
  */
-export async function fetchWxJsConfig(
-  _url: string,
-): Promise<{ data: Record<string, unknown> }> {
+export async function fetchWxJsConfig(_url: string): Promise<{ data: Record<string, unknown> }> {
   return { data: {} };
 }
 
 function isWeixinBrowser() {
-  return (
-    typeof navigator !== 'undefined' && /MicroMessenger/i.test(navigator.userAgent)
-  );
+  return typeof navigator !== 'undefined' && /MicroMessenger/i.test(navigator.userAgent);
 }
 
 /**
@@ -449,10 +435,7 @@ function isWeixinBrowser() {
  * const [ready, $wx] = useWeixin()
  * $wx?.scanQRCode?.({ needResult: 1, success: console.log })
  */
-export const useWeixin = createGlobalState((): [
-  Ref<boolean>,
-  WeixinJsSdk | undefined,
-] => {
+export const useWeixin = createGlobalState((): [Ref<boolean>, WeixinJsSdk | undefined] => {
   const ready = ref(false);
   const wx = typeof window !== 'undefined' ? window.wx : undefined;
   let pending: Promise<void> | null = null;
@@ -533,11 +516,13 @@ git commit -m "feat(composables): add useWeixin with jssdk config stub"
 ### Task 3: API 文档页 + 路由
 
 **Files:**
+
 - Create: `src/views/composables/use-auth-demo.vue`
 - Create: `src/views/composables/use-weixin-demo.vue`
 - Modify: `src/router/index.ts`
 
 **Interfaces:**
+
 - Consumes: `useAuth` / `useWeixin` 公开签名（仅文档描述，页面不调用）
 - Produces: 路由 `composables-use-auth`（order 4）、`composables-use-weixin`（order 5）
 
@@ -555,10 +540,8 @@ defineOptions({ name: 'UseAuthDemo' });
   <DemoPage width="wide">
     <template #description>
       微信网页授权（OAuth）。从 URL search 同步
-      <code>code</code>，并通过
-      <code>authorize</code> 跳转微信授权页。workbench 使用 History 路由，
-      <code>redirect_uri</code> 不含 hash 路径。需配置
-      <code>VITE_WECHAT_APPID</code>。
+      <code>code</code>，并通过 <code>authorize</code> 跳转微信授权页。workbench 使用 History 路由，
+      <code>redirect_uri</code> 不含 hash 路径。需配置 <code>VITE_WECHAT_APPID</code>。
     </template>
 
     <template #api>
@@ -579,9 +562,7 @@ defineOptions({ name: 'UseAuthDemo' });
         <tr>
           <td><code>[1] authorize</code></td>
           <td><code>(redirect?: string) =&gt; void</code></td>
-          <td>
-            跳转微信授权；可选 <code>redirect</code> 替换当前 pathname（History）。
-          </td>
+          <td>跳转微信授权；可选 <code>redirect</code> 替换当前 pathname（History）。</td>
         </tr>
       </DemoApiTable>
 
@@ -613,9 +594,8 @@ defineOptions({ name: 'UseWeixinDemo' });
       微信 JSSDK 初始化（<code>createGlobalState</code>，全局只
       <code>wx.config</code> 一次）。签名 URL 取
       <code>location.href.split('#')[0]</code>。非微信环境或
-      <code>VITE_JSSDK_ENABLED !== 'true'</code> 时跳过。当前
-      <code>fetchWxJsConfig</code> 为 stub（空
-      <code>data</code>），待接 <code>/wechat/jssdk/config</code>。
+      <code>VITE_JSSDK_ENABLED !== 'true'</code> 时跳过。当前 <code>fetchWxJsConfig</code> 为
+      stub（空 <code>data</code>），待接 <code>/wechat/jssdk/config</code>。
     </template>
 
     <template #api>
@@ -628,10 +608,7 @@ defineOptions({ name: 'UseWeixinDemo' });
         <tr>
           <td><code>[1] wx</code></td>
           <td><code>WeixinJsSdk | undefined</code></td>
-          <td>
-            <code>window.wx</code> 引用；未注入脚本时为
-            <code>undefined</code>。
-          </td>
+          <td><code>window.wx</code> 引用；未注入脚本时为 <code>undefined</code>。</td>
         </tr>
       </DemoApiTable>
 
@@ -691,6 +668,7 @@ git commit -m "docs(playground): add useAuth and useWeixin API pages"
 ### Task 4: 全量验证
 
 **Files:**
+
 - （无新文件；回归）
 
 - [ ] **Step 1: 跑全部测试**
@@ -721,13 +699,13 @@ git commit -m "fix(composables): address wechat migration verification gaps"
 
 ## Spec coverage checklist
 
-| Spec 项 | Task |
-|---------|------|
-| `useAuth` History OAuth | Task 1 |
-| `useWeixin` + stub `fetchWxJsConfig` | Task 2 |
-| `env.d.ts` 环境变量与 `Window.wx` | Task 1 |
-| 根 barrel 导出 | Task 1–2 |
-| 单元测试 | Task 1–2 |
-| API-only demos + 路由 | Task 3 |
-| 不引入真实 API / jweixin | Global Constraints |
-| 全量回归 | Task 4 |
+| Spec 项                              | Task               |
+| ------------------------------------ | ------------------ |
+| `useAuth` History OAuth              | Task 1             |
+| `useWeixin` + stub `fetchWxJsConfig` | Task 2             |
+| `env.d.ts` 环境变量与 `Window.wx`    | Task 1             |
+| 根 barrel 导出                       | Task 1–2           |
+| 单元测试                             | Task 1–2           |
+| API-only demos + 路由                | Task 3             |
+| 不引入真实 API / jweixin             | Global Constraints |
+| 全量回归                             | Task 4             |

@@ -21,8 +21,8 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
+| 路径                                          | 职责                              |
+| --------------------------------------------- | --------------------------------- |
 | `src/views/plus-table/basic-editing-demo.vue` | mode 切换 + row 操作列 + 文案更新 |
 
 ---
@@ -30,9 +30,11 @@
 ### Task 1: 实现 mode 切换与 row 操作列
 
 **Files:**
+
 - Modify: `src/views/plus-table/basic-editing-demo.vue`
 
 **Interfaces:**
+
 - Consumes: `EditMode`（`@/components/plus-table`）、expose `startRowEdit` / `commitRowEdit` / `cancelRowEdit`
 - Produces: 可交互 demo（四种 mode + row 操作列）
 
@@ -50,7 +52,7 @@ const tableRef = ref<{
 }>();
 const editingRowId = ref<number | null>(null);
 
-const baseColumns = [ /* 现有列 */ ];
+const baseColumns = [/* 现有列 */];
 const columns = computed(() =>
   mode.value === 'row'
     ? [

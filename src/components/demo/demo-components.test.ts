@@ -9,13 +9,9 @@ import DemoPage from './demo-page.vue';
 import { highlightCode, resolveLang } from './demo-highlighter';
 
 describe('demo components', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
-    [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
 
-  async function mount(
-    component: Parameters<typeof createApp>[0],
-    router?: Router,
-  ) {
+  async function mount(component: Parameters<typeof createApp>[0], router?: Router) {
     const host = document.createElement('div');
     document.body.append(host);
     const app = createApp(component);
@@ -52,9 +48,11 @@ describe('demo components', () => {
     });
 
     expect(host.querySelector('.demo__api-title')?.textContent).toBe('Events');
-    expect(
-      [...host.querySelectorAll('th')].map((cell) => cell.textContent),
-    ).toEqual(['名称', '载荷', '说明']);
+    expect([...host.querySelectorAll('th')].map((cell) => cell.textContent)).toEqual([
+      '名称',
+      '载荷',
+      '说明',
+    ]);
     expect(host.querySelector('tbody code')?.textContent).toBe('page-change');
   });
 
@@ -105,8 +103,7 @@ describe('demo components', () => {
 
   it('renders highlighted code with line spans', async () => {
     const host = await mount({
-      render: () =>
-        h(DemoCode, { code: 'const a = 1\nconst b = 2', lang: 'ts' }),
+      render: () => h(DemoCode, { code: 'const a = 1\nconst b = 2', lang: 'ts' }),
     });
 
     await vi.waitFor(() => {

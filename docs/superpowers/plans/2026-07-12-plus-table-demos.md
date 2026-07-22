@@ -16,24 +16,25 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `package.json` | 增加 `vue-router` 依赖 |
-| `src/main.ts` | `app.use(router)` |
-| `src/App.vue` | 壳：config-provider + router-view |
-| `src/router/index.ts` | 路由表与重定向 |
-| `src/layouts/playground-layout.vue` | 侧栏 + router-view |
-| `src/views/plus-table/basic-editing-demo.vue` | 多编辑器 cell 编辑 |
-| `src/views/plus-table/dependencies-validation-demo.vue` | 联动 + 校验 |
-| `src/views/plus-table/history-dirty-demo.vue` | history + dirty |
-| `src/views/plus-table/pagination-rows-demo.vue` | 分页 + 行操作（改全量源） |
-| `README.md` | 补充 playground 路由说明 |
+| 路径                                                    | 职责                              |
+| ------------------------------------------------------- | --------------------------------- |
+| `package.json`                                          | 增加 `vue-router` 依赖            |
+| `src/main.ts`                                           | `app.use(router)`                 |
+| `src/App.vue`                                           | 壳：config-provider + router-view |
+| `src/router/index.ts`                                   | 路由表与重定向                    |
+| `src/layouts/playground-layout.vue`                     | 侧栏 + router-view                |
+| `src/views/plus-table/basic-editing-demo.vue`           | 多编辑器 cell 编辑                |
+| `src/views/plus-table/dependencies-validation-demo.vue` | 联动 + 校验                       |
+| `src/views/plus-table/history-dirty-demo.vue`           | history + dirty                   |
+| `src/views/plus-table/pagination-rows-demo.vue`         | 分页 + 行操作（改全量源）         |
+| `README.md`                                             | 补充 playground 路由说明          |
 
 ---
 
 ### Task 1: 安装 vue-router 并接通壳
 
 **Files:**
+
 - Modify: `package.json`（经 pnpm）
 - Modify: `src/main.ts`
 - Create: `src/router/index.ts`
@@ -262,6 +263,7 @@ git commit -m "feat(playground): add vue-router shell and plus-table routes"
 ### Task 2: basic-editing-demo
 
 **Files:**
+
 - Modify: `src/views/plus-table/basic-editing-demo.vue`
 
 - [ ] **Step 1: 实现完整页面**
@@ -341,8 +343,7 @@ const columns = [
     editable: true,
     component: 'select',
     componentProps: { options: statusOptions, clearable: true },
-    formatter: (row: Row) =>
-      statusOptions.find((o) => o.value === row.status)?.label ?? row.status,
+    formatter: (row: Row) => statusOptions.find((o) => o.value === row.status)?.label ?? row.status,
   },
   {
     prop: 'dueDate',
@@ -367,17 +368,9 @@ const columns = [
   <section class="demo">
     <header class="demo__header">
       <h1 class="demo__title">基础编辑</h1>
-      <p class="demo__desc">
-        cell 模式：input / input-number / select / date-picker / switch
-      </p>
+      <p class="demo__desc">cell 模式：input / input-number / select / date-picker / switch</p>
     </header>
-    <PlusTable
-      v-model:data="data"
-      :columns="columns"
-      row-key="id"
-      edit-mode="cell"
-      border
-    />
+    <PlusTable v-model:data="data" :columns="columns" row-key="id" edit-mode="cell" border />
   </section>
 </template>
 
@@ -416,6 +409,7 @@ git commit -m "feat(plus-table): add basic editing demo"
 ### Task 3: dependencies-validation-demo
 
 **Files:**
+
 - Modify: `src/views/plus-table/dependencies-validation-demo.vue`
 
 - [ ] **Step 1: 实现完整页面**
@@ -473,9 +467,7 @@ const columns = [
       clearable: true,
     },
     formatter: (row: Row) =>
-      ({ hardware: '硬件', software: '软件' } as Record<string, string>)[
-        row.category
-      ] ?? '',
+      (({ hardware: '硬件', software: '软件' }) as Record<string, string>)[row.category] ?? '',
   },
   {
     prop: 'item',
@@ -519,9 +511,7 @@ async function handleValidate() {
     lastValidate.value = '无法校验';
     return;
   }
-  lastValidate.value = result.valid
-    ? '校验通过'
-    : `失败 ${result.errors.length} 项`;
+  lastValidate.value = result.valid ? '校验通过' : `失败 ${result.errors.length} 项`;
 }
 </script>
 
@@ -529,9 +519,7 @@ async function handleValidate() {
   <section class="demo">
     <header class="demo__header">
       <h1 class="demo__title">联动与校验</h1>
-      <p class="demo__desc">
-        类别驱动明细选项；必填校验。第 3 行故意留空便于触发失败。
-      </p>
+      <p class="demo__desc">类别驱动明细选项；必填校验。第 3 行故意留空便于触发失败。</p>
     </header>
     <PlusTable
       ref="tableRef"
@@ -590,6 +578,7 @@ git commit -m "feat(plus-table): add dependencies and validation demo"
 ### Task 4: history-dirty-demo
 
 **Files:**
+
 - Modify: `src/views/plus-table/history-dirty-demo.vue`
 
 - [ ] **Step 1: 实现完整页面**
@@ -738,6 +727,7 @@ git commit -m "feat(plus-table): add history and dirty tracking demo"
 ### Task 5: pagination-rows-demo
 
 **Files:**
+
 - Modify: `src/views/plus-table/pagination-rows-demo.vue`
 
 **要点:** PlusTable 分页为服务端驱动（组件不切片）。`insertRow`/`removeRow` 作用在传入的 `data` 上；因此行操作必须改 `allRows`，表格只吃当前页切片。单元格编辑会原地改行对象，切片与全量共享引用即可。
@@ -834,9 +824,7 @@ function duplicateFirstOnPage() {
   <section class="demo">
     <header class="demo__header">
       <h1 class="demo__title">分页与行操作</h1>
-      <p class="demo__desc">
-        全量在内存切片；增删复制改源数据。表格仅接收当前页。
-      </p>
+      <p class="demo__desc">全量在内存切片；增删复制改源数据。表格仅接收当前页。</p>
     </header>
     <PlusTable
       :data="pageRows"
@@ -903,6 +891,7 @@ git commit -m "feat(plus-table): add pagination and row ops demo"
 ### Task 6: README + 最终验收
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: 更新 README 仓库结构与 PlusTable 小节**
@@ -971,17 +960,17 @@ git commit -m "docs: document playground routes"
 
 ## Spec coverage check
 
-| Spec 要求 | Task |
-|-----------|------|
-| vue-router + layout + 重定向 | 1 |
-| 四条 plus-table 路由 | 1 |
-| basic-editing | 2 |
-| dependencies-validation | 3 |
-| history-dirty | 4 |
-| pagination-rows（全量切片） | 5 |
-| 无 composables 导航 | 1（layout 仅 PlusTable） |
-| typecheck / 验收 | 各 task + 6 |
-| README | 6 |
+| Spec 要求                    | Task                     |
+| ---------------------------- | ------------------------ |
+| vue-router + layout + 重定向 | 1                        |
+| 四条 plus-table 路由         | 1                        |
+| basic-editing                | 2                        |
+| dependencies-validation      | 3                        |
+| history-dirty                | 4                        |
+| pagination-rows（全量切片）  | 5                        |
+| 无 composables 导航          | 1（layout 仅 PlusTable） |
+| typecheck / 验收             | 各 task + 6              |
+| README                       | 6                        |
 
 ## Plan self-review
 

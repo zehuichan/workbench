@@ -6,11 +6,7 @@
 import { isFunction, isPlainObject, isString } from 'es-toolkit';
 import type { Component } from 'vue';
 import type { RowContext, RowData } from '../table/defaults';
-import {
-  EDITOR_REGISTRY,
-  TYPED_REGISTRY,
-  type BuiltinEditorType,
-} from './component';
+import { EDITOR_REGISTRY, TYPED_REGISTRY, type BuiltinEditorType } from './component';
 
 export type { BuiltinEditorType, EditorAdapter } from './component';
 export { EDITOR_REGISTRY } from './component';
@@ -25,9 +21,7 @@ export interface EditorColumnFields<T extends RowData = RowData> {
    */
   component?: ColumnComponent;
   /** 透传给编辑控件的 props；dependencies.componentProps 覆盖同名项 */
-  componentProps?:
-    | Record<string, unknown>
-    | ((ctx: RowContext<T>) => Record<string, unknown>);
+  componentProps?: Record<string, unknown> | ((ctx: RowContext<T>) => Record<string, unknown>);
   /** 自定义组件的 v-model prop 名，默认 modelValue */
   modelProp?: string;
 }
@@ -72,13 +66,9 @@ export function resolveEditor<T extends RowData = RowData>(
   fields: EditorColumnFields<T> | undefined,
   ctx: RowContext<T>,
 ): ResolvedEditor {
-  const base = resolveComponent(
-    fields?.component,
-    fields?.modelProp ?? 'modelValue',
-  );
+  const base = resolveComponent(fields?.component, fields?.modelProp ?? 'modelValue');
   const configProps = fields?.componentProps;
-  const resolvedProps =
-    isFunction(configProps) ? configProps(ctx) : configProps;
+  const resolvedProps = isFunction(configProps) ? configProps(ctx) : configProps;
   if (resolvedProps !== undefined && !isPlainObject(resolvedProps)) {
     throw new TypeError(
       '[PlusTable] componentProps 必须是普通对象，函数式 componentProps 也必须返回普通对象。',

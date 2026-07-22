@@ -1,17 +1,11 @@
 import { createApp, h, nextTick } from 'vue';
-import {
-  createMemoryHistory,
-  createRouter,
-  RouterLink,
-  type Router,
-} from 'vue-router';
+import { createMemoryHistory, createRouter, RouterLink, type Router } from 'vue-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { SidebarProvider } from '@/ui/sidebar';
 import PlaygroundSidebar from '../playground-sidebar.vue';
 
 describe('playground-sidebar', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
-    [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
 
   async function mountWithRouter(
     groups: { name: string; links: { to: string; label: string }[] }[],

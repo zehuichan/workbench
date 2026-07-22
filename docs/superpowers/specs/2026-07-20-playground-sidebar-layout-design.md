@@ -8,15 +8,15 @@ Date: 2026-07-20
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 侧栏组件 | shadcn `Sidebar`（非 Navigation Menu） |
-| 顶栏 categories | `NavigationMenu` + `NavigationMenuLink`，无 Trigger/Content |
-| 分组交互 | 始终展开；不接 `Collapsible` |
-| 侧栏整体 | `collapsible="none"`，不做 icon/offcanvas |
-| 文件位置 | `playground-sidebar.vue` / `playground-header.vue` 与 layout 平级，均在 `layouts/` |
-| 路由数据 | 保留 `router` 的 `meta.group` / `meta.title` / `meta.order`；分类状态仍在 layout |
-| 样式 | 壳改用 Tailwind + sidebar token；删除 `index.scss` 中 `.playground*` 壳样式；`.demo*` 保留 |
+| 项              | 选择                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| 侧栏组件        | shadcn `Sidebar`（非 Navigation Menu）                                                     |
+| 顶栏 categories | `NavigationMenu` + `NavigationMenuLink`，无 Trigger/Content                                |
+| 分组交互        | 始终展开；不接 `Collapsible`                                                               |
+| 侧栏整体        | `collapsible="none"`，不做 icon/offcanvas                                                  |
+| 文件位置        | `playground-sidebar.vue` / `playground-header.vue` 与 layout 平级，均在 `layouts/`         |
+| 路由数据        | 保留 `router` 的 `meta.group` / `meta.title` / `meta.order`；分类状态仍在 layout           |
+| 样式            | 壳改用 Tailwind + sidebar token；删除 `index.scss` 中 `.playground*` 壳样式；`.demo*` 保留 |
 
 ## File Architecture
 
@@ -59,8 +59,8 @@ playground-layout.vue
 
 ### `playground-sidebar.vue`
 
-| Prop | 类型 | 说明 |
-|------|------|------|
+| Prop     | 类型                                                         | 说明                 |
+| -------- | ------------------------------------------------------------ | -------------------- |
 | `groups` | `{ name: string; links: { to: string; label: string }[] }[]` | 当前分类下的分组菜单 |
 
 - 品牌文案固定 `Workbench`。
@@ -69,11 +69,11 @@ playground-layout.vue
 
 ### `playground-header.vue`
 
-| Prop / Emit | 类型 | 说明 |
-|-------------|------|------|
-| `categories` | `{ key: string; groups: readonly string[] }[]` | 顶栏分类 |
-| `activeCategory` | `string` | 当前分类 |
-| `select` | emit `(key: string)` | 用户选择分类 |
+| Prop / Emit      | 类型                                           | 说明         |
+| ---------------- | ---------------------------------------------- | ------------ |
+| `categories`     | `{ key: string; groups: readonly string[] }[]` | 顶栏分类     |
+| `activeCategory` | `string`                                       | 当前分类     |
+| `select`         | emit `(key: string)`                           | 用户选择分类 |
 
 - 无 groups 的分类禁用（与现状一致）。
 - 使用 `NavigationMenuLink` 样式触发选择；不使用下拉。

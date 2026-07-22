@@ -50,11 +50,7 @@ describe('useWechatAuth', () => {
       href: 'https://example.com/app/home?code=oauth-code-1&from=demo',
       origin: 'https://example.com',
     });
-    window.history.replaceState(
-      {},
-      '',
-      '/app/home?code=oauth-code-1&from=demo',
-    );
+    window.history.replaceState({}, '', '/app/home?code=oauth-code-1&from=demo');
     const pair = scope.run(() => useWechatAuth());
     if (!pair) throw new Error('scope did not return useWechatAuth');
     const [code] = pair;
@@ -69,22 +65,16 @@ describe('useWechatAuth', () => {
 
     expect(hrefSetter).toHaveBeenCalledTimes(1);
     const url = String(hrefSetter.mock.calls[0]?.[0]);
-    expect(url).toContain(
-      'https://open.weixin.qq.com/connect/oauth2/authorize?',
-    );
+    expect(url).toContain('https://open.weixin.qq.com/connect/oauth2/authorize?');
     expect(url).toContain('appid=wx-test-appid');
     expect(url).toContain('response_type=code');
     expect(url).toContain('scope=snsapi_base');
     expect(url).toContain('#wechat_redirect');
 
     const state = url.match(/state=([^&#]+)/)?.[1];
-    expect(state).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
-    );
+    expect(state).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
 
-    const redirectUri = decodeURIComponent(
-      url.match(/redirect_uri=([^&]+)/)?.[1] ?? '',
-    );
+    const redirectUri = decodeURIComponent(url.match(/redirect_uri=([^&]+)/)?.[1] ?? '');
     expect(redirectUri).toBe('https://example.com/app/home?from=demo');
     expect(redirectUri.includes('#')).toBe(false);
   });
@@ -96,9 +86,7 @@ describe('useWechatAuth', () => {
     authorize('/login');
 
     const url = String(hrefSetter.mock.calls[0]?.[0]);
-    const redirectUri = decodeURIComponent(
-      url.match(/redirect_uri=([^&]+)/)?.[1] ?? '',
-    );
+    const redirectUri = decodeURIComponent(url.match(/redirect_uri=([^&]+)/)?.[1] ?? '');
     expect(redirectUri).toBe('https://example.com/login?from=demo');
   });
 });

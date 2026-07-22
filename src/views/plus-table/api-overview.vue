@@ -9,9 +9,8 @@ defineOptions({ name: 'ApiOverview' });
   <DemoPage width="wide">
     <template #description>
       PlusTable 完整公开 API 参考。交互与场景说明见侧栏其它 demo。未列出的
-      <code>el-table</code> 属性经 <code>$attrs</code> 透传；列上
-      <code>width</code> / <code>align</code> / <code>fixed</code> /
-      <code>sortable</code> / <code>formatter</code> 等
+      <code>el-table</code> 属性经 <code>$attrs</code> 透传；列上 <code>width</code> /
+      <code>align</code> / <code>fixed</code> / <code>sortable</code> / <code>formatter</code> 等
       <code>el-table-column</code> 字段可直通。
     </template>
 
@@ -40,17 +39,14 @@ defineOptions({ name: 'ApiOverview' });
         <tr>
           <td><code>validate-event</code></td>
           <td><code>boolean</code></td>
-          <td>
-            默认 <code>true</code>。为 false 时仅
-            <code>ref.validate()</code> 触发校验。
-          </td>
+          <td>默认 <code>true</code>。为 false 时仅 <code>ref.validate()</code> 触发校验。</td>
         </tr>
         <tr>
           <td><code>cache</code></td>
           <td><code>boolean</code></td>
           <td>
-            默认 <code>false</code>。缓存列设置（显隐 / 顺序 /
-            列宽）；为 true 时需同时传 <code>id</code>。
+            默认 <code>false</code>。缓存列设置（显隐 / 顺序 / 列宽）；为 true 时需同时传
+            <code>id</code>。
           </td>
         </tr>
         <tr>
@@ -163,8 +159,7 @@ defineOptions({ name: 'ApiOverview' });
           <td><code>#editor-&#123;prop&#125;</code></td>
           <td>
             编辑态插槽；参数含
-            <code>value</code> / <code>setValue</code> /
-            <code>commit</code> / <code>cancel</code>。
+            <code>value</code> / <code>setValue</code> / <code>commit</code> / <code>cancel</code>。
           </td>
         </tr>
       </DemoApiTable>
@@ -214,8 +209,7 @@ defineOptions({ name: 'ApiOverview' });
         </tr>
         <tr>
           <td>
-            <code>startRowEdit</code> /
-            <code>commitRowEdit</code> /
+            <code>startRowEdit</code> / <code>commitRowEdit</code> /
             <code>cancelRowEdit</code>
           </td>
           <td>行编辑 API</td>
@@ -312,11 +306,9 @@ defineOptions({ name: 'ApiOverview' });
           <td><code>component</code></td>
           <td><code>BuiltinEditorType | Component</code></td>
           <td>
-            编辑控件。内置：<code>input</code> /
-            <code>textarea</code> / <code>input-number</code> /
-            <code>select</code> / <code>date-picker</code> /
-            <code>time-picker</code> / <code>switch</code> /
-            <code>checkbox</code>。
+            编辑控件。内置：<code>input</code> / <code>textarea</code> / <code>input-number</code> /
+            <code>select</code> / <code>date-picker</code> / <code>time-picker</code> /
+            <code>switch</code> / <code>checkbox</code>。
           </td>
         </tr>
         <tr>

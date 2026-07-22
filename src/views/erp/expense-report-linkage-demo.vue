@@ -80,8 +80,7 @@ async function onRemoveLine(id: string) {
   <DemoPage width="wide">
     <template #description>
       费用报销演示表头→明细副作用：币种
-      <code>force</code>（默认汇率时改币种会带出新汇率）、部门/项目
-      <code>inherit</code>、汇率
+      <code>force</code>（默认汇率时改币种会带出新汇率）、部门/项目 <code>inherit</code>、汇率
       <code>recalculate</code>
       本位币金额。明细改部门/项目后标记为人工值；手改汇率后改币种不覆盖。
     </template>
@@ -93,11 +92,7 @@ async function onRemoveLine(id: string) {
         }}
       </template>
 
-      <el-form
-        class="erp-page__header"
-        label-position="top"
-        :model="draft.header"
-      >
+      <el-form class="erp-page__header" label-position="top" :model="draft.header">
         <el-form-item label="报销人部门 · 继承传播">
           <el-select
             :model-value="draft.header.departmentId"
@@ -180,9 +175,7 @@ async function onRemoveLine(id: string) {
         class="mt-3 flex flex-wrap items-end gap-x-6 gap-y-3 border-t border-[var(--el-border-color-lighter)] pt-3"
       >
         <div class="min-w-28">
-          <div class="text-xs text-[var(--el-text-color-secondary)]">
-            原币合计
-          </div>
+          <div class="text-xs text-[var(--el-text-color-secondary)]">原币合计</div>
           <div
             class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-text-color-primary)]"
           >
@@ -190,9 +183,7 @@ async function onRemoveLine(id: string) {
           </div>
         </div>
         <div class="min-w-28">
-          <div class="text-xs text-[var(--el-text-color-secondary)]">
-            可抵扣税额
-          </div>
+          <div class="text-xs text-[var(--el-text-color-secondary)]">可抵扣税额</div>
           <div
             class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-text-color-primary)]"
           >
@@ -200,9 +191,7 @@ async function onRemoveLine(id: string) {
           </div>
         </div>
         <div class="min-w-28">
-          <div class="text-xs text-[var(--el-text-color-secondary)]">
-            本位币合计
-          </div>
+          <div class="text-xs text-[var(--el-text-color-secondary)]">本位币合计</div>
           <div
             class="mt-0.5 font-mono text-lg font-semibold tabular-nums tracking-tight text-[var(--el-color-primary)]"
           >

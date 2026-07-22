@@ -22,26 +22,28 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `package.json` / `pnpm-lock.yaml` | 增加 `shiki` 依赖 |
-| `src/components/demo/demo-highlighter.ts` | highlighter 单例 + `resolveLang` + `highlightCode` |
-| `src/components/demo/demo-code.vue` | DemoCode UI |
-| `src/components/demo/demo-components.test.ts` | 追加 DemoCode / highlighter 测试 |
-| `src/styles/index.scss` | `.demo-code` 样式（工具栏、行号） |
-| `src/views/composables/use-auth-demo.vue` | 裸 pre → DemoCode |
-| `src/views/composables/use-weixin-demo.vue` | 裸 pre → DemoCode |
+| 路径                                          | 职责                                               |
+| --------------------------------------------- | -------------------------------------------------- |
+| `package.json` / `pnpm-lock.yaml`             | 增加 `shiki` 依赖                                  |
+| `src/components/demo/demo-highlighter.ts`     | highlighter 单例 + `resolveLang` + `highlightCode` |
+| `src/components/demo/demo-code.vue`           | DemoCode UI                                        |
+| `src/components/demo/demo-components.test.ts` | 追加 DemoCode / highlighter 测试                   |
+| `src/styles/index.scss`                       | `.demo-code` 样式（工具栏、行号）                  |
+| `src/views/composables/use-auth-demo.vue`     | 裸 pre → DemoCode                                  |
+| `src/views/composables/use-weixin-demo.vue`   | 裸 pre → DemoCode                                  |
 
 ---
 
 ### Task 1: `demo-highlighter` + `shiki` 依赖（TDD）
 
 **Files:**
+
 - Modify: `package.json`（via `pnpm add`）
 - Create: `src/components/demo/demo-highlighter.ts`
 - Modify: `src/components/demo/demo-components.test.ts`
 
 **Interfaces:**
+
 - Consumes: `shiki` 的 `createHighlighter`
 - Produces:
   - `resolveLang(lang: string): string` — `ts`→`typescript`，`js`→`javascript`，其余原样
@@ -109,10 +111,7 @@ function getHighlighter(): Promise<Highlighter> {
   return highlighterPromise;
 }
 
-export async function highlightCode(
-  code: string,
-  lang = 'ts',
-): Promise<string> {
+export async function highlightCode(code: string, lang = 'ts'): Promise<string> {
   const highlighter = await getHighlighter();
   return highlighter.codeToHtml(code, {
     lang: resolveLang(lang),
@@ -141,11 +140,13 @@ git commit -m "feat(demo): add Shiki highlighter singleton"
 ### Task 2: `DemoCode` 组件 + 样式（TDD）
 
 **Files:**
+
 - Create: `src/components/demo/demo-code.vue`
 - Modify: `src/styles/index.scss`
 - Modify: `src/components/demo/demo-components.test.ts`
 
 **Interfaces:**
+
 - Consumes: `highlightCode` from `./demo-highlighter`
 - Produces: Vue SFC `DemoCode`，props `{ code: string; lang?: string; title?: string }`（`lang` 默认 `'ts'`）
 
@@ -156,8 +157,7 @@ git commit -m "feat(demo): add Shiki highlighter singleton"
 ```ts
 it('renders highlighted code with line spans', async () => {
   const host = await mount({
-    render: () =>
-      h(DemoCode, { code: 'const a = 1\nconst b = 2', lang: 'ts' }),
+    render: () => h(DemoCode, { code: 'const a = 1\nconst b = 2', lang: 'ts' }),
   });
 
   await vi.waitFor(() => {
@@ -362,10 +362,12 @@ git commit -m "feat(demo): add DemoCode with highlight, lines, and copy"
 ### Task 3: 接入 useAuth / useWeixin 文档页
 
 **Files:**
+
 - Modify: `src/views/composables/use-auth-demo.vue`
 - Modify: `src/views/composables/use-weixin-demo.vue`
 
 **Interfaces:**
+
 - Consumes: `DemoCode` props `{ code, lang? }`
 - Produces: 两页「代码演示」区使用高亮组件，无裸 `demo__pre`
 
@@ -422,15 +424,15 @@ git commit -m "docs(playground): use DemoCode on useAuth and useWeixin pages"
 
 ## Spec coverage (self-review)
 
-| Spec 项 | Task |
-|---------|------|
-| `shiki` + `createHighlighter` 单例 | Task 1 |
-| `github-light` / langs ts·vue·js | Task 1 |
-| `resolveLang` 别名 | Task 1 |
-| DemoCode props `code`/`lang`/`title` | Task 2 |
-| 复制按钮 +「已复制」 | Task 2 |
-| 行号 CSS counter | Task 2 |
-| 降级纯文本 `<pre>` | Task 2（`html` 空时 fallback） |
-| 接入 use-auth / use-weixin | Task 3 |
-| 组件测试高亮 + 复制 | Task 2 |
-| 不做暗色 / 预渲染 / 全站迁移 | 全任务未包含 |
+| Spec 项                              | Task                           |
+| ------------------------------------ | ------------------------------ |
+| `shiki` + `createHighlighter` 单例   | Task 1                         |
+| `github-light` / langs ts·vue·js     | Task 1                         |
+| `resolveLang` 别名                   | Task 1                         |
+| DemoCode props `code`/`lang`/`title` | Task 2                         |
+| 复制按钮 +「已复制」                 | Task 2                         |
+| 行号 CSS counter                     | Task 2                         |
+| 降级纯文本 `<pre>`                   | Task 2（`html` 空时 fallback） |
+| 接入 use-auth / use-weixin           | Task 3                         |
+| 组件测试高亮 + 复制                  | Task 2                         |
+| 不做暗色 / 预渲染 / 全站迁移         | 全任务未包含                   |

@@ -8,21 +8,21 @@ Date: 2026-07-12
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 覆盖范围 | 三个 composable，各一页 |
-| 深度 | 场景向（典型用法，非全边界） |
-| UI 载体 | 轻量 el-form / 输入区 |
-| 结构 | 延续 PlusTable 扩展约定：独立页面 + 路由 + 侧栏分组 |
-| 共享组件 | 不抽 demo shell |
-| 明确不做 | 真实后端、PlusTable 集成、单元测试、文档站 |
+| 项       | 选择                                                |
+| -------- | --------------------------------------------------- |
+| 覆盖范围 | 三个 composable，各一页                             |
+| 深度     | 场景向（典型用法，非全边界）                        |
+| UI 载体  | 轻量 el-form / 输入区                               |
+| 结构     | 延续 PlusTable 扩展约定：独立页面 + 路由 + 侧栏分组 |
+| 共享组件 | 不抽 demo shell                                     |
+| 明确不做 | 真实后端、PlusTable 集成、单元测试、文档站          |
 
 ## Routes
 
-| 路径 | 组件 |
-|------|------|
-| `/composables/use-auto-save` | `use-auto-save-demo.vue` |
-| `/composables/use-form-draft` | `use-form-draft-demo.vue` |
+| 路径                           | 组件                       |
+| ------------------------------ | -------------------------- |
+| `/composables/use-auto-save`   | `use-auto-save-demo.vue`   |
+| `/composables/use-form-draft`  | `use-form-draft-demo.vue`  |
 | `/composables/use-save-hotkey` | `use-save-hotkey-demo.vue` |
 
 `/` 仍重定向到 `/plus-table/basic-editing`，不变。

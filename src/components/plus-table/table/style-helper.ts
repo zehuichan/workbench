@@ -32,10 +32,7 @@ export function useStyle<T extends RowData = RowData>(table: PlusTable<T>) {
     if (!table.props.adaptive) return undefined;
     if (isContainerMode.value) return '100%';
     const available =
-      windowHeight.value -
-      gridTop.value -
-      paginationHeight.value -
-      config.value.offsetBottom;
+      windowHeight.value - gridTop.value - paginationHeight.value - config.value.offsetBottom;
     return Math.max(available, config.value.minHeight);
   });
 

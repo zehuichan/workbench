@@ -8,14 +8,14 @@ Date: 2026-07-18
 
 ## Decisions
 
-| 项 | 选择 |
-|----|------|
-| 范围 | 仅改 `src/views/plus-table/basic-editing-demo.vue` |
-| 控件位置 | `PlusTable` `#toolbar` + `el-radio-group` / `el-radio-button` |
-| 可选值 | `none` / `cell` / `row` / `table`（默认 `cell`） |
+| 项         | 选择                                                           |
+| ---------- | -------------------------------------------------------------- |
+| 范围       | 仅改 `src/views/plus-table/basic-editing-demo.vue`             |
+| 控件位置   | `PlusTable` `#toolbar` + `el-radio-group` / `el-radio-button`  |
+| 可选值     | `none` / `cell` / `row` / `table`（默认 `cell`）               |
 | row 操作列 | `mode === 'row'` 时追加 `type: 'operation'` 列；其它模式不出现 |
-| row 交互 | 操作列编辑/保存/取消 + 保留双击进编 |
-| 切换行为 | 只改 `mode` ref；不重置表格数据 |
+| row 交互   | 操作列编辑/保存/取消 + 保留双击进编                            |
+| 切换行为   | 只改 `mode` ref；不重置表格数据                                |
 
 ## Out of Scope
 
@@ -25,12 +25,12 @@ Date: 2026-07-18
 
 ## Behavior by Mode
 
-| mode | 期望体验 |
-|------|----------|
-| `none` | 只读；不可进编 |
-| `cell` | 双击 / Enter / F2 / 可打印字符进编；方向键移格（现状） |
-| `row` | 双击或点「编辑」进整行；「保存」→ `commitRowEdit`，「取消」→ `cancelRowEdit` |
-| `table` | 可编辑列常驻编辑器 |
+| mode    | 期望体验                                                                     |
+| ------- | ---------------------------------------------------------------------------- |
+| `none`  | 只读；不可进编                                                               |
+| `cell`  | 双击 / Enter / F2 / 可打印字符进编；方向键移格（现状）                       |
+| `row`   | 双击或点「编辑」进整行；「保存」→ `commitRowEdit`，「取消」→ `cancelRowEdit` |
+| `table` | 可编辑列常驻编辑器                                                           |
 
 ## Implementation Sketch
 

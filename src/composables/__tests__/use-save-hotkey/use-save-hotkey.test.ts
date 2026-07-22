@@ -81,10 +81,7 @@ function createNestedRoot(
   };
 }
 
-function dispatchSave(
-  target: Element,
-  init: KeyboardEventInit = {},
-): KeyboardEvent {
+function dispatchSave(target: Element, init: KeyboardEventInit = {}): KeyboardEvent {
   const event = new KeyboardEvent('keydown', {
     key: 's',
     ctrlKey: true,
@@ -300,11 +297,7 @@ describe('useSaveHotkey', () => {
       {
         setup() {
           useSaveHotkey({ handler });
-          return () =>
-            h(Fragment, [
-              h('button', { id: 'first' }, 'First'),
-              h('button', 'Second'),
-            ]);
+          return () => h(Fragment, [h('button', { id: 'first' }, 'First'), h('button', 'Second')]);
         },
       },
       (host) => host.querySelector('#first'),
@@ -324,8 +317,7 @@ describe('useSaveHotkey', () => {
       {
         setup() {
           useSaveHotkey({ handler });
-          return () =>
-            h(Teleport, { to: teleportHost }, [h('button', 'Teleported')]);
+          return () => h(Teleport, { to: teleportHost }, [h('button', 'Teleported')]);
         },
       },
       () => teleportHost.querySelector('button'),
@@ -446,8 +438,7 @@ describe('useSaveHotkey', () => {
           useSaveHotkey({ handler });
           return () =>
             h(Suspense, null, {
-              default: () =>
-                h(Teleport, { to: teleportHost }, [h('button', 'Teleported')]),
+              default: () => h(Teleport, { to: teleportHost }, [h('button', 'Teleported')]),
               fallback: () => h('span', 'Loading'),
             });
         },
@@ -567,9 +558,6 @@ describe('useSaveHotkey', () => {
     const event = dispatchSave(document.body);
     expect(event.defaultPrevented).toBe(false);
     expect(handler).not.toHaveBeenCalled();
-    expect(removeEventListener).toHaveBeenCalledWith(
-      'keydown',
-      expect.any(Function),
-    );
+    expect(removeEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
   });
 });

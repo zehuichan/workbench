@@ -12,16 +12,12 @@ interface PlusTableBase<T extends RowData = RowData> {
 }
 
 /** 公开注入上下文仅暴露兼容的 index-based Store。 */
-interface PlusTableContext<
-  T extends RowData = RowData,
-> extends PlusTableBase<T> {
+interface PlusTableContext<T extends RowData = RowData> extends PlusTableBase<T> {
   store: Store<T>;
 }
 
 /** 组件内部上下文可访问稳定 CellRef 相关成员。 */
-export interface PlusTable<
-  T extends RowData = RowData,
-> extends PlusTableBase<T> {
+export interface PlusTable<T extends RowData = RowData> extends PlusTableBase<T> {
   ids: {
     description: string;
     cell: (rowKey: string, colId: string) => string;
@@ -35,8 +31,7 @@ export interface PlusTable<
   store: InternalStore<T>;
 }
 
-export const PLUS_TABLE_INJECTION_KEY: InjectionKey<PlusTableContext<any>> =
-  Symbol('plus-table');
+export const PLUS_TABLE_INJECTION_KEY: InjectionKey<PlusTableContext<any>> = Symbol('plus-table');
 
 export function usePlusTable<T extends RowData = RowData>(): PlusTable<T> {
   const table = inject(PLUS_TABLE_INJECTION_KEY);

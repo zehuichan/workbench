@@ -22,14 +22,14 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `src/composables/shared/watch-readable.ts` | 共享 watch 工具（非公共） |
-| `src/composables/use-emit-effect/` | emit-effect 纯函数 + `useEmitEffect` + 测试 + 夹内 barrel |
-| `src/composables/use-form-draft/` | `useFormDraft` + 测试 + 夹内 barrel |
-| `src/composables/use-auto-save/` | `useAutoSave` + 测试 + 夹内 barrel |
-| `src/composables/use-save-hotkey/` | registry（私有）+ `useSaveHotkey` + 测试 + 夹内 barrel |
-| `src/composables/index.ts` | 根公开 API；只从上述四夹 re-export |
+| 路径                                       | 职责                                                      |
+| ------------------------------------------ | --------------------------------------------------------- |
+| `src/composables/shared/watch-readable.ts` | 共享 watch 工具（非公共）                                 |
+| `src/composables/use-emit-effect/`         | emit-effect 纯函数 + `useEmitEffect` + 测试 + 夹内 barrel |
+| `src/composables/use-form-draft/`          | `useFormDraft` + 测试 + 夹内 barrel                       |
+| `src/composables/use-auto-save/`           | `useAutoSave` + 测试 + 夹内 barrel                        |
+| `src/composables/use-save-hotkey/`         | registry（私有）+ `useSaveHotkey` + 测试 + 夹内 barrel    |
+| `src/composables/index.ts`                 | 根公开 API；只从上述四夹 re-export                        |
 
 搬家后根目录不应再残留平铺的 `use-*.ts` / `emit-effect.ts` / `watch-readable.ts` / `save-hotkey-registry.ts`。
 
@@ -38,6 +38,7 @@
 ### Task 1: `use-emit-effect` 文件夹
 
 **Files:**
+
 - Create: `src/composables/use-emit-effect/index.ts`
 - Move: `src/composables/emit-effect.ts` → `src/composables/use-emit-effect/emit-effect.ts`
 - Move: `src/composables/emit-effect.test.ts` → `src/composables/use-emit-effect/emit-effect.test.ts`
@@ -46,6 +47,7 @@
 - Modify: `src/composables/index.ts`（临时指向新路径，避免整仓断裂）
 
 **Interfaces:**
+
 - Consumes: 无（自包含）
 - Produces: 夹内公开面见下方 `index.ts`；同夹内 `./emit-effect` / `./use-emit-effect` 相对路径保持不变
 
@@ -86,10 +88,7 @@ export type {
 } from './emit-effect';
 
 export { useEmitEffect } from './use-emit-effect';
-export type {
-  UseEmitEffectOptions,
-  UseEmitEffectReturn,
-} from './use-emit-effect';
+export type { UseEmitEffectOptions, UseEmitEffectReturn } from './use-emit-effect';
 ```
 
 - [ ] **Step 3: 更新根 barrel 中 emit-effect 相关导出路径**
@@ -146,6 +145,7 @@ EOF
 ### Task 2: `shared/` + `use-form-draft` + `use-auto-save`
 
 **Files:**
+
 - Move: `src/composables/watch-readable.ts` → `src/composables/shared/watch-readable.ts`
 - Create: `src/composables/use-form-draft/index.ts`
 - Move: `src/composables/use-form-draft.ts` → `src/composables/use-form-draft/use-form-draft.ts`
@@ -157,6 +157,7 @@ EOF
 - Modify: `src/composables/index.ts` 对应两段路径
 
 **Interfaces:**
+
 - Consumes: `watchReadable` from `../shared/watch-readable`
 - Produces:
   - `useFormDraft` + `UseFormDraftOptions` / `UseFormDraftReturn`
@@ -202,11 +203,7 @@ export type { UseFormDraftOptions, UseFormDraftReturn } from './use-form-draft';
 
 ```ts
 export { useAutoSave } from './use-auto-save';
-export type {
-  AutoSaveStatus,
-  UseAutoSaveOptions,
-  UseAutoSaveReturn,
-} from './use-auto-save';
+export type { AutoSaveStatus, UseAutoSaveOptions, UseAutoSaveReturn } from './use-auto-save';
 ```
 
 - [ ] **Step 4: 更新根 barrel 路径**
@@ -235,6 +232,7 @@ EOF
 ### Task 3: `use-save-hotkey` 文件夹
 
 **Files:**
+
 - Create: `src/composables/use-save-hotkey/index.ts`
 - Move: `src/composables/save-hotkey-registry.ts` → `src/composables/use-save-hotkey/save-hotkey-registry.ts`
 - Move: `src/composables/use-save-hotkey.ts` → `src/composables/use-save-hotkey/use-save-hotkey.ts`
@@ -242,6 +240,7 @@ EOF
 - Modify: `src/composables/index.ts`（若仍指向平铺文件则改为目录）
 
 **Interfaces:**
+
 - Consumes: `registerSaveHotkey` from `./save-hotkey-registry`（同夹，路径不变）
 - Produces: `useSaveHotkey` + `UseSaveHotkeyOptions`（registry **不**进夹内 barrel）
 
@@ -291,21 +290,19 @@ EOF
 ### Task 4: 根 barrel 定稿 + 全量验证
 
 **Files:**
+
 - Modify: `src/composables/index.ts`（最终形态）
 - Verify: 无残留平铺实现文件；views 无需改动
 
 **Interfaces:**
+
 - Produces: 与搬家前相同的 `@/composables` 符号集合
 
 - [ ] **Step 1: 将根 `index.ts` 写成最终形态**
 
 ```ts
 export { useAutoSave } from './use-auto-save';
-export type {
-  AutoSaveStatus,
-  UseAutoSaveOptions,
-  UseAutoSaveReturn,
-} from './use-auto-save';
+export type { AutoSaveStatus, UseAutoSaveOptions, UseAutoSaveReturn } from './use-auto-save';
 
 export {
   addLineMutation,
@@ -394,14 +391,14 @@ EOF
 
 ## Spec coverage (self-review)
 
-| Spec 要求 | Task |
-|-----------|------|
-| 每 `useXxx` 一夹 | 1–3 |
-| `shared/watch-readable` | 2 |
-| 根 barrel 公开 API 不变 | 1 Step 3、4 |
-| 夹内 barrel 只导出公开面 | 1–3 的 `index.ts` |
-| registry / watchReadable 不公共导出 | 2、3、4 |
-| 不改 views import | 全任务（验证靠 `@/composables`） |
-| 测试通过 | 各 Task Step 跑测 + Task 4 全量 |
+| Spec 要求                           | Task                             |
+| ----------------------------------- | -------------------------------- |
+| 每 `useXxx` 一夹                    | 1–3                              |
+| `shared/watch-readable`             | 2                                |
+| 根 barrel 公开 API 不变             | 1 Step 3、4                      |
+| 夹内 barrel 只导出公开面            | 1–3 的 `index.ts`                |
+| registry / watchReadable 不公共导出 | 2、3、4                          |
+| 不改 views import                   | 全任务（验证靠 `@/composables`） |
+| 测试通过                            | 各 Task Step 跑测 + Task 4 全量  |
 
 Placeholder scan: 无 TBD /「类似 Task N」。类型名与现有 `index.ts` 一致。

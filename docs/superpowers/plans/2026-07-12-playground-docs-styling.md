@@ -18,22 +18,23 @@
 
 ## File Structure
 
-| 路径 | 职责 |
-|------|------|
-| `src/styles/demo-docs.css` | 文档页 + Demo 卡片 + API 表 + composable 布局工具类 |
-| `src/components/demo/demo-page.vue` | 页根容器，`width` prop |
-| `src/components/demo/demo-block.vue` | 试一试卡片壳 |
-| `src/layouts/playground-layout.vue` | 引入 CSS；侧栏视觉增强 |
-| `src/views/plus-table/*-demo.vue` ×4 | 套壳，`width="wide"` |
-| `src/views/composables/*-demo.vue` ×3 | 套壳，默认 `readable` |
-| 删除 `src/views/styles/demo-page.css` | 旧共享样式 |
-| 删除 `src/views/composables/composables-demo.css` | 旧 composable 样式 |
+| 路径                                              | 职责                                                |
+| ------------------------------------------------- | --------------------------------------------------- |
+| `src/styles/demo-docs.css`                        | 文档页 + Demo 卡片 + API 表 + composable 布局工具类 |
+| `src/components/demo/demo-page.vue`               | 页根容器，`width` prop                              |
+| `src/components/demo/demo-block.vue`              | 试一试卡片壳                                        |
+| `src/layouts/playground-layout.vue`               | 引入 CSS；侧栏视觉增强                              |
+| `src/views/plus-table/*-demo.vue` ×4              | 套壳，`width="wide"`                                |
+| `src/views/composables/*-demo.vue` ×3             | 套壳，默认 `readable`                               |
+| 删除 `src/views/styles/demo-page.css`             | 旧共享样式                                          |
+| 删除 `src/views/composables/composables-demo.css` | 旧 composable 样式                                  |
 
 ---
 
 ### Task 1: 共享 CSS + DemoPage + DemoBlock
 
 **Files:**
+
 - Create: `src/styles/demo-docs.css`
 - Create: `src/components/demo/demo-page.vue`
 - Create: `src/components/demo/demo-block.vue`
@@ -347,6 +348,7 @@ git commit -m "feat(demo): add docs page shell and shared styles"
 ### Task 2: Layout 引入 CSS + 侧栏抛光
 
 **Files:**
+
 - Modify: `src/layouts/playground-layout.vue`
 
 - [ ] **Step 1: 在 script 顶部增加样式 import**
@@ -405,7 +407,9 @@ import '@/styles/demo-docs.css';
   font-size: 14px;
   line-height: 1.4;
   margin-bottom: 2px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .playground__link:hover {
@@ -443,6 +447,7 @@ git commit -m "style(playground): polish sidebar and load demo docs css"
 ### Task 3: 迁移 PlusTable 四个 demo
 
 **Files:**
+
 - Modify: `src/views/plus-table/basic-editing-demo.vue`
 - Modify: `src/views/plus-table/dependencies-validation-demo.vue`
 - Modify: `src/views/plus-table/history-dirty-demo.vue`
@@ -517,6 +522,7 @@ git commit -m "refactor(plus-table): wrap demos with DemoPage and DemoBlock"
 ### Task 4: 迁移 Composables 三个 demo
 
 **Files:**
+
 - Modify: `src/views/composables/use-auto-save-demo.vue`
 - Modify: `src/views/composables/use-form-draft-demo.vue`
 - Modify: `src/views/composables/use-save-hotkey-demo.vue`
@@ -561,6 +567,7 @@ git commit -m "refactor(composables): wrap demos with DemoPage and DemoBlock"
 ### Task 5: 删除旧 CSS + 验收
 
 **Files:**
+
 - Delete: `src/views/styles/demo-page.css`
 - Delete: `src/views/composables/composables-demo.css`
 
@@ -599,12 +606,12 @@ git commit -m "chore(demo): remove legacy demo page stylesheets"
 
 ## Spec coverage checklist
 
-| Spec 项 | Task |
-|---------|------|
-| Element Plus 风侧栏 | Task 2 |
-| DemoPage wide/readable | Task 1, 3, 4 |
-| DemoBlock 卡片 + playground 底栏 | Task 1, 3, 4 |
-| 不做 Show Code | 全任务（未引入源码面板） |
-| 合并 CSS、删除旧文件 | Task 1, 5 |
-| 七页迁移、业务不动 | Task 3, 4 |
-| typecheck | 每任务末步 |
+| Spec 项                          | Task                     |
+| -------------------------------- | ------------------------ |
+| Element Plus 风侧栏              | Task 2                   |
+| DemoPage wide/readable           | Task 1, 3, 4             |
+| DemoBlock 卡片 + playground 底栏 | Task 1, 3, 4             |
+| 不做 Show Code                   | 全任务（未引入源码面板） |
+| 合并 CSS、删除旧文件             | Task 1, 5                |
+| 七页迁移、业务不动               | Task 3, 4                |
+| typecheck                        | 每任务末步               |
