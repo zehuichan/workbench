@@ -4,7 +4,7 @@ import { useUrlSearchParams } from '@vueuse/core';
 /**
  * WeChat Open Platform website QR login (`qrconnect` / `snsapi_login`).
  *
- * Same shape as `useWechatAuth`; differs in endpoint, scope, and AppId.
+ * Same shape as `useOauth2`; differs in endpoint, scope, and AppId.
  *
  * @example
  * const [code, authorize] = useQrconnect()

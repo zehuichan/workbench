@@ -1,7 +1,7 @@
 import { ref, watchEffect, type Ref } from 'vue';
 import { useUrlSearchParams } from '@vueuse/core';
 
-export type WechatOAuthScope = 'snsapi_base' | 'snsapi_userinfo';
+export type Oauth2Scope = 'snsapi_base' | 'snsapi_userinfo';
 
 /**
  * WeChat web OAuth helper (History mode redirect_uri).
@@ -10,11 +10,11 @@ export type WechatOAuthScope = 'snsapi_base' | 'snsapi_userinfo';
  * instead of a timestamp. Validate it server-side when exchanging `code`.
  *
  * @example
- * const [code, authorize] = useWechatAuth()
+ * const [code, authorize] = useOauth2()
  * authorize('/login')
  */
-export function useWechatAuth(
-  scope: WechatOAuthScope = 'snsapi_userinfo',
+export function useOauth2(
+  scope: Oauth2Scope = 'snsapi_userinfo',
 ): [Ref<string | undefined>, (redirect?: string) => void] {
   const params = useUrlSearchParams('history');
   const code = ref<string | undefined>(undefined);

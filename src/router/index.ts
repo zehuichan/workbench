@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
 import PlaygroundLayout from '@/layouts/playground-layout.vue';
-import UseWechatAuthDemo from '@/views/composables/use-wechat-auth-demo.vue';
+import UseOauth2Demo from '@/views/composables/use-oauth2-demo.vue';
 import UseQrconnectDemo from '@/views/composables/use-qrconnect-demo.vue';
 import QrconnectCallback from '@/views/composables/qrconnect-callback.vue';
 import UseAutoSaveDemo from '@/views/composables/use-auto-save-demo.vue';
@@ -106,10 +106,10 @@ export const router = createRouter({
           meta: { title: 'use-save-hotkey', group: 'Form', order: 3 },
         },
         {
-          path: 'composables/use-wechat-auth',
-          name: 'composables-use-wechat-auth',
-          component: UseWechatAuthDemo,
-          meta: { title: 'use-wechat-auth', group: 'WeChat', order: 1 },
+          path: 'composables/use-oauth2',
+          name: 'composables-use-oauth2',
+          component: UseOauth2Demo,
+          meta: { title: 'use-oauth2', group: 'WeChat', order: 1 },
         },
         {
           path: 'composables/use-qrconnect',

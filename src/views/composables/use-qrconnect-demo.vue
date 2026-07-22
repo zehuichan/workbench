@@ -50,7 +50,7 @@ watch(
       /
       <code>snsapi_login</code>
       ）。用法与
-      <code>useWechatAuth</code>
+      <code>useOauth2</code>
       同款：同步 URL
       <code>code</code>
       ，
