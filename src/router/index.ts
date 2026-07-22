@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 import PlaygroundLayout from '@/layouts/playground-layout.vue';
 import UseWechatAuthDemo from '@/views/composables/use-wechat-auth-demo.vue';
+import UseWechatQrAuthDemo from '@/views/composables/use-wechat-qr-auth-demo.vue';
+import WechatQrAuthCallback from '@/views/composables/wechat-qr-auth-callback.vue';
 import UseAutoSaveDemo from '@/views/composables/use-auto-save-demo.vue';
 import UseFormDraftDemo from '@/views/composables/use-form-draft-demo.vue';
 import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
@@ -20,6 +22,12 @@ import PaginationRowsDemo from '@/views/plus-table/pagination-rows-demo.vue';
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    {
+      path: '/auth/wechat',
+      name: 'auth-wechat',
+      component: WechatQrAuthCallback,
+      meta: { title: '微信扫码回调' },
+    },
     {
       path: '/',
       component: PlaygroundLayout,
@@ -104,16 +112,22 @@ export const router = createRouter({
           meta: { title: 'use-wechat-auth', group: 'WeChat', order: 1 },
         },
         {
+          path: 'composables/use-wechat-qr-auth',
+          name: 'composables-use-wechat-qr-auth',
+          component: UseWechatQrAuthDemo,
+          meta: { title: 'use-wechat-qr-auth', group: 'WeChat', order: 2 },
+        },
+        {
           path: 'composables/use-wechat',
           name: 'composables-use-wechat',
           component: UseWechatDemo,
-          meta: { title: 'use-wechat', group: 'WeChat', order: 2 },
+          meta: { title: 'use-wechat', group: 'WeChat', order: 3 },
         },
         {
           path: 'composables/use-wecom',
           name: 'composables-use-wecom',
           component: UseWecomDemo,
-          meta: { title: 'use-wecom', group: 'WeChat', order: 3 },
+          meta: { title: 'use-wecom', group: 'WeChat', order: 4 },
         },
       ],
     },
