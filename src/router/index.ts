@@ -27,6 +27,8 @@ import DependenciesValidationDemo from '@/views/plus-table/dependencies-validati
 import HistoryDirtyDemo from '@/views/plus-table/history-dirty-demo.vue';
 import AdaptiveHeightDemo from '@/views/plus-table/adaptive-height-demo.vue';
 import PaginationRowsDemo from '@/views/plus-table/pagination-rows-demo.vue';
+import GridyApiOverview from '@/views/gridy/api-overview.vue';
+import GridyBasicDemo from '@/views/gridy/basic-demo.vue';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -81,6 +83,18 @@ export const router = createRouter({
           name: 'plus-table-adaptive-height',
           component: AdaptiveHeightDemo,
           meta: { title: '自适应高度', group: 'PlusTable', order: 5 },
+        },
+        {
+          path: 'gridy/api-overview',
+          name: 'gridy-api-overview',
+          component: GridyApiOverview,
+          meta: { title: 'API Overview', group: 'Gridy', order: 0 },
+        },
+        {
+          path: 'gridy/basic',
+          name: 'gridy-basic',
+          component: GridyBasicDemo,
+          meta: { title: '基础编辑', group: 'Gridy', order: 1 },
         },
         {
           path: 'filters/api-overview',
