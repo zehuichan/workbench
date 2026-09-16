@@ -260,6 +260,7 @@ describe('useFormDraft', () => {
     ['key', 'draft'],
     ['enabled', true],
     ['debounceMs', 100],
+    ['omit', [] as ReadonlyArray<keyof FormState>],
   ] as const)(
     'reports a reactive %s getter failure and cancels pending work',
     (name, initialValue) => {
@@ -290,7 +291,7 @@ describe('useFormDraft', () => {
     const failure = new Error('key getter failed');
     let form!: Ref<FormState>;
     let shouldFail!: Ref<boolean>;
-    let draft!: UseFormDraftReturn;
+    let draft!: UseFormDraftReturn<FormState>;
     const host = document.createElement('div');
     const app = createApp({
       setup() {
@@ -321,5 +322,150 @@ describe('useFormDraft', () => {
     } finally {
       app.unmount();
     }
+  });
+
+  it('applies restore merge with draft, current, and defaults', () => {
+    localStorage.setItem('draft', '{"name":"","note":"from-draft"}');
+    const form = ref<FormState>({ name: 'server', note: 'server-note' });
+    const draft = createDraft(form, {
+      defaults: { name: 'default', note: 'fallback' },
+    });
+    const merge = vi.fn(
+      (stored: Partial<FormState>, current: FormState, defaults: Partial<FormState>) => {
+        const next = { ...defaults, ...current };
+        for (const [key, value] of Object.entries(stored)) {
+          if (value == null || value === '') continue;
+          next[key as keyof FormState] = value as never;
+        }
+        return next as FormState;
+      },
+    );
+
+    expect(draft.restore({ merge })).toBe(true);
+    expect(merge).toHaveBeenCalledWith(
+      { name: '', note: 'from-draft' },
+      { name: 'server', note: 'server-note' },
+      { name: 'default', note: 'fallback' },
+    );
+    expect(form.value).toEqual({ name: 'server', note: 'from-draft' });
+    expect(draft.isPending.value).toBe(false);
+  });
+
+  it('omits keys from persisted drafts and honours a reactive omit getter', () => {
+    const omitKeys = ref<ReadonlyArray<keyof FormState>>([]);
+    const form = ref<FormState>({ name: '', note: '' });
+    createDraft(form, { omit: omitKeys });
+
+    form.value = { name: 'Ada', note: 'secret' };
+    omitKeys.value = ['note'];
+    vi.runAllTimers();
+    expect(localStorage.getItem('draft')).toBe('{"name":"Ada"}');
+
+    omitKeys.value = [];
+    form.value = { name: 'Grace', note: 'visible' };
+    vi.runAllTimers();
+    expect(localStorage.getItem('draft')).toBe('{"name":"Grace","note":"visible"}');
+  });
+
+  it('strips omitted keys from a stored draft during restore', () => {
+    localStorage.setItem('draft', '{"name":"Lin","note":"stale"}');
+    const form = ref<FormState>({ name: 'current', note: 'current-note' });
+    const draft = createDraft(form, {
+      omit: ['note'],
+      defaults: { name: 'default', note: 'fallback' },
+    });
+
+    expect(draft.restore()).toBe(true);
+    expect(form.value).toEqual({ name: 'Lin', note: 'fallback' });
+  });
+
+  it('skips phantom writes after withPaused when only omitted fields change', async () => {
+    const form = ref<FormState>({ name: '', note: '' });
+    const draft = createDraft(form, { omit: ['note'] });
+
+    await draft.withPaused(() => {
+      form.value = { name: 'server', note: 'initial' };
+    });
+    vi.runAllTimers();
+    expect(localStorage.getItem('draft')).toBeNull();
+
+    form.value.note = 'late-async-child';
+    vi.runAllTimers();
+    expect(localStorage.getItem('draft')).toBeNull();
+    expect(draft.isPending.value).toBe(false);
+
+    form.value.name = 'user-edit';
+    vi.runAllTimers();
+    expect(localStorage.getItem('draft')).toBe('{"name":"user-edit"}');
+  });
+
+  it('skips a timer write that reverts to the clean baseline', async () => {
+    const form = ref<FormState>({ name: '' });
+    const draft = createDraft(form);
+
+    await draft.withPaused(() => {
+      form.value = { name: 'clean' };
+    });
+
+    form.value.name = 'dirty';
+    form.value.name = 'clean';
+    vi.runAllTimers();
+
+    expect(draft.isPending.value).toBe(false);
+    expect(localStorage.getItem('draft')).toBeNull();
+  });
+
+  it('flushes even when the form equals the clean baseline', async () => {
+    const form = ref<FormState>({ name: '' });
+    const draft = createDraft(form);
+
+    await draft.withPaused(() => {
+      form.value = { name: 'clean' };
+    });
+
+    expect(draft.flush()).toBe(true);
+    expect(localStorage.getItem('draft')).toBe('{"name":"clean"}');
+  });
+
+  it('captures baseline from the outermost withPaused exit', async () => {
+    const form = ref<FormState>({ name: '' });
+    const draft = createDraft(form);
+
+    await draft.withPaused(async () => {
+      form.value = { name: 'outer' };
+      await draft.withPaused(() => {
+        form.value = { name: 'inner' };
+      });
+      form.value = { name: 'final' };
+    });
+
+    form.value.name = 'dirty';
+    form.value.name = 'final';
+    vi.runAllTimers();
+    expect(localStorage.getItem('draft')).toBeNull();
+
+    form.value.name = 'changed';
+    vi.runAllTimers();
+    expect(localStorage.getItem('draft')).toBe('{"name":"changed"}');
+  });
+
+  it('reports baseline serialization failure without blocking a later write', async () => {
+    const onError = vi.fn();
+    const form = ref<FormState>({ name: '' });
+    const draft = createDraft(form, { onError });
+    const circular = { name: 'broken' } as FormState & { self?: FormState };
+    circular.self = circular;
+
+    await draft.withPaused(() => {
+      form.value = circular;
+    });
+
+    expect(draft.error.value).toBeInstanceOf(TypeError);
+    expect(onError).toHaveBeenCalledOnce();
+
+    form.value = { name: 'recovered' };
+    vi.runAllTimers();
+    expect(localStorage.getItem('draft')).toBe('{"name":"recovered"}');
+    expect(draft.error.value).toBeNull();
   });
 });

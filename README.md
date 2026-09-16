@@ -139,16 +139,16 @@ const { status, flush: saveNow } = useAutoSave(form, (value, signal) =>
 useSaveHotkey(saveNow);
 ```
 
-| 模块            | 签名（简化）                                             | 用途                         |
-| --------------- | -------------------------------------------------------- | ---------------------------- |
-| `useEmitEffect` | `(rules, initialDraft, options?)`                        | 表头变更驱动明细副作用与汇总 |
-| `useAutoSave`   | `(source, save, options?)` → `{ status, flush, … }`      | 防抖自动保存                 |
-| `useFormDraft`  | `(form, key, options?)` → `{ restore, clear, flush, … }` | localStorage 草稿            |
-| `useSaveHotkey` | `(handler, options?)`                                    | Ctrl/Cmd+S                   |
-| `useOauth2`     | `(options?)` → `{ code, authorize }`                     | 微信网页授权                 |
-| `useQrconnect`  | `(options?)` → `{ code, authorize }`                     | 开放平台扫码登录             |
-| `useWechat`     | `(options?)` → `{ ready, wx }`                           | 微信 JSSDK                   |
-| `useWecom`      | `(options?)` → `{ ready, ww }`                           | 企微 JSSDK                   |
+| 模块            | 签名（简化）                                             | 用途                                              |
+| --------------- | -------------------------------------------------------- | ------------------------------------------------- |
+| `useEmitEffect` | `(rules, initialDraft, options?)`                        | 表头变更驱动明细副作用与汇总                      |
+| `useAutoSave`   | `(source, save, options?)` → `{ status, flush, … }`      | 防抖自动保存                                      |
+| `useFormDraft`  | `(form, key, options?)` → `{ restore, clear, flush, … }` | localStorage 草稿（支持 `omit` / `merge` / 基线） |
+| `useSaveHotkey` | `(handler, options?)`                                    | Ctrl/Cmd+S                                        |
+| `useOauth2`     | `(options?)` → `{ code, authorize }`                     | 微信网页授权                                      |
+| `useQrconnect`  | `(options?)` → `{ code, authorize }`                     | 开放平台扫码登录                                  |
+| `useWechat`     | `(options?)` → `{ ready, wx }`                           | 微信 JSSDK                                        |
+| `useWecom`      | `(options?)` → `{ ready, ww }`                           | 企微 JSSDK                                        |
 
 浏览器全局与 AppId / 开关通过 `options` 注入（`window`、`appId`、`enabled`、`mode` 等），`import.meta.env` 只作默认值。hash 路由读回调 `code` 时传 `mode: 'hash'`。
 

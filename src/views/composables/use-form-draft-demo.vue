@@ -19,10 +19,12 @@ interface FormState {
 const defaults: FormState = { name: '', email: '', remark: '' };
 const form = ref<FormState>({ ...defaults });
 const enabled = ref(true);
+const omitRemark = ref(false);
 
-const { error, isPending, restore, clear, flush } = useFormDraft(form, DRAFT_KEY, {
+const { error, isPending, restore, clear, flush, withPaused } = useFormDraft(form, DRAFT_KEY, {
   enabled,
   defaults,
+  omit: () => (omitRemark.value ? (['remark'] as const) : []),
   debounceMs: 500,
 });
 
@@ -45,6 +47,32 @@ function handleFlush() {
   const ok = flush();
   ElMessage[ok ? 'success' : 'warning'](ok ? '已立即写入' : '未写入');
 }
+
+async function handleSimulateServerLoad() {
+  await withPaused(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    form.value = {
+      name: '服务端姓名',
+      email: 'server@example.com',
+      remark: '服务端备注（异步子字段）',
+    };
+    restore({
+      merge: (draft, current, fallback) => {
+        const next = { ...fallback, ...current };
+        for (const [key, value] of Object.entries(draft)) {
+          if (value == null || value === '') continue;
+          next[key as keyof FormState] = value as never;
+        }
+        return next;
+      },
+    });
+  });
+  // Simulate a late child write after withPaused ends (e.g. listOrders fetch).
+  setTimeout(() => {
+    form.value.remark = `${form.value.remark} · 迟到回写`;
+  }, 50);
+  ElMessage.success('已模拟服务端加载；迟到回写在 omit remark 开启时不会产生幻影草稿');
+}
 </script>
 
 <template>
@@ -53,7 +81,9 @@ function handleFlush() {
       把表单对象 debounce 写入
       <code>localStorage</code>，用于崩溃/刷新后恢复。
       <strong>恢复必须显式调用</strong>
-      <code>restore()</code>，避免本地草稿静默覆盖服务端数据。
+      <code>restore()</code>，且应在
+      <code>withPaused</code>
+      内先加载服务端数据再恢复，避免本地草稿静默覆盖服务端字段。
     </template>
 
     <template #api>
@@ -77,6 +107,11 @@ function handleFlush() {
           <td><code>defaults</code></td>
           <td><code>MaybeRefOrGetter&lt;Partial&lt;T&gt;&gt;</code></td>
           <td>可选。Restore 时浅合并到底层（草稿覆盖其上）。</td>
+        </tr>
+        <tr>
+          <td><code>omit</code></td>
+          <td><code>MaybeRefOrGetter&lt;ReadonlyArray&lt;keyof T&gt;&gt;</code></td>
+          <td>可选。永不持久化、也不恢复的字段（如服务端托管集合）。</td>
         </tr>
         <tr>
           <td><code>debounceMs</code></td>
@@ -103,8 +138,12 @@ function handleFlush() {
         </tr>
         <tr>
           <td><code>restore</code></td>
-          <td><code>() =&gt; boolean</code></td>
-          <td>读取当前 key 的草稿并浅合并进 form；无草稿返回 false。</td>
+          <td><code>(options?) =&gt; boolean</code></td>
+          <td>
+            读取当前 key 的草稿并合并进 form；可传
+            <code>merge(draft, current, defaults)</code>
+            。无草稿返回 false。
+          </td>
         </tr>
         <tr>
           <td><code>clear</code></td>
@@ -114,20 +153,31 @@ function handleFlush() {
         <tr>
           <td><code>flush</code></td>
           <td><code>() =&gt; boolean</code></td>
-          <td>取消 debounce，立即写入当前 form。</td>
+          <td>取消 debounce，立即写入当前 form（不受基线跳过影响）。</td>
         </tr>
         <tr>
           <td><code>withPaused</code></td>
           <td><code>(task) =&gt; Promise&lt;R&gt;</code></td>
-          <td>执行期间忽略 form 变更，不调度写入。</td>
+          <td>
+            执行期间忽略 form 变更；最外层退出时记录干净基线，之后与基线相同的 debounce
+            写入会被跳过。
+          </td>
         </tr>
       </DemoApiTable>
     </template>
 
     <DemoBlock>
       <template #hint>
-        编辑表单 → 等 debounce 或点 Flush → 刷新页面 → 点 Restore 回填。Clear 后 Restore
-        会提示无草稿。当前 key：
+        <ol class="demo__rules">
+          <li>先在 <code>withPaused</code> 内加载服务端数据，再调用 <code>restore</code>。</li>
+          <li>
+            异步子组件（如列表）可能在 pause 结束后才回写：配合
+            <code>omit</code>
+            与基线，避免写成幻影草稿。
+          </li>
+          <li>服务端托管字段放进 <code>omit</code>，不要让旧草稿冲掉它们。</li>
+        </ol>
+        编辑表单 → 等 debounce 或点 Flush → 刷新页面 → 点 Restore 回填。当前 key：
         <code>{{ DRAFT_KEY }}</code>
       </template>
 
@@ -136,9 +186,14 @@ function handleFlush() {
           <span>enabled</span>
           <el-switch v-model="enabled" />
         </label>
+        <label class="demo__control">
+          <span>omit remark</span>
+          <el-switch v-model="omitRemark" />
+        </label>
         <el-button size="small" type="primary" @click="handleRestore"> Restore </el-button>
         <el-button size="small" @click="handleFlush">Flush</el-button>
         <el-button size="small" @click="handleClear">Clear</el-button>
+        <el-button size="small" @click="handleSimulateServerLoad">模拟服务端加载</el-button>
       </div>
 
       <p class="demo__status">
@@ -166,3 +221,14 @@ function handleFlush() {
     </DemoBlock>
   </DemoPage>
 </template>
+
+<style scoped>
+.demo__rules {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.demo__rules li + li {
+  margin-top: 0.25rem;
+}
+</style>
