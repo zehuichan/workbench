@@ -1,6 +1,6 @@
 /**
  * 通用组件适配层：把 Element Plus 组件注册到全局共享状态，
- * 供 Filters、PlusTable、Gridy、后续 Form 等共用。
+ * 供 Filters、PlusTable、后续 Form 等共用。
  */
 
 import type {

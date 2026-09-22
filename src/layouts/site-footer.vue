@@ -8,7 +8,6 @@ const columns = [
     label: 'COMPONENTS',
     links: [
       { label: 'PlusTable', to: '/plus-table/api-overview' },
-      { label: 'Gridy', to: '/gridy/api-overview' },
       { label: 'Filters', to: '/filters/api-overview' },
       { label: 'ERP 场景', to: '/erp/api-overview' },
     ],
