@@ -1,23 +1,104 @@
-# Repository Guidelines
+# AGENTS.md
 
-## Project Structure & Module Organization
+Workbench is a Vue 3 + TypeScript + Vite playground for business data entry and field linkage. Read [DESIGN.md](DESIGN.md) before changing playground, brand, or theme UI. Review a non-trivial change with [workbench-code-review](.agents/skills/workbench-code-review/SKILL.md).
 
-Workbench is a Vue 3 + TypeScript + Vite playground for complex business data entry and field linkage. Application code lives under `src/`: `components/plus-table/` (enhanced table), `composables/` (reusable hooks such as `useEmitEffect`, form draft/auto-save), `views/` (PlusTable, ERP, and composable demos), `layouts/` (playground shell), `ui/` (shadcn-vue / Reka UI primitives), `styles/` (Tailwind tokens + SCSS), `router/`, and `api/`. Brand assets and previews sit in `docs/brand/`; design-system source of truth is root [`DESIGN.md`](DESIGN.md). Shared scripts live in `scripts/`. Prefer extending the closest existing module; keep demo routes under `src/views/<area>/` and reusable logic under `src/composables/` or `src/components/`.
+## Repository layout
 
-## Build, Test, and Development Commands
+```
+src/
+  components/plus-table/   grid on el-table
+  components/filters/      filter bar
+  components/demo/         playground demo shell
+  composables/             useEmitEffect, form draft, WeChat
+  layouts/                 playground and site shell
+  views/                   demo routes under src/views/<area>/
+  ui/                      shadcn-vue primitives
+  styles/                  Tailwind tokens (tailwind.css) and SCSS
+  adapter/                 Element Plus field-control registry
+  router/  api/  utils/
+brand/                     logo and preview HTML
+scripts/                   local scripts
+.agents/skills/            on-demand skills
+```
 
-Use Node.js ≥20.19 and pnpm ≥10 (`packageManager` pins pnpm 10.33.4). Install with `pnpm install` (runs `prepare` to enable husky). Run `pnpm dev` for the Vite playground (default http://localhost:8000). `pnpm build` type-checks then produces production assets; `pnpm preview` serves the build. `pnpm typecheck` runs `vue-tsc`. `pnpm test` runs Vitest (happy-dom). Format with `pnpm format`; check with `pnpm format:check`. Pre-commit runs `lint-staged` (Prettier on staged files). `pnpm clean` / `pnpm reinstall` reset local installs.
+Prefer the closest existing module. Demo routes stay under `src/views/<area>/`. Reusable logic stays under `src/composables/` or `src/components/`.
 
-## Coding Style & Naming Conventions
+## Commands
 
-Composables under `src/composables/` and browser helpers under `src/utils/` follow [vueuse/vueuse](https://github.com/vueuse/vueuse) conventions; the enforceable rules live in [`.cursor/rules/vueuse-composables.mdc`](.cursor/rules/vueuse-composables.mdc). In short: positional primary args with a trailing options object, exported `UseXxxOptions` / `UseXxxReturn`, object (not tuple) returns, `MaybeRefOrGetter` + `toValue`, `tryOnScopeDispose`, `ConfigurableWindow` instead of reaching for `window` / `import.meta.env`, and no import-time side effects.
+```sh
+pnpm install            # Node >=20.19, pnpm >=10 (packageManager pins 10.33.4); prepare enables husky
+pnpm dev                # Vite playground, http://localhost:9527
+pnpm typecheck          # vue-tsc
+pnpm test               # Vitest, happy-dom
+pnpm build              # typecheck, then production assets
+pnpm preview
+pnpm format             # Prettier
+pnpm format:check
+pnpm clean              # node_modules, dist, and local residue
+pnpm reinstall          # clean, then install
+```
 
-We write Vue SFCs and TypeScript. Prettier enforces semicolons, single quotes, and trailing commas (auto-formatted on commit via husky + lint-staged; use `pnpm format` for a full-tree pass). Use `PascalCase` for components and classes, `camelCase` for variables/functions/composables (`useXxx`), and `SCREAMING_SNAKE_CASE` only for exported config constants. File names follow kebab-case (e.g., `use-auto-save.ts`, `playground-sidebar.vue`). Import via path aliases (`@/components`, `@/composables`, `@/ui`, `@/utils`) from `components.json`. For playground / brand / theme UI, read [`DESIGN.md`](DESIGN.md) first and keep tokens aligned with `src/styles/tailwind.css`; previews live at `docs/brand/preview.html`. Prefer existing shadcn-vue primitives under `src/ui/` over ad-hoc controls.
+Pre-commit runs lint-staged (Prettier on staged files).
 
-## Testing Guidelines
+### Run relevant checks locally
 
-Unit tests use Vitest and live in colocated `__tests__` folders or `*.test.ts` files (e.g., `src/composables/__tests__/`, `src/components/plus-table/__tests__/`). Prefer descriptive names like `use-emit-effect.test.ts`. Cover new logic with `pnpm test`; include fixtures/helpers under `__tests__/helpers` when shared setup is needed. UI shell changes should update the matching layout tests under `src/layouts/__tests__/`.
+Match the command to the change. A composable fix runs its colocated Vitest file, and `pnpm typecheck` when types moved. A shell change also runs `src/layouts/__tests__/`. Run `pnpm typecheck` and `pnpm test` before calling a non-trivial change done. Report the commands actually run. Do not rerun a check that already passed for the same diff.
 
-## Commit & Pull Request Guidelines
+UI changes: exercise the affected route in the playground. Judgment lives in [workbench-ui-ux](.agents/skills/workbench-ui-ux/SKILL.md).
 
-Follow conventional commits (`type(scope): subject`) as seen in history (`feat(layouts): ...`, `feat(brand): ...`). Keep subjects imperative and ≤72 characters, with optional bodies for context. PRs must describe the change, link related issues/specs under `docs/superpowers/` when applicable, and attach before/after screenshots for UI updates. Confirm `pnpm typecheck` and `pnpm test` locally, note follow-ups, and keep diffs scoped to the request.
+## Secrets
+
+WeChat and WeCom demos read `VITE_WECHAT_APPID`, `VITE_WORK_WECHAT_CORP_ID`, `VITE_WORK_WECHAT_AGENT_ID`, and the `VITE_*_ENABLED` flags. Those values are option defaults only. Never commit `.env` or credentials.
+
+## Conventions
+
+- ESM (`"type": "module"`). Import app code through the aliases in `components.json`: `@/components`, `@/composables`, `@/ui`, `@/utils`.
+- **Composable shape** for `src/composables/` and `src/utils/` is the [vueuse rule](.cursor/rules/vueuse-composables.mdc): positional required args, trailing options, `UseXxxOptions` / `UseXxxReturn`, object returns, `MaybeRefOrGetter` + `toValue`, `tryOnScopeDispose`, `ConfigurableWindow`, no import-time side effects. File names stay kebab-case (`use-auto-save/use-auto-save.ts`).
+- **Field controls register once.** `initComponentAdapter()` writes `useGlobalShareState`. PlusTable resolves editors with `resolveEditor`; Filters use the same `component` ids. Do not open a second map. `input-number` stays `controls: false` so a cell can leave edit mode on blur.
+- **PlusTable** renders an `el-table`. `defineColumns` returns its array unchanged. New table behavior is a composable under `src/components/plus-table/composables/`, wired in `useTable` by explicit arguments. Descendants read context only through `usePlusTable()`.
+- **emit-effect.** A bare function is `{ compute }`. `compute` overwrites user edits; `default` is a suggestion the user may override. `defineEmitRules` returns its argument unchanged.
+- **Two UI stacks.** Playground chrome uses `src/ui/` (shadcn-vue). Data-entry demos use Element Plus through `src/adapter`, including `ElMessage` and `ElMessageBox`. Tokens live in [DESIGN.md](DESIGN.md) and `src/styles/tailwind.css`.
+- **Prefer a maintained dependency** (`@vueuse/core`, `es-toolkit`, Element Plus, Vue Router) when it deletes owned code and tests. Say in the PR why the existing library cannot do the job.
+- **Trust TypeScript at typed same-process boundaries.** Do not add runtime validation solely for values the static types already require. Validate at JSON parse, `localStorage` drafts, OAuth callbacks, and WeChat or WeCom SDK payloads.
+- **No new assertions to `unknown`** (`as unknown` or `<unknown>`). Narrow the type, or validate at a boundary above. Do not add a cast to keep a call compiling.
+- **Closed unions** switch on their tag. The leftover case assigns to `never`.
+- **Misconfiguration fails loud.** A missing required referent throws at the first point it can be known. Do not skip it.
+- **An empty `catch` names the error** and why. Keep the `try` to one statement.
+- **Keep comments local.** State the obligation the code cannot show. Do not restate the next line or narrate the change. Prose bans live in [workbench-code-review](.agents/skills/workbench-code-review/SKILL.md).
+- **Prefer symmetry for parallel values.** An unexplained one-off usually means a shared value was missed.
+- **Tests describe behavior.** Change obsolete behavior together with its tests. Do not assert private fields or call counts.
+- Naming: `PascalCase` components and classes, `camelCase` functions (`useXxx`), `SCREAMING_SNAKE_CASE` only for exported config constants. Prettier owns semicolons, single quotes, and trailing commas.
+- Ask before deleting behavior that looks intentional.
+- TODO markers: `FIXME` blocks this change, `TODO` is deferred, `XXX` is a known hazard.
+- Files end with exactly one trailing newline.
+
+## Type safety and documentation
+
+`strict: true` in the app and node tsconfigs. Every remaining `any` says why narrowing is infeasible.
+
+Public composable and component exports carry JSDoc for obligations the signature does not show: ownership, failure, and what `undefined` means. Composable JSDoc is English and includes `@example`.
+
+Comments and docs state the current behavior, failure, timing, and ownership. One fact has one home: this file, the vueuse rule, `DESIGN.md`, or a skill. A decision that rejected an alternative goes in the commit or PR body, not in a comment. Details: [workbench-agent-experience](.agents/skills/workbench-agent-experience/SKILL.md).
+
+## Testing
+
+Vitest, happy-dom. Colocate tests in `__tests__/` or `*.test.ts` (`src/composables/__tests__/`, `src/components/plus-table/__tests__/`). Shared fixtures live under `__tests__/helpers`. Shell changes update `src/layouts/__tests__/`.
+
+## Git
+
+Conventional commits: `type(scope): subject`, imperative, at most 72 characters. Do not commit, push, or rewrite history unless the user asks. Do not skip hooks. Stage explicit paths.
+
+## Agent skills
+
+Load a skill when its description matches. Do not paste the skill back into this file.
+
+- [workbench-code-review](.agents/skills/workbench-code-review/SKILL.md) — before calling a non-trivial change done.
+- [workbench-ui-ux](.agents/skills/workbench-ui-ux/SKILL.md) — product-visible UI.
+- [workbench-find-simplifications](.agents/skills/workbench-find-simplifications/SKILL.md) — dead or speculative code.
+- [workbench-agent-experience](.agents/skills/workbench-agent-experience/SKILL.md) — this file, skill descriptions, public JSDoc.
+
+Adapt a harness rule only when this repo has a place for it. Do not copy deepseek-harness `AGENTS.md` sections or `.agents/skills` that point at docs, gates, or packages this repo does not have.
+
+## Editing these instructions
+
+Keep each rule to a few lines and link the skill or file that holds the procedure. If a section starts repeating a skill, move the detail back.
