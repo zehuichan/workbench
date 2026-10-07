@@ -11,6 +11,19 @@
   border: 0;
 }
 
+/** useSummaries 分组合计：分隔线拉满 footer 单元格，文字仍对齐 .cell 的水平内边距 */
+.ptbl-summary-group {
+  margin-inline: calc(var(--ptbl-cell-padding-x, 12px) * -1);
+
+  &__item {
+    padding-inline: var(--ptbl-cell-padding-x, 12px);
+  }
+
+  &__item + &__item {
+    border-top: 1px solid var(--el-table-border-color);
+  }
+}
+
 .plus-table {
   display: flex;
   flex-direction: column;

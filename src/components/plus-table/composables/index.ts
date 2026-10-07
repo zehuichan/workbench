@@ -10,4 +10,5 @@ export * from './use-history';
 export * from './use-keyboard';
 export * from './use-rows';
 export * from './use-styles';
+export * from './use-summaries';
 export * from './use-validation';

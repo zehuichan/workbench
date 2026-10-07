@@ -5,6 +5,7 @@ export { PlusTable };
 export { PLUS_TABLE_INJECTION_KEY, usePlusTable } from './tokens';
 export { resolveEditor } from './adapter';
 export { defineColumns } from './column';
+export { useSummaries } from './composables/use-summaries';
 
 export type { ColumnComponent, EditorColumnFields, EditorTrigger, ResolvedEditor } from './adapter';
 export type { ComponentType } from '@/adapter';
@@ -14,6 +15,13 @@ export type { UseTableReturn } from './use-table';
 export type { SettingItem } from './composables/use-columns';
 export type { DependencyState } from './composables/use-dependencies';
 export type { DirtyCell } from './composables/use-dirty';
+export type {
+  SummaryColumnOptions,
+  SummaryColumns,
+  SummaryFormatContext,
+  UseSummariesOptions,
+  UseSummariesReturn,
+} from './composables/use-summaries';
 export type {
   AdaptiveConfig,
   CellChangePayload,

@@ -195,6 +195,16 @@ defineOptions({ name: 'ApiOverview' });
         </tr>
       </DemoApiTable>
 
+      <DemoApiTable title="Composables" :headers="['名称', '说明']">
+        <tr>
+          <td><code>useSummaries</code></td>
+          <td>
+            返回 <code>summaryMethod</code>，配合 <code>show-summary</code> 做列合计 /
+            分组合计。详见侧栏「合计行」。
+          </td>
+        </tr>
+      </DemoApiTable>
+
       <DemoApiTable title="Expose · 校验">
         <tr>
           <td><code>validate</code></td>

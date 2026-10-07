@@ -27,6 +27,7 @@ import DependenciesValidationDemo from '@/views/plus-table/dependencies-validati
 import HistoryDirtyDemo from '@/views/plus-table/history-dirty-demo.vue';
 import AdaptiveHeightDemo from '@/views/plus-table/adaptive-height-demo.vue';
 import PaginationRowsDemo from '@/views/plus-table/pagination-rows-demo.vue';
+import SummaryDemo from '@/views/plus-table/summary-demo.vue';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -81,6 +82,12 @@ export const router = createRouter({
           name: 'plus-table-adaptive-height',
           component: AdaptiveHeightDemo,
           meta: { title: '自适应高度', group: 'PlusTable', order: 5 },
+        },
+        {
+          path: 'plus-table/summary',
+          name: 'plus-table-summary',
+          component: SummaryDemo,
+          meta: { title: '合计行', group: 'PlusTable', order: 6 },
         },
         {
           path: 'filters/api-overview',
