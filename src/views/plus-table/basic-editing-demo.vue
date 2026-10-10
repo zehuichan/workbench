@@ -3,7 +3,12 @@ import { computed, ref, watch } from 'vue';
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { defineColumns, PlusTable, type EditMode } from '@/components/plus-table';
+import {
+  defineColumns,
+  PlusTable,
+  type EditMode,
+  type PlusTableExpose,
+} from '@/components/plus-table';
 
 defineOptions({ name: 'BasicEditingDemo' });
 
@@ -16,14 +21,8 @@ interface Row {
   enabled: boolean;
 }
 
-interface TableExpose {
-  startRowEdit: (rowIndex: number) => boolean;
-  commitRowEdit: (rowIndex: number) => Promise<boolean>;
-  cancelRowEdit: (rowIndex: number) => void;
-}
-
 const mode = ref<EditMode>('cell');
-const tableRef = ref<TableExpose>();
+const tableRef = ref<PlusTableExpose<Row>>();
 const editingRowId = ref<number | null>(null);
 
 const data = ref<Row[]>([

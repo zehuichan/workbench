@@ -57,8 +57,7 @@
     margin-right: auto;
   }
 
-  // flex + gap：子项 v-show=false（display:none）不会占位；ElSpace 的
-  // .el-space__item 包裹层做不到这一点，故 toolbar 不用 ElSpace。
+  // v-show 子项不占位依赖 flex + gap，不要换成包裹层布局。
   &__toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -536,42 +535,11 @@
     justify-content: space-between;
     width: 100%;
     gap: 12px;
-
-    .ptbl-column-settings__reset {
-      color: var(--el-text-color-secondary);
-    }
   }
 }
 
 .ptbl-column-settings-drawer {
   --el-drawer-padding-primary: 0;
-
-  .el-drawer__header {
-    min-height: 52px;
-    margin-bottom: 0;
-    padding: 10px 12px 10px 16px;
-    border-bottom: 1px solid var(--el-border-color-lighter);
-  }
-
-  .el-drawer__title {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 22px;
-    color: var(--el-text-color-primary);
-  }
-
-  .el-drawer__close-btn {
-    width: 32px;
-    height: 32px;
-    color: var(--el-text-color-secondary);
-    border-radius: var(--el-border-radius-base);
-
-    &:hover,
-    &:focus-visible {
-      color: var(--el-text-color-primary);
-      background: var(--el-fill-color-light);
-    }
-  }
 
   .el-drawer__body {
     min-height: 0;

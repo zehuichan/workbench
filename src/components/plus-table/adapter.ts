@@ -5,6 +5,7 @@ import { isFunction, isPlainObject, isString } from 'es-toolkit';
 import type { Component } from 'vue';
 
 import { useGlobalShareState, type ComponentType } from '@/adapter';
+import type { RowContext, RowData } from './types';
 
 /** 提交时机：blur=失焦提交（文本类）；change=变更即提交（选择类） */
 export type EditorTrigger = 'blur' | 'change';
@@ -20,15 +21,6 @@ const EDITOR_TRIGGER = {
   textarea: 'blur',
   'time-picker': 'change',
 } as const satisfies Record<ComponentType, EditorTrigger>;
-
-/** 通用行数据；与 PlusTable RowData 结构对齐 */
-type RowData = Record<string, any>;
-
-/** 编辑器解析上下文；与 PlusTable RowContext 结构对齐 */
-interface RowContext<T extends RowData = RowData> {
-  row: T;
-  rowIndex: number;
-}
 
 /** 编辑控件：内置标识或自定义 Vue 组件 */
 export type ColumnComponent = ComponentType | Component;

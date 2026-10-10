@@ -280,7 +280,7 @@ export function useValidation<T extends RowData = RowData>({
 
   /**
    * 全表校验；默认滚动并激活到视觉上的首个错误格（错误列被列设置隐藏时找不到 colIndex，跳过滚动）。
-   * 行之间没有先后依赖，用固定大小的协程池并发跑，异步规则不再逐行排队。
+   * 行之间没有先后依赖，用固定大小的协程池并发跑。
    */
   async function validate(scrollToFirstError = true): Promise<ValidateResult> {
     const rows = [...data.value];

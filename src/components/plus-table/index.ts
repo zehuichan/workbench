@@ -32,6 +32,8 @@ export type {
   HotkeyContext,
   PageChangePayload,
   PlusTableEmits,
+  PlusTableExpose,
+  PlusTableLocalExpose,
   PlusTableProps,
   PlusTableResolvedProps,
   ValidateResult,

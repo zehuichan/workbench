@@ -82,7 +82,7 @@ export function useEvents<T extends RowData = RowData>(table: PlusTableContext<T
         disabled,
         separator: item.separator,
         closeOnSelect: item.closeOnSelect,
-        slotProps: ctx as unknown as Record<string, unknown>,
+        slotProps: { ...ctx },
         handler: () => item.handler(ctx),
       });
     }

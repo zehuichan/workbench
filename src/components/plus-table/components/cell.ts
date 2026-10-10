@@ -99,7 +99,7 @@ export default defineComponent({
             view.editorSlotProps
               ? editorSlot!(view.editorSlotProps)
               : view.editorBind
-                ? h(view.editorBind.component as never, view.editorBind.bind)
+                ? h(view.editorBind.component, view.editorBind.bind)
                 : null,
           ])
         : renderDisplay(view.value, location.rowIndex);

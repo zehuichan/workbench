@@ -251,9 +251,8 @@ function buildColumnView<T extends RowData>(
         const children = visible(node.children, node.id, level + 1);
         if (children.length) {
           /**
-           * 子树可见叶子 id 的有序指纹。分组列的重挂载 key 直接读它，渲染期不再
-           * 递归 JSON.stringify；子节点自身的指纹已算好，逐层拼接即可自底向上得到
-           * 整棵子树的叶子序列。
+           * 子树可见叶子 id 的有序指纹。分组列的重挂载 key 直接读它；
+           * 子节点自身的指纹已算好，逐层拼接即可自底向上得到整棵子树的叶子序列。
            */
           const subtreeKey = children.map((child) => child.subtreeKey ?? child.id).join('|');
           result.push({ ...node, children, subtreeKey });
@@ -361,8 +360,8 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
   }
 
   /**
-   * 唯一落盘出口：settings 为 null 表示清除缓存条目。每个列设置写入点显式调用，
-   * 因此「重置」与「同一 tick 内的后续改动」不再需要靠 nextTick 回读状态去猜是哪一种。
+   * 唯一落盘出口：settings 为 null 表示清除缓存条目。
+   * 每个列设置写入点显式调用；重置写 null，后续改动再写一次。
    */
   function persist(settings: PersistedSettings | null): void {
     const key = storageKey.value;
@@ -525,8 +524,8 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
   }
 
   /**
-   * 回到列的初始配置并删除缓存条目。同一 tick 内紧接着发生的正常改动会自己
-   * 再落一次盘，把条目写回去——两者是各自独立的显式写入，不再互相干扰。
+   * 回到列的初始配置并删除缓存条目。
+   * 同一 tick 内紧接着发生的正常改动会自己再落一次盘，把条目写回去。
    */
   function resetSettings() {
     applySettings(createDefaultSettings());

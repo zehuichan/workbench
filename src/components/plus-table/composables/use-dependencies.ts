@@ -32,7 +32,7 @@ const DEPENDENCY_CALLBACK_KEYS = [
 
 /**
  * 列配置期断言。归一化（use-columns 的 normalize）是唯一调用点：配置只在
- * props.columns 变化时重建，取状态 / 广播变更的热路径不再重复校验同一份配置。
+ * props.columns 变化时重建，取状态 / 广播变更的热路径不校验配置。
  */
 export function assertColumnDependencies<T extends RowData = RowData>(
   column: PlusTableColumn<T>,

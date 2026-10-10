@@ -123,15 +123,21 @@ export function focusEditorElement(
 
   input.focus({ preventScroll: options.preventScroll });
   if (options.select && isTextInput(input)) {
-    try {
-      if (options.select === 'end') {
-        const len = input.value.length;
+    if (options.select === 'end') {
+      const len = input.value.length;
+      try {
         input.setSelectionRange(len, len);
-      } else {
-        input.select();
+      } catch (error) {
+        // number 等 type 的 input 不支持 selection API（InvalidStateError），忽略
+        void error;
       }
-    } catch {
-      // number 等输入类型不支持 selection API
+    } else {
+      try {
+        input.select();
+      } catch (error) {
+        // number 等 type 的 input 不支持 selection API（InvalidStateError），忽略
+        void error;
+      }
     }
   }
   return true;

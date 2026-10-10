@@ -33,6 +33,7 @@ function nativeProps(column: PlusTableColumn): Record<string, unknown> {
 export default defineComponent({
   name: 'PlusTableColumnNode',
   props: {
+    // defineComponent props 无法携带行泛型；运行期节点已由 useColumns 归一化。
     node: { type: Object as PropType<ColumnNode<any>>, required: true },
   },
   setup(props) {

@@ -3,7 +3,7 @@ import { computed, ref, unref } from 'vue';
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { defineColumns, PlusTable } from '@/components/plus-table';
+import { defineColumns, PlusTable, type PlusTableExpose } from '@/components/plus-table';
 
 defineOptions({ name: 'HistoryDirtyDemo' });
 
@@ -13,17 +13,7 @@ interface Row {
   amount: number;
 }
 
-interface TableExpose {
-  undo: () => unknown;
-  redo: () => unknown;
-  /** 经模板 ref 访问时 ComputedRef 会被解包成 boolean */
-  canUndo: boolean;
-  canRedo: boolean;
-  getModifiedRows: () => Row[];
-  resetTracking: () => void;
-}
-
-const tableRef = ref<TableExpose>();
+const tableRef = ref<PlusTableExpose<Row>>();
 const dirtyCount = ref(0);
 
 const data = ref<Row[]>([

@@ -13,6 +13,7 @@ export type PlusTableContext<T extends RowData = RowData> = TableHost<T> &
     props: PlusTableResolvedProps<T>;
   };
 
+/** InjectionKey 在运行期只有一份，不能按行泛型各建一把；消费方经 usePlusTable<T>() 再收窄。 */
 export const PLUS_TABLE_INJECTION_KEY: InjectionKey<PlusTableContext<any>> = Symbol('plus-table');
 
 export function usePlusTable<T extends RowData = RowData>(): PlusTableContext<T> {

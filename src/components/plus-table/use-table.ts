@@ -224,7 +224,7 @@ export function useTable<T extends RowData = RowData>(
   /**
    * 单元格写值流水线：写回行对象 → 历史 / 脏追踪 → cell-change → 联动 trigger → 按需校验。
    * 所有编辑路径（cell 提交 / row·table 直绑 / Delete 清空 / 联动 setValue / 自定义热键 setValue）统一走这里。
-   * 公开事件与联动一律用 keysMap 解析出的最新下标；调用方传入的 rowIndex 只作提示，不再原样透传。
+   * 公开事件与联动一律用 keysMap 解析出的最新下标；调用方传入的 rowIndex 只作提示。
    */
   function setCellValue(row: T, _rowIndex: number, prop: string, value: unknown): void {
     // 同值写入提前退出，避免为一次空写建立脏基线快照；writeRowField 内部同样会兜底
@@ -395,14 +395,11 @@ export function useTable<T extends RowData = RowData>(
     // data
     data,
     keysMap,
-    rowKeyMap,
     getRowKey,
     setData,
 
     // write pipeline
     setCellValue,
-    writeRowField,
-    deleteRowField,
     clearCell,
     undo,
     redo,
@@ -416,8 +413,6 @@ export function useTable<T extends RowData = RowData>(
     columns,
     allColumns,
     triggerIndex,
-    visibleColumnsById,
-    validationSchema,
     settingItems,
     getColumnById,
     getColumnsByProp,
@@ -443,8 +438,6 @@ export function useTable<T extends RowData = RowData>(
     setCurrentCell,
     isCurrentRef,
     isCurrentCell,
-    invalidateCurrentRow,
-    cleanCurrent,
     moveCurrent,
     moveSequential,
     moveToRowEdge,
@@ -456,34 +449,19 @@ export function useTable<T extends RowData = RowData>(
     getDependencyState,
     notifyFieldChange,
     bumpDependencyGeneration,
-    invalidateDependencyRow,
-    clearDependencyCache,
 
     // history
-    undoStack,
-    redoStack,
     canUndo,
     canRedo,
-    pushChange,
-    withHistoryBatch,
-    getPushCount,
-    dropRecentRowChanges,
-    popUndo,
-    popRedo,
     clearHistory,
-    invalidateHistoryRow,
 
     // dirty
-    dirtyCells,
-    touchRow,
-    markDirty,
     isCellDirty,
     isRowDirty,
     getDirtyCells,
     getModifiedRows,
     clearDirty,
     resetTracking,
-    invalidateDirtyRow,
 
     // validation
     getCellError,
@@ -493,9 +471,6 @@ export function useTable<T extends RowData = RowData>(
     validate,
     clearValidate,
     clearRowValidate,
-    invalidateValidationRow,
-    invalidateColumnProps,
-    reindexValidationErrors,
 
     // editing
     editingCell,
@@ -505,8 +480,6 @@ export function useTable<T extends RowData = RowData>(
     isEditingRef,
     isRowEditing,
     getEditingCellLocation,
-    cleanEditingCell,
-    discardDraftProps,
     startEdit,
     commitEdit,
     cancelEdit,
@@ -519,8 +492,6 @@ export function useTable<T extends RowData = RowData>(
     setDraft,
     flushDraft,
     discardDraft,
-    discardDraftsForRow,
-    invalidateEditingRow,
 
     // rows
     insertRow,

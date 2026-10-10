@@ -1,7 +1,7 @@
 import { createApp, defineComponent, h, nextTick } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../table-column-settings/index.vue', () => ({
+vi.mock('../../components/column-settings.vue', () => ({
   default: { name: 'PlusTableColumnSettings', render: () => null },
 }));
 

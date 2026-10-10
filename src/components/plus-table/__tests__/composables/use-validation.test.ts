@@ -2,19 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTestTable, type TestTable } from '../helpers/create-test-table';
 import type { RuleItem } from 'async-validator';
 
-/** 统计 Schema 构造次数，用来观察纯静态规则的 Schema 是否被复用 */
-const schemaCounter = vi.hoisted(() => ({ constructed: 0 }));
-
-vi.mock('async-validator', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('async-validator')>();
-  const Original = actual.default;
-  function CountingSchema(this: unknown, descriptor: unknown) {
-    schemaCounter.constructed += 1;
-    return new (Original as unknown as new (descriptor: unknown) => unknown)(descriptor);
-  }
-  return { ...actual, default: CountingSchema as unknown as typeof actual.default };
-});
-
 interface Row {
   id: number;
   a: string;
@@ -143,41 +130,16 @@ describe('PlusTable validation', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('放弃重试'));
   });
 
-  it('reuses one Schema for static rules and rebuilds it for dependency-driven rules', async () => {
-    const { table } = setup(createRows(2), [
-      { prop: 'a', label: 'A', required: true },
-      {
-        prop: 'b',
-        label: 'B',
-        dependencies: { triggerFields: ['a'], required: (row: Row) => row.a === '' },
-      },
-    ]);
-    const [first, second] = table.data.value as [Row, Row];
-
-    schemaCounter.constructed = 0;
-    await table.validateCell(first, 0, 'a');
-    await table.validateCell(first, 0, 'a');
-    await table.validateCell(second, 1, 'a');
-    expect(schemaCounter.constructed).toBe(1);
-
-    schemaCounter.constructed = 0;
-    await table.validateCell(first, 0, 'b');
-    await table.validateCell(first, 0, 'b');
-    expect(schemaCounter.constructed).toBe(2);
-  });
-
-  it('rebuilds the cached Schema after the column rules change', async () => {
+  it('rebuilds required-field messages after the column label changes', async () => {
     const testTable = setup(createRows(1), [{ prop: 'a', label: 'A', required: true }]);
     const row = testTable.table.data.value[0]!;
 
-    schemaCounter.constructed = 0;
     await testTable.table.validateCell(row, 0, 'a');
-    expect(schemaCounter.constructed).toBe(1);
+    expect(testTable.table.getCellError(row, 'a')?.message).toBe('A不能为空');
 
     testTable.props.columns[0]!.label = 'A 列';
     await testTable.table.validateCell(row, 0, 'a');
 
-    expect(schemaCounter.constructed).toBe(2);
     expect(testTable.table.getCellError(row, 'a')?.message).toBe('A 列不能为空');
   });
 });

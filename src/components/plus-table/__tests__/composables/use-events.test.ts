@@ -46,12 +46,14 @@ describe('PlusTable context menu events', () => {
   }
 
   function mouseEvent(target: EventTarget = document.body) {
-    return new MouseEvent('contextmenu', {
+    const event = new MouseEvent('contextmenu', {
       bubbles: true,
       cancelable: true,
       clientX: 40,
       clientY: 50,
     });
+    Object.defineProperty(event, 'target', { value: target });
+    return event;
   }
 
   it('opens header menu with hide and settings items', () => {

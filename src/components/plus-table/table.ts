@@ -1,6 +1,8 @@
-import type { Ref, Slots } from 'vue';
+import type { ComputedRef, Ref, ShallowUnwrapRef, Slots } from 'vue';
+import type { TableInstance } from 'element-plus';
 import type { ColumnSettingsExpose } from './column-settings';
 import type { ContextMenuExpose } from './context-menu';
+import type { DirtyCell } from './composables/use-dirty';
 import type {
   CellError,
   EditMode,
@@ -15,7 +17,7 @@ import type {
  */
 
 export interface AdaptiveConfig {
-  /** 'viewport'：按视口高度计算（默认，行为不变）；'container'：交给 CSS flex 父级撑满，适合卡片/弹窗等自身高度受限的容器 */
+  /** 'viewport'：按视口高度计算（默认）；'container'：交给 CSS flex 父级撑满，适合卡片/弹窗等自身高度受限的容器 */
   mode?: 'viewport' | 'container';
   /** 表格底部到视口底部预留的间距，默认 16；仅 viewport 模式生效 */
   offsetBottom?: number;
@@ -188,7 +190,7 @@ type DefaultedKey = keyof typeof DEFAULT_PROPS;
 
 /**
  * withDefaults 之后的 props 形态。composable 一律按这个类型读取 props，
- * 带默认值的字段直接取值，不再各自 `?? DEFAULT_PROPS.x` 兜底。
+ * 带默认值的字段直接取值。
  */
 export type PlusTableResolvedProps<T extends RowData = RowData> = Omit<
   PlusTableProps<T>,
@@ -227,3 +229,45 @@ export interface TableHost<T extends RowData = RowData> {
   /** 当前是否有人监听 update:data；行结构操作用它在开发期点破"看起来成功实际无效"的情况 */
   hasDataListener: () => boolean;
 }
+
+/**
+ * defineExpose 字面量的形态：canUndo / canRedo 仍是 ComputedRef。
+ * table.vue 的 expose 对象按此标注，名单对不上就编译失败。
+ */
+export interface PlusTableLocalExpose<T extends RowData = RowData> {
+  validate: (scrollToFirstError?: boolean) => Promise<ValidateResult>;
+  clearValidate: () => void;
+  getErrors: () => CellError[];
+  insertRow: (row: T, index?: number) => T;
+  removeRow: (index: number) => T | undefined;
+  moveRow: (from: number, to: number) => boolean;
+  duplicateRow: (index: number, patch: Partial<T>) => T | undefined;
+  startRowEdit: (rowIndex: number) => boolean;
+  commitRowEdit: (rowIndex: number) => Promise<boolean>;
+  cancelRowEdit: (rowIndex: number) => void;
+  startEdit: (rowIndex: number, colIndex: number, opts?: { defaultValue?: unknown }) => boolean;
+  cancelEdit: () => void;
+  setActiveCell: (rowIndex: number, colIndex: number, scroll?: boolean) => void;
+  resetColumnSettings: () => void;
+  setColumnWidth: (id: string, width: number | null) => void;
+  clearColumnWidth: (id: string) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: ComputedRef<boolean>;
+  canRedo: ComputedRef<boolean>;
+  clearHistory: () => void;
+  getModifiedRows: () => T[];
+  getDirtyCells: () => DirtyCell[];
+  isCellDirty: (rowKey: string, prop: string) => boolean;
+  isRowDirty: (rowKey: string) => boolean;
+  resetTracking: () => void;
+  clearDirty: (rowKey?: string, prop?: string) => void;
+}
+
+/**
+ * 模板 ref 拿到的实例形态：ComputedRef 已解包成 boolean，并透传 Partial<TableInstance>。
+ */
+export type PlusTableExpose<T extends RowData = RowData> = ShallowUnwrapRef<
+  PlusTableLocalExpose<T>
+> &
+  Partial<TableInstance>;

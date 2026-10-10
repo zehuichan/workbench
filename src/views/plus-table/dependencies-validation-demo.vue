@@ -3,8 +3,7 @@ import { ref } from 'vue';
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { defineColumns, PlusTable } from '@/components/plus-table';
-import type { ValidateResult } from '@/components/plus-table';
+import { defineColumns, PlusTable, type PlusTableExpose } from '@/components/plus-table';
 
 defineOptions({ name: 'DependenciesValidationDemo' });
 
@@ -26,7 +25,7 @@ const CATEGORY_ITEMS: Record<string, { label: string; value: string }[]> = {
   ],
 };
 
-const tableRef = ref<{ validate: () => Promise<ValidateResult> }>();
+const tableRef = ref<PlusTableExpose<Row>>();
 const lastValidate = ref('');
 
 const data = ref<Row[]>([

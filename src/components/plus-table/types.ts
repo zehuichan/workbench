@@ -3,6 +3,7 @@ import type { RuleItem } from 'async-validator';
 import type { TableColumnCtx } from 'element-plus';
 import type { EditorColumnFields } from './adapter';
 
+/** 行对象字段名与值类型由业务决定；表格热路径按字符串键读写，无法在库内收窄为具体形状。 */
 export type RowData = Record<string, any>;
 
 export type RowKey<T extends RowData = RowData> =

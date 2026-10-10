@@ -15,6 +15,7 @@ import type { ContextMenuExpose } from './context-menu';
 import type {
   ContextMenuItemSlotProps,
   PlusTableEmits,
+  PlusTableLocalExpose,
   PlusTableProps,
   PlusTableResolvedProps,
   TableHost,
@@ -104,48 +105,45 @@ const footerEnabled = computed(() => !!slots.summary || paginationEnabled.value)
 
 const headerEnabled = computed(() => !!slots.title || !!slots.toolbar);
 
-defineExpose(
-  createTableExpose(
-    {
-      /** 全表校验 */
-      validate: table.validate,
-      clearValidate: table.clearValidate,
-      getErrors: table.getErrors,
-      /** 行操作 */
-      insertRow: table.insertRow,
-      removeRow: table.removeRow,
-      moveRow: table.moveRow,
-      duplicateRow: table.duplicateRow,
-      /** row 模式行编辑 */
-      startRowEdit: table.startRowEdit,
-      commitRowEdit: table.commitRowEdit,
-      cancelRowEdit: table.cancelRowEdit,
-      /** cell 模式单元格编辑 */
-      startEdit: table.startEdit,
-      cancelEdit: table.cancelEdit,
-      // 内部按 E-P 命名为 setCurrentCell；公开 API 继续保留 setActiveCell。
-      setActiveCell: table.setCurrentCell,
-      /** 列设置 */
-      resetColumnSettings: table.resetSettings,
-      setColumnWidth: table.setColumnWidth,
-      clearColumnWidth: table.clearColumnWidth,
-      /** 撤销重做（history prop 关闭时栈恒为空，undo/redo 为安全空操作） */
-      undo: table.undo,
-      redo: table.redo,
-      canUndo: table.canUndo,
-      canRedo: table.canRedo,
-      clearHistory: table.clearHistory,
-      /** 脏行 / 脏格追踪（dirtyTracking prop 关闭时恒无脏格） */
-      getModifiedRows: table.getModifiedRows,
-      getDirtyCells: table.getDirtyCells,
-      isCellDirty: table.isCellDirty,
-      isRowDirty: table.isRowDirty,
-      resetTracking: table.resetTracking,
-      clearDirty: table.clearDirty,
-    },
-    tableRef,
-  ),
-);
+const localExpose: PlusTableLocalExpose<T> = {
+  /** 全表校验 */
+  validate: table.validate,
+  clearValidate: table.clearValidate,
+  getErrors: table.getErrors,
+  /** 行操作 */
+  insertRow: table.insertRow,
+  removeRow: table.removeRow,
+  moveRow: table.moveRow,
+  duplicateRow: table.duplicateRow,
+  /** row 模式行编辑 */
+  startRowEdit: table.startRowEdit,
+  commitRowEdit: table.commitRowEdit,
+  cancelRowEdit: table.cancelRowEdit,
+  /** cell 模式单元格编辑 */
+  startEdit: table.startEdit,
+  cancelEdit: table.cancelEdit,
+  // 公开名 setActiveCell；内部随 Element Plus 命名为 setCurrentCell。
+  setActiveCell: table.setCurrentCell,
+  /** 列设置 */
+  resetColumnSettings: table.resetSettings,
+  setColumnWidth: table.setColumnWidth,
+  clearColumnWidth: table.clearColumnWidth,
+  /** 撤销重做（history prop 关闭时栈恒为空，undo/redo 为安全空操作） */
+  undo: table.undo,
+  redo: table.redo,
+  canUndo: table.canUndo,
+  canRedo: table.canRedo,
+  clearHistory: table.clearHistory,
+  /** 脏行 / 脏格追踪（dirtyTracking prop 关闭时恒无脏格） */
+  getModifiedRows: table.getModifiedRows,
+  getDirtyCells: table.getDirtyCells,
+  isCellDirty: table.isCellDirty,
+  isRowDirty: table.isRowDirty,
+  resetTracking: table.resetTracking,
+  clearDirty: table.clearDirty,
+};
+
+defineExpose(createTableExpose(localExpose, tableRef));
 </script>
 
 <template>
