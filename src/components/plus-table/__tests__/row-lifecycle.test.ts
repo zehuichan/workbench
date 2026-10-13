@@ -1,5 +1,6 @@
-import { nextTick, watch } from 'vue';
+import { nextTick } from 'vue';
 import { afterEach, describe, expect, it } from 'vitest';
+import { cellPosition } from './helpers/cell-position';
 import { createTestTable, type TestTable } from './helpers/create-test-table';
 
 interface Row {
@@ -44,57 +45,47 @@ describe('PlusTable cell identity and row lifecycle', () => {
     for (const testTable of tables.splice(0)) testTable.dispose();
   });
 
-  it('keeps current and editing identity while deriving new positions after reorder', () => {
-    const { table, rows } = setup();
+  it('keeps current and editing identity while deriving new positions after reorder', async () => {
+    const { table, props, rows } = setup();
 
     table.setCurrentCell(0, 1, false);
     expect(table.startEdit(0, 1)).toBe(true);
-    const currentRef = table.getCurrentRef();
 
-    table.setData([rows[1]!, rows[0]!]);
-
-    expect(table.getCurrentRef()).toBe(currentRef);
-    expect(table.getCurrentRef()).toEqual({ rowKey: '1', colId: 'amount' });
-    expect(table.currentCell.value).toEqual({
-      rowIndex: 1,
-      colIndex: 1,
-    });
-    expect(table.editingCell.value).toEqual({
-      rowIndex: 1,
-      colIndex: 1,
-    });
-    expect(table.isEditingRef('1', 'amount')).toBe(true);
-  });
-
-  it('keeps public position refs writable', () => {
-    const { table } = setup();
-
-    table.currentCell.value = { rowIndex: 1, colIndex: 0 };
-    table.editingCell.value = { rowIndex: 0, colIndex: 1 };
-
-    expect(table.getCurrentRef()).toEqual({ rowKey: '2', colId: 'name' });
-    expect(table.isEditingRef('1', 'amount')).toBe(true);
-
-    table.currentCell.value = null;
-    table.editingCell.value = null;
-    expect(table.getCurrentRef()).toBeNull();
-    expect(table.editingCell.value).toBeNull();
-  });
-
-  it('does not notify position watchers when identity and indexes are unchanged', async () => {
-    const { table, rows } = setup();
-    table.setCurrentCell(0, 0, false);
-    const changes: unknown[] = [];
-    watch(table.currentCell, (value) => changes.push(value));
-
-    table.setData([...rows, { id: 3, name: 'three', amount: 30 }]);
+    props.data = [rows[1]!, rows[0]!];
     await nextTick();
 
-    expect(changes).toEqual([]);
+    expect(table.isCurrentRef('1', 'amount')).toBe(true);
+    expect(cellPosition(table.getCurrentCellLocation())).toEqual({
+      rowIndex: 1,
+      colIndex: 1,
+    });
+    expect(cellPosition(table.getEditingCellLocation())).toEqual({
+      rowIndex: 1,
+      colIndex: 1,
+    });
+    expect(table.isEditingRef('1', 'amount')).toBe(true);
+  });
+
+  it('sets current and editing identity through the public commands', () => {
+    const { table } = setup();
+
+    table.setCurrentCell(1, 0, false);
+    expect(table.startEdit(0, 1)).toBe(true);
+
+    expect(table.isCurrentRef('1', 'amount')).toBe(true);
+    expect(table.isEditingRef('1', 'amount')).toBe(true);
+    expect(cellPosition(table.getCurrentCellLocation())).toEqual({
+      rowIndex: 0,
+      colIndex: 1,
+    });
+
+    table.cancelEdit();
+    expect(table.getEditingCellLocation()).toBeNull();
+    expect(table.isCurrentRef('1', 'amount')).toBe(true);
   });
 
   it('invalidates every row-keyed domain when an object is replaced at the same key', async () => {
-    const { table, rows } = setup({ history: true, dirtyTracking: true });
+    const { table, props, rows } = setup({ history: true, dirtyTracking: true });
     table.setCurrentCell(0, 0, false);
     expect(table.startEdit(0, 0)).toBe(true);
     table.setDraft('1', 'name', 'draft');
@@ -106,10 +97,11 @@ describe('PlusTable cell identity and row lifecycle', () => {
     expect(table.getErrors()).toHaveLength(1);
 
     const replacement = { id: 1, name: 'replacement', amount: 100 };
-    table.setData([replacement, rows[1]!]);
+    props.data = [replacement, rows[1]!];
+    await nextTick();
 
-    expect(table.currentCell.value).toBeNull();
-    expect(table.editingCell.value).toBeNull();
+    expect(table.getCurrentCellLocation()).toBeNull();
+    expect(table.getEditingCellLocation()).toBeNull();
     expect(table.canUndo.value).toBe(false);
     expect(table.isRowDirty('1')).toBe(false);
     expect(table.getErrors()).toEqual([]);
@@ -125,18 +117,19 @@ describe('PlusTable cell identity and row lifecycle', () => {
     rows[0]!.id = 3;
     await nextTick();
 
-    expect(table.currentCell.value).toBeNull();
-    expect(table.editingCell.value).toBeNull();
+    expect(table.getCurrentCellLocation()).toBeNull();
+    expect(table.getEditingCellLocation()).toBeNull();
     expect(table.canUndo.value).toBe(false);
     expect(table.isRowDirty('1')).toBe(false);
   });
 
   it('preserves keyed state and reindexes validation errors for a pure reorder', async () => {
-    const { table, rows } = setup({ history: true, dirtyTracking: true });
+    const { table, props, rows } = setup({ history: true, dirtyTracking: true });
     table.setCellValue(rows[0]!, 0, 'name', '');
     await table.validateCell(rows[0]!, 0, 'name');
 
-    table.setData([rows[1]!, rows[0]!]);
+    props.data = [rows[1]!, rows[0]!];
+    await nextTick();
 
     expect(table.canUndo.value).toBe(true);
     expect(table.isRowDirty('1')).toBe(true);
@@ -154,15 +147,17 @@ describe('PlusTable cell identity and row lifecycle', () => {
     await nextTick();
 
     expect(table.data.value.map((row) => row.id)).toEqual([2]);
-    expect(table.currentCell.value).toBeNull();
-    expect(table.editingCell.value).toBeNull();
+    expect(table.getCurrentCellLocation()).toBeNull();
+    expect(table.getEditingCellLocation()).toBeNull();
   });
 
   it('rejects duplicate row identities before mutating state', () => {
-    const { table, rows } = setup();
+    const rows: Row[] = [
+      { id: 1, name: 'one', amount: 10 },
+      { id: 1, name: 'dup', amount: 20 },
+    ];
 
-    expect(() => table.setData([rows[0]!, { ...rows[0]! }])).toThrow(/rowKey="1".*重复/);
-    expect(table.data.value).toEqual(rows);
+    expect(() => createTestTable({ data: rows, columns })).toThrow(/rowKey="1".*重复/);
   });
 
   it('allows an async row commit to finish after the same row is reordered', async () => {
@@ -201,11 +196,12 @@ describe('PlusTable cell identity and row lifecycle', () => {
 
     const committing = testTable.table.commitRowEdit(0);
     await validationStarted;
-    testTable.table.setData([rows[1]!, rows[0]!]);
+    testTable.props.data = [rows[1]!, rows[0]!];
+    await nextTick();
     releaseValidation();
 
     await expect(committing).resolves.toBe(true);
-    expect(testTable.table.editingRowKey.value).toBeNull();
+    expect(testTable.table.isRowEditing(testTable.table.data.value[1]!)).toBe(false);
   });
 
   it('does not commit a row when its validation is superseded', async () => {
@@ -276,7 +272,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
     releaseSecond();
     await expect(newerValidation).resolves.toBeNull();
     await expect(committing).resolves.toBe(false);
-    expect(testTable.table.editingRowKey.value).toBe('1');
+    expect(testTable.table.isRowEditing(row)).toBe(true);
   });
 
   it('serializes concurrent stable validations of the same row', async () => {
@@ -378,7 +374,8 @@ describe('PlusTable cell identity and row lifecycle', () => {
 
     const validating = testTable.table.validate(false);
     await firstStarted;
-    testTable.table.setData([rows[1]!, rows[0]!]);
+    testTable.props.data = [rows[1]!, rows[0]!];
+    await nextTick();
     releaseFirst();
 
     await expect(validating).resolves.toEqual({ valid: true, errors: [] });
@@ -426,7 +423,8 @@ describe('PlusTable cell identity and row lifecycle', () => {
 
     const validating = testTable.table.validate(false);
     await secondStarted;
-    testTable.table.setData([rows[1]!]);
+    testTable.props.data = [rows[1]!];
+    await nextTick();
     releaseSecond();
 
     await expect(validating).resolves.toEqual({ valid: true, errors: [] });

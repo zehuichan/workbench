@@ -3,15 +3,22 @@ import { cloneDeep } from 'es-toolkit';
 import { focusEditorElement, resolveEditable } from '../utils';
 import { useCellRefSlot } from './use-cell-ref';
 import type { PlusTableResolvedProps } from '../table';
-import type { CellLocation, CellRef, RowData } from '../types';
+import type { CellLocation, CellRef, ColumnNode, RowData } from '../types';
 import type { UseColumnsReturn } from './use-columns';
 import type { UseCurrentReturn } from './use-current';
 import type { UseDataReturn } from './use-data';
-import type { UseDependenciesReturn } from './use-dependencies';
+import type { DependencyState, UseDependenciesReturn } from './use-dependencies';
 import type { UseDirtyReturn } from './use-dirty';
 import type { UseHistoryReturn } from './use-history';
 import type { UseValidationReturn } from './use-validation';
 import type { WriteRowFieldResult } from './utils';
+
+export interface EditState {
+  depState: DependencyState | undefined;
+  disabled: boolean;
+  editable: boolean;
+  editing: boolean;
+}
 
 type UseEditingProps<T extends RowData> = Pick<UseDataReturn<T>, 'data' | 'keysMap' | 'getRowKey'> &
   Pick<UseColumnsReturn<T>, 'getColumnById' | 'getColumnIndex'> &
@@ -52,9 +59,7 @@ export function useEditing<T extends RowData = RowData>(
     deleteRowField,
   }: UseEditingProps<T>,
 ) {
-  const slot = useCellRefSlot(current);
-  /** 对外按当前行列顺序呈现的编辑格下标位置。 */
-  const editingCell = slot.position;
+  const slot = useCellRefSlot();
   /** row 模式：当前编辑行 key */
   const editingRowKey = shallowRef<string | null>(null);
 
@@ -158,17 +163,39 @@ export function useEditing<T extends RowData = RowData>(
 
   // ---- 可编辑性判定 ----
 
-  function isLocatedCellEditable(cell: CellLocation<T>): boolean {
-    return (
-      props.mode !== 'none' &&
-      resolveEditable(cell.row, cell.rowIndex, cell.node.column) &&
-      !getDependencyState(cell.row, cell.rowIndex, cell.node).disabled
-    );
+  /**
+   * 单元格编辑态的单一真相：渲染层与进编入口共用，避免 mode / editable / disabled
+   * 在两处各写一份。
+   */
+  function resolveEditState(input: {
+    row: T;
+    rowIndex: number;
+    rowKey: string;
+    node: ColumnNode<T>;
+  }): EditState {
+    const { row, rowIndex, rowKey, node } = input;
+    const column = node.column;
+    const mode = props.mode;
+    const depState = column.dependencies ? getDependencyState(row, rowIndex, node) : undefined;
+    const rawEditable = mode !== 'none' && !!column.prop && resolveEditable(row, rowIndex, column);
+    const disabled = rawEditable && !!depState?.disabled;
+    const editable = rawEditable && !disabled;
+    let editing = false;
+    if (mode === 'table') editing = editable;
+    else if (mode === 'row') editing = editingRowKey.value === rowKey && editable;
+    else if (mode === 'cell') editing = slot.has(rowKey, node.id);
+    return { depState, disabled, editable, editing };
   }
 
   function canEditCell(rowIndex: number, colIndex: number): boolean {
     const cell = current.locateCell(rowIndex, colIndex);
-    return !!cell && isLocatedCellEditable(cell);
+    if (!cell) return false;
+    return resolveEditState({
+      row: cell.row,
+      rowIndex: cell.rowIndex,
+      rowKey: cell.rowKey,
+      node: cell.node,
+    }).editable;
   }
 
   function isRowEditing(row: T): boolean {
@@ -177,24 +204,6 @@ export function useEditing<T extends RowData = RowData>(
 
   function isEditingRef(rowKey: string, colId: string): boolean {
     return slot.has(rowKey, colId);
-  }
-
-  /** 单元格是否处于编辑器渲染态（三种模式统一入口） */
-  function isCellEditing(rowIndex: number, colIndex: number): boolean {
-    switch (props.mode) {
-      case 'table':
-        return canEditCell(rowIndex, colIndex);
-      case 'row': {
-        const row = data.value[rowIndex];
-        return !!row && isRowEditing(row) && canEditCell(rowIndex, colIndex);
-      }
-      case 'cell': {
-        const ref = current.toCellRef(rowIndex, colIndex);
-        return !!ref && slot.has(ref.rowKey, ref.colId);
-      }
-      default:
-        return false;
-    }
   }
 
   async function focusEditor(ref: CellRef, hasInitialValue: boolean): Promise<void> {
@@ -233,7 +242,17 @@ export function useEditing<T extends RowData = RowData>(
     if (props.mode !== 'cell') return false;
     const ref = current.toCellRef(rowIndex, colIndex);
     const cell = ref && current.locateCellRef(ref);
-    if (!ref || !cell || !isLocatedCellEditable(cell)) return false;
+    if (!ref || !cell) return false;
+    if (
+      !resolveEditState({
+        row: cell.row,
+        rowIndex: cell.rowIndex,
+        rowKey: cell.rowKey,
+        node: cell.node,
+      }).editable
+    ) {
+      return false;
+    }
     if (slot.get()) commitEdit();
     const hasInitial = 'defaultValue' in opts;
     setDraft(cell.rowKey, cell.prop, hasInitial ? opts.defaultValue : cell.row[cell.prop]);
@@ -299,7 +318,17 @@ export function useEditing<T extends RowData = RowData>(
     if (props.mode !== 'row') return false;
     const ref = current.toCellRef(rowIndex, colIndex);
     const cell = ref && current.locateCellRef(ref);
-    if (!ref || !cell || !isRowEditing(cell.row) || !isLocatedCellEditable(cell)) return false;
+    if (!ref || !cell || !isRowEditing(cell.row)) return false;
+    if (
+      !resolveEditState({
+        row: cell.row,
+        rowIndex: cell.rowIndex,
+        rowKey: cell.rowKey,
+        node: cell.node,
+      }).editable
+    ) {
+      return false;
+    }
     clearRowEditingCell(true);
     setDraft(cell.rowKey, cell.prop, cell.row[cell.prop]);
     slot.set(ref);
@@ -375,11 +404,8 @@ export function useEditing<T extends RowData = RowData>(
   }
 
   return {
-    editingCell,
-    editingRowKey,
-
     canEditCell,
-    isCellEditing,
+    resolveEditState,
     isEditingRef,
     isRowEditing,
     getEditingCellLocation,

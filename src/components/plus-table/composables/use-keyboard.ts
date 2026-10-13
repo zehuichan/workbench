@@ -1,3 +1,4 @@
+import { computed } from 'vue';
 import { partition } from 'es-toolkit';
 import { typedCharToDraft } from '../adapter';
 import type { HotkeyBinding, HotkeyContext } from '../table';
@@ -158,10 +159,13 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
     };
   }
 
-  function getCustomHotkeys(): HotkeyBinding<T>[] {
-    if (!table.props.hotkeyEnabled) return [];
-    return table.props.hotkeys ?? [];
-  }
+  const customHotkeyGroups = computed(() => {
+    if (!table.props.hotkeyEnabled) {
+      return { overrides: [] as HotkeyBinding<T>[], normals: [] as HotkeyBinding<T>[] };
+    }
+    const [overrides, normals] = partition(table.props.hotkeys ?? [], (h) => !!h.override);
+    return { overrides, normals };
+  });
 
   function runHotkeyBindings(bindings: HotkeyBinding<T>[], event: KeyboardEvent): boolean {
     for (const binding of bindings) {
@@ -341,7 +345,7 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
 
   function handleKeydown(event: KeyboardEvent) {
     const mode = table.props.mode;
-    const [overrides, normals] = partition(getCustomHotkeys(), (h) => !!h.override);
+    const { overrides, normals } = customHotkeyGroups.value;
 
     // 1. 用户 override 热键：先于任何内置行为判定，任何编辑态 / 焦点位置都生效
     if (runHotkeyBindings(overrides, event)) return;

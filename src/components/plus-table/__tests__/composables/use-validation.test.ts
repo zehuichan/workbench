@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cellPosition } from '../helpers/cell-position';
 import { createTestTable, type TestTable } from '../helpers/create-test-table';
 import type { RuleItem } from 'async-validator';
 
@@ -90,7 +91,7 @@ describe('PlusTable validation', () => {
 
     await table.validate();
 
-    expect(table.currentCell.value).toEqual({ rowIndex: 0, colIndex: 0 });
+    expect(cellPosition(table.getCurrentCellLocation())).toEqual({ rowIndex: 0, colIndex: 0 });
   });
 
   it('keeps hidden-column errors last and skips scrolling to them', async () => {
@@ -102,7 +103,7 @@ describe('PlusTable validation', () => {
     const result = await table.validate();
 
     expect(result.errors.map((error) => error.prop)).toEqual(['b', 'a']);
-    expect(table.currentCell.value).toEqual({ rowIndex: 0, colIndex: 0 });
+    expect(cellPosition(table.getCurrentCellLocation())).toEqual({ rowIndex: 0, colIndex: 0 });
   });
 
   it('stops retrying a row that keeps being preempted by newer input', async () => {

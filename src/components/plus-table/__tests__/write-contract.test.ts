@@ -62,7 +62,7 @@ describe('PlusTable row field write contract', () => {
     expect(row).toEqual({ id: 1, name: 'one', amount: 10 });
     expect('extra' in row).toBe(false);
     expect(table.isRowDirty('1')).toBe(false);
-    expect(table.editingRowKey.value).toBeNull();
+    expect(table.isRowEditing(row)).toBe(false);
   });
 
   it('replays undo and redo through the same write contract', () => {

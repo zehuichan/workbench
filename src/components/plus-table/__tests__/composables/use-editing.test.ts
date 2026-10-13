@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { nextTick } from 'vue';
 import { createTestTable, type TestTable } from '../helpers/create-test-table';
 
 interface Row {
@@ -65,7 +66,7 @@ describe('PlusTable row editing session', () => {
 
     expect(rows[0]).toMatchObject({ name: 'edited', amount: 99 });
     expect(table.getDraft('1', 'name').has).toBe(false);
-    expect(table.editingRowKey.value).toBeNull();
+    expect(table.isRowEditing(rows[0]!)).toBe(false);
   });
 
   it('does not commit when a draft is written while validation is in flight', async () => {
@@ -80,7 +81,7 @@ describe('PlusTable row editing session', () => {
     gate.release();
 
     await expect(committing).resolves.toBe(false);
-    expect(table.editingRowKey.value).toBe('1');
+    expect(table.isRowEditing(rows[0]!)).toBe(true);
     expect(table.getDraft('1', 'name').value).toBe('second');
     expect(rows[0]!.name).toBe('first');
   });
@@ -97,27 +98,28 @@ describe('PlusTable row editing session', () => {
     gate.release();
 
     await expect(committing).resolves.toBe(false);
-    expect(table.editingRowKey.value).toBeNull();
+    expect(table.isRowEditing(rows[0]!)).toBe(false);
     expect(rows[0]!.name).toBe('one');
   });
 
   it('does not commit when the row object is replaced at the same key', async () => {
     const gate = createGate();
-    const { table, rows } = setup({ validator: () => gate.wait() });
+    const { table, props, rows } = setup({ validator: () => gate.wait() });
     expect(table.startRowEdit(0)).toBe(true);
 
     const committing = table.commitRowEdit(0);
     await gate.entered;
-    table.setData([{ id: 1, name: 'replacement', amount: 100 }, rows[1]!]);
+    props.data = [{ id: 1, name: 'replacement', amount: 100 }, rows[1]!];
+    await nextTick();
     gate.release();
 
     await expect(committing).resolves.toBe(false);
-    expect(table.editingRowKey.value).toBeNull();
+    expect(table.isRowEditing(table.data.value[0]!)).toBe(false);
   });
 
   it('does not commit a session that was restarted on another row', async () => {
     const gate = createGate();
-    const { table } = setup({ validator: () => gate.wait() });
+    const { table, rows } = setup({ validator: () => gate.wait() });
     expect(table.startRowEdit(0)).toBe(true);
 
     const committing = table.commitRowEdit(0);
@@ -126,7 +128,7 @@ describe('PlusTable row editing session', () => {
     gate.release();
 
     await expect(committing).resolves.toBe(false);
-    expect(table.editingRowKey.value).toBe('2');
+    expect(table.isRowEditing(rows[1]!)).toBe(true);
   });
 
   it('rolls back to the session snapshot and drops drafts on cancel', () => {
@@ -139,7 +141,6 @@ describe('PlusTable row editing session', () => {
 
     expect(rows[0]).toMatchObject({ name: 'one', amount: 10 });
     expect(table.getDraft('1', 'name').has).toBe(false);
-    expect(table.editingRowKey.value).toBeNull();
     expect(table.isRowEditing(rows[0]!)).toBe(false);
   });
 
@@ -240,7 +241,7 @@ describe('PlusTable row editing session', () => {
 
     await expect(table.commitRowEdit(0)).resolves.toBe(false);
 
-    expect(table.editingRowKey.value).toBe('1');
+    expect(table.isRowEditing(table.data.value[0]!)).toBe(true);
     expect(table.getErrors()).toHaveLength(1);
   });
 });

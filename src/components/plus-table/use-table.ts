@@ -12,8 +12,9 @@ import {
 } from './composables';
 import { deleteRowField as deleteField, writeRowField as writeField } from './composables/utils';
 import { TABLE_MODE_EDITOR_LIMIT } from './constants';
-import { devWarn, getRowIdentity } from './utils';
+import { devWarn } from './utils';
 import type { AppliedHistoryChange } from './composables/use-history';
+import type { DataSnapshot } from './composables/use-data';
 import type { PlusTableResolvedProps, TableHost } from './table';
 import type { RowData } from './types';
 
@@ -28,12 +29,10 @@ export function useTable<T extends RowData = RowData>(
 ) {
   const { emit, gridRef, ids, hasDataListener } = host;
 
-  const { data, keysMap, rowKeyMap, getRowKey, readDataSnapshot } = useData<T>(props);
+  const { data, keysMap, getRowKey, readDataSnapshot, buildRegistry, commitData } =
+    useData<T>(props);
 
   const {
-    columnTree,
-    hiddenIds,
-    orderMap,
     widthMap,
     originColumns,
     columns,
@@ -62,20 +61,12 @@ export function useTable<T extends RowData = RowData>(
     ids,
   });
   const {
-    currentCell,
-    toCellRef,
     resolveCellPosition,
-    locateCellRef,
     locateCell,
-    getCurrentRef,
     getCurrentCellLocation,
     getCellElRef,
-    getCellEl,
-    scrollCellRef,
-    scrollCellIntoView,
     setCurrentCell,
     isCurrentRef,
-    isCurrentCell,
     invalidateCurrentRow,
     cleanCurrent,
     moveCurrent,
@@ -145,10 +136,8 @@ export function useTable<T extends RowData = RowData>(
   });
 
   const {
-    editingCell,
-    editingRowKey,
     canEditCell,
-    isCellEditing,
+    resolveEditState,
     isEditingRef,
     isRowEditing,
     getEditingCellLocation,
@@ -289,33 +278,17 @@ export function useTable<T extends RowData = RowData>(
     invalidateValidationRow,
     invalidateDependencyRow,
   ];
-  let committedRowsByKey = new Map<string, T>();
 
   /** 同 rowKey 换了行对象即视为身份失效，所有按 rowKey 寻址的域一并清理；纯重排只重算下标。 */
-  function setData(next: T[]): void {
-    const option = props.rowKey;
-    const nextRowsByKey = new Map<string, T>();
-    next.forEach((row, rowIndex) => {
-      const key = getRowIdentity(row, option);
-      if (nextRowsByKey.has(key)) {
-        throw new Error(
-          `[PlusTable] setData 失败：第 ${rowIndex} 行的 rowKey="${key}" 与前序行重复。`,
-        );
-      }
-      if (Object.isFrozen(row)) {
-        devWarn(
-          `[PlusTable] 第 ${rowIndex} 行（rowKey="${key}"）是冻结对象：字段编辑就地修改行对象，冻结行无法写入。`,
-        );
-      }
-      nextRowsByKey.set(key, row);
-    });
+  function setData(snapshot: DataSnapshot<T>): void {
+    const previous = keysMap.value;
+    const registry = buildRegistry(snapshot.rows, snapshot.keys);
 
-    for (const [key, previousRow] of committedRowsByKey) {
-      if (nextRowsByKey.get(key) === previousRow) continue;
+    for (const [key, location] of previous) {
+      if (registry.keysMap.get(key)?.row === location.row) continue;
       for (const invalidate of rowInvalidators) invalidate(key);
     }
-    data.value = next;
-    committedRowsByKey = nextRowsByKey;
+    commitData(snapshot.rows, registry);
     reindexValidationErrors();
   }
 
@@ -382,7 +355,7 @@ export function useTable<T extends RowData = RowData>(
   setData(readDataSnapshot());
   // 取值函数抛错时 Vue 不会调用回调（或在配置了 errorHandler 时以 undefined 调用），这里兜一下
   watch(readDataSnapshot, (snapshot) => {
-    if (snapshot) setData(snapshot);
+    if (snapshot?.rows) setData(snapshot);
   });
   watch(
     () => props.history,
@@ -396,7 +369,6 @@ export function useTable<T extends RowData = RowData>(
     data,
     keysMap,
     getRowKey,
-    setData,
 
     // write pipeline
     setCellValue,
@@ -405,17 +377,11 @@ export function useTable<T extends RowData = RowData>(
     redo,
 
     // columns
-    columnTree,
-    hiddenIds,
-    orderMap,
     widthMap,
     originColumns,
     columns,
-    allColumns,
-    triggerIndex,
     settingItems,
     getColumnById,
-    getColumnsByProp,
     getColumnIndex,
     toggleColumnVisible,
     updateColumnOrder,
@@ -424,20 +390,11 @@ export function useTable<T extends RowData = RowData>(
     resetSettings,
 
     // current
-    currentCell,
-    toCellRef,
     resolveCellPosition,
-    locateCellRef,
-    locateCell,
-    getCurrentRef,
     getCurrentCellLocation,
     getCellElRef,
-    getCellEl,
-    scrollCellRef,
-    scrollCellIntoView,
     setCurrentCell,
     isCurrentRef,
-    isCurrentCell,
     moveCurrent,
     moveSequential,
     moveToRowEdge,
@@ -447,8 +404,6 @@ export function useTable<T extends RowData = RowData>(
 
     // dependencies
     getDependencyState,
-    notifyFieldChange,
-    bumpDependencyGeneration,
 
     // history
     canUndo,
@@ -470,13 +425,10 @@ export function useTable<T extends RowData = RowData>(
     validateRow,
     validate,
     clearValidate,
-    clearRowValidate,
 
     // editing
-    editingCell,
-    editingRowKey,
     canEditCell,
-    isCellEditing,
+    resolveEditState,
     isEditingRef,
     isRowEditing,
     getEditingCellLocation,

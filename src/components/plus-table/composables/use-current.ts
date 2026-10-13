@@ -54,18 +54,7 @@ export function useCurrent<T extends RowData = RowData>({
     return ref ? locateCellRef(ref) : null;
   }
 
-  const slot = useCellRefSlot({ toCellRef, resolveCellPosition });
-  /** 对外按当前行列顺序呈现的活动格下标位置。 */
-  const currentCell = slot.position;
-
-  function getCurrentRef(): CellRef | null {
-    return slot.get();
-  }
-
-  function resolveCurrentPosition(): CellPosition | null {
-    const ref = slot.get();
-    return ref ? resolveCellPosition(ref) : null;
-  }
+  const slot = useCellRefSlot();
 
   function getCurrentCellLocation(): CellLocation<T> | null {
     const ref = slot.get();
@@ -79,18 +68,8 @@ export function useCurrent<T extends RowData = RowData>({
     return grid.querySelector<HTMLElement>(`#${CSS.escape(ids.cell(ref.rowKey, ref.colId))}`);
   }
 
-  function getCellEl(rowIndex: number, colIndex: number): HTMLElement | null {
-    const ref = toCellRef(rowIndex, colIndex);
-    return ref ? getCellElRef(ref) : null;
-  }
-
   function scrollCellRef(ref: CellRef): void {
     getCellElRef(ref)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }
-
-  function scrollCellIntoView(rowIndex: number, colIndex: number): void {
-    const ref = toCellRef(rowIndex, colIndex);
-    if (ref) scrollCellRef(ref);
   }
 
   function setCurrentCell(rowIndex: number, colIndex: number, scroll = true): void {
@@ -104,7 +83,8 @@ export function useCurrent<T extends RowData = RowData>({
 
   /** 无可解析活动格时选择首格并返回 null，让本次移动立即停止。 */
   function resolveMoveOrigin(): CellPosition | null {
-    const position = resolveCurrentPosition();
+    const ref = slot.get();
+    const position = ref ? resolveCellPosition(ref) : null;
     if (position) return position;
     setCurrentCell(0, 0);
     return null;
@@ -114,11 +94,6 @@ export function useCurrent<T extends RowData = RowData>({
     return slot.has(rowKey, colId);
   }
 
-  function isCurrentCell(rowIndex: number, colIndex: number): boolean {
-    const ref = toCellRef(rowIndex, colIndex);
-    return !!ref && slot.has(ref.rowKey, ref.colId);
-  }
-
   /** 数据行身份失效时调用：清掉该 rowKey 上的活动格。 */
   function invalidateCurrentRow(rowKey: string): void {
     if (slot.get()?.rowKey === rowKey) slot.set(null);
@@ -126,7 +101,8 @@ export function useCurrent<T extends RowData = RowData>({
 
   /** 列显隐 / 重排后活动格若已无法解析，直接清掉。 */
   function cleanCurrent(): void {
-    if (!resolveCurrentPosition()) slot.set(null);
+    const ref = slot.get();
+    if (ref && !resolveCellPosition(ref)) slot.set(null);
   }
 
   /** 方向移动（不换行），无活动格时落到首格 */
@@ -179,21 +155,15 @@ export function useCurrent<T extends RowData = RowData>({
   }
 
   return {
-    currentCell,
-
     toCellRef,
     resolveCellPosition,
     locateCellRef,
     locateCell,
-    getCurrentRef,
     getCurrentCellLocation,
     getCellElRef,
-    getCellEl,
     scrollCellRef,
-    scrollCellIntoView,
     setCurrentCell,
     isCurrentRef,
-    isCurrentCell,
     invalidateCurrentRow,
     cleanCurrent,
     moveCurrent,

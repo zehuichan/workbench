@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useEvents } from '../../composables/use-events';
+import { cellPosition } from '../helpers/cell-position';
 import { createTestTable, type TestTable } from '../helpers/create-test-table';
 import type { ContextMenuItem } from '../../table';
 import type { ResolvedMenuItem } from '../../context-menu';
@@ -90,7 +91,10 @@ describe('PlusTable context menu events', () => {
     expect(event.defaultPrevented).toBe(true);
     expect(open).toHaveBeenCalledTimes(1);
     expect(open.mock.calls[0]![1].map((item) => item.key)).toEqual(['copy']);
-    expect(testTable.table.currentCell.value).toEqual({ rowIndex: 0, colIndex: 1 });
+    expect(cellPosition(testTable.table.getCurrentCellLocation())).toEqual({
+      rowIndex: 0,
+      colIndex: 1,
+    });
   });
 
   it('does not preventDefault when contextMenu is empty', () => {

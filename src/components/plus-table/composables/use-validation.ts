@@ -1,4 +1,4 @@
-import { reactive } from 'vue';
+import { computed, reactive } from 'vue';
 import Schema from 'async-validator';
 import { isString } from 'es-toolkit';
 import { MAX_STALE_RETRIES, VALIDATE_ROW_CONCURRENCY } from '../constants';
@@ -97,14 +97,14 @@ export function useValidation<T extends RowData = RowData>({
   }
 
   /** prop → 首个可导航（可见）叶子列的下标；隐藏列的字段不在表里 */
-  function getVisibleColIndexes(): Map<string, number> {
+  const visibleColIndexes = computed(() => {
     const colIndexes = new Map<string, number>();
     columns.value.forEach((node: ColumnNode<T>, colIndex: number) => {
       const prop = node.column.prop;
       if (prop && !colIndexes.has(prop)) colIndexes.set(prop, colIndex);
     });
     return colIndexes;
-  }
+  });
 
   /**
    * 只读访问器：供业务侧渲染自定义错误汇总面板。
@@ -112,7 +112,7 @@ export function useValidation<T extends RowData = RowData>({
    * 从左到右一致；首个元素就是 validate() 要滚过去的那一格。
    */
   function getErrors(): CellError[] {
-    const colIndexes = getVisibleColIndexes();
+    const colIndexes = visibleColIndexes.value;
     const result: CellError[] = [];
     for (const rowErrors of errors.values()) {
       result.push(...rowErrors.values());
@@ -300,7 +300,7 @@ export function useValidation<T extends RowData = RowData>({
     const canonicalErrors = getErrors();
     if (scrollToFirstError && canonicalErrors.length) {
       const first = canonicalErrors[0]!;
-      const colIndex = getVisibleColIndexes().get(first.prop);
+      const colIndex = visibleColIndexes.value.get(first.prop);
       if (colIndex !== undefined) setCurrentCell(first.rowIndex, colIndex);
     }
     return { valid: canonicalErrors.length === 0, errors: canonicalErrors };

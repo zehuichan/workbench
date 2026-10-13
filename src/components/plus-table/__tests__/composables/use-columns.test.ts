@@ -1,5 +1,6 @@
 import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { cellPosition } from '../helpers/cell-position';
 import { createTestTable, type TestTable } from '../helpers/create-test-table';
 
 interface Row {
@@ -46,7 +47,6 @@ describe('PlusTable columns', () => {
 
     expect(table.originColumns.value.map((node) => node.id)).toEqual(['#', 'Group', '操作']);
     expect(table.columns.value.map((node) => node.id)).toEqual(['a-primary', 'a-secondary']);
-    expect(table.allColumns.value.map((node) => node.id)).toEqual(['a-primary', 'a-secondary']);
     expect(table.settingItems.value.map((item) => item.id)).toEqual([
       'Group',
       'a-primary',
@@ -70,7 +70,7 @@ describe('PlusTable columns', () => {
     table.toggleColumnVisible('Group', false);
 
     expect(table.columns.value.map((node) => node.id)).toEqual(['c']);
-    expect(table.allColumns.value.map((node) => node.id)).toEqual(['a', 'b', 'c']);
+    expect(table.settingItems.value.map((item) => item.id)).toEqual(['Group', 'a', 'b', 'c']);
     expect(table.settingItems.value.find((item) => item.id === 'Group')).toEqual(
       expect.objectContaining({ checked: false, indeterminate: false }),
     );
@@ -109,7 +109,6 @@ describe('PlusTable columns', () => {
 
       expect(table.originColumns.value.map((node) => node.id)).toEqual(['a', 'b', 'c']);
       expect(table.columns.value.map((node) => node.id)).toEqual(['a', 'b', 'c']);
-      expect(table.orderMap.value).toEqual({});
     },
   );
 
@@ -142,7 +141,7 @@ describe('PlusTable columns', () => {
       { label: 'A#1' },
       { label: '__root' },
     ]);
-    const ids = table.columnTree.value.map((node) => node.id);
+    const ids = table.originColumns.value.map((node) => node.id);
 
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).not.toContain('__root');
@@ -186,11 +185,8 @@ describe('PlusTable columns', () => {
     ];
     await nextTick();
 
-    expect(testTable.table.getCurrentRef()).toEqual({
-      rowKey: '1',
-      colId: 'a-secondary',
-    });
-    expect(testTable.table.editingCell.value).toEqual({
+    expect(testTable.table.isCurrentRef('1', 'a-secondary')).toBe(true);
+    expect(cellPosition(testTable.table.getEditingCellLocation())).toEqual({
       rowIndex: 0,
       colIndex: 0,
     });
@@ -211,7 +207,9 @@ describe('PlusTable columns', () => {
       },
     ]);
 
-    expect([...table.hiddenIds.value]).toEqual(['a']);
+    expect(table.settingItems.value.find((item) => item.id === 'a')).toEqual(
+      expect.objectContaining({ checked: false }),
+    );
     expect(table.settingItems.value.find((item) => item.id === 'Group')).toEqual(
       expect.objectContaining({ checked: false, indeterminate: false }),
     );
@@ -281,8 +279,10 @@ describe('PlusTable columns', () => {
       { cache: true, id: 'stale-cache' },
     );
 
-    expect(table.hiddenIds.value).toEqual(new Set(['a']));
-    expect(table.orderMap.value).toEqual({ __root: ['a'] });
+    expect(table.settingItems.value.find((item) => item.id === 'a')).toEqual(
+      expect.objectContaining({ checked: false }),
+    );
+    expect(table.columns.value.map((node) => node.id)).toEqual([]);
     expect(table.widthMap.value).toEqual({ a: 100 });
   });
 
@@ -297,7 +297,9 @@ describe('PlusTable columns', () => {
     await nextTick();
 
     expect(testTable.table.columns.value.map((node) => node.id)).toEqual(['c']);
-    expect(testTable.table.hiddenIds.value).toEqual(new Set(['b']));
+    expect(testTable.table.settingItems.value.find((item) => item.id === 'b')).toEqual(
+      expect.objectContaining({ checked: false }),
+    );
     expect(testTable.table.widthMap.value).toEqual({});
   });
 

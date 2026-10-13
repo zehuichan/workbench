@@ -1,6 +1,7 @@
 import { nextTick } from 'vue';
 import { afterEach, describe, expect, it } from 'vitest';
 import { useKeyboard } from '../../composables/use-keyboard';
+import { cellPosition } from '../helpers/cell-position';
 import { createTestTable, type TestTable } from '../helpers/create-test-table';
 import type { HotkeyBinding } from '../../table';
 import type { EditMode } from '../../types';
@@ -81,6 +82,18 @@ describe('PlusTable keyboard routing', () => {
       return event;
     }
 
+    function isEditingAt(rowIndex: number, colIndex: number): boolean {
+      const row = table.data.value[rowIndex];
+      const node = table.columns.value[colIndex];
+      if (!row || !node) return false;
+      return table.resolveEditState({
+        row,
+        rowIndex,
+        rowKey: table.getRowKey(row),
+        node,
+      }).editing;
+    }
+
     return {
       table,
       rows: table.data.value,
@@ -88,7 +101,8 @@ describe('PlusTable keyboard routing', () => {
       actionButton,
       editorAt,
       press,
-      current: () => table.currentCell.value,
+      isEditingAt,
+      current: () => cellPosition(table.getCurrentCellLocation()),
     };
   }
 
@@ -99,7 +113,7 @@ describe('PlusTable keyboard routing', () => {
 
   describe('none mode', () => {
     it('navigates without ever entering an editor', () => {
-      const { table, rows, grid, press, current } = setup('none');
+      const { table, rows, grid, press, current, isEditingAt } = setup('none');
       table.setCurrentCell(0, 0, false);
 
       expect(press(grid, 'ArrowDown').defaultPrevented).toBe(true);
@@ -110,22 +124,22 @@ describe('PlusTable keyboard routing', () => {
       expect(press(grid, 'F2').defaultPrevented).toBe(false);
       expect(press(grid, 'x').defaultPrevented).toBe(false);
       expect(press(grid, 'Delete').defaultPrevented).toBe(false);
-      expect(table.isCellEditing(2, 0)).toBe(false);
+      expect(isEditingAt(2, 0)).toBe(false);
       expect(rows[2]!.name).toBe('three');
     });
   });
 
   describe('cell mode', () => {
     it('starts an edit from F2 and seeds a printable character as the draft', () => {
-      const { table, grid, press } = setup('cell');
+      const { table, grid, press, isEditingAt } = setup('cell');
       table.setCurrentCell(0, 0, false);
 
       expect(press(grid, 'F2').defaultPrevented).toBe(true);
-      expect(table.isCellEditing(0, 0)).toBe(true);
+      expect(isEditingAt(0, 0)).toBe(true);
       table.cancelEdit();
 
       expect(press(grid, 'x').defaultPrevented).toBe(true);
-      expect(table.isCellEditing(0, 0)).toBe(true);
+      expect(isEditingAt(0, 0)).toBe(true);
       expect(table.getDraft('1', 'name').value).toBe('x');
     });
 
@@ -138,7 +152,7 @@ describe('PlusTable keyboard routing', () => {
     });
 
     it('keeps arrow keys local inside the active editor and cancels on Escape', () => {
-      const { table, editorAt, press, current } = setup('cell');
+      const { table, editorAt, press, current, isEditingAt } = setup('cell');
       table.setCurrentCell(0, 0, false);
       expect(table.startEdit(0, 0)).toBe(true);
       const editor = editorAt(0, 0);
@@ -147,7 +161,7 @@ describe('PlusTable keyboard routing', () => {
       expect(current()).toEqual({ rowIndex: 0, colIndex: 0 });
 
       expect(press(editor, 'Escape').defaultPrevented).toBe(true);
-      expect(table.isCellEditing(0, 0)).toBe(false);
+      expect(isEditingAt(0, 0)).toBe(false);
     });
 
     it('commits the active editor and moves down on Enter', () => {
@@ -178,22 +192,22 @@ describe('PlusTable keyboard routing', () => {
     });
 
     it('cancels the whole row on Escape from a non-active editor', () => {
-      const { table, editorAt, press } = setup('row');
+      const { table, rows, editorAt, press } = setup('row');
       table.setCurrentCell(0, 0, false);
       expect(table.startRowEdit(0)).toBe(true);
 
       expect(press(editorAt(0, 1), 'Escape').defaultPrevented).toBe(true);
-      expect(table.editingRowKey.value).toBeNull();
+      expect(table.isRowEditing(rows[0]!)).toBe(false);
     });
 
     it('cancels the whole row on Escape from the active editor', () => {
-      const { table, editorAt, press } = setup('row');
+      const { table, rows, editorAt, press } = setup('row');
       table.setCurrentCell(0, 0, false);
       expect(table.startRowEdit(0)).toBe(true);
       expect(table.setRowEditingCell(0, 0)).toBe(true);
 
       expect(press(editorAt(0, 0), 'Escape').defaultPrevented).toBe(true);
-      expect(table.editingRowKey.value).toBeNull();
+      expect(table.isRowEditing(rows[0]!)).toBe(false);
     });
   });
 

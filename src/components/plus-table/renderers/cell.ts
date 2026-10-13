@@ -1,6 +1,5 @@
 import { nextTick } from 'vue';
 import { resolveEditor } from '../adapter';
-import { resolveEditable } from '../utils';
 import type { CellView, EditorBinding, EditorSlotProps } from '../cell';
 import type { DependencyState } from '../composables/use-dependencies';
 import type { PlusTableContext } from '../tokens';
@@ -126,19 +125,10 @@ export function getCellView<T extends RowData = RowData>(
   const active = inGrid && table.isCurrentRef(rowKey, node.id);
   const error = prop ? table.getCellError(row, prop) : undefined;
 
-  const depState = column.dependencies ? table.getDependencyState(row, rowIndex, node) : undefined;
-  const rawEditable = mode !== 'none' && !!prop && resolveEditable(row, rowIndex, column);
-  const disabled = rawEditable && !!depState?.disabled;
-  const editable = inGrid && rawEditable && !disabled;
-  const editing =
-    inGrid &&
-    (mode === 'table'
-      ? editable
-      : mode === 'row'
-        ? table.isRowEditing(row) && editable
-        : mode === 'cell'
-          ? table.isEditingRef(rowKey, node.id)
-          : false);
+  const editState = inGrid
+    ? table.resolveEditState({ row, rowIndex, rowKey, node })
+    : { depState: undefined, disabled: false, editable: false, editing: false };
+  const { depState, disabled, editable, editing } = editState;
   // 动态必填：联动算出来的必填状态格内即时可见，不必等提交校验失败才发现
   const required = !!column.required || !!depState?.required;
   const dirty = !!prop && table.isCellDirty(rowKey, prop);

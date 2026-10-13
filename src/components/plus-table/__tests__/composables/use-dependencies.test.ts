@@ -78,7 +78,7 @@ describe('PlusTable dependencies', () => {
 
     for (let index = 0; index < 5; index += 1) {
       expect(testTable.table.getDependencyState(row, 0, node).disabled).toBe(false);
-      testTable.table.notifyFieldChange(row, 0, 'a');
+      testTable.table.setCellValue(row, 0, 'a', `v${index}`);
     }
     testTable.table.setCellValue(row, 0, 'a', 'lock');
 
@@ -86,23 +86,29 @@ describe('PlusTable dependencies', () => {
     expect(testTable.table.getDependencyState(row, 0, node).disabled).toBe(true);
   });
 
-  it('indexes dependents by trigger field, including hidden columns', () => {
+  it('runs triggers for hidden dependents of a changed field', () => {
+    const onHidden = vi.fn();
+    const onVisible = vi.fn();
     const { table } = setup([
       { prop: 'a', label: 'A' },
       {
         prop: 'b',
         label: 'B',
         visible: false,
-        dependencies: { triggerFields: ['a', 'a'], trigger: () => {} },
+        dependencies: { triggerFields: ['a', 'a'], trigger: onHidden },
       },
-      { prop: 'c', label: 'C', dependencies: { triggerFields: ['a', 'd'], trigger: () => {} } },
+      { prop: 'c', label: 'C', dependencies: { triggerFields: ['a', 'd'], trigger: onVisible } },
     ]);
+    const row = table.data.value[0]!;
 
-    const index = table.triggerIndex.value;
-    expect([...index.keys()].sort()).toEqual(['a', 'd']);
-    // 同一字段重复声明只登记一次，隐藏列同样在索引里
-    expect(index.get('a')!.map((node) => node.id)).toEqual(['b', 'c']);
-    expect(index.get('d')!.map((node) => node.id)).toEqual(['c']);
+    table.setCellValue(row, 0, 'a', 'next');
+    // 同一字段重复声明只触发一次，隐藏列同样收到广播
+    expect(onHidden).toHaveBeenCalledTimes(1);
+    expect(onVisible).toHaveBeenCalledTimes(1);
+
+    table.setCellValue(row, 0, 'd', 'next');
+    expect(onHidden).toHaveBeenCalledTimes(1);
+    expect(onVisible).toHaveBeenCalledTimes(2);
   });
 
   it('runs only the triggers registered for the changed field', () => {
@@ -219,7 +225,8 @@ describe('PlusTable dependencies', () => {
     testTable.table.getDependencyState(row, 0, node);
     expect(disabled).toHaveBeenCalledTimes(1);
 
-    testTable.table.bumpDependencyGeneration('1');
+    // 同行非触发字段写入同样推进代数，迫使联动状态重算
+    testTable.table.setCellValue(row, 0, 'd', 'noise');
     testTable.table.getDependencyState(row, 0, node);
     expect(disabled).toHaveBeenCalledTimes(2);
 
