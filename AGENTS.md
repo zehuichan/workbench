@@ -30,6 +30,7 @@ pnpm install            # Node >=20.19, pnpm >=10 (packageManager pins 10.33.4);
 pnpm dev                # Vite playground, http://localhost:9527
 pnpm typecheck          # vue-tsc
 pnpm test               # Vitest, happy-dom
+pnpm test:benchmark     # Vitest bench, *.benchmark.ts
 pnpm build              # typecheck, then production assets
 pnpm preview
 pnpm format             # Prettier

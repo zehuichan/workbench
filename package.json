@@ -8,6 +8,7 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run --environment happy-dom",
+    "test:benchmark": "vitest bench --run --environment happy-dom",
     "typecheck": "vue-tsc --noEmit -p tsconfig.app.json",
     "format": "prettier . --write --cache --log-level warn",
     "format:check": "prettier . --check --cache --log-level warn",
