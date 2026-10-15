@@ -1,10 +1,28 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createApp } from 'vue';
+import {
+  createMemoryHistory,
+  createRouter,
+  createWebHashHistory,
+  createWebHistory,
+  type RouterHistory,
+} from 'vue-router';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getToken, removeToken, TOKEN_KEY } from '../auth';
 import { sso } from '../sso';
 
-function stubWindow(href: string) {
-  const replace = vi.fn();
-  return { window: { location: { href, replace } } as unknown as Window, replace };
+function visit(path: string) {
+  window.history.replaceState(null, '', path);
+}
+
+function currentPath() {
+  return window.location.href.slice(window.location.origin.length);
+}
+
+function createTestRouter(history: RouterHistory = createWebHistory()) {
+  return createRouter({
+    history,
+    routes: [{ path: '/:path(.*)*', component: { render: () => null } }],
+  });
 }
 
 describe('sso', () => {
@@ -14,70 +32,80 @@ describe('sso', () => {
 
   afterEach(() => {
     removeToken();
+    visit('/');
   });
 
   it('no-ops when required query keys are missing', () => {
-    const { window, replace } = stubWindow('https://example.com/home?from=demo');
+    visit('/home?from=demo');
 
-    expect(sso({ window })).toBe(false);
+    expect(sso(createTestRouter())).toBe(false);
     expect(getToken()).toBeNull();
-    expect(replace).not.toHaveBeenCalled();
+    expect(currentPath()).toBe('/home?from=demo');
   });
 
-  it('clears old token, stores SSO payload, and replaces URL', () => {
+  it('clears old token, stores SSO payload, and strips the URL in place', () => {
     localStorage.setItem(TOKEN_KEY, JSON.stringify({ accessToken: 'old' }));
-    const { window, replace } = stubWindow(
-      'https://example.com/home?username=sso&roles=admin,editor&accessToken=tok&from=demo',
-    );
+    visit('/home?username=sso&roles=admin,editor&accessToken=tok&from=demo');
 
-    expect(sso({ window })).toBe(true);
+    expect(sso(createTestRouter())).toBe(true);
     expect(getToken()).toEqual({
       accessToken: 'tok',
       username: 'sso',
       roles: ['admin', 'editor'],
     });
-    expect(replace).toHaveBeenCalledWith('https://example.com/home?username=sso&from=demo');
+    expect(currentPath()).toBe('/home?username=sso&from=demo');
   });
 
-  it('supports hash-mode SSO callbacks', () => {
-    const { window, replace } = stubWindow(
-      'https://example.com/#/permission/page?username=sso&roles=admin&accessToken=eyJ',
-    );
+  it('reads credentials from the hash query', () => {
+    visit('/#/permission/page?username=sso&roles=admin&accessToken=eyJ');
 
-    sso({ window });
+    sso(createTestRouter());
 
     expect(getToken()?.accessToken).toBe('eyJ');
-    expect(replace).toHaveBeenCalledWith('https://example.com/#/permission/page?username=sso');
+    expect(currentPath()).toBe('/#/permission/page?username=sso');
   });
 
   it('reads hash credentials even when the base URL already has a query', () => {
-    const { window, replace } = stubWindow(
-      'https://example.com/?tenant=acme#/permission/page?username=sso&roles=admin&accessToken=eyJ',
-    );
+    visit('/?tenant=acme#/permission/page?username=sso&roles=admin&accessToken=eyJ');
 
-    sso({ window });
+    sso(createTestRouter());
 
     expect(getToken()?.accessToken).toBe('eyJ');
-    expect(replace).toHaveBeenCalledWith(
-      'https://example.com/?tenant=acme#/permission/page?username=sso',
-    );
+    expect(currentPath()).toBe('/?tenant=acme#/permission/page?username=sso');
   });
 
   it('keeps the hash route intact when credentials arrive in the search string', () => {
-    const { window, replace } = stubWindow(
-      'https://example.com/?username=sso&roles=admin&accessToken=eyJ#/permission/page?tab=list',
-    );
+    visit('/?username=sso&roles=admin&accessToken=eyJ#/permission/page?tab=list');
 
-    sso({ window });
+    sso(createTestRouter());
 
     expect(getToken()?.accessToken).toBe('eyJ');
-    expect(replace).toHaveBeenCalledWith(
-      'https://example.com/?username=sso#/permission/page?tab=list',
-    );
+    expect(currentPath()).toBe('/?username=sso#/permission/page?tab=list');
+  });
+
+  it('cleans the route query of a hash-history router', () => {
+    visit('/#/permission/page?username=sso&roles=admin&accessToken=eyJ');
+
+    sso(createTestRouter(createWebHashHistory()));
+
+    expect(getToken()?.accessToken).toBe('eyJ');
+    expect(currentPath()).toBe('/#/permission/page?username=sso');
+  });
+
+  it('keeps credentials out of the first navigation', async () => {
+    visit('/home?username=sso&roles=admin&accessToken=tok');
+    const router = createTestRouter();
+
+    sso(router);
+    createApp({ render: () => null }).use(router);
+    await router.isReady();
+
+    expect(router.currentRoute.value.fullPath).toBe('/home?username=sso');
+    expect(currentPath()).toBe('/home?username=sso');
   });
 
   it('bails out without a window (SSR)', () => {
-    expect(sso({ window: undefined })).toBe(false);
+    expect(sso(createTestRouter(createMemoryHistory()), { window: undefined })).toBe(false);
     expect(getToken()).toBeNull();
   });
 });

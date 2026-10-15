@@ -1,4 +1,5 @@
 import { defaultWindow, type ConfigurableWindow } from '@vueuse/core';
+import type { Router } from 'vue-router';
 import { removeToken, setToken } from './auth';
 
 // 三个都在才认定是 SSO 回调；清理时只抹敏感项，username 留着方便排查
@@ -27,7 +28,7 @@ function readCredentials(url: URL): Credentials | null {
   return null;
 }
 
-function buildCleanUrl(url: URL, { params, from }: Credentials): string {
+function buildCleanLocation(url: URL, { params, from }: Credentials): string {
   const next = new URLSearchParams(params);
   for (const key of SENSITIVE) {
     next.delete(key);
@@ -41,16 +42,20 @@ function buildCleanUrl(url: URL, { params, from }: Credentials): string {
     url.search = query ? `?${query}` : '';
   }
 
-  return url.toString();
+  return url.pathname + url.search + url.hash;
 }
 
 /**
  * Frontend single sign-on handoff.
  *
  * Detects a callback carrying `username`, `roles`, and `accessToken`, stores the
- * credentials locally, then replaces the URL with a copy that has the sensitive
- * params stripped. Works in both history and hash routing modes: the credentials
- * are read from whichever query string holds them, and only that one is cleaned.
+ * credentials locally, then strips the sensitive params through the router's
+ * history. The address bar and the location the router recorded at creation
+ * change together, without a reload. The credentials are read from whichever
+ * query of the router's location holds them, and only that one is cleaned.
+ *
+ * Call it before `app.use(router)`. Editing the address bar behind the router lets
+ * its first navigation write the credentials back.
  *
  * Local check (history mode):
  * `http://localhost:8000/?username=sso&roles=admin&accessToken=eyJhbGciOiJIUzUxMiJ9.demo`
@@ -62,16 +67,17 @@ function buildCleanUrl(url: URL, { params, from }: Credentials): string {
  *
  * @example
  * import { sso } from '@/utils/sso'
+ * import { router } from './router'
  *
- * sso()
- * createApp(App).mount('#app')
+ * sso(router)
+ * createApp(App).use(router).mount('#app')
  */
-export function sso(options: SsoOptions = {}): boolean {
+export function sso(router: Router, options: SsoOptions = {}): boolean {
   const { window = defaultWindow } = options;
   if (!window) return false;
 
-  const { location } = window;
-  const url = new URL(location.href);
+  const { history } = router.options;
+  const url = new URL(history.location, window.location.origin);
   const credentials = readCredentials(url);
   if (!credentials) return false;
 
@@ -86,6 +92,6 @@ export function sso(options: SsoOptions = {}): boolean {
       .filter(Boolean),
   });
 
-  location.replace(buildCleanUrl(url, credentials));
+  history.replace(buildCleanLocation(url, credentials));
   return true;
 }

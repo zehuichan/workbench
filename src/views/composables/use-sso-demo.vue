@@ -17,10 +17,11 @@ onMounted(() => {
   token.value = getToken();
 });
 
-const usage = `// main.ts — 挂载前显式调用
+const usage = `// main.ts — 在 app.use(router) 之前调用
 import { sso } from '@/utils/sso'
+import { router } from './router'
 
-sso()
+sso(router)
 createApp(App).use(router).mount('#app')
 
 // 带齐三参的 URL 会被识别为 SSO 回调（history 与 hash 模式都支持）：
@@ -33,9 +34,9 @@ createApp(App).use(router).mount('#app')
     <template #description>
       简版前端 SSO：URL 同时带
       <code>username</code>、<code>roles</code>、<code>accessToken</code>
-      时，清空旧会话、写入本地，并用
-      <code>location.replace</code> 去掉敏感参数。history / hash 两种路由模式都支持，凭证在哪一段
-      query 就只清理哪一段。<code>main.ts</code> 里挂载前调用一次 <code>sso()</code> 即可。
+      时，清空旧会话、写入本地，并用 router 的 history 原地去掉敏感参数，页面不重载。history / hash
+      两种路由模式都支持，凭证在哪一段 query 就只清理哪一段。<code>main.ts</code> 里在
+      <code>app.use(router)</code> 之前调用一次 <code>sso(router)</code>。
     </template>
 
     <template #api>

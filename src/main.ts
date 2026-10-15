@@ -11,7 +11,7 @@ import { sso } from '@/utils/sso';
 import App from './App.vue';
 import { router } from './router';
 
-sso();
+sso(router);
 initComponentAdapter();
 
 createApp(App).use(router).use(ElementPlus, { locale: zhCn }).mount('#app');

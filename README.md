@@ -152,12 +152,13 @@ useSaveHotkey(saveNow);
 
 浏览器全局与 AppId / 开关通过 `options` 注入（`window`、`appId`、`enabled`、`mode` 等），`import.meta.env` 只作默认值。hash 路由读回调 `code` 时传 `mode: 'hash'`。
 
-SSO 不是 composable：挂载前显式调用 [`sso()`](src/utils/sso.ts)，不要 `import '@/utils/sso'`。
+SSO 不是 composable：在 `app.use(router)` 之前显式调用 [`sso(router)`](src/utils/sso.ts)，不要 `import '@/utils/sso'`。
 
 ```ts
 import { sso } from '@/utils/sso';
+import { router } from './router';
 
-sso();
+sso(router);
 createApp(App).use(router).mount('#app');
 ```
 
@@ -172,4 +173,4 @@ createApp(App).use(router).mount('#app');
 | `const [code, authorize] = useOauth2('snsapi_base')` | `const { code, authorize } = useOauth2({ scope: 'snsapi_base' })` |
 | `const [ready, $wx] = useWechat()`                   | `const { ready, wx } = useWechat()`                               |
 | `const [ready, $ww] = useWecom()`                    | `const { ready, ww } = useWecom()`                                |
-| `import '@/utils/sso'`                               | `import { sso } from '@/utils/sso'` 后调用 `sso()`                |
+| `import '@/utils/sso'`                               | `import { sso } from '@/utils/sso'` 后调用 `sso(router)`          |
