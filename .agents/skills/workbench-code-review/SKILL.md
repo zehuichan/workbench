@@ -8,7 +8,7 @@ description: >-
 
 # workbench 代码审查
 
-Prettier 管格式，这份清单管语义。先跑 `pnpm typecheck` 与 `pnpm test`，红的先修；绿了再往下。
+Oxfmt 管格式，这份清单管语义。先跑 `pnpm typecheck` 与 `pnpm test`，红的先修；绿了再往下。
 
 ## 真源
 
@@ -30,7 +30,7 @@ Prettier 管格式，这份清单管语义。先跑 `pnpm typecheck` 与 `pnpm t
 - 与任务无关的顺手改动（重命名、清理、多余文件、整文件格式化）单列出来，问要不要拆出去。
 - 删掉了看起来是有意为之的功能或代码：确认有人问过。
 
-## 风格核对（Prettier 管不到的）
+## 风格核对（Oxfmt 管不到的）
 
 - 命名：组件与类 `PascalCase`，变量 / 函数 / composable `camelCase`（`useXxx`），导出配置常量才用 `SCREAMING_SNAKE_CASE`。
 - 注释跟所在文件的现有语言。composable 的 JSDoc 保持英文，并带 `@example`。不要在功能 diff 里顺手翻译一整片注释。

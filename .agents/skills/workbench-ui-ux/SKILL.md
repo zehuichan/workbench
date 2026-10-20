@@ -8,7 +8,7 @@ description: >-
 
 # workbench UI / UX
 
-这份 skill 管判断题，不是清单：反馈出现在哪、复用哪一套控件、浮层在窗口边缘和两种主题下怎么表现。Prettier、`workbench-code-review` 的阻断项、以及 `.agents/skills/shadcn-vue/SKILL.md` 的 class / `cn()` 规则不在这里重复。
+这份 skill 管判断题，不是清单：反馈出现在哪、复用哪一套控件、浮层在窗口边缘和两种主题下怎么表现。Oxfmt、`workbench-code-review` 的阻断项、以及 `.agents/skills/shadcn-vue/SKILL.md` 的 class / `cn()` 规则不在这里重复。
 
 ## 真源
 

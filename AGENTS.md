@@ -26,20 +26,21 @@ Prefer the closest existing module. Demo routes stay under `src/views/<area>/`. 
 ## Commands
 
 ```sh
-pnpm install            # Node >=20.19, pnpm >=10 (packageManager pins 10.33.4); prepare enables husky
+pnpm install            # Node >=20.19, pnpm >=10 (packageManager pins 10.33.4); prepare installs lefthook
 pnpm dev                # Vite playground, http://localhost:9527
 pnpm typecheck          # vue-tsc
+pnpm lint               # oxfmt --check, oxlint --type-aware, eslint, stylelint
+pnpm format             # stylelint --fix, oxfmt, oxlint --fix, eslint --fix
+pnpm format:check       # oxfmt --check
 pnpm test               # Vitest, happy-dom
 pnpm test:benchmark     # Vitest bench, *.benchmark.ts
 pnpm build              # typecheck, then production assets
 pnpm preview
-pnpm format             # Prettier
-pnpm format:check
 pnpm clean              # node_modules, dist, and local residue
 pnpm reinstall          # clean, then install
 ```
 
-Pre-commit runs lint-staged (Prettier on staged files).
+Pre-commit (lefthook) runs oxlint, oxfmt, eslint, and stylelint on staged files, then a full typecheck. commit-msg runs commitlint (`commitlint.config.ts`).
 
 ### Run relevant checks locally
 
@@ -68,7 +69,7 @@ WeChat and WeCom demos read `VITE_WECHAT_APPID`, `VITE_WORK_WECHAT_CORP_ID`, `VI
 - **Keep comments local.** State the obligation the code cannot show. Do not restate the next line or narrate the change. Prose bans live in [workbench-code-review](.agents/skills/workbench-code-review/SKILL.md).
 - **Prefer symmetry for parallel values.** An unexplained one-off usually means a shared value was missed.
 - **Tests describe behavior.** Change obsolete behavior together with its tests. Do not assert private fields or call counts.
-- Naming: `PascalCase` components and classes, `camelCase` functions (`useXxx`), `SCREAMING_SNAKE_CASE` only for exported config constants. Prettier owns semicolons, single quotes, and trailing commas.
+- Naming: `PascalCase` components and classes, `camelCase` functions (`useXxx`), `SCREAMING_SNAKE_CASE` only for exported config constants. Oxfmt owns semicolons, single quotes, and trailing commas (`oxfmt.config.ts`).
 - Ask before deleting behavior that looks intentional.
 - TODO markers: `FIXME` blocks this change, `TODO` is deferred, `XXX` is a known hazard.
 - Files end with exactly one trailing newline.

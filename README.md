@@ -98,8 +98,8 @@ pnpm dev
 | `pnpm preview`      | 预览构建产物                   |
 | `pnpm typecheck`    | `vue-tsc` 类型检查             |
 | `pnpm test`         | Vitest（happy-dom）            |
-| `pnpm format`       | Prettier 格式化                |
-| `pnpm format:check` | Prettier 检查                  |
+| `pnpm format`       | Oxfmt 格式化                   |
+| `pnpm format:check` | Oxfmt 检查                     |
 | `pnpm clean`        | 清理 `node_modules`、`dist` 等 |
 | `pnpm reinstall`    | 深度清理后重新安装依赖         |
 
