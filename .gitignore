@@ -34,3 +34,7 @@ dist-ssr
 
 # Local git worktrees
 .worktrees/
+
+# vibe-harness:begin
+.agent-scratch/
+# vibe-harness:end

@@ -1,0 +1,187 @@
+{
+  "lockVersion": 1,
+  "kit": {
+    "repository": "https://github.com/zehuichan/vibe-harness",
+    "version": "0.1.1",
+    "ref": "v0.1.1",
+    "commit": "e159e73e92d8ddcc2ba4355e8d5036e7671eda81"
+  },
+  "variables": {
+    "PROJECT_NAME": "workbench"
+  },
+  "skills": [
+    "agent-experience",
+    "agent-notes",
+    "code-review",
+    "docs-standard",
+    "error-handling",
+    "find-simplifications",
+    "lifecycle-review",
+    "perf-evidence",
+    "pre-push-checks",
+    "prose-standard",
+    "record-browser-gif",
+    "responsive-ui",
+    "test-reliability",
+    "trim-cot-leakage",
+    "ui-ux-review",
+    "upgrade-guide",
+    "vibe-harness-bootstrap"
+  ],
+  "claude": "symlink",
+  "files": {
+    ".agents/notes/AGENTS.md": {
+      "source": "templates/agent-notes/AGENTS.md",
+      "upstream": "f54c42072d6956969c0eac8604cd70567a5219d04506f579a276236b59f8c2f4"
+    },
+    ".agents/notes/archived/AGENTS.md": {
+      "source": "templates/agent-notes/archived/AGENTS.md",
+      "upstream": "9043057ca8d26aae256b5828096c8cc2e9a27cc7463bacab027bb57d49f7eeab"
+    },
+    ".agents/notes/implemented/AGENTS.md": {
+      "source": "templates/agent-notes/implemented/AGENTS.md",
+      "upstream": "bb4589a8bff0f4646b96008d10a42d116e3a78e92b7999692f13824c472a2769"
+    },
+    ".agents/notes/README.md": {
+      "source": "templates/agent-notes/README.md",
+      "upstream": "84d09e4e791a2a5a9693b859dfe70a0b545188878f79b36e55ad3f182d89fbca"
+    },
+    ".agents/skills/agent-experience/SKILL.md": {
+      "source": "skills/agent-experience/SKILL.md",
+      "upstream": "6a60a2660f9b717ecaab99c548eccfe33b38facc3dacd1484f0a04e9d38f2d77"
+    },
+    ".agents/skills/agent-notes/SKILL.md": {
+      "source": "skills/agent-notes/SKILL.md",
+      "upstream": "c5db831a6893be8483b9bd9b37989d7103498ec71aee2b1ef22b5c89fdd3bb94"
+    },
+    ".agents/skills/code-review/SKILL.md": {
+      "source": "skills/code-review/SKILL.md",
+      "upstream": "a0a389a1bd8535c8d8f0037b1d01a28cce3a08c7af646e749b3386af7185daae"
+    },
+    ".agents/skills/docs-standard/references/page-structure.md": {
+      "source": "skills/docs-standard/references/page-structure.md",
+      "upstream": "a7a0a9f2ac3ac11563351c6bea7c49cd83107e6c6a9526197d8c2b598b36f285"
+    },
+    ".agents/skills/docs-standard/references/review.md": {
+      "source": "skills/docs-standard/references/review.md",
+      "upstream": "95db2227e1348d3c85f18c6a0e0530a3d530df9ced755e4674db5ed33f2424dd"
+    },
+    ".agents/skills/docs-standard/SKILL.md": {
+      "source": "skills/docs-standard/SKILL.md",
+      "upstream": "3ac1309527bdade0b3f27b851affd68038d1381168b58fa41d1b03b8601e1602"
+    },
+    ".agents/skills/error-handling/SKILL.md": {
+      "source": "skills/error-handling/SKILL.md",
+      "upstream": "3599d7fc4fa3fe35f1159409b24aed8b4f67b5f4ad432dcfe2783d032a3fe33f"
+    },
+    ".agents/skills/find-simplifications/references/patterns.md": {
+      "source": "skills/find-simplifications/references/patterns.md",
+      "upstream": "000b12074cbc8f13c0ccd3ca9eed9ffdd77853f394d5d1ceca56332bf6ba65a9"
+    },
+    ".agents/skills/find-simplifications/SKILL.md": {
+      "source": "skills/find-simplifications/SKILL.md",
+      "upstream": "63a3ab297511b01df9d17bb7c2e132f208cce4f033200146f8aab2a11bd459eb"
+    },
+    ".agents/skills/lifecycle-review/SKILL.md": {
+      "source": "skills/lifecycle-review/SKILL.md",
+      "upstream": "8e61220ca7ff44cfd4b5fa136b8a22d7f22ed2a5d0b431dec64ec3b07db3e11a"
+    },
+    ".agents/skills/perf-evidence/SKILL.md": {
+      "source": "skills/perf-evidence/SKILL.md",
+      "upstream": "1820961fe302f5200a4a76723064d91cb911d42dce46f5afc4d52aed94a889a2"
+    },
+    ".agents/skills/pre-push-checks/SKILL.md": {
+      "source": "skills/pre-push-checks/SKILL.md",
+      "upstream": "ee9dc64a13b600b3cac35e73b4031ee0feaeb8348f83c59cde565f5e9492f99e"
+    },
+    ".agents/skills/prose-standard/references/examples.md": {
+      "source": "skills/prose-standard/references/examples.md",
+      "upstream": "1579ba09567670c5a020444b90879532c84cba3cb1d5184d1e9605d1ed882dd8"
+    },
+    ".agents/skills/prose-standard/SKILL.md": {
+      "source": "skills/prose-standard/SKILL.md",
+      "upstream": "cab63f4bfb2f4a3f9c05426970651aaf8b14b6d40631a5db60e039a0661addaa"
+    },
+    ".agents/skills/record-browser-gif/scripts/encode_gif.py": {
+      "source": "skills/record-browser-gif/scripts/encode_gif.py",
+      "upstream": "34aa805990361bc9838267a767160bd209f3e113d844913d4370b98af8441a47"
+    },
+    ".agents/skills/record-browser-gif/scripts/test_encode_gif.py": {
+      "source": "skills/record-browser-gif/scripts/test_encode_gif.py",
+      "upstream": "b803ee933e13123ec4663e08243c207881c609a16abf158f944fa626e31272d5"
+    },
+    ".agents/skills/record-browser-gif/SKILL.md": {
+      "source": "skills/record-browser-gif/SKILL.md",
+      "upstream": "7a23363e08890c784a4317d1529e27d993844134d87ff7f2c567a2e4413374a2"
+    },
+    ".agents/skills/responsive-ui/SKILL.md": {
+      "source": "skills/responsive-ui/SKILL.md",
+      "upstream": "f17fbd3e9e2b221997d0c14732645094c63202b07d1826d08604b785b613781a"
+    },
+    ".agents/skills/test-reliability/references/ci-flake-diagnosis.md": {
+      "source": "skills/test-reliability/references/ci-flake-diagnosis.md",
+      "upstream": "4971741874f6bc1112ff925f45ff758dce39cc37a63257c79c6872aa7466fb30"
+    },
+    ".agents/skills/test-reliability/SKILL.md": {
+      "source": "skills/test-reliability/SKILL.md",
+      "upstream": "2aa5f87d417da24e6eafe9ec9e367905d366047362c24cb4e5ce7f7dc01c7466"
+    },
+    ".agents/skills/trim-cot-leakage/references/examples.md": {
+      "source": "skills/trim-cot-leakage/references/examples.md",
+      "upstream": "c38674864510113b0068b6e482b376da779e84476a0e058b501a5dbc42149664"
+    },
+    ".agents/skills/trim-cot-leakage/references/recall-batteries.md": {
+      "source": "skills/trim-cot-leakage/references/recall-batteries.md",
+      "upstream": "60e9a21c217870c091c7b38c0b51c3a635886679967b6f7c51ce51c3805435c6"
+    },
+    ".agents/skills/trim-cot-leakage/SKILL.md": {
+      "source": "skills/trim-cot-leakage/SKILL.md",
+      "upstream": "a72eb91133c36f0c7039f56606c13b9ee77eb5fe96c6af8853e8faa0ad1f1217"
+    },
+    ".agents/skills/ui-ux-review/SKILL.md": {
+      "source": "skills/ui-ux-review/SKILL.md",
+      "upstream": "e15a3a10ba0501f89dee6fcb6beb26d1742d939682030508e19c91632f803862"
+    },
+    ".agents/skills/upgrade-guide/references/template.md": {
+      "source": "skills/upgrade-guide/references/template.md",
+      "upstream": "1da07ee81401a2299c7b78036e96c7eec18b4f980535e86f85660d739e67f763"
+    },
+    ".agents/skills/upgrade-guide/SKILL.md": {
+      "source": "skills/upgrade-guide/SKILL.md",
+      "upstream": "6b4160612d5d416ff007fea98f9da1cae30b9366531c8502258a69621e7e77aa"
+    },
+    ".agents/skills/vibe-harness-bootstrap/SKILL.md": {
+      "source": "skills/vibe-harness-bootstrap/SKILL.md",
+      "upstream": "d1072a293ee0fd2c646682a6c22a789e8977eb17875bf426319c518f37940e93"
+    },
+    "docs/AGENTS.md": {
+      "source": "templates/docs-AGENTS.md",
+      "upstream": "434ac6a1292e2448bf3821b10777ee88c29335e15868e59b44cd2aea041ee971"
+    },
+    "docs/defensive-patterns/general.md": {
+      "source": "templates/defensive-patterns/general.md",
+      "upstream": "ceac005b78fa483f770e1299c1fa963416f8f1fc6aceceaa28fe10a86ceaab71"
+    },
+    "docs/defensive-patterns/README.md": {
+      "source": "templates/defensive-patterns/README.md",
+      "upstream": "5bc07ef1594868b1ae7722543ff50a8cbcf7f23575ff20efd0b8720198a6635c"
+    }
+  },
+  "blocks": {
+    ".gitignore": {
+      "source": "templates/gitignore.tmpl",
+      "upstream": "b878c97d49e3ab81e91dd81383554bcc53ac379fa26871cb9cd60f9fec3530dc"
+    },
+    "AGENTS.md": {
+      "source": "templates/AGENTS.md.tmpl",
+      "upstream": "dccbc59faf8f41f7725e6f717e334d36d851ae3b71d2e49c1068b9765e482009"
+    }
+  },
+  "seeds": {
+    ".agents/notes/proposed/.gitkeep": "created",
+    ".agents/notes/rejected/.gitkeep": "created",
+    ".agents/project-profile.md": "created",
+    "CLAUDE.md": "created"
+  },
+  "mirrors": []
+}
