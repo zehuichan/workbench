@@ -1,18 +1,15 @@
-import {
-  createApp,
-  effectScope,
-  ref,
-  watch,
-  type EffectScope,
-  type MaybeRefOrGetter,
-  type Ref,
-} from 'vue';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  useFormDraft,
-  type UseFormDraftOptions,
-  type UseFormDraftReturn,
+import type { EffectScope, MaybeRefOrGetter, Ref } from 'vue';
+
+import type {
+  UseFormDraftOptions,
+  UseFormDraftReturn,
 } from '../../use-form-draft/use-form-draft';
+
+import { createApp, effectScope, ref, watch } from 'vue';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { useFormDraft } from '../../use-form-draft/use-form-draft';
 
 interface FormState {
   name: string;
@@ -20,13 +17,20 @@ interface FormState {
 }
 
 /** Mirrors the positional signature while keeping the tests declarative. */
-type DraftSetup = UseFormDraftOptions<FormState> & { key?: MaybeRefOrGetter<string> };
+type DraftSetup = UseFormDraftOptions<FormState> & {
+  key?: MaybeRefOrGetter<string>;
+};
 
 describe('useFormDraft', () => {
   let scope: EffectScope;
 
-  const createDraft = (form: Ref<FormState>, { key = 'draft', ...options }: DraftSetup = {}) => {
-    const draft = scope.run(() => useFormDraft(form, key, { debounceMs: 100, ...options }));
+  const createDraft = (
+    form: Ref<FormState>,
+    { key = 'draft', ...options }: DraftSetup = {},
+  ) => {
+    const draft = scope.run(() =>
+      useFormDraft(form, key, { debounceMs: 100, ...options }),
+    );
 
     if (!draft) throw new Error('effect scope did not return a draft');
     return draft;
@@ -331,10 +335,14 @@ describe('useFormDraft', () => {
       defaults: { name: 'default', note: 'fallback' },
     });
     const merge = vi.fn(
-      (stored: Partial<FormState>, current: FormState, defaults: Partial<FormState>) => {
+      (
+        stored: Partial<FormState>,
+        current: FormState,
+        defaults: Partial<FormState>,
+      ) => {
         const next = { ...defaults, ...current };
         for (const [key, value] of Object.entries(stored)) {
-          if (value == null || value === '') continue;
+          if (value === null || value === undefined || value === '') continue;
           next[key as keyof FormState] = value as never;
         }
         return next as FormState;
@@ -364,7 +372,9 @@ describe('useFormDraft', () => {
     omitKeys.value = [];
     form.value = { name: 'Grace', note: 'visible' };
     vi.runAllTimers();
-    expect(localStorage.getItem('draft')).toBe('{"name":"Grace","note":"visible"}');
+    expect(localStorage.getItem('draft')).toBe(
+      '{"name":"Grace","note":"visible"}',
+    );
   });
 
   it('strips omitted keys from a stored draft during restore', () => {

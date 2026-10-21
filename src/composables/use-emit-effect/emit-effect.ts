@@ -1,9 +1,11 @@
 import { cloneDeep, isEqual, isPlainObject } from 'es-toolkit';
 
-export type MaybePromise<T> = T | Promise<T>;
+import { defined } from '@/utils/defined';
+
+export type MaybePromise<T> = Promise<T> | T;
 
 /** Returning `undefined` keeps the field's current value. */
-export type Resolver<Ctx, V> = (ctx: Ctx) => MaybePromise<V | undefined>;
+export type Resolver<Ctx, V> = (ctx: Ctx) => MaybePromise<undefined | V>;
 
 /** Always follows the formula; user edits are overwritten. */
 export interface ComputeRule<Ctx, V> {
@@ -13,12 +15,15 @@ export interface ComputeRule<Ctx, V> {
 
 /** Suggested value the user may override; re-derived when a same-level dependency changes. */
 export interface DefaultRule<Ctx, V> {
-  default: Resolver<Ctx, V>;
   confirm?: boolean;
+  default: Resolver<Ctx, V>;
 }
 
 /** A bare function is shorthand for `{ compute }`. */
-export type FieldRule<Ctx, V> = Resolver<Ctx, V> | ComputeRule<Ctx, V> | DefaultRule<Ctx, V>;
+export type FieldRule<Ctx, V> =
+  | ComputeRule<Ctx, V>
+  | DefaultRule<Ctx, V>
+  | Resolver<Ctx, V>;
 
 export interface FormCtx<F> {
   form: F;
@@ -45,15 +50,17 @@ export type EmitEffectRules<F> = {
     : FieldRule<FormCtx<F>, F[K]>;
 };
 
-export function defineEmitRules<F extends object>(rules: EmitEffectRules<F>): EmitEffectRules<F> {
+export function defineEmitRules<F extends object>(
+  rules: EmitEffectRules<F>,
+): EmitEffectRules<F> {
   return rules;
 }
 
 /** Header field (`{ field }`) or row field (`{ entity, rowId, field }`). */
 export interface FieldRef {
   entity?: string;
-  rowId?: string;
   field: string;
+  rowId?: string;
 }
 
 export interface FieldChange extends FieldRef {
@@ -62,19 +69,19 @@ export interface FieldChange extends FieldRef {
 
 /** Built once per propagation when a header change makes `confirm` rules rewrite values. */
 export interface EmitEffectConfirmation {
-  field: string;
-  oldValue: unknown;
-  newValue: unknown;
   /** Nodes with `confirm: true` whose value changed. */
   affected: FieldRef[];
+  field: string;
+  newValue: unknown;
+  oldValue: unknown;
   /** Nodes with `confirm: true` kept because they were manually set. */
   preservedCount: number;
 }
 
 export interface ResolvedRule {
+  confirm: boolean;
   kind: 'compute' | 'default';
   run: Resolver<unknown, unknown>;
-  confirm: boolean;
 }
 
 export interface ManualLookup {
@@ -83,28 +90,28 @@ export interface ManualLookup {
 
 export interface HeaderTrigger {
   field: string;
-  oldValue: unknown;
   newValue: unknown;
+  oldValue: unknown;
 }
 
 export interface PropagateOptions {
-  /** Current form values; never mutated. */
-  form: object;
-  /** Stable row ids per entity, aligned with the array indexes. */
-  rowIds: Record<string, string[]>;
-  manual: ManualLookup;
-  /** Dependency keys changed since the last propagation (see `headerKey` / `rowFieldKey` / `entityKey`). */
-  dirty?: Iterable<string>;
-  /** Fields the user edited this round; their `default` rules are not re-derived. */
-  triggers?: FieldRef[];
-  /** Set when exactly one header field changed; enables confirmation collection. */
-  headerTrigger?: HeaderTrigger;
-  /** Nodes to re-derive regardless of manual state (restore). */
-  force?: FieldRef[];
   /** Treat every node as never run (normalize / hydrate). */
   all?: boolean;
+  /** Dependency keys changed since the last propagation (see `headerKey` / `rowFieldKey` / `entityKey`). */
+  dirty?: Iterable<string>;
   /** Record dependencies only; emit no changes. */
   dryRun?: boolean;
+  /** Nodes to re-derive regardless of manual state (restore). */
+  force?: FieldRef[];
+  /** Current form values; never mutated. */
+  form: object;
+  /** Set when exactly one header field changed; enables confirmation collection. */
+  headerTrigger?: HeaderTrigger;
+  manual: ManualLookup;
+  /** Stable row ids per entity, aligned with the array indexes. */
+  rowIds: Record<string, string[]>;
+  /** Fields the user edited this round; their `default` rules are not re-derived. */
+  triggers?: FieldRef[];
 }
 
 export interface PropagateResult {
@@ -117,29 +124,36 @@ export interface PropagateResult {
 export interface EmitEngine {
   /** Fields whose rule is a row-rule table. */
   entities: string[];
-  ruleOf: (ref: FieldRef) => ResolvedRule | undefined;
   propagate: (options: PropagateOptions) => Promise<PropagateResult>;
   /** Forget every recorded dependency (hydrate). */
   reset: () => void;
+  ruleOf: (ref: FieldRef) => ResolvedRule | undefined;
 }
 
-const SEP = '\u001f';
+const SEP = '\u001F';
 export const MAX_ROUNDS = 20;
 
 export const headerKey = (field: string): string => field;
 export const entityKey = (entity: string): string => entity;
-export const rowFieldKey = (entity: string, rowId: string, field: string): string =>
-  `${entity}${SEP}${rowId}${SEP}${field}`;
+export const rowFieldKey = (
+  entity: string,
+  rowId: string,
+  field: string,
+): string => `${entity}${SEP}${rowId}${SEP}${field}`;
 
 export function refKey(ref: FieldRef): string {
-  return ref.entity !== undefined
-    ? rowFieldKey(ref.entity, ref.rowId ?? '', ref.field)
-    : headerKey(ref.field);
+  return ref.entity === undefined
+    ? headerKey(ref.field)
+    : rowFieldKey(ref.entity, ref.rowId ?? '', ref.field);
 }
 
 export function resolveRule(rule: unknown): ResolvedRule | undefined {
   if (typeof rule === 'function') {
-    return { kind: 'compute', run: rule as Resolver<unknown, unknown>, confirm: false };
+    return {
+      kind: 'compute',
+      run: rule as Resolver<unknown, unknown>,
+      confirm: false,
+    };
   }
   if (!isPlainObject(rule)) return undefined;
   const candidate = rule as Record<string, unknown>;
@@ -152,7 +166,10 @@ export function resolveRule(rule: unknown): ResolvedRule | undefined {
   if (extraKeys.length > 0) return undefined;
   return {
     kind: hasCompute ? 'compute' : 'default',
-    run: (hasCompute ? candidate.compute : candidate.default) as Resolver<unknown, unknown>,
+    run: (hasCompute ? candidate.compute : candidate.default) as Resolver<
+      unknown,
+      unknown
+    >,
     confirm: candidate.confirm === true,
   };
 }
@@ -169,7 +186,9 @@ export function detectEntities(form: object, rules: object): Set<string> {
     if (isRowRules(rule)) entities.add(field);
   }
   for (const [field, value] of Object.entries(form)) {
-    if (Array.isArray(value) && value.every(isPlainObject)) entities.add(field);
+    if (Array.isArray(value) && value.every((item) => isPlainObject(item))) {
+      entities.add(field);
+    }
   }
   return entities;
 }
@@ -179,24 +198,26 @@ export function isEmptyValue(value: unknown): boolean {
 }
 
 interface Node {
+  entity?: string;
+  index?: number;
   key: string;
   ref: FieldRef;
-  rule: ResolvedRule;
-  entity?: string;
   rowId?: string;
-  index?: number;
+  rule: ResolvedRule;
 }
 
-type Plan = 'skip' | 'dry' | 'write';
+type Plan = 'dry' | 'skip' | 'write';
 
 function rejectWrite(): never {
-  throw new Error('[useEmitEffect] 规则函数不能直接写字段，请通过返回值给出结果。');
+  throw new Error(
+    '[useEmitEffect] 规则函数不能直接写字段，请通过返回值给出结果。',
+  );
 }
 
 interface Tracker {
   form: Record<string, unknown>;
-  rows: (entity: string) => unknown[];
   row: (entity: string, index: number) => Record<string, unknown>;
+  rows: (entity: string) => unknown[];
 }
 
 function createTracker(
@@ -213,7 +234,10 @@ function createTracker(
     const cached = rowProxies.get(cacheKey);
     if (cached) return cached;
     const list = snapshot[entity];
-    const target = (Array.isArray(list) ? list[index] : undefined) as Record<string, unknown>;
+    const target = (Array.isArray(list) ? list[index] : undefined) as Record<
+      string,
+      unknown
+    >;
     const rowId = rowIds[entity]?.[index] ?? String(index);
     const proxy = new Proxy(target, {
       get(obj, prop, receiver) {
@@ -237,7 +261,9 @@ function createTracker(
       get(arr, prop, receiver) {
         if (typeof prop === 'string' && /^\d+$/.test(prop)) {
           const index = Number(prop);
-          return isPlainObject(arr[index]) ? row(entity, index) : Reflect.get(arr, prop, receiver);
+          return isPlainObject(arr[index])
+            ? row(entity, index)
+            : Reflect.get(arr, prop, receiver);
         }
         return Reflect.get(arr, prop, receiver);
       },
@@ -268,16 +294,20 @@ function createTracker(
 function readNode(snapshot: Record<string, unknown>, node: Node): unknown {
   if (node.entity === undefined) return snapshot[node.ref.field];
   const list = snapshot[node.entity] as Record<string, unknown>[];
-  return list[node.index!]?.[node.ref.field];
+  return list[defined(node.index)]?.[node.ref.field];
 }
 
-function writeNode(snapshot: Record<string, unknown>, node: Node, value: unknown): void {
+function writeNode(
+  snapshot: Record<string, unknown>,
+  node: Node,
+  value: unknown,
+): void {
   if (node.entity === undefined) {
     snapshot[node.ref.field] = value;
     return;
   }
   const list = snapshot[node.entity] as Record<string, unknown>[];
-  list[node.index!]![node.ref.field] = value;
+  defined(list[defined(node.index)])[node.ref.field] = value;
 }
 
 /**
@@ -292,21 +322,30 @@ function writeNode(snapshot: Record<string, unknown>, node: Node, value: unknown
  * const engine = createEmitEngine(rules)
  * const { changes } = await engine.propagate({ form, rowIds, manual, dirty: [headerKey('currency')] })
  */
-export function createEmitEngine<F extends object>(rules: EmitEffectRules<F>): EmitEngine {
+export function createEmitEngine<F extends object>(
+  rules: EmitEffectRules<F>,
+): EmitEngine {
   const ruleTable = rules as Record<string, unknown>;
   const deps = new Map<string, Set<string>>();
-  const entities = Object.keys(ruleTable).filter((field) => isRowRules(ruleTable[field]));
+  const entities = Object.keys(ruleTable).filter((field) =>
+    isRowRules(ruleTable[field]),
+  );
 
   function ruleOf(ref: FieldRef): ResolvedRule | undefined {
     if (ref.entity === undefined) {
-      return isRowRules(ruleTable[ref.field]) ? undefined : resolveRule(ruleTable[ref.field]);
+      return isRowRules(ruleTable[ref.field])
+        ? undefined
+        : resolveRule(ruleTable[ref.field]);
     }
     const table = ruleTable[ref.entity];
     if (!isRowRules(table)) return undefined;
     return resolveRule((table as Record<string, unknown>)[ref.field]);
   }
 
-  function buildNodes(snapshot: Record<string, unknown>, rowIds: Record<string, string[]>): Node[] {
+  function buildNodes(
+    snapshot: Record<string, unknown>,
+    rowIds: Record<string, string[]>,
+  ): Node[] {
     const nodes: Node[] = [];
     for (const field of Object.keys(ruleTable)) {
       const rule = ruleTable[field];
@@ -316,12 +355,22 @@ export function createEmitEngine<F extends object>(rules: EmitEffectRules<F>): E
         const table = rule as Record<string, unknown>;
         const fieldRules = Object.keys(table)
           .map((rowField) => [rowField, resolveRule(table[rowField])] as const)
-          .filter((entry): entry is readonly [string, ResolvedRule] => entry[1] !== undefined);
+          .filter(
+            (entry): entry is readonly [string, ResolvedRule] =>
+              entry[1] !== undefined,
+          );
         list.forEach((_row, index) => {
           const rowId = rowIds[field]?.[index] ?? String(index);
           for (const [rowField, resolved] of fieldRules) {
             const ref: FieldRef = { entity: field, rowId, field: rowField };
-            nodes.push({ key: refKey(ref), ref, rule: resolved, entity: field, rowId, index });
+            nodes.push({
+              key: refKey(ref),
+              ref,
+              rule: resolved,
+              entity: field,
+              rowId,
+              index,
+            });
           }
         });
         continue;
@@ -347,18 +396,24 @@ export function createEmitEngine<F extends object>(rules: EmitEffectRules<F>): E
    */
   function originOfKey(key: string, entitySet: Set<string>): string {
     const first = key.indexOf(SEP);
-    if (first >= 0) {
+    if (first !== -1) {
       const second = key.indexOf(SEP, first + 1);
-      return second >= 0 ? key.slice(0, second) : key;
+      return second === -1 ? key : key.slice(0, second);
     }
     return entitySet.has(key) ? `#entity${SEP}${key}` : '#header';
   }
 
   function levelOf(node: Node): string {
-    return node.entity === undefined ? '#header' : `${node.entity}${SEP}${node.rowId}`;
+    return node.entity === undefined
+      ? '#header'
+      : `${node.entity}${SEP}${node.rowId}`;
   }
 
-  function addDirty(dirty: Map<string, Set<string>>, key: string, origins: Iterable<string>): void {
+  function addDirty(
+    dirty: Map<string, Set<string>>,
+    key: string,
+    origins: Iterable<string>,
+  ): void {
     let set = dirty.get(key);
     if (!set) {
       set = new Set();
@@ -367,17 +422,23 @@ export function createEmitEngine<F extends object>(rules: EmitEffectRules<F>): E
     for (const origin of origins) set.add(origin);
   }
 
-  async function propagate(options: PropagateOptions): Promise<PropagateResult> {
+  async function propagate(
+    options: PropagateOptions,
+  ): Promise<PropagateResult> {
     const snapshot = cloneDeep(options.form) as Record<string, unknown>;
     const entitySet = detectEntities(snapshot, ruleTable);
     const nodes = buildNodes(snapshot, options.rowIds);
     pruneDeps(nodes);
 
-    const triggers = new Set((options.triggers ?? []).map(refKey));
-    const force = new Set((options.force ?? []).map(refKey));
-    const collectConfirm = options.headerTrigger !== undefined && !options.dryRun;
+    const triggers = new Set(
+      (options.triggers ?? []).map((ref) => refKey(ref)),
+    );
+    const force = new Set((options.force ?? []).map((ref) => refKey(ref)));
+    const collectConfirm =
+      options.headerTrigger !== undefined && !options.dryRun;
     let dirty = new Map<string, Set<string>>();
-    for (const key of options.dirty ?? []) addDirty(dirty, key, [originOfKey(key, entitySet)]);
+    for (const key of options.dirty ?? [])
+      addDirty(dirty, key, [originOfKey(key, entitySet)]);
 
     const changes = new Map<string, FieldChange>();
     const clearedManual: FieldRef[] = [];
@@ -412,7 +473,12 @@ export function createEmitEngine<F extends object>(rules: EmitEffectRules<F>): E
         if (options.all || force.has(node.key)) return true;
         const recorded = deps.get(node.key);
         if (!recorded) return true;
-        if (round === 0 && node.rule.kind === 'compute' && triggers.has(node.key)) return true;
+        if (
+          round === 0 &&
+          node.rule.kind === 'compute' &&
+          triggers.has(node.key)
+        )
+          return true;
         for (const key of recorded) if (dirty.has(key)) return true;
         return false;
       });
@@ -433,13 +499,18 @@ export function createEmitEngine<F extends object>(rules: EmitEffectRules<F>): E
         if (plan === 'skip') continue;
 
         const reads = new Set<string>();
-        const tracker = createTracker(snapshot, options.rowIds, entitySet, (key) => reads.add(key));
+        const tracker = createTracker(
+          snapshot,
+          options.rowIds,
+          entitySet,
+          (key) => reads.add(key),
+        );
         const ctx =
           node.entity === undefined
             ? { form: tracker.form }
             : {
                 form: tracker.form,
-                row: tracker.row(node.entity, node.index!),
+                row: tracker.row(node.entity, defined(node.index)),
                 rows: tracker.rows(node.entity),
               };
 
@@ -450,7 +521,8 @@ export function createEmitEngine<F extends object>(rules: EmitEffectRules<F>): E
           writeNode(snapshot, node, value);
           changes.set(node.key, { ...node.ref, value });
           addDirty(nextDirty, node.key, hitOrigins);
-          if (node.rule.confirm && collectConfirm) affected.set(node.key, node.ref);
+          if (node.rule.confirm && collectConfirm)
+            affected.set(node.key, node.ref);
         };
 
         let output: unknown;
@@ -486,10 +558,13 @@ export function createEmitEngine<F extends object>(rules: EmitEffectRules<F>): E
       );
     }
 
-    const result: PropagateResult = { changes: [...changes.values()], clearedManual };
+    const result: PropagateResult = {
+      changes: [...changes.values()],
+      clearedManual,
+    };
     if (collectConfirm && affected.size > 0) {
       result.confirmation = {
-        ...options.headerTrigger!,
+        ...defined(options.headerTrigger),
         affected: [...affected.values()],
         preservedCount,
       };
@@ -513,5 +588,8 @@ function describe(node: Node): string {
 
 function ruleError(node: Node, cause: unknown): Error {
   const reason = cause instanceof Error ? cause.message : String(cause);
-  return new Error(`[useEmitEffect] 规则 ${describe(node)} 执行失败：${reason}`, { cause });
+  return new Error(
+    `[useEmitEffect] 规则 ${describe(node)} 执行失败：${reason}`,
+    { cause },
+  );
 }

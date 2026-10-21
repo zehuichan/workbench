@@ -1,12 +1,16 @@
-import { createApp, effectScope, ref, watch, type EffectScope, type Ref } from 'vue';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  useAutoSave,
-  type AutoSaveHandler,
-  type UseAutoSaveOptions,
-  type UseAutoSaveReturn,
+import type { EffectScope, MaybeRefOrGetter, Ref } from 'vue';
+
+import type {
+  AutoSaveHandler,
+  UseAutoSaveOptions,
+  UseAutoSaveReturn,
 } from '../../use-auto-save/use-auto-save';
-import type { MaybeRefOrGetter } from 'vue';
+
+import { createApp, effectScope, ref, watch } from 'vue';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { useAutoSave } from '../../use-auto-save/use-auto-save';
 
 interface FormState {
   name: string;
@@ -14,8 +18,8 @@ interface FormState {
 
 /** Mirrors the positional signature while keeping the tests declarative. */
 type AutoSaveSetup = UseAutoSaveOptions<FormState> & {
-  source: MaybeRefOrGetter<FormState>;
   save: AutoSaveHandler<FormState>;
+  source: MaybeRefOrGetter<FormState>;
 };
 
 function deferred() {
@@ -192,7 +196,7 @@ describe('useAutoSave', () => {
     const source = ref<FormState>({ name: '' });
     const onError = vi.fn();
     const save = vi
-      .fn<(value: FormState) => void | Promise<void>>()
+      .fn<(value: FormState) => Promise<void> | void>()
       .mockRejectedValueOnce(failure)
       .mockResolvedValueOnce();
     const autoSave = createAutoSave({

@@ -1,3 +1,5 @@
+import type { MaybeRefOrGetter } from 'vue';
+
 import {
   getCurrentInstance,
   getCurrentScope,
@@ -6,8 +8,8 @@ import {
   onMounted,
   toValue,
   watch,
-  type MaybeRefOrGetter,
 } from 'vue';
+
 import { tryOnScopeDispose } from '@vueuse/core';
 
 import { registerSaveHotkey } from './save-hotkey-registry';
@@ -41,15 +43,15 @@ function collectRenderedElements(
 ): Element[] {
   if (typeof value !== 'object' || value === null) return result;
   const vnode = value as {
-    el?: unknown;
-    type?: unknown;
-    component?: { subTree?: unknown } | null;
-    suspense?: { activeBranch?: unknown } | null;
     children?: unknown;
+    component?: null | { subTree?: unknown };
+    el?: unknown;
+    suspense?: null | { activeBranch?: unknown };
+    type?: unknown;
   };
   const element = asElement(vnode.el);
-  if (element && collectRoot) {
-    if (!result.includes(element)) result.push(element);
+  if (element && collectRoot && !result.includes(element)) {
+    result.push(element);
   }
 
   const isTeleport =
@@ -59,7 +61,11 @@ function collectRenderedElements(
   const collectChildren = isTeleport || (collectRoot && !element);
 
   collectRenderedElements(vnode.component?.subTree, result, collectChildren);
-  collectRenderedElements(vnode.suspense?.activeBranch, result, collectChildren);
+  collectRenderedElements(
+    vnode.suspense?.activeBranch,
+    result,
+    collectChildren,
+  );
   if (Array.isArray(vnode.children)) {
     for (const child of vnode.children) {
       collectRenderedElements(child, result, collectChildren);
@@ -69,13 +75,13 @@ function collectRenderedElements(
 }
 
 /** Save operation shared with the primary save action. */
-export type SaveHotkeyHandler = () => void | Promise<void>;
+export type SaveHotkeyHandler = () => Promise<void> | void;
 
 export interface UseSaveHotkeyOptions {
-  /** Whether the registered entry may currently execute. */
-  enabled?: MaybeRefOrGetter<boolean>;
   /** Whether a mounted page or dialog currently owns the shortcut. */
   active?: MaybeRefOrGetter<boolean>;
+  /** Whether the registered entry may currently execute. */
+  enabled?: MaybeRefOrGetter<boolean>;
   /** Receives handler and reactive predicate failures. */
   onError?: (error: unknown) => void;
 }
@@ -108,7 +114,9 @@ export function useSaveHotkey(
     getCurrentScope() !== Reflect.get(instance, 'scope') ||
     typeof Reflect.get(instance, 'render') === 'function'
   ) {
-    throw new Error('[useSaveHotkey] must be called synchronously during component setup.');
+    throw new Error(
+      '[useSaveHotkey] must be called synchronously during component setup.',
+    );
   }
   const owner = instance.appContext.app;
 
@@ -131,8 +139,8 @@ export function useSaveHotkey(
     }
     try {
       onError(error);
-    } catch (onErrorFailure) {
-      console.error('[useSaveHotkey] Error handler failed.', onErrorFailure);
+    } catch (error_) {
+      console.error('[useSaveHotkey] Error handler failed.', error_);
     }
   };
 
@@ -144,7 +152,7 @@ export function useSaveHotkey(
   /** 成功求值带递增版本，确保异常恢复为相同布尔值时仍会重新注册。 */
   let activeEvaluation = 0;
   let activeValue = false;
-  const readActive = (): { value: boolean; evaluation: number } => {
+  const readActive = (): { evaluation: number; value: boolean } => {
     try {
       return {
         value: toValue(active),
@@ -161,13 +169,15 @@ export function useSaveHotkey(
   activeValue = readActive().value;
 
   const resolveAppScope = (): Node | null => {
-    const container = (instance.appContext.app as { _container?: unknown })._container;
-    const root = asNode(instance.root.subTree?.el) ?? asNode(instance.root.vnode.el);
+    const container = (instance.appContext.app as { _container?: unknown })
+      ._container;
+    const root =
+      asNode(instance.root.subTree?.el) ?? asNode(instance.root.vnode.el);
     return asAppScope(container) ?? asAppScope(root?.parentNode);
   };
 
   const resolveScopes = (fallback: Node | null): Node[] => {
-    let current: typeof instance | null = instance;
+    let current: null | typeof instance = instance;
     while (current) {
       const elements = collectRenderedElements(current.subTree);
       if (elements.length > 0) return elements;
