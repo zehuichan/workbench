@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import WorkbenchMark from '@/components/brand/workbench-mark.vue';
+import logoMarkup from '../assets/logo.svg?raw';
 
 defineOptions({ name: 'SiteFooter' });
+
+const copyright =
+  '© Workbench contributors · Vue 3 business data entry playground';
 
 const columns = [
   {
@@ -30,12 +33,10 @@ const columns = [
       class="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 py-12 sm:flex-row sm:justify-between"
     >
       <div>
-        <div
-          class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight"
-        >
-          <WorkbenchMark :size="20" />
-          <span>Workbench</span>
-        </div>
+        <span
+          class="inline-flex text-foreground [&_svg]:block [&_svg]:h-7 [&_svg]:w-[122.5px] [&_text]:[fill:currentColor]"
+          v-html="logoMarkup"
+        ></span>
         <p
           class="mt-3 text-[13.5px] leading-relaxed whitespace-nowrap text-muted-foreground"
         >
@@ -68,7 +69,7 @@ const columns = [
       <div
         class="mx-auto flex w-full max-w-[1200px] flex-col gap-2 px-6 py-5 text-[12px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
       >
-        <span>© Workbench contributors · Vue 3 business data entry playground</span>
+        <span>{{ copyright }}</span>
         <a
           href="https://github.com/zehuichan/workbench"
           target="_blank"

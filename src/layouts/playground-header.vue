@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import WorkbenchMark from '@/components/brand/workbench-mark.vue';
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuList,
 } from '@/ui/navigation-menu';
 import { cn } from '@/utils';
+
+import logoMarkup from '../assets/logo.svg?raw';
 
 defineOptions({ name: 'PlaygroundHeader' });
 
@@ -28,13 +29,12 @@ function onSelect(key: string, disabled: boolean) {
   <header
     class="z-20 flex h-14 shrink-0 items-stretch justify-between border-b border-border bg-background px-6"
   >
-    <RouterLink
-      to="/"
-      class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-foreground"
-      aria-label="Workbench 首页"
-    >
-      <WorkbenchMark />
-      <span>Workbench</span>
+    <RouterLink to="/" class="flex items-center" aria-label="Workbench 首页">
+      <span
+        class="text-foreground [&_svg]:block [&_svg]:h-7 [&_svg]:w-[122.5px] [&_text]:[fill:currentColor]"
+        aria-hidden="true"
+        v-html="logoMarkup"
+      ></span>
     </RouterLink>
 
     <div class="flex items-stretch gap-1 self-stretch">

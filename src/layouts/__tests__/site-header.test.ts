@@ -45,7 +45,9 @@ describe('site-header', () => {
     const brand = host.querySelector('a[href="/"]') as HTMLAnchorElement | null;
 
     expect(brand).toBeTruthy();
-    expect(defined(brand).textContent).toContain('Workbench');
+    expect(
+      defined(brand).querySelector('svg')?.getAttribute('aria-label'),
+    ).toBe('Workbench');
   });
 
   it('keeps only the GitHub entry beside the brand', async () => {

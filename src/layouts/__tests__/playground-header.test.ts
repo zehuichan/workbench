@@ -101,7 +101,9 @@ describe('playground-header', () => {
     });
     const brand = host.querySelector('a[href="/"]') as HTMLAnchorElement | null;
     expect(brand).toBeTruthy();
-    expect(defined(brand).textContent).toContain('Workbench');
+    expect(
+      defined(brand).querySelector('svg')?.getAttribute('aria-label'),
+    ).toBe('Workbench');
   });
 
   it('renders a GitHub repository link', async () => {
