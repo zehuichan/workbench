@@ -1,7 +1,9 @@
-import { beforeAll, describe, expect, it } from 'vitest';
-import { ElCheckbox, ElSwitch } from 'element-plus';
+import type { ComponentType } from '../index';
 
-import { initComponentAdapter, useGlobalShareState, type ComponentType } from '../index';
+import { ElCheckbox, ElSwitch } from 'element-plus';
+import { beforeAll, describe, expect, it } from 'vitest';
+
+import { initComponentAdapter, useGlobalShareState } from '../index';
 
 const EXPECTED_KEYS: ComponentType[] = [
   'checkbox',

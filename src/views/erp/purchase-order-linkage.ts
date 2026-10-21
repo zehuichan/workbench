@@ -1,40 +1,42 @@
 import type { PlusTableColumnDef } from '@/components/plus-table';
+
 import { defineEmitRules } from '@/composables';
+
 import { money, optionLabel, sum } from './emit-helpers';
 import {
   CURRENCY_OPTIONS,
   EXCHANGE_RATES,
-  MATERIAL_OPTIONS,
-  WAREHOUSE_OPTIONS,
   fetchPurchasePrice,
+  MATERIAL_OPTIONS,
   supplierOf,
+  WAREHOUSE_OPTIONS,
 } from './mock-master-data';
 
 export interface PurchaseOrderLine {
+  amount: null | number;
+  currency: null | string;
   id: number;
-  materialId: string | null;
-  quantity: number | null;
-  currency: string | null;
-  warehouseId: string | null;
-  unitPrice: number | null;
-  taxRate: number | null;
-  amount: number | null;
-  localAmount: number | null;
+  localAmount: null | number;
+  materialId: null | string;
+  quantity: null | number;
+  taxRate: null | number;
+  unitPrice: null | number;
+  warehouseId: null | string;
 }
 
 export interface PurchaseOrderForm {
-  id: number | null;
-  documentNo: string | null;
-  supplierId: string | null;
-  paymentTermDays: number | null;
-  currency: string | null;
-  exchangeRate: number | null;
-  warehouseId: string | null;
-  taxRate: number | null;
-  totalQty: number | null;
-  totalAmount: number | null;
-  totalLocalAmount: number | null;
+  currency: null | string;
+  documentNo: null | string;
+  exchangeRate: null | number;
+  id: null | number;
   lines: PurchaseOrderLine[];
+  paymentTermDays: null | number;
+  supplierId: null | string;
+  taxRate: null | number;
+  totalAmount: null | number;
+  totalLocalAmount: null | number;
+  totalQty: null | number;
+  warehouseId: null | string;
 }
 
 export const defaultPurchaseOrderForm: PurchaseOrderForm = {
@@ -77,8 +79,8 @@ export function createPurchaseOrderSeed(): PurchaseOrderForm {
     warehouseId: 'WH-SH',
     taxRate: 0.13,
     totalQty: 30,
-    totalAmount: 17967,
-    totalLocalAmount: 17967,
+    totalAmount: 17_967,
+    totalLocalAmount: 17_967,
     lines: [
       {
         id: 1,
@@ -88,8 +90,8 @@ export function createPurchaseOrderSeed(): PurchaseOrderForm {
         warehouseId: 'WH-SH',
         unitPrice: 950,
         taxRate: 0.13,
-        amount: 10735,
-        localAmount: 10735,
+        amount: 10_735,
+        localAmount: 10_735,
       },
       {
         id: 2,
@@ -107,7 +109,9 @@ export function createPurchaseOrderSeed(): PurchaseOrderForm {
 }
 
 export const purchaseOrderRules = defineEmitRules<PurchaseOrderForm>({
-  paymentTermDays: { default: ({ form }) => supplierOf(form.supplierId)?.paymentTermDays },
+  paymentTermDays: {
+    default: ({ form }) => supplierOf(form.supplierId)?.paymentTermDays,
+  },
   exchangeRate: { default: ({ form }) => EXCHANGE_RATES[form.currency ?? ''] },
   totalQty: ({ form }) => sum(form.lines, 'quantity'),
   totalAmount: ({ form }) => sum(form.lines, 'amount'),
@@ -117,12 +121,16 @@ export const purchaseOrderRules = defineEmitRules<PurchaseOrderForm>({
     warehouseId: { default: ({ form }) => form.warehouseId },
     taxRate: { default: ({ form }) => form.taxRate },
     unitPrice: {
-      default: ({ row, form }) => fetchPurchasePrice(row.materialId, form.supplierId),
+      default: ({ row, form }) =>
+        fetchPurchasePrice(row.materialId, form.supplierId),
       confirm: true,
     },
     amount: ({ row }) =>
-      money((row.quantity ?? 0) * (row.unitPrice ?? 0) * (1 + (row.taxRate ?? 0))),
-    localAmount: ({ row, form }) => money((row.amount ?? 0) * (form.exchangeRate ?? 0)),
+      money(
+        (row.quantity ?? 0) * (row.unitPrice ?? 0) * (1 + (row.taxRate ?? 0)),
+      ),
+    localAmount: ({ row, form }) =>
+      money((row.amount ?? 0) * (form.exchangeRate ?? 0)),
   },
 });
 
@@ -136,7 +144,11 @@ export const PURCHASE_FIELD_LABELS: Record<string, string> = {
   unitPrice: '采购单价',
 };
 
-export const purchaseOrderManualFields = ['warehouseId', 'taxRate', 'unitPrice'] as const;
+export const purchaseOrderManualFields = [
+  'warehouseId',
+  'taxRate',
+  'unitPrice',
+] as const;
 
 export const purchaseOrderColumns: PlusTableColumnDef[] = [
   { type: 'index', label: '#', width: 54 },
@@ -147,7 +159,8 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: MATERIAL_OPTIONS },
-    formatter: (row: PurchaseOrderLine) => optionLabel(MATERIAL_OPTIONS, row.materialId),
+    formatter: (row: PurchaseOrderLine) =>
+      optionLabel(MATERIAL_OPTIONS, row.materialId),
   },
   {
     prop: 'quantity',
@@ -161,7 +174,8 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
     prop: 'currency',
     label: '币种',
     width: 110,
-    formatter: (row: PurchaseOrderLine) => optionLabel(CURRENCY_OPTIONS, row.currency),
+    formatter: (row: PurchaseOrderLine) =>
+      optionLabel(CURRENCY_OPTIONS, row.currency),
   },
   {
     prop: 'warehouseId',
@@ -170,7 +184,8 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: WAREHOUSE_OPTIONS },
-    formatter: (row: PurchaseOrderLine) => optionLabel(WAREHOUSE_OPTIONS, row.warehouseId),
+    formatter: (row: PurchaseOrderLine) =>
+      optionLabel(WAREHOUSE_OPTIONS, row.warehouseId),
   },
   {
     prop: 'unitPrice',
@@ -191,5 +206,11 @@ export const purchaseOrderColumns: PlusTableColumnDef[] = [
   { prop: 'amount', label: '价税合计', width: 120 },
   { prop: 'localAmount', label: '本位币金额', width: 120 },
   { prop: 'source', label: '人工值', minWidth: 160 },
-  { prop: 'actions', type: 'operation', label: '操作', width: 76, fixed: 'right' },
+  {
+    prop: 'actions',
+    type: 'operation',
+    label: '操作',
+    width: 76,
+    fixed: 'right',
+  },
 ];

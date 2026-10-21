@@ -1,5 +1,6 @@
-import { ElMessageBox } from 'element-plus';
 import type { EmitEffectConfirmation } from '@/composables';
+
+import { ElMessageBox } from 'element-plus';
 
 /** Human readable summary of a pending batch rewrite, e.g. for `ElMessageBox`. */
 export function describeConfirmation(
@@ -7,9 +8,15 @@ export function describeConfirmation(
   labels: Record<string, string> = {},
 ): string {
   const header = labels[confirmation.field] ?? confirmation.field;
-  const fields = [...new Set(confirmation.affected.map((ref) => labels[ref.field] ?? ref.field))];
+  const fields = [
+    ...new Set(
+      confirmation.affected.map((ref) => labels[ref.field] ?? ref.field),
+    ),
+  ];
   const preserved =
-    confirmation.preservedCount > 0 ? `，保留 ${confirmation.preservedCount} 处手改值` : '';
+    confirmation.preservedCount > 0
+      ? `，保留 ${confirmation.preservedCount} 处手改值`
+      : '';
   return `表头「${header}」变更将重算 ${confirmation.affected.length} 处「${fields.join('、')}」${preserved}，是否继续？`;
 }
 
@@ -24,11 +31,15 @@ export function useConfirmDialog(
 ): (confirmation: EmitEffectConfirmation) => Promise<boolean> {
   return async (confirmation) => {
     try {
-      await ElMessageBox.confirm(describeConfirmation(confirmation, labels), '确认联动', {
-        type: 'warning',
-        confirmButtonText: '应用',
-        cancelButtonText: '取消',
-      });
+      await ElMessageBox.confirm(
+        describeConfirmation(confirmation, labels),
+        '确认联动',
+        {
+          type: 'warning',
+          confirmButtonText: '应用',
+          cancelButtonText: '取消',
+        },
+      );
       return true;
     } catch {
       return false;

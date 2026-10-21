@@ -30,18 +30,24 @@ const columns = [
       class="mx-auto flex w-full max-w-[1200px] flex-col gap-10 px-6 py-12 sm:flex-row sm:justify-between"
     >
       <div>
-        <div class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight">
+        <div
+          class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight"
+        >
           <WorkbenchMark :size="20" />
           <span>Workbench</span>
         </div>
-        <p class="mt-3 text-[13.5px] leading-relaxed whitespace-nowrap text-muted-foreground">
+        <p
+          class="mt-3 text-[13.5px] leading-relaxed whitespace-nowrap text-muted-foreground"
+        >
           面向中后台复杂业务录入与字段联动的 Vue 3 工作台。
         </p>
       </div>
 
       <div class="flex gap-12">
         <div v-for="column in columns" :key="column.label">
-          <p class="font-mono text-[11px] font-medium tracking-[0.08em] text-muted-foreground">
+          <p
+            class="font-mono text-[11px] font-medium tracking-[0.08em] text-muted-foreground"
+          >
             {{ column.label }}
           </p>
           <ul class="mt-3 space-y-2">

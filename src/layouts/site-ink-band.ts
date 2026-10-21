@@ -1,4 +1,6 @@
-import { computed, onBeforeUnmount, onMounted, reactive, type Ref } from 'vue';
+import type { Ref } from 'vue';
+
+import { computed, onBeforeUnmount, onMounted, reactive } from 'vue';
 
 /** Height of the sticky site header, in px. */
 export const SITE_HEADER_HEIGHT = 56;

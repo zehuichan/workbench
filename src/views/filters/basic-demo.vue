@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import type { FilterSchemaField } from '@/components/filters';
+
 import { ref } from 'vue';
+
 import { ElButton, ElMessage } from 'element-plus';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { Filters, type FilterSchemaField } from '@/components/filters';
+import { Filters } from '@/components/filters';
 
 defineOptions({ name: 'FiltersBasicDemo' });
 
@@ -20,7 +24,11 @@ const schema: FilterSchemaField[] = [
     fieldName: 'status',
     label: '状态',
     component: 'select',
-    componentProps: { options: statusOptions, clearable: true, placeholder: '请选择状态' },
+    componentProps: {
+      options: statusOptions,
+      clearable: true,
+      placeholder: '请选择状态',
+    },
   },
   {
     fieldName: 'amount',
@@ -32,7 +40,11 @@ const schema: FilterSchemaField[] = [
     fieldName: 'dueDate',
     label: '截止日期',
     component: 'date-picker',
-    componentProps: { type: 'date', valueFormat: 'YYYY-MM-DD', placeholder: '选择日期' },
+    componentProps: {
+      type: 'date',
+      valueFormat: 'YYYY-MM-DD',
+      placeholder: '选择日期',
+    },
   },
   {
     fieldName: 'enabled',
@@ -42,7 +54,7 @@ const schema: FilterSchemaField[] = [
 ];
 
 const query = ref<Record<string, unknown>>({});
-const lastSearch = ref<Record<string, unknown> | null>(null);
+const lastSearch = ref<null | Record<string, unknown>>(null);
 
 function onSearch(values: Record<string, unknown>) {
   lastSearch.value = { ...values };
@@ -62,7 +74,8 @@ function onExport() {
 <template>
   <DemoPage width="wide">
     <template #description>
-      可配置槽位筛选：每个槽位先选字段，再填值；字段互斥。完整 API 见「API Overview」。
+      可配置槽位筛选：每个槽位先选字段，再填值；字段互斥。完整 API 见「API
+      Overview」。
     </template>
 
     <template #api>
@@ -79,7 +92,10 @@ function onExport() {
         </tr>
       </DemoApiTable>
 
-      <DemoApiTable title="Events（本页用到）" :headers="['名称', '载荷', '说明']">
+      <DemoApiTable
+        title="Events（本页用到）"
+        :headers="['名称', '载荷', '说明']"
+      >
         <tr>
           <td><code>search</code></td>
           <td><code>values</code></td>
@@ -102,10 +118,16 @@ function onExport() {
 
     <DemoBlock title="基础筛选">
       <template #hint>
-        选择「键」绑定字段再填值。操作行整宽左右布局：默认插槽在左，重置 / 搜索在右。
+        选择「键」绑定字段再填值。操作行整宽左右布局：默认插槽在左，重置 /
+        搜索在右。
       </template>
 
-      <Filters v-model="query" :schema="schema" @search="onSearch" @reset="onReset">
+      <Filters
+        v-model="query"
+        :schema="schema"
+        @search="onSearch"
+        @reset="onReset"
+      >
         <ElButton @click="onExport">导出</ElButton>
       </Filters>
 
@@ -138,13 +160,13 @@ function onExport() {
 }
 
 .filters-demo__preview pre {
-  margin: 0;
   padding: 12px;
+  margin: 0;
   overflow: auto;
   font-size: 12px;
   line-height: 1.5;
-  white-space: pre-wrap;
   word-break: break-all;
+  white-space: pre-wrap;
   background: var(--muted);
   border-radius: 8px;
 }

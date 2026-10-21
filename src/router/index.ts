@@ -2,14 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 import PlaygroundLayout from '@/layouts/playground-layout.vue';
 import SiteLayout from '@/layouts/site-layout.vue';
-import SiteHome from '@/views/home/site-home.vue';
-import UseOauth2Demo from '@/views/composables/use-oauth2-demo.vue';
-import UseQrconnectDemo from '@/views/composables/use-qrconnect-demo.vue';
 import QrconnectCallback from '@/views/composables/qrconnect-callback.vue';
 import UseAutoSaveDemo from '@/views/composables/use-auto-save-demo.vue';
-import UseFormDraftDemo from '@/views/composables/use-form-draft-demo.vue';
-import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
 import UseEmitEffectDemo from '@/views/composables/use-emit-effect-demo.vue';
+import UseFormDraftDemo from '@/views/composables/use-form-draft-demo.vue';
+import UseOauth2Demo from '@/views/composables/use-oauth2-demo.vue';
+import UseQrconnectDemo from '@/views/composables/use-qrconnect-demo.vue';
+import UseSaveHotkeyDemo from '@/views/composables/use-save-hotkey-demo.vue';
 import UseSsoDemo from '@/views/composables/use-sso-demo.vue';
 import UseWechatDemo from '@/views/composables/use-wechat-demo.vue';
 import UseWecomDemo from '@/views/composables/use-wecom-demo.vue';
@@ -21,11 +20,12 @@ import SupplierQuotationLinkageDemo from '@/views/erp/supplier-quotation-linkage
 import FiltersApiOverview from '@/views/filters/api-overview.vue';
 import FiltersBasicDemo from '@/views/filters/basic-demo.vue';
 import FiltersPresetDemo from '@/views/filters/preset-demo.vue';
+import SiteHome from '@/views/home/site-home.vue';
+import AdaptiveHeightDemo from '@/views/plus-table/adaptive-height-demo.vue';
 import ApiOverview from '@/views/plus-table/api-overview.vue';
 import BasicEditingDemo from '@/views/plus-table/basic-editing-demo.vue';
 import DependenciesValidationDemo from '@/views/plus-table/dependencies-validation-demo.vue';
 import HistoryDirtyDemo from '@/views/plus-table/history-dirty-demo.vue';
-import AdaptiveHeightDemo from '@/views/plus-table/adaptive-height-demo.vue';
 import PaginationRowsDemo from '@/views/plus-table/pagination-rows-demo.vue';
 import SummaryDemo from '@/views/plus-table/summary-demo.vue';
 
@@ -41,7 +41,14 @@ export const router = createRouter({
     {
       path: '/',
       component: SiteLayout,
-      children: [{ path: '', name: 'home', component: SiteHome, meta: { title: 'Workbench' } }],
+      children: [
+        {
+          path: '',
+          name: 'home',
+          component: SiteHome,
+          meta: { title: 'Workbench' },
+        },
+      ],
     },
     {
       path: '/',
@@ -117,25 +124,45 @@ export const router = createRouter({
           path: 'erp/sales-order-linkage',
           name: 'erp-sales-order-linkage',
           component: SalesOrderLinkageDemo,
-          meta: { title: '销售订单联动', group: 'ERP 场景', order: 1, badge: 'beta' },
+          meta: {
+            title: '销售订单联动',
+            group: 'ERP 场景',
+            order: 1,
+            badge: 'beta',
+          },
         },
         {
           path: 'erp/purchase-order-linkage',
           name: 'erp-purchase-order-linkage',
           component: PurchaseOrderLinkageDemo,
-          meta: { title: '采购订单联动', group: 'ERP 场景', order: 2, badge: 'beta' },
+          meta: {
+            title: '采购订单联动',
+            group: 'ERP 场景',
+            order: 2,
+            badge: 'beta',
+          },
         },
         {
           path: 'erp/expense-report-linkage',
           name: 'erp-expense-report-linkage',
           component: ExpenseReportLinkageDemo,
-          meta: { title: '费用报销联动', group: 'ERP 场景', order: 3, badge: 'beta' },
+          meta: {
+            title: '费用报销联动',
+            group: 'ERP 场景',
+            order: 3,
+            badge: 'beta',
+          },
         },
         {
           path: 'erp/supplier-quotation-linkage',
           name: 'erp-supplier-quotation-linkage',
           component: SupplierQuotationLinkageDemo,
-          meta: { title: '供应商报价（多子表）', group: 'ERP 场景', order: 4, badge: 'beta' },
+          meta: {
+            title: '供应商报价（多子表）',
+            group: 'ERP 场景',
+            order: 4,
+            badge: 'beta',
+          },
         },
         {
           path: 'composables/use-emit-effect',

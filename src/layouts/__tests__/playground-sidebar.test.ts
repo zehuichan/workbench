@@ -1,14 +1,23 @@
+import type { Router } from 'vue-router';
+
 import { createApp, h, nextTick } from 'vue';
-import { createMemoryHistory, createRouter, RouterLink, type Router } from 'vue-router';
+import { createMemoryHistory, createRouter, RouterLink } from 'vue-router';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { SidebarProvider } from '@/ui/sidebar';
+
 import PlaygroundSidebar from '../playground-sidebar.vue';
 
 describe('playground-sidebar', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
+    [];
 
   async function mountWithRouter(
-    groups: { name: string; links: { to: string; label: string; badge?: string }[] }[],
+    groups: {
+      links: { badge?: string; label: string; to: string }[];
+      name: string;
+    }[],
     initialPath = '/composables/use-auto-save',
   ) {
     const router: Router = createRouter({
@@ -90,7 +99,11 @@ describe('playground-sidebar', () => {
       {
         name: 'ERP 场景',
         links: [
-          { to: '/composables/use-auto-save', label: '销售订单联动', badge: 'beta' },
+          {
+            to: '/composables/use-auto-save',
+            label: '销售订单联动',
+            badge: 'beta',
+          },
           { to: '/composables/use-form-draft', label: 'API Overview' },
         ],
       },

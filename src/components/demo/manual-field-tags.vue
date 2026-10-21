@@ -4,11 +4,11 @@ import { computed } from 'vue';
 defineOptions({ name: 'ManualFieldTags' });
 
 const props = defineProps<{
-  row: object;
   /** Row fields that carry a `default` rule. */
   fields: readonly string[];
-  labels?: Record<string, string>;
   isManual: (target: [row: object, field: string]) => boolean;
+  labels?: Record<string, string>;
+  row: object;
 }>();
 
 const emit = defineEmits<{

@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
-
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn-vue/tailwind.css';
@@ -8,11 +7,12 @@
 
 @theme inline {
   --font-sans:
-    'Geist Variable', 'Geist', 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+    'Geist Variable', 'Geist', 'Helvetica Neue', helvetica, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', arial, sans-serif;
   --font-heading: var(--font-sans);
   --font-mono:
-    'Geist Mono', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    'Geist Mono', 'IBM Plex Mono', ui-monospace, sfmono-regular, menlo,
+    consolas, monospace;
   --radius-xs: 4px;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -53,11 +53,11 @@
 
 /* DESIGN.md — light */
 :root {
-  --background: #ffffff;
+  --background: #fff;
   --foreground: #14181f;
-  --card: #ffffff;
+  --card: #fff;
   --card-foreground: #14181f;
-  --popover: #ffffff;
+  --popover: #fff;
   --popover-foreground: #14181f;
   --primary: #0b6e6e;
   --primary-foreground: #f2efe6;
@@ -137,7 +137,6 @@
   --sidebar-accent-foreground: #f2efe6;
   --sidebar-border: #ffffff14;
   --sidebar-ring: #2dd4bf;
-
   --brand: #0b6e6e;
   --brand-hover: #0f766e;
   --brand-soft: #0b6e6e40;
@@ -147,7 +146,6 @@
   --paper: #f2efe6;
   --inverse-canvas: #0f1218;
   --code-canvas: #0f1218;
-
   --site-canvas: #14181f;
   --site-nav: #14181fd9;
   --site-dot: #f2efe61f;
@@ -159,8 +157,10 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+
+    scrollbar-color: color-mix(in oklab, var(--foreground) 28%, transparent)
+      transparent;
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in oklab, var(--foreground) 28%, transparent) transparent;
   }
 
   *::-webkit-scrollbar {
@@ -188,8 +188,8 @@
 
 @utility site-dot-grid {
   background-image: radial-gradient(var(--site-dot) 1px, transparent 1px);
-  background-size: 24px 24px;
   background-position: -1px -1px;
+  background-size: 24px 24px;
 }
 
 /* Ink band backdrop: two teal washes over the dark canvas, kept well below neon. */
@@ -213,7 +213,13 @@
 }
 
 @utility site-mask-fade-y {
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 74%, transparent 100%);
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 22%,
+    #000 74%,
+    transparent 100%
+  );
 }
 
 @utility site-reveal {
@@ -239,8 +245,9 @@
 }
 
 @utility scrollbar-thin {
+  scrollbar-color: color-mix(in oklab, var(--foreground) 28%, transparent)
+    transparent;
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklab, var(--foreground) 28%, transparent) transparent;
 
   &::-webkit-scrollbar {
     display: block;

@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import WorkbenchMark from '@/components/brand/workbench-mark.vue';
-import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from '@/ui/navigation-menu';
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuList,
+} from '@/ui/navigation-menu';
 import { cn } from '@/utils';
 
 defineOptions({ name: 'PlaygroundHeader' });
 
 defineProps<{
-  categories: { key: string; groups: readonly string[] }[];
   activeCategory: string;
+  categories: { groups: readonly string[]; key: string }[];
 }>();
 
 const emit = defineEmits<{
@@ -57,7 +61,9 @@ function onSelect(key: string, disabled: boolean) {
                 )
               "
               :data-active="activeCategory === category.key || undefined"
-              :aria-current="activeCategory === category.key ? 'page' : undefined"
+              :aria-current="
+                activeCategory === category.key ? 'page' : undefined
+              "
               :disabled="category.groups.length === 0"
               @click="onSelect(category.key, category.groups.length === 0)"
             >
@@ -65,7 +71,7 @@ function onSelect(key: string, disabled: boolean) {
               <span
                 v-if="activeCategory === category.key"
                 class="absolute inset-x-2 bottom-0 h-[2px] rounded-full bg-[var(--playground-accent)]"
-              />
+              ></span>
             </button>
           </NavigationMenuItem>
         </NavigationMenuList>

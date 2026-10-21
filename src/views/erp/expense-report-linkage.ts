@@ -1,42 +1,44 @@
 import type { PlusTableColumnDef } from '@/components/plus-table';
+
 import { defineEmitRules } from '@/composables';
+
 import { money, optionLabel, sum } from './emit-helpers';
 import {
   CURRENCY_OPTIONS,
   DEPARTMENT_OPTIONS,
+  employeeOf,
   EXCHANGE_RATES,
   EXPENSE_TYPE_OPTIONS,
-  PROJECT_OPTIONS,
-  employeeOf,
   expenseTypeOf,
+  PROJECT_OPTIONS,
 } from './mock-master-data';
 
 export interface ExpenseLine {
+  amount: null | number;
+  currency: null | string;
+  deductibleTax: null | number;
+  departmentId: null | string;
+  expenseType: null | string;
   id: number;
-  expenseType: string | null;
-  departmentId: string | null;
-  projectId: string | null;
-  currency: string | null;
-  amount: number | null;
-  deductibleTax: number | null;
-  localAmount: number | null;
+  localAmount: null | number;
+  projectId: null | string;
 }
 
 export interface ExpenseReportForm {
-  id: number | null;
-  documentNo: string | null;
-  employeeId: string | null;
-  departmentId: string | null;
-  projectId: string | null;
-  currency: string | null;
-  exchangeRate: number | null;
   /** Advance already paid to the employee, netted from the payable. */
-  advanceAmount: number | null;
-  totalAmount: number | null;
-  totalDeductibleTax: number | null;
-  totalLocalAmount: number | null;
-  payableAmount: number | null;
+  advanceAmount: null | number;
+  currency: null | string;
+  departmentId: null | string;
+  documentNo: null | string;
+  employeeId: null | string;
+  exchangeRate: null | number;
+  id: null | number;
   lines: ExpenseLine[];
+  payableAmount: null | number;
+  projectId: null | string;
+  totalAmount: null | number;
+  totalDeductibleTax: null | number;
+  totalLocalAmount: null | number;
 }
 
 export const defaultExpenseReportForm: ExpenseReportForm = {
@@ -108,23 +110,33 @@ export function createExpenseReportSeed(): ExpenseReportForm {
 }
 
 export const expenseReportRules = defineEmitRules<ExpenseReportForm>({
-  departmentId: { default: ({ form }) => employeeOf(form.employeeId)?.departmentId },
+  departmentId: {
+    default: ({ form }) => employeeOf(form.employeeId)?.departmentId,
+  },
   exchangeRate: { default: ({ form }) => EXCHANGE_RATES[form.currency ?? ''] },
   totalAmount: ({ form }) => sum(form.lines, 'amount'),
   totalDeductibleTax: ({ form }) => sum(form.lines, 'deductibleTax'),
   totalLocalAmount: ({ form }) => sum(form.lines, 'localAmount'),
   payableAmount: ({ form }) =>
-    money(Math.max((form.totalLocalAmount ?? 0) - (form.advanceAmount ?? 0), 0)),
+    money(
+      Math.max((form.totalLocalAmount ?? 0) - (form.advanceAmount ?? 0), 0),
+    ),
   lines: {
     departmentId: { default: ({ form }) => form.departmentId },
     projectId: { default: ({ form }) => form.projectId },
     currency: ({ form }) => form.currency,
     deductibleTax: {
       default: ({ row }) =>
-        money((row.amount ?? 0) * (expenseTypeOf(row.expenseType)?.deductibleRate ?? 0)),
+        money(
+          (row.amount ?? 0) *
+            (expenseTypeOf(row.expenseType)?.deductibleRate ?? 0),
+        ),
     },
     localAmount: ({ row, form }) =>
-      money(Math.max((row.amount ?? 0) - (row.deductibleTax ?? 0), 0) * (form.exchangeRate ?? 0)),
+      money(
+        Math.max((row.amount ?? 0) - (row.deductibleTax ?? 0), 0) *
+          (form.exchangeRate ?? 0),
+      ),
   },
 });
 
@@ -137,7 +149,11 @@ export const EXPENSE_FIELD_LABELS: Record<string, string> = {
   deductibleTax: '可抵扣税额',
 };
 
-export const expenseReportManualFields = ['departmentId', 'projectId', 'deductibleTax'] as const;
+export const expenseReportManualFields = [
+  'departmentId',
+  'projectId',
+  'deductibleTax',
+] as const;
 
 export const expenseReportColumns: PlusTableColumnDef[] = [
   { type: 'index', label: '#', width: 54 },
@@ -148,7 +164,8 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: EXPENSE_TYPE_OPTIONS },
-    formatter: (row: ExpenseLine) => optionLabel(EXPENSE_TYPE_OPTIONS, row.expenseType),
+    formatter: (row: ExpenseLine) =>
+      optionLabel(EXPENSE_TYPE_OPTIONS, row.expenseType),
   },
   {
     prop: 'departmentId',
@@ -157,7 +174,8 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: DEPARTMENT_OPTIONS },
-    formatter: (row: ExpenseLine) => optionLabel(DEPARTMENT_OPTIONS, row.departmentId),
+    formatter: (row: ExpenseLine) =>
+      optionLabel(DEPARTMENT_OPTIONS, row.departmentId),
   },
   {
     prop: 'projectId',
@@ -166,13 +184,15 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
     editable: true,
     component: 'select',
     componentProps: { options: PROJECT_OPTIONS },
-    formatter: (row: ExpenseLine) => optionLabel(PROJECT_OPTIONS, row.projectId),
+    formatter: (row: ExpenseLine) =>
+      optionLabel(PROJECT_OPTIONS, row.projectId),
   },
   {
     prop: 'currency',
     label: '币种',
     width: 110,
-    formatter: (row: ExpenseLine) => optionLabel(CURRENCY_OPTIONS, row.currency),
+    formatter: (row: ExpenseLine) =>
+      optionLabel(CURRENCY_OPTIONS, row.currency),
   },
   {
     prop: 'amount',
@@ -192,5 +212,11 @@ export const expenseReportColumns: PlusTableColumnDef[] = [
   },
   { prop: 'localAmount', label: '本位币金额', width: 120 },
   { prop: 'source', label: '人工值', minWidth: 160 },
-  { prop: 'actions', type: 'operation', label: '操作', width: 76, fixed: 'right' },
+  {
+    prop: 'actions',
+    type: 'operation',
+    label: '操作',
+    width: 76,
+    fixed: 'right',
+  },
 ];

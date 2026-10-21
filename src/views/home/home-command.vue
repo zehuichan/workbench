@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue';
+
 import { CheckIcon, CopyIcon } from '@lucide/vue';
 
 defineOptions({ name: 'HomeCommand' });

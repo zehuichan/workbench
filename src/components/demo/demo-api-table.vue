@@ -3,8 +3,8 @@ defineOptions({ name: 'DemoApiTable' });
 
 withDefaults(
   defineProps<{
-    title: string;
     headers?: readonly string[];
+    title: string;
   }>(),
   { headers: () => ['名称', '类型', '说明'] },
 );
@@ -19,7 +19,7 @@ withDefaults(
       </tr>
     </thead>
     <tbody>
-      <slot />
+      <slot></slot>
     </tbody>
   </table>
 </template>

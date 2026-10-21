@@ -11,7 +11,10 @@ import type {
   SwitchProps,
   TimePickerDefaultProps,
 } from 'element-plus';
+
 import type { Component } from 'vue';
+
+import { defineComponent, h, ref, shallowRef } from 'vue';
 
 import { createGlobalState } from '@vueuse/core';
 import {
@@ -23,7 +26,6 @@ import {
   ElSwitch,
   ElTimePicker,
 } from 'element-plus';
-import { defineComponent, h, ref, shallowRef } from 'vue';
 
 export type ComponentType =
   | 'checkbox'
@@ -86,7 +88,8 @@ function withDefaultPlaceholder(
         : undefined,
     inheritAttrs: false,
     setup(_props, { attrs, expose, slots }) {
-      const placeholder = (attrs.placeholder as string | undefined) ?? DEFAULT_PLACEHOLDER[type];
+      const placeholder =
+        (attrs.placeholder as string | undefined) ?? DEFAULT_PLACEHOLDER[type];
       const innerRef = ref();
       expose(
         new Proxy(
@@ -97,7 +100,12 @@ function withDefaultPlaceholder(
           },
         ),
       );
-      return () => h(component, { ...componentProps, placeholder, ...attrs, ref: innerRef }, slots);
+      return () =>
+        h(
+          component,
+          { ...componentProps, placeholder, ...attrs, ref: innerRef },
+          slots,
+        );
     },
   });
 }
@@ -111,7 +119,9 @@ export function initComponentAdapter() {
     'date-picker': ElDatePicker,
     input: withDefaultPlaceholder(ElInput, 'input'),
     // 默认关闭加减按钮：点击 controls 会打断内部 input 失焦，cell 模式无法靠 blur 退出编辑态
-    'input-number': withDefaultPlaceholder(ElInputNumber, 'input', { controls: false }),
+    'input-number': withDefaultPlaceholder(ElInputNumber, 'input', {
+      controls: false,
+    }),
     select: withDefaultPlaceholder(ElSelectV2, 'select'),
     switch: ElSwitch,
     textarea: withDefaultPlaceholder(ElInput, 'input', {

@@ -3,10 +3,10 @@
  * the shipped APIs. Keep each snippet short enough to read without scrolling.
  */
 export interface HomeSnippet {
-  label: string;
-  note: string;
-  lang: string;
   code: string;
+  label: string;
+  lang: string;
+  note: string;
 }
 
 export const columnsSnippet: HomeSnippet = {

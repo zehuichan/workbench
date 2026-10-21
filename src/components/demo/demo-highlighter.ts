@@ -1,4 +1,6 @@
-import { createHighlighter, type Highlighter } from 'shiki';
+import type { Highlighter } from 'shiki';
+
+import { createHighlighter } from 'shiki';
 
 const LANG_ALIASES: Record<string, string> = {
   ts: 'typescript',
@@ -13,7 +15,7 @@ export function resolveLang(lang: string): string {
   return LANG_ALIASES[lang] ?? lang;
 }
 
-let highlighterPromise: Promise<Highlighter> | null = null;
+let highlighterPromise: null | Promise<Highlighter> = null;
 
 function getHighlighter(): Promise<Highlighter> {
   if (!highlighterPromise) {

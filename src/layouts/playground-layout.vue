@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
+import { sortBy } from 'es-toolkit';
+
 import { SidebarInset, SidebarProvider } from '@/ui/sidebar';
+
 import PlaygroundAside from './playground-aside.vue';
 import PlaygroundHeader from './playground-header.vue';
 import PlaygroundSidebar from './playground-sidebar.vue';
+
 import '@/styles/index.scss';
 
 defineOptions({ name: 'PlaygroundLayout' });
@@ -12,12 +17,15 @@ defineOptions({ name: 'PlaygroundLayout' });
 type CategoryKey = 'components' | 'composables' | 'packages';
 
 interface CategoryConfig {
-  key: CategoryKey;
   groups: readonly string[];
+  key: CategoryKey;
 }
 
 const categories: readonly CategoryConfig[] = [
-  { key: 'components', groups: ['PlusTable', 'Filters', 'ERP 场景'] },
+  {
+    key: 'components',
+    groups: ['PlusTable', 'PlusDialog', 'Filters', 'ERP 场景'],
+  },
   { key: 'composables', groups: ['Form', 'Auth', 'WeChat'] },
   { key: 'packages', groups: [] },
 ];
@@ -27,10 +35,10 @@ const router = useRouter();
 const activeCategory = ref<CategoryKey>('components');
 
 function groupRoutes(group: string) {
-  return router
-    .getRoutes()
-    .filter((item) => item.meta.group === group)
-    .sort((left, right) => Number(left.meta.order) - Number(right.meta.order));
+  return sortBy(
+    router.getRoutes().filter((item) => item.meta.group === group),
+    [(item) => Number(item.meta.order)],
+  );
 }
 
 function categoryForGroup(group: unknown): CategoryKey | undefined {
@@ -39,7 +47,9 @@ function categoryForGroup(group: unknown): CategoryKey | undefined {
 }
 
 const navGroups = computed(() => {
-  const groups = categories.find((category) => category.key === activeCategory.value)?.groups ?? [];
+  const groups =
+    categories.find((category) => category.key === activeCategory.value)
+      ?.groups ?? [];
 
   return groups.map((group) => ({
     name: group,
@@ -83,7 +93,9 @@ function selectCategory(key: string): void {
       <PlaygroundSidebar :groups="navGroups" />
       <SidebarInset class="min-h-0 min-w-0 overflow-hidden bg-background">
         <div class="flex h-full min-h-0">
-          <div class="scrollbar-thin min-w-0 flex-1 overflow-y-auto px-10 pt-8 pb-16">
+          <div
+            class="scrollbar-thin min-w-0 flex-1 overflow-y-auto px-10 pt-8 pb-16"
+          >
             <router-view />
           </div>
           <PlaygroundAside />

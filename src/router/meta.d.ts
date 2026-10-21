@@ -2,11 +2,9 @@ import 'vue-router';
 
 declare module 'vue-router' {
   interface RouteMeta {
-    title?: string;
+    badge?: string;
     group?: string;
     order?: number;
-    badge?: string;
+    title?: string;
   }
 }
-
-export {};

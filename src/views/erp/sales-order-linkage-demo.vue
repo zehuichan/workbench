@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import type { SalesOrderForm, SalesOrderLine } from './sales-order-linkage';
+
+import { computed, ref } from 'vue';
+
 import { ElMessage } from 'element-plus';
 import { cloneDeep } from 'es-toolkit';
-import { computed, ref } from 'vue';
+
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
@@ -10,28 +14,35 @@ import ManualFieldTags from '@/components/demo/manual-field-tags.vue';
 import { useConfirmDialog } from '@/components/demo/use-confirm-dialog';
 import { PlusTable } from '@/components/plus-table';
 import { useEmitEffect } from '@/composables';
+
 import { createTempIdFactory } from './emit-helpers';
-import { CURRENCY_OPTIONS, CUSTOMER_OPTIONS, WAREHOUSE_OPTIONS } from './mock-master-data';
 import {
-  SALES_FIELD_LABELS,
+  CURRENCY_OPTIONS,
+  CUSTOMER_OPTIONS,
+  WAREHOUSE_OPTIONS,
+} from './mock-master-data';
+import {
   createSalesLine,
   createSalesOrderSeed,
   defaultSalesOrderForm,
+  SALES_FIELD_LABELS,
   salesOrderColumns,
   salesOrderManualFields,
   salesOrderRules,
-  type SalesOrderForm,
-  type SalesOrderLine,
 } from './sales-order-linkage';
 
 defineOptions({ name: 'SalesOrderLinkageDemo' });
 
 // Same shape as a CRUD page: declare the form synchronously, replace `.value` when a document loads.
 const form = ref<SalesOrderForm>(cloneDeep(defaultSalesOrderForm));
-const { pending, isManual, restore, normalize } = useEmitEffect(form, salesOrderRules, {
-  confirm: useConfirmDialog(SALES_FIELD_LABELS),
-  immediate: true,
-});
+const { pending, isManual, restore, normalize } = useEmitEffect(
+  form,
+  salesOrderRules,
+  {
+    confirm: useConfirmDialog(SALES_FIELD_LABELS),
+    immediate: true,
+  },
+);
 
 const nextId = createTempIdFactory();
 const submitted = ref('');
@@ -59,7 +70,7 @@ function addLine() {
 
 function removeLine(row: SalesOrderLine) {
   const index = form.value.lines.indexOf(row);
-  if (index >= 0) form.value.lines.splice(index, 1);
+  if (index !== -1) form.value.lines.splice(index, 1);
 }
 
 async function submit() {
@@ -73,21 +84,23 @@ async function submit() {
   <DemoPage width="wide">
     <template #description>
       销售订单：表单就是提交 DTO，<code>v-model</code> / <code>:data</code> 直绑
-      <code>form</code
-      >。规则表声明「哪个字段怎么算」，改客户异步重取单价（弹确认、手改价保留）、改币种带出汇率并同步明细、仓库
+      <code>form</code>。规则表声明「哪个字段怎么算」，改客户异步重取单价（弹确认、手改价保留）、改币种带出汇率并同步明细、仓库
       / 税率下发到未手改的行；行金额与表头合计随手改即时重算。
     </template>
 
     <DemoBlock>
       <template #hint>
-        「载入示例单据」整体替换 <code>form.value</code>：任何字段都不会被重算。改明细单价 /
+        「载入示例单据」整体替换
+        <code>form.value</code>：任何字段都不会被重算。改明细单价 /
         仓库后出现「人工值」标签，点 × 恢复规则值；改同行商品会让手改单价失效。
       </template>
 
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <el-button @click="loadSeed">载入示例单据</el-button>
         <el-button @click="newDocument">新建空单</el-button>
-        <el-button type="primary" :loading="pending" @click="submit">提交</el-button>
+        <el-button type="primary" :loading="pending" @click="submit">
+          提交
+        </el-button>
         <span class="demo__meta">{{ form.documentNo ?? '未保存单据' }}</span>
       </div>
 
@@ -158,7 +171,13 @@ async function submit() {
         </el-form-item>
       </el-form>
 
-      <PlusTable :data="form.lines" :columns="salesOrderColumns" row-key="id" mode="cell" border>
+      <PlusTable
+        :data="form.lines"
+        :columns="salesOrderColumns"
+        row-key="id"
+        mode="cell"
+        border
+      >
         <template #toolbar>
           <el-button type="primary" @click="addLine">新增明细</el-button>
         </template>
@@ -172,7 +191,9 @@ async function submit() {
           />
         </template>
         <template #cell-actions="{ row }">
-          <el-button type="danger" link @click.stop="removeLine(row)">删除</el-button>
+          <el-button type="danger" link @click.stop="removeLine(row)">
+            删除
+          </el-button>
         </template>
       </PlusTable>
 

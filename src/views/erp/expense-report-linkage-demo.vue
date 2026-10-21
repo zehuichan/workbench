@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import type { ExpenseLine, ExpenseReportForm } from './expense-report-linkage';
+
+import { computed, ref } from 'vue';
+
 import { ElMessage } from 'element-plus';
 import { cloneDeep } from 'es-toolkit';
-import { computed, ref } from 'vue';
+
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
@@ -10,32 +14,35 @@ import ManualFieldTags from '@/components/demo/manual-field-tags.vue';
 import { useConfirmDialog } from '@/components/demo/use-confirm-dialog';
 import { PlusTable } from '@/components/plus-table';
 import { useEmitEffect } from '@/composables';
+
 import { createTempIdFactory } from './emit-helpers';
+import {
+  createExpenseLine,
+  createExpenseReportSeed,
+  defaultExpenseReportForm,
+  EXPENSE_FIELD_LABELS,
+  expenseReportColumns,
+  expenseReportManualFields,
+  expenseReportRules,
+} from './expense-report-linkage';
 import {
   CURRENCY_OPTIONS,
   DEPARTMENT_OPTIONS,
   EMPLOYEE_OPTIONS,
   PROJECT_OPTIONS,
 } from './mock-master-data';
-import {
-  EXPENSE_FIELD_LABELS,
-  createExpenseLine,
-  createExpenseReportSeed,
-  defaultExpenseReportForm,
-  expenseReportColumns,
-  expenseReportManualFields,
-  expenseReportRules,
-  type ExpenseLine,
-  type ExpenseReportForm,
-} from './expense-report-linkage';
 
 defineOptions({ name: 'ExpenseReportLinkageDemo' });
 
 const form = ref<ExpenseReportForm>(cloneDeep(defaultExpenseReportForm));
-const { pending, isManual, restore, normalize } = useEmitEffect(form, expenseReportRules, {
-  confirm: useConfirmDialog(EXPENSE_FIELD_LABELS),
-  immediate: true,
-});
+const { pending, isManual, restore, normalize } = useEmitEffect(
+  form,
+  expenseReportRules,
+  {
+    confirm: useConfirmDialog(EXPENSE_FIELD_LABELS),
+    immediate: true,
+  },
+);
 
 const nextId = createTempIdFactory();
 const submitted = ref('');
@@ -44,7 +51,11 @@ const summary = computed(() => [
   { label: '原币合计', value: form.value.totalAmount },
   { label: '可抵扣税额', value: form.value.totalDeductibleTax },
   { label: '本位币合计', value: form.value.totalLocalAmount },
-  { label: '应付金额（扣预借）', value: form.value.payableAmount, primary: true },
+  {
+    label: '应付金额（扣预借）',
+    value: form.value.payableAmount,
+    primary: true,
+  },
 ]);
 
 function loadSeed() {
@@ -64,7 +75,7 @@ function addLine() {
 
 function removeLine(row: ExpenseLine) {
   const index = form.value.lines.indexOf(row);
-  if (index >= 0) form.value.lines.splice(index, 1);
+  if (index !== -1) form.value.lines.splice(index, 1);
 }
 
 async function submit() {
@@ -77,9 +88,10 @@ async function submit() {
 <template>
   <DemoPage width="wide">
     <template #description>
-      费用报销：报销人带出部门（可手改），部门 / 项目下发到未手改的行；费用类型 ×
-      金额估算可抵扣税额（可手改，改金额或类型后重估）；本位币金额 = (原币 − 可抵扣) ×
-      汇率；表头四个合计与「应付金额 = 本位币合计 − 预借款」都是入库字段。
+      费用报销：报销人带出部门（可手改），部门 / 项目下发到未手改的行；费用类型
+      × 金额估算可抵扣税额（可手改，改金额或类型后重估）；本位币金额 = (原币 −
+      可抵扣) × 汇率；表头四个合计与「应付金额 = 本位币合计 −
+      预借款」都是入库字段。
     </template>
 
     <DemoBlock>
@@ -91,7 +103,9 @@ async function submit() {
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <el-button @click="loadSeed">载入示例单据</el-button>
         <el-button @click="newDocument">新建空单</el-button>
-        <el-button type="primary" :loading="pending" @click="submit">提交</el-button>
+        <el-button type="primary" :loading="pending" @click="submit">
+          提交
+        </el-button>
         <span class="demo__meta">{{ form.documentNo ?? '未保存单据' }}</span>
       </div>
 
@@ -184,7 +198,13 @@ async function submit() {
         </el-form-item>
       </el-form>
 
-      <PlusTable :data="form.lines" :columns="expenseReportColumns" row-key="id" mode="cell" border>
+      <PlusTable
+        :data="form.lines"
+        :columns="expenseReportColumns"
+        row-key="id"
+        mode="cell"
+        border
+      >
         <template #toolbar>
           <el-button type="primary" @click="addLine">新增明细</el-button>
         </template>
@@ -198,7 +218,9 @@ async function submit() {
           />
         </template>
         <template #cell-actions="{ row }">
-          <el-button type="danger" link @click.stop="removeLine(row)">删除</el-button>
+          <el-button type="danger" link @click.stop="removeLine(row)">
+            删除
+          </el-button>
         </template>
       </PlusTable>
 

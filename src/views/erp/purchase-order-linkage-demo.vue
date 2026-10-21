@@ -1,7 +1,14 @@
 <script setup lang="ts">
+import type {
+  PurchaseOrderForm,
+  PurchaseOrderLine,
+} from './purchase-order-linkage';
+
+import { computed, ref } from 'vue';
+
 import { ElMessage } from 'element-plus';
 import { cloneDeep } from 'es-toolkit';
-import { computed, ref } from 'vue';
+
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
@@ -10,27 +17,34 @@ import ManualFieldTags from '@/components/demo/manual-field-tags.vue';
 import { useConfirmDialog } from '@/components/demo/use-confirm-dialog';
 import { PlusTable } from '@/components/plus-table';
 import { useEmitEffect } from '@/composables';
+
 import { createTempIdFactory } from './emit-helpers';
-import { CURRENCY_OPTIONS, SUPPLIER_OPTIONS, WAREHOUSE_OPTIONS } from './mock-master-data';
 import {
-  PURCHASE_FIELD_LABELS,
+  CURRENCY_OPTIONS,
+  SUPPLIER_OPTIONS,
+  WAREHOUSE_OPTIONS,
+} from './mock-master-data';
+import {
   createPurchaseLine,
   createPurchaseOrderSeed,
   defaultPurchaseOrderForm,
+  PURCHASE_FIELD_LABELS,
   purchaseOrderColumns,
   purchaseOrderManualFields,
   purchaseOrderRules,
-  type PurchaseOrderForm,
-  type PurchaseOrderLine,
 } from './purchase-order-linkage';
 
 defineOptions({ name: 'PurchaseOrderLinkageDemo' });
 
 const form = ref<PurchaseOrderForm>(cloneDeep(defaultPurchaseOrderForm));
-const { pending, isManual, restore, normalize } = useEmitEffect(form, purchaseOrderRules, {
-  confirm: useConfirmDialog(PURCHASE_FIELD_LABELS),
-  immediate: true,
-});
+const { pending, isManual, restore, normalize } = useEmitEffect(
+  form,
+  purchaseOrderRules,
+  {
+    confirm: useConfirmDialog(PURCHASE_FIELD_LABELS),
+    immediate: true,
+  },
+);
 
 const nextId = createTempIdFactory();
 const submitted = ref('');
@@ -58,7 +72,7 @@ function addLine() {
 
 function removeLine(row: PurchaseOrderLine) {
   const index = form.value.lines.indexOf(row);
-  if (index >= 0) form.value.lines.splice(index, 1);
+  if (index !== -1) form.value.lines.splice(index, 1);
 }
 
 async function submit() {
@@ -77,14 +91,16 @@ async function submit() {
 
     <DemoBlock>
       <template #hint>
-        试试：先手改第 2 行采购单价，再切换供应商——确认框会说明「重算 1 处、保留 1 处」；改第 2
-        行物料则手改价失效并重新取价。
+        试试：先手改第 2 行采购单价，再切换供应商——确认框会说明「重算 1 处、保留
+        1 处」；改第 2 行物料则手改价失效并重新取价。
       </template>
 
       <div class="mb-3 flex flex-wrap items-center gap-2">
         <el-button @click="loadSeed">载入示例单据</el-button>
         <el-button @click="newDocument">新建空单</el-button>
-        <el-button type="primary" :loading="pending" @click="submit">提交</el-button>
+        <el-button type="primary" :loading="pending" @click="submit">
+          提交
+        </el-button>
         <span class="demo__meta">{{ form.documentNo ?? '未保存单据' }}</span>
       </div>
 
@@ -177,7 +193,13 @@ async function submit() {
         </el-form-item>
       </el-form>
 
-      <PlusTable :data="form.lines" :columns="purchaseOrderColumns" row-key="id" mode="cell" border>
+      <PlusTable
+        :data="form.lines"
+        :columns="purchaseOrderColumns"
+        row-key="id"
+        mode="cell"
+        border
+      >
         <template #toolbar>
           <el-button type="primary" @click="addLine">新增明细</el-button>
         </template>
@@ -191,7 +213,9 @@ async function submit() {
           />
         </template>
         <template #cell-actions="{ row }">
-          <el-button type="danger" link @click.stop="removeLine(row)">删除</el-button>
+          <el-button type="danger" link @click.stop="removeLine(row)">
+            删除
+          </el-button>
         </template>
       </PlusTable>
 

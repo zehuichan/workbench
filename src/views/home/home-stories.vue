@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { ArrowUpRightIcon } from '@lucide/vue';
+
 import { cn } from '@/utils';
+
 import HomeCode from './home-code.vue';
-import { columnsSnippet, linkageSnippet, persistSnippet } from './home-snippets';
+import {
+  columnsSnippet,
+  linkageSnippet,
+  persistSnippet,
+} from './home-snippets';
 import { vReveal } from './use-reveal';
 
 defineOptions({ name: 'HomeStories' });
@@ -58,20 +64,30 @@ const stories = [
         v-reveal
         class="grid items-center gap-10 lg:grid-cols-2 lg:gap-16"
       >
-        <div :class="cn('lg:max-w-[30rem]', index % 2 === 1 && 'lg:order-2 lg:justify-self-end')">
+        <div
+          :class="
+            cn(
+              'lg:max-w-[30rem]',
+              index % 2 === 1 && 'lg:order-2 lg:justify-self-end',
+            )
+          "
+        >
           <p
             class="flex items-center gap-2 font-mono text-[11px] font-medium tracking-[0.08em] text-muted-foreground"
           >
-            <span class="text-[var(--brand)]" v-text="story.index" />
+            <span class="text-[var(--brand)]" v-text="story.index"></span>
             {{ story.kicker }}
           </p>
 
           <h3
             class="mt-4 text-[clamp(1.35rem,2.4vw,1.7rem)] leading-[1.3] font-semibold tracking-[-0.02em]"
             v-text="story.title"
-          />
+          ></h3>
 
-          <p class="mt-4 text-[15px] leading-relaxed text-muted-foreground" v-text="story.lede" />
+          <p
+            class="mt-4 text-[15px] leading-relaxed text-muted-foreground"
+            v-text="story.lede"
+          ></p>
 
           <RouterLink
             :to="story.link.to"

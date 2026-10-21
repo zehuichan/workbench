@@ -7,12 +7,14 @@ defineOptions({ name: 'HomeStart' });
 const steps = [
   {
     title: '拉取源码',
-    description: '克隆仓库，所有示例与 composables 都在 src/ 下，可以直接复制到你的项目。',
+    description:
+      '克隆仓库，所有示例与 composables 都在 src/ 下，可以直接复制到你的项目。',
     commands: ['git clone https://github.com/zehuichan/workbench'],
   },
   {
     title: '本地启动',
-    description: 'Node.js ≥ 20.19 与 pnpm ≥ 10，安装后启动 Vite Playground（默认 :8000）。',
+    description:
+      'Node.js ≥ 20.19 与 pnpm ≥ 10，安装后启动 Vite Playground（默认 :8000）。',
     commands: ['pnpm install', 'pnpm dev'],
   },
 ] as const;
@@ -41,14 +43,21 @@ const steps = [
         v-reveal="index * 90"
         class="rounded-xl border border-border bg-background p-6"
       >
-        <h3 class="text-[15px] font-semibold tracking-[-0.01em]" v-text="step.title" />
+        <h3
+          class="text-[15px] font-semibold tracking-[-0.01em]"
+          v-text="step.title"
+        ></h3>
         <p
           class="mt-2 text-[13.5px] leading-relaxed text-muted-foreground"
           v-text="step.description"
-        />
+        ></p>
 
         <div class="mt-5 space-y-2">
-          <HomeCommand v-for="command in step.commands" :key="command" :command="command" />
+          <HomeCommand
+            v-for="command in step.commands"
+            :key="command"
+            :command="command"
+          />
         </div>
       </div>
     </div>

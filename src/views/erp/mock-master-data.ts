@@ -8,7 +8,9 @@ import type { SelectOption } from './emit-helpers';
 const LOOKUP_DELAY_MS = 120;
 
 function later<T>(value: T): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(value), LOOKUP_DELAY_MS));
+  return new Promise((resolve) =>
+    setTimeout(() => resolve(value), LOOKUP_DELAY_MS),
+  );
 }
 
 // ---- currency ----
@@ -36,16 +38,26 @@ export const WAREHOUSE_OPTIONS: SelectOption[] = [
 // ---- sales ----
 
 export interface Customer {
+  defaultWarehouseId: string;
   id: string;
   name: string;
   /** Multiplier applied to list prices. */
   priceFactor: number;
-  defaultWarehouseId: string;
 }
 
 export const CUSTOMERS: Customer[] = [
-  { id: 'customer-east', name: '华东旗舰客户', priceFactor: 1, defaultWarehouseId: 'WH-SH' },
-  { id: 'customer-channel', name: '全国渠道客户', priceFactor: 0.95, defaultWarehouseId: 'WH-BJ' },
+  {
+    id: 'customer-east',
+    name: '华东旗舰客户',
+    priceFactor: 1,
+    defaultWarehouseId: 'WH-SH',
+  },
+  {
+    id: 'customer-channel',
+    name: '全国渠道客户',
+    priceFactor: 0.95,
+    defaultWarehouseId: 'WH-BJ',
+  },
 ];
 
 export const CUSTOMER_OPTIONS: SelectOption[] = CUSTOMERS.map((customer) => ({
@@ -55,8 +67,8 @@ export const CUSTOMER_OPTIONS: SelectOption[] = CUSTOMERS.map((customer) => ({
 
 export interface Product {
   id: string;
-  name: string;
   listPrice: number;
+  name: string;
 }
 
 export const PRODUCTS: Product[] = [
@@ -82,7 +94,9 @@ export function fetchSalesPrice(
   const product = PRODUCTS.find((item) => item.id === productId);
   const customer = customerOf(customerId);
   if (!product || !customer) return later(undefined);
-  return later(Math.round(product.listPrice * customer.priceFactor * 100) / 100);
+  return later(
+    Math.round(product.listPrice * customer.priceFactor * 100) / 100,
+  );
 }
 
 // ---- purchase ----
@@ -90,13 +104,23 @@ export function fetchSalesPrice(
 export interface Supplier {
   id: string;
   name: string;
-  priceFactor: number;
   paymentTermDays: number;
+  priceFactor: number;
 }
 
 export const SUPPLIERS: Supplier[] = [
-  { id: 'supplier-south', name: '华南电子', priceFactor: 1, paymentTermDays: 30 },
-  { id: 'supplier-material', name: '精工材料', priceFactor: 0.94, paymentTermDays: 60 },
+  {
+    id: 'supplier-south',
+    name: '华南电子',
+    priceFactor: 1,
+    paymentTermDays: 30,
+  },
+  {
+    id: 'supplier-material',
+    name: '精工材料',
+    priceFactor: 0.94,
+    paymentTermDays: 60,
+  },
 ];
 
 export const SUPPLIER_OPTIONS: SelectOption[] = SUPPLIERS.map((supplier) => ({
@@ -106,8 +130,8 @@ export const SUPPLIER_OPTIONS: SelectOption[] = SUPPLIERS.map((supplier) => ({
 
 export interface Material {
   id: string;
-  name: string;
   listPrice: number;
+  name: string;
 }
 
 export const MATERIALS: Material[] = [
@@ -132,7 +156,9 @@ export function fetchPurchasePrice(
   const material = MATERIALS.find((item) => item.id === materialId);
   const supplier = supplierOf(supplierId);
   if (!material || !supplier) return later(undefined);
-  return later(Math.round(material.listPrice * supplier.priceFactor * 100) / 100);
+  return later(
+    Math.round(material.listPrice * supplier.priceFactor * 100) / 100,
+  );
 }
 
 // ---- expense ----
@@ -150,9 +176,9 @@ export const PROJECT_OPTIONS: SelectOption[] = [
 ];
 
 export interface Employee {
+  departmentId: string;
   id: string;
   name: string;
-  departmentId: string;
 }
 
 export const EMPLOYEES: Employee[] = [
@@ -171,10 +197,10 @@ export function employeeOf(id: unknown): Employee | undefined {
 }
 
 export interface ExpenseType {
-  id: string;
-  name: string;
   /** Share of the amount that is deductible input tax. */
   deductibleRate: number;
+  id: string;
+  name: string;
 }
 
 export const EXPENSE_TYPES: ExpenseType[] = [
@@ -183,10 +209,12 @@ export const EXPENSE_TYPES: ExpenseType[] = [
   { id: 'entertainment', name: '业务招待费', deductibleRate: 0 },
 ];
 
-export const EXPENSE_TYPE_OPTIONS: SelectOption[] = EXPENSE_TYPES.map((type) => ({
-  label: type.name,
-  value: type.id,
-}));
+export const EXPENSE_TYPE_OPTIONS: SelectOption[] = EXPENSE_TYPES.map(
+  (type) => ({
+    label: type.name,
+    value: type.id,
+  }),
+);
 
 export function expenseTypeOf(id: unknown): ExpenseType | undefined {
   return EXPENSE_TYPES.find((type) => type.id === id);
@@ -236,19 +264,29 @@ export const TRADE_TERM_OPTIONS: SelectOption[] = [
 export interface FeeCatalogItem {
   field: string;
   name: string;
-  unit: string;
   price: number;
+  unit: string;
 }
 
 export const POL_FEE_CATALOG: FeeCatalogItem[] = [
-  { field: 'pol_customs_declaration_fee', name: '报关费', unit: '/票', price: 350 },
+  {
+    field: 'pol_customs_declaration_fee',
+    name: '报关费',
+    unit: '/票',
+    price: 350,
+  },
   { field: 'pol_trucking_fee', name: '拖车费', unit: '/柜', price: 1200 },
   { field: 'pol_thc', name: '码头操作费 THC', unit: '/柜', price: 980 },
   { field: 'pol_doc_fee', name: '文件费', unit: '/票', price: 450 },
 ];
 
 export const POD_FEE_CATALOG: FeeCatalogItem[] = [
-  { field: 'pod_customs_clearance_fee', name: '目的港清关费', unit: '/票', price: 900 },
+  {
+    field: 'pod_customs_clearance_fee',
+    name: '目的港清关费',
+    unit: '/票',
+    price: 900,
+  },
   { field: 'pod_delivery_fee', name: '目的港派送费', unit: '/柜', price: 1500 },
   { field: 'pod_thc', name: '目的港码头费', unit: '/柜', price: 1100 },
 ];

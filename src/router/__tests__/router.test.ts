@@ -1,18 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { router } from '..';
-import SiteHome from '@/views/home/site-home.vue';
-import SiteLayout from '@/layouts/site-layout.vue';
+
 import PlaygroundLayout from '@/layouts/playground-layout.vue';
+import SiteLayout from '@/layouts/site-layout.vue';
+import SiteHome from '@/views/home/site-home.vue';
+
+import { router } from '..';
 
 describe('router', () => {
   it('renders the site home inside the site shell at the root path', () => {
     const resolved = router.resolve('/');
 
     expect(resolved.name).toBe('home');
-    expect(resolved.matched.map((record) => record.components?.default)).toEqual([
-      SiteLayout,
-      SiteHome,
-    ]);
+    expect(
+      resolved.matched.map((record) => record.components?.default),
+    ).toEqual([SiteLayout, SiteHome]);
   });
 
   it('keeps playground demos inside the playground shell', () => {

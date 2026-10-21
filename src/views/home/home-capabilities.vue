@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { ArrowUpRightIcon, SaveIcon, Table2Icon, WorkflowIcon } from '@lucide/vue';
+import {
+  ArrowUpRightIcon,
+  SaveIcon,
+  Table2Icon,
+  WorkflowIcon,
+} from '@lucide/vue';
+
 import { vReveal } from './use-reveal';
 
 defineOptions({ name: 'HomeCapabilities' });
@@ -25,7 +31,8 @@ const capabilities = [
     icon: SaveIcon,
     title: '草稿与自动保存',
     code: 'FORM PERSISTENCE',
-    description: '未提交的输入落到本地，自动保存按节奏静默提交，保存动作收敛到一个快捷键。',
+    description:
+      '未提交的输入落到本地，自动保存按节奏静默提交，保存动作收敛到一个快捷键。',
     to: '/composables/use-form-draft',
   },
 ] as const;
@@ -47,7 +54,9 @@ const capabilities = [
         让复杂单据在一屏里录完
       </h2>
 
-      <p class="mx-auto mt-5 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+      <p
+        class="mx-auto mt-5 max-w-lg text-[15px] leading-relaxed text-muted-foreground"
+      >
         表格是复杂录入的主场。<br class="hidden sm:block" />
         编辑、联动、保存拆成三层能力，各自独立可用，叠起来就是一张能干活的单据。
       </p>
@@ -61,17 +70,24 @@ const capabilities = [
         :to="capability.to"
         class="group flex flex-col rounded-xl border border-border bg-background p-6 transition-colors hover:border-[var(--brand)]/45"
       >
-        <component :is="capability.icon" class="size-5 text-[var(--brand)]" aria-hidden="true" />
+        <component
+          :is="capability.icon"
+          class="size-5 text-[var(--brand)]"
+          aria-hidden="true"
+        />
 
-        <h3 class="mt-5 text-[17px] font-semibold tracking-[-0.01em]" v-text="capability.title" />
+        <h3
+          class="mt-5 text-[17px] font-semibold tracking-[-0.01em]"
+          v-text="capability.title"
+        ></h3>
         <p
           class="mt-1.5 font-mono text-[10.5px] font-medium tracking-[0.12em] text-muted-foreground"
           v-text="capability.code"
-        />
+        ></p>
         <p
           class="mt-4 flex-1 text-[13.5px] leading-relaxed text-muted-foreground"
           v-text="capability.description"
-        />
+        ></p>
 
         <span
           class="mt-6 inline-flex items-center gap-1 text-[13px] font-medium text-[var(--brand)]"

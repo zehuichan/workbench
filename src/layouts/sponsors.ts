@@ -1,21 +1,21 @@
 /** Playground right-rail ads & sponsors. Edit this file to update listings. */
 
 export interface PlaygroundAd {
-  id: string;
-  href: string;
-  title: string;
   description: string;
+  href: string;
+  id: string;
   /** Optional banner image URL; falls back to text card when omitted. */
   image?: string;
+  title: string;
 }
 
 export interface PlaygroundSponsor {
-  id: string;
-  name: string;
   href: string;
-  slogan: string;
+  id: string;
   /** Optional logo URL; falls back to monogram from `name`. */
   logo?: string;
+  name: string;
+  slogan: string;
 }
 
 export const SPONSOR_INQUIRY_URL =

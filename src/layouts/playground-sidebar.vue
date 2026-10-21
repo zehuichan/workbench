@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router';
+
 import {
   Sidebar,
   SidebarContent,
@@ -13,20 +14,20 @@ import {
 
 defineOptions({ name: 'PlaygroundSidebar' });
 
-export interface PlaygroundNavLink {
-  to: string;
-  label: string;
-  badge?: string;
-}
-
-export interface PlaygroundNavGroup {
-  name: string;
-  links: PlaygroundNavLink[];
-}
-
 defineProps<{
   groups: PlaygroundNavGroup[];
 }>();
+
+export interface PlaygroundNavLink {
+  badge?: string;
+  label: string;
+  to: string;
+}
+
+export interface PlaygroundNavGroup {
+  links: PlaygroundNavLink[];
+  name: string;
+}
 
 const route = useRoute();
 </script>
@@ -38,7 +39,9 @@ const route = useRoute();
   >
     <SidebarContent class="scrollbar-thin gap-6 overflow-y-auto px-3 py-5">
       <SidebarGroup v-for="group in groups" :key="group.name" class="p-0">
-        <SidebarGroupLabel class="mb-2 h-auto px-3 text-[13px] font-semibold text-foreground">
+        <SidebarGroupLabel
+          class="mb-2 h-auto px-3 text-[13px] font-semibold text-foreground"
+        >
           {{ group.name }}
         </SidebarGroupLabel>
         <SidebarGroupContent>

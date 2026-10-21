@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import type { FilterSchemaField } from '@/components/filters';
+
 import { ref } from 'vue';
+
 import { ElButton, ElMessage, ElTag } from 'element-plus';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { Filters, type FilterSchemaField } from '@/components/filters';
+import { Filters } from '@/components/filters';
 
 defineOptions({ name: 'FiltersPresetDemo' });
 
@@ -20,7 +24,11 @@ const schema: FilterSchemaField[] = [
     fieldName: 'status',
     label: '状态',
     component: 'select',
-    componentProps: { options: statusOptions, clearable: true, placeholder: '请选择状态' },
+    componentProps: {
+      options: statusOptions,
+      clearable: true,
+      placeholder: '请选择状态',
+    },
   },
   {
     fieldName: 'amount',
@@ -32,7 +40,11 @@ const schema: FilterSchemaField[] = [
     fieldName: 'dueDate',
     label: '截止日期',
     component: 'date-picker',
-    componentProps: { type: 'date', valueFormat: 'YYYY-MM-DD', placeholder: '选择日期' },
+    componentProps: {
+      type: 'date',
+      valueFormat: 'YYYY-MM-DD',
+      placeholder: '选择日期',
+    },
   },
   {
     fieldName: 'enabled',
@@ -42,7 +54,10 @@ const schema: FilterSchemaField[] = [
 ];
 
 /** 预设：键顺序决定挂载时槽位填充顺序 */
-const presets: Record<string, { label: string; values: Record<string, unknown> }> = {
+const presets: Record<
+  string,
+  { label: string; values: Record<string, unknown> }
+> = {
   empty: { label: '空', values: {} },
   todo: {
     label: '待办清单',
@@ -67,7 +82,7 @@ const presets: Record<string, { label: string; values: Record<string, unknown> }
 const activePreset = ref('todo');
 const remountKey = ref(0);
 const query = ref<Record<string, unknown>>({ ...presets.todo.values });
-const lastSearch = ref<Record<string, unknown> | null>(null);
+const lastSearch = ref<null | Record<string, unknown>>(null);
 
 function applyPreset(key: string) {
   const preset = presets[key];
@@ -95,7 +110,8 @@ function onReset() {
   <DemoPage width="wide">
     <template #description>
       通过 <code>v-model</code> 传入初始值：挂载时按
-      <code>Object.keys(modelValue)</code> 顺序把合法字段填入槽位。完整 API 见「API Overview」。
+      <code>Object.keys(modelValue)</code> 顺序把合法字段填入槽位。完整 API
+      见「API Overview」。
     </template>
 
     <template #api>
@@ -148,7 +164,9 @@ function onReset() {
         @search="onSearch"
         @reset="onReset"
       >
-        <ElButton size="small" @click="applyPreset('todo')">恢复「待办清单」</ElButton>
+        <ElButton size="small" @click="applyPreset('todo')">
+          恢复「待办清单」
+        </ElButton>
       </Filters>
 
       <div class="filters-demo__preview">
@@ -196,13 +214,13 @@ function onReset() {
 }
 
 .filters-demo__preview pre {
-  margin: 0;
   padding: 12px;
+  margin: 0;
   overflow: auto;
   font-size: 12px;
   line-height: 1.5;
-  white-space: pre-wrap;
   word-break: break-all;
+  white-space: pre-wrap;
   background: var(--muted);
   border-radius: 8px;
 }

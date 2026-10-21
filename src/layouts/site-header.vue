@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+
 import GithubMark from '@/components/brand/github-mark.vue';
 import WorkbenchMark from '@/components/brand/workbench-mark.vue';
 import { cn } from '@/utils';
+
 import { inkBandActive } from './site-ink-band';
 
 defineOptions({ name: 'SiteHeader' });
@@ -37,7 +39,9 @@ onBeforeUnmount(() => {
       )
     "
   >
-    <div class="mx-auto flex h-14 w-full max-w-[1200px] items-center gap-6 px-6">
+    <div
+      class="mx-auto flex h-14 w-full max-w-[1200px] items-center gap-6 px-6"
+    >
       <RouterLink
         to="/"
         class="flex items-center gap-2.5 text-[15px] font-semibold tracking-tight text-foreground"

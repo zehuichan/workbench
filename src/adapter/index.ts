@@ -4,8 +4,8 @@
  */
 
 export {
-  initComponentAdapter,
-  useGlobalShareState,
   type ComponentPropsMap,
   type ComponentType,
+  initComponentAdapter,
+  useGlobalShareState,
 } from './component';
