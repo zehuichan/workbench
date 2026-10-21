@@ -299,10 +299,10 @@ UI chrome (sidebar, header categories, demo pages) stays quiet so **tables, form
 
 ### Lockups
 
-| Context              | Treatment                                                                     |
-| -------------------- | ----------------------------------------------------------------------------- |
-| Favicon / app icon   | Mark only (`public/favicon.svg`)                                              |
-| Sidebar brand        | 22–24px mark + `{typography.brand-wordmark}` “Workbench”                      |
+| Context | Treatment |
+| --- | --- |
+| Favicon / app icon | Mark only (`public/favicon.svg`) |
+| Sidebar brand | 22–24px mark + `{typography.brand-wordmark}` “Workbench” |
 | README / docs header | 36–48px mark + wordmark; optional one-line subtitle in `{typography.caption}` |
 
 ### Color variants
@@ -349,17 +349,17 @@ UI chrome (sidebar, header categories, demo pages) stays quiet so **tables, form
 
 ### Mode mapping (implementation)
 
-| Role                   | Light token                      | Dark token (`html.dark`)                  |
-| ---------------------- | -------------------------------- | ----------------------------------------- |
-| Page background        | `{colors.canvas}`                | `{colors.dark-canvas}`                    |
-| Sidebar                | `{colors.sidebar}`               | `{colors.dark-sidebar}`                   |
-| Card / demo            | `{colors.canvas}` + hairline     | `{colors.dark-surface-1}` + dark-hairline |
-| Primary button fill    | `{colors.primary}`               | `{colors.dark-primary}` (same hex)        |
-| Active nav / link text | `{colors.primary}`               | `{colors.dark-primary-bright}`            |
-| Focus ring             | `{colors.primary}`               | `{colors.dark-primary-bright}`            |
-| Body text              | `{colors.ink}`                   | `{colors.dark-ink}`                       |
-| Code block             | `{colors.inverse-canvas}`        | `{colors.dark-code-canvas}`               |
-| Logo mark              | `{colors.primary}` + paper cells | **same** (do not invert by default)       |
+| Role | Light token | Dark token (`html.dark`) |
+| --- | --- | --- |
+| Page background | `{colors.canvas}` | `{colors.dark-canvas}` |
+| Sidebar | `{colors.sidebar}` | `{colors.dark-sidebar}` |
+| Card / demo | `{colors.canvas}` + hairline | `{colors.dark-surface-1}` + dark-hairline |
+| Primary button fill | `{colors.primary}` | `{colors.dark-primary}` (same hex) |
+| Active nav / link text | `{colors.primary}` | `{colors.dark-primary-bright}` |
+| Focus ring | `{colors.primary}` | `{colors.dark-primary-bright}` |
+| Body text | `{colors.ink}` | `{colors.dark-ink}` |
+| Code block | `{colors.inverse-canvas}` | `{colors.dark-code-canvas}` |
+| Logo mark | `{colors.primary}` + paper cells | **same** (do not invert by default) |
 
 Wire to existing shadcn CSS variables under `:root` / `.dark` in `src/styles/tailwind.css` (map `--background`, `--foreground`, `--sidebar*`, and brand `--playground-accent`).
 
@@ -376,21 +376,21 @@ Wire to existing shadcn CSS variables under `:root` / `.dark` in `src/styles/tai
 
 ### Hierarchy
 
-| Token                                     | Size      | Weight | Line Height | Letter Spacing | Use                            |
-| ----------------------------------------- | --------- | ------ | ----------- | -------------- | ------------------------------ |
-| `{typography.display-xl}`                 | 48px      | 600    | 1.1         | -1.2px         | Rare marketing / README heroes |
-| `{typography.display-lg}`                 | 36px      | 600    | 1.15        | -0.8px         | Page titles                    |
-| `{typography.heading-1}`                  | 28px      | 600    | 1.2         | -0.5px         | Demo page H1                   |
-| `{typography.heading-2}`                  | 22px      | 600    | 1.25        | -0.3px         | Section titles                 |
-| `{typography.heading-3}`                  | 18px      | 600    | 1.3         | -0.2px         | Card / block titles            |
-| `{typography.brand-wordmark}`             | 18px      | 600    | 1           | -0.04em        | “Workbench” beside mark        |
-| `{typography.body-lg}`                    | 16px      | 400    | 1.55        | -0.01em        | Lead paragraphs                |
-| `{typography.body}`                       | 14px      | 400    | 1.5         | 0              | Default UI copy                |
-| `{typography.body-sm}`                    | 13.5px    | 400    | 1.45        | 0              | Sidebar links, dense tables    |
-| `{typography.caption}`                    | 12px      | 500    | 1.4         | 0.02em         | Meta, badges                   |
-| `{typography.eyebrow}`                    | 11px      | 500    | 1.3         | 0.08em         | Uppercase section labels       |
-| `{typography.button}`                     | 14px      | 500    | 1.2         | 0              | Buttons                        |
-| `{typography.mono}` / `{typography.code}` | 12.5–13px | 400    | 1.5–1.55    | 0              | Code / tokens                  |
+| Token | Size | Weight | Line Height | Letter Spacing | Use |
+| --- | --- | --- | --- | --- | --- |
+| `{typography.display-xl}` | 48px | 600 | 1.1 | -1.2px | Rare marketing / README heroes |
+| `{typography.display-lg}` | 36px | 600 | 1.15 | -0.8px | Page titles |
+| `{typography.heading-1}` | 28px | 600 | 1.2 | -0.5px | Demo page H1 |
+| `{typography.heading-2}` | 22px | 600 | 1.25 | -0.3px | Section titles |
+| `{typography.heading-3}` | 18px | 600 | 1.3 | -0.2px | Card / block titles |
+| `{typography.brand-wordmark}` | 18px | 600 | 1 | -0.04em | “Workbench” beside mark |
+| `{typography.body-lg}` | 16px | 400 | 1.55 | -0.01em | Lead paragraphs |
+| `{typography.body}` | 14px | 400 | 1.5 | 0 | Default UI copy |
+| `{typography.body-sm}` | 13.5px | 400 | 1.45 | 0 | Sidebar links, dense tables |
+| `{typography.caption}` | 12px | 500 | 1.4 | 0.02em | Meta, badges |
+| `{typography.eyebrow}` | 11px | 500 | 1.3 | 0.08em | Uppercase section labels |
+| `{typography.button}` | 14px | 500 | 1.2 | 0 | Buttons |
+| `{typography.mono}` / `{typography.code}` | 12.5–13px | 400 | 1.5–1.55 | 0 | Code / tokens |
 
 ### Principles
 
@@ -426,26 +426,26 @@ Quiet density: enough air to scan ERP forms, tight enough to feel like a tool. P
 
 ## Elevation & Depth
 
-| Level       | Light                                       | Dark                                                  | Use                              |
-| ----------- | ------------------------------------------- | ----------------------------------------------------- | -------------------------------- |
-| 0 flat      | No shadow                                   | No shadow                                             | Body, sidebar, header            |
-| 1 hairline  | 1px `{colors.hairline}`                     | 1px `{colors.dark-hairline}`                          | Demo blocks, table wraps, inputs |
-| 2 soft lift | `{colors.surface-1}` / `{colors.surface-2}` | `{colors.dark-surface-2}` / `{colors.dark-surface-3}` | Hover rows, nested panels        |
-| 3 overlay   | `{colors.overlay}` + soft shadow            | `{colors.dark-overlay}` + softer shadow               | Dialog / sheet only              |
-| focus       | 2px `{colors.primary}` @ ~40%               | 2px `{colors.dark-primary-bright}` @ ~45%             | Focused controls                 |
+| Level | Light | Dark | Use |
+| --- | --- | --- | --- |
+| 0 flat | No shadow | No shadow | Body, sidebar, header |
+| 1 hairline | 1px `{colors.hairline}` | 1px `{colors.dark-hairline}` | Demo blocks, table wraps, inputs |
+| 2 soft lift | `{colors.surface-1}` / `{colors.surface-2}` | `{colors.dark-surface-2}` / `{colors.dark-surface-3}` | Hover rows, nested panels |
+| 3 overlay | `{colors.overlay}` + soft shadow | `{colors.dark-overlay}` + softer shadow | Dialog / sheet only |
+| focus | 2px `{colors.primary}` @ ~40% | 2px `{colors.dark-primary-bright}` @ ~45% | Focused controls |
 
 Avoid multi-layer decorative shadows and colored glows (especially in dark mode).
 
 ## Shapes
 
-| Token                             | Value  | Use                                                    |
-| --------------------------------- | ------ | ------------------------------------------------------ |
-| `{rounded.xs}`                    | 4px    | Tiny chips                                             |
-| `{rounded.sm}`                    | 6px    | Dense tags                                             |
-| `{rounded.md}`                    | 8px    | Buttons, inputs, sidebar links (`--radius` ≈ 0.625rem) |
-| `{rounded.lg}`                    | 10px   | Demo cards                                             |
-| `{rounded.xl}` / `{rounded.mark}` | 14px   | Logo outer square                                      |
-| `{rounded.pill}`                  | 9999px | Status badges only                                     |
+| Token | Value | Use |
+| --- | --- | --- |
+| `{rounded.xs}` | 4px | Tiny chips |
+| `{rounded.sm}` | 6px | Dense tags |
+| `{rounded.md}` | 8px | Buttons, inputs, sidebar links (`--radius` ≈ 0.625rem) |
+| `{rounded.lg}` | 10px | Demo cards |
+| `{rounded.xl}` / `{rounded.mark}` | 14px | Logo outer square |
+| `{rounded.pill}` | 9999px | Status badges only |
 
 ## Components
 
@@ -503,12 +503,12 @@ Dark mode is a **paired inversion of surfaces**, not a second brand. Keep the sa
 
 ### What flips vs what stays
 
-| Stays                          | Flips                                         |
-| ------------------------------ | --------------------------------------------- |
-| Logo mark geometry + teal fill | Canvas, sidebar, card fills                   |
-| Radius, spacing, type scale    | Ink → dark-ink hierarchy                      |
-| Primary button fill `#0b6e6e`  | Active link / underline / focus → bright teal |
-| Favicon SVG                    | Code block theme (Shiki)                      |
+| Stays | Flips |
+| --- | --- |
+| Logo mark geometry + teal fill | Canvas, sidebar, card fills |
+| Radius, spacing, type scale | Ink → dark-ink hierarchy |
+| Primary button fill `#0b6e6e` | Active link / underline / focus → bright teal |
+| Favicon SVG | Code block theme (Shiki) |
 
 ## Do's and Don'ts
 
@@ -537,11 +537,11 @@ Dark mode is a **paired inversion of surfaces**, not a second brand. Keep the sa
 
 ### Breakpoints
 
-| Name    | Width      | Key Changes                                                      |
-| ------- | ---------- | ---------------------------------------------------------------- |
-| Desktop | ≥1024px    | Full sidebar + header categories                                 |
-| Tablet  | 768–1023px | Sidebar may compress; demos stack                                |
-| Mobile  | <768px     | Prefer sheet / offcanvas for nav if enabled; single-column demos |
+| Name | Width | Key Changes |
+| --- | --- | --- |
+| Desktop | ≥1024px | Full sidebar + header categories |
+| Tablet | 768–1023px | Sidebar may compress; demos stack |
+| Mobile | <768px | Prefer sheet / offcanvas for nav if enabled; single-column demos |
 
 ### Touch Targets
 

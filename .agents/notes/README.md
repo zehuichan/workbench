@@ -1,6 +1,6 @@
 # Agent Notes
 
-An **Agent Note** records a decision or proposal that affects this codebase: the *why* and *what we gave up*, which code and ordinary documentation cannot carry. This file defines where Agent Notes live, when to write one, and the in-file format. The [`agent-notes`](../skills/agent-notes/SKILL.md) skill owns the creation, supersession, and archiving workflow.
+An **Agent Note** records a decision or proposal that affects this codebase: the _why_ and _what we gave up_, which code and ordinary documentation cannot carry. This file defines where Agent Notes live, when to write one, and the in-file format. The [`agent-notes`](../skills/agent-notes/SKILL.md) skill owns the creation, supersession, and archiving workflow.
 
 ## Layout and naming
 
@@ -18,7 +18,7 @@ The date in the filename is when the topic was first proposed. Cross-references 
 ## Classification
 
 | Class | What it covers |
-|---|---|
+| --- | --- |
 | `feature` | A new user- or model-facing capability. |
 | `bug-fix` | Corrects a defect or closes a gap an incident surfaced. |
 | `simplification` | Removes code, behavior, or surface area without adding a capability. |

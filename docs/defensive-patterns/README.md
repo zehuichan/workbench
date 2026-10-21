@@ -13,7 +13,7 @@ Five habits cover most of what follows; each page applies them to one kind of ar
 - **Require evidence.** A claim is falsifiable and recomputable, measured before and after or checked by an executed check, instead of kept in sync by hand.
 
 | Changing | Read |
-|---|---|
+| --- | --- |
 | Timing, state representation, shared ownership, capability placement, migrations, performance, disposal, callbacks, subprocesses, filesystem cleanup | [general.md](general.md) |
 
 Add a page per artifact family when the project accumulates rules that only apply there (for example client components, remote APIs, persistence, or package exports), and add its row to the table. Each rule on a page states what must hold, the judged condition, its boundary, and a correct and a wrong example.

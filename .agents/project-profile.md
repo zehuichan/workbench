@@ -43,7 +43,7 @@ This file holds the project facts that the vibe-harness skills read: commands, v
 Map each kind of change to the narrowest evidence that would fail for its regression. `pre-push-checks` selects from this table.
 
 | Change touches | Required evidence |
-|---|---|
+| --- | --- |
 | Source behavior | `commands.focused-test` on the owning tests |
 | Public types or exports | `commands.typecheck`, then `commands.build` |
 | Documentation | `commands.docs-check` and `git diff --check` |

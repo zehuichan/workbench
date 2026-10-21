@@ -27,4 +27,4 @@ Verify the resulting state and the visible outcome, not merely that an exception
 
 ## Foundations
 
-Meyer, *Object-Oriented Software Construction* (1997): contracts and invariants. Sutter, *Exceptional C++* (1999): exception-safety guarantees. Armstrong, [Making reliable distributed systems in the presence of software errors](https://www.erlang.org/download/armstrong_thesis_2003.pdf) (2003): isolation and supervision.
+Meyer, _Object-Oriented Software Construction_ (1997): contracts and invariants. Sutter, _Exceptional C++_ (1999): exception-safety guarantees. Armstrong, [Making reliable distributed systems in the presence of software errors](https://www.erlang.org/download/armstrong_thesis_2003.pdf) (2003): isolation and supervision.

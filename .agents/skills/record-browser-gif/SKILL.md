@@ -36,21 +36,24 @@ Store scripts, raw video, timing notes, QA frames, and the GIF under the gitigno
 Match `viewport` and `recordVideo.size` explicitly; Playwright otherwise scales video down to fit 800×800, which can make text unreadable.
 
 ```js
-import { chromium } from 'playwright'
-import { join } from 'node:path'
+import { chromium } from 'playwright';
+import { join } from 'node:path';
 
-const size = { width: 1440, height: 900 }
-const browser = await chromium.launch()
-const context = await browser.newContext({ viewport: size, recordVideo: { dir: join(runDir, 'videos'), size } })
+const size = { width: 1440, height: 900 };
+const browser = await chromium.launch();
+const context = await browser.newContext({
+  viewport: size,
+  recordVideo: { dir: join(runDir, 'videos'), size },
+});
 try {
-  const page = await context.newPage()
-  const video = page.video()
+  const page = await context.newPage();
+  const video = page.video();
   // Navigate and exercise the real application here.
-  await context.close()
-  await video.saveAs(join(runDir, 'demo.webm'))
+  await context.close();
+  await video.saveAs(join(runDir, 'demo.webm'));
 } finally {
-  await context.close()
-  await browser.close()
+  await context.close();
+  await browser.close();
 }
 ```
 

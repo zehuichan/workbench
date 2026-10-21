@@ -2,7 +2,11 @@
 
 declare module '*.vue' {
   import type { DefineComponent } from 'vue';
-  const component: DefineComponent<Record<string, unknown>, Record<string, unknown>, unknown>;
+  const component: DefineComponent<
+    Record<string, unknown>,
+    Record<string, unknown>,
+    unknown
+  >;
   export default component;
 }
 
@@ -11,14 +15,14 @@ declare module '*.css' {}
 declare module '*.scss' {}
 
 interface ImportMetaEnv {
+  readonly VITE_JSSDK_ENABLED?: string;
   readonly VITE_WECHAT_APPID?: string;
   readonly VITE_WECHAT_OPEN_APPID?: string;
   /** Fixed OAuth callback path for QR login; default /auth/wechat */
   readonly VITE_WECHAT_QR_REDIRECT_PATH?: string;
-  readonly VITE_JSSDK_ENABLED?: string;
-  readonly VITE_WW_JSSDK_ENABLED?: string;
-  readonly VITE_WORK_WECHAT_CORP_ID?: string;
   readonly VITE_WORK_WECHAT_AGENT_ID?: string;
+  readonly VITE_WORK_WECHAT_CORP_ID?: string;
+  readonly VITE_WW_JSSDK_ENABLED?: string;
 }
 
 interface ImportMeta {
@@ -27,10 +31,10 @@ interface ImportMeta {
 
 /** Minimal Weixin JSSDK surface used by useWechat. */
 interface WeixinJsSdk {
-  config: (config: Record<string, unknown>) => void;
-  ready: (fn: () => void) => void;
-  error: (fn: (err: unknown) => void) => void;
   agentConfig?: (config: Record<string, unknown>) => void;
+  config: (config: Record<string, unknown>) => void;
+  error: (fn: (err: unknown) => void) => void;
+  ready: (fn: () => void) => void;
   scanQRCode?: (options: Record<string, unknown>) => void;
 }
 

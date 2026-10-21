@@ -28,13 +28,15 @@ The judged condition: does correctness depend on "that callback already ran" ins
 
 ```ts
 // The order is written into the code: dispose the old store, then build its successor.
-store.dispose()
-store = createStore(scopeKey)
+store.dispose();
+store = createStore(scopeKey);
 ```
 
 ```ts
-queueMicrotask(() => { if (!ready) refresh() })   // wrong: assumes the microtask runs before the next frame
-setTimeout(() => setMounted(true), 0)             // wrong: waits for a render that was never sequenced
+queueMicrotask(() => {
+  if (!ready) refresh();
+}); // wrong: assumes the microtask runs before the next frame
+setTimeout(() => setMounted(true), 0); // wrong: waits for a render that was never sequenced
 ```
 
 ## Optional inputs state both behaviors
@@ -45,14 +47,16 @@ The judged condition: does `?.` replace a determination that a field exists, rat
 
 ```ts
 // Both behaviors are in the contract: no options means "unknown", not "skip".
-function resolve(input: { options?: readonly string[] }): { kind: 'unknown' } | { kind: 'value'; value: string } {
-  if (input.options === undefined) return { kind: 'unknown' }
-  return { kind: 'value', value: input.options.join(',') }
+function resolve(input: {
+  options?: readonly string[];
+}): { kind: 'unknown' } | { kind: 'value'; value: string } {
+  if (input.options === undefined) return { kind: 'unknown' };
+  return { kind: 'value', value: input.options.join(',') };
 }
 ```
 
 ```ts
-const value = a?.b?.c?.d ?? fallback   // wrong: four layers of fallback hide whether d should exist
+const value = a?.b?.c?.d ?? fallback; // wrong: four layers of fallback hide whether d should exist
 ```
 
 ## One value states one fact
@@ -62,7 +66,10 @@ An unknown value, an empty collection, and a genuinely absent field are three di
 The judged condition: does a single "no value" carry more than one meaning (not yet queried, queried and empty, cannot be determined)?
 
 ```ts
-type ValueState<T> = { kind: 'unknown' } | { kind: 'empty' } | { kind: 'value'; value: T }
+type ValueState<T> =
+  | { kind: 'unknown' }
+  | { kind: 'empty' }
+  | { kind: 'value'; value: T };
 ```
 
 ## No new global "current" singleton
@@ -84,7 +91,9 @@ A business capability lives in its own module and attaches through a registratio
 The judged condition: does the capability register itself, with the central layer only forwarding and managing lifetime? A new branch in a central layer must explain why it cannot live in the owning module.
 
 ```ts
-if (pluginName === 'attachments') { /* wrong: business branch inside the manager */ }
+if (pluginName === 'attachments') {
+  /* wrong: business branch inside the manager */
+}
 ```
 
 ## Changes carry performance evidence
@@ -106,9 +115,16 @@ The judged condition: does teardown await actual quiescence or only request it? 
 Catch and report each listener's exception without rejecting the dispatch or starving later listeners. The listener's owner must still handle state it mutated, under the [`error-handling`](../../.agents/skills/error-handling/SKILL.md) rules; catching alone does not restore state.
 
 ```ts
-async function dispatch(listeners: ((event: string) => Promise<void>)[], event: string): Promise<void> {
+async function dispatch(
+  listeners: ((event: string) => Promise<void>)[],
+  event: string,
+): Promise<void> {
   for (const listener of listeners) {
-    try { await listener(event) } catch (error) { console.warn('listener failed', error) }
+    try {
+      await listener(event);
+    } catch (error) {
+      console.warn('listener failed', error);
+    }
   }
 }
 ```

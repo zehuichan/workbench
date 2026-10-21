@@ -27,21 +27,21 @@ Components reference semantic CSS variable tokens. Change the variables to chang
 
 Every color follows the `name` / `name-foreground` convention. The base variable is for backgrounds, `-foreground` is for text/icons on that background.
 
-| Variable                                     | Purpose                          |
-| -------------------------------------------- | -------------------------------- |
-| `--background` / `--foreground`              | Page background and default text |
-| `--card` / `--card-foreground`               | Card surfaces                    |
-| `--primary` / `--primary-foreground`         | Primary buttons and actions      |
-| `--secondary` / `--secondary-foreground`     | Secondary actions                |
-| `--muted` / `--muted-foreground`             | Muted/disabled states            |
-| `--accent` / `--accent-foreground`           | Hover and accent states          |
-| `--destructive` / `--destructive-foreground` | Error and destructive actions    |
-| `--border`                                   | Default border color             |
-| `--input`                                    | Form input borders               |
-| `--ring`                                     | Focus ring color                 |
-| `--chart-1` through `--chart-5`              | Chart/data visualization         |
-| `--sidebar-*`                                | Sidebar-specific colors          |
-| `--surface` / `--surface-foreground`         | Secondary surface                |
+| Variable | Purpose |
+| --- | --- |
+| `--background` / `--foreground` | Page background and default text |
+| `--card` / `--card-foreground` | Card surfaces |
+| `--primary` / `--primary-foreground` | Primary buttons and actions |
+| `--secondary` / `--secondary-foreground` | Secondary actions |
+| `--muted` / `--muted-foreground` | Muted/disabled states |
+| `--accent` / `--accent-foreground` | Hover and accent states |
+| `--destructive` / `--destructive-foreground` | Error and destructive actions |
+| `--border` | Default border color |
+| `--input` | Form input borders |
+| `--ring` | Focus ring color |
+| `--chart-1` through `--chart-5` | Chart/data visualization |
+| `--sidebar-*` | Sidebar-specific colors |
+| `--surface` / `--surface-foreground` | Secondary surface |
 
 Colors use OKLCH: `--primary: oklch(0.205 0 0)` where values are lightness (0–1), chroma (0 = gray), and hue (0–360).
 
@@ -119,7 +119,8 @@ module.exports = {
     extend: {
       colors: {
         warning: 'oklch(var(--warning) / <alpha-value>)',
-        'warning-foreground': 'oklch(var(--warning-foreground) / <alpha-value>)',
+        'warning-foreground':
+          'oklch(var(--warning-foreground) / <alpha-value>)',
       },
     },
   },

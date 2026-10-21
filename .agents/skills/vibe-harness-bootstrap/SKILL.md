@@ -19,6 +19,7 @@ vibe-harness is a kit of agent skills and governance templates. A repository ado
    ```
 
    Reuse an existing clone only after `git -C <kit-dir> fetch --tags origin`. Use the default branch only when the kit has no tags or the user asks for it.
+
 3. Read `<kit-dir>/BOOTSTRAP.md` and follow it from the section that matches the request: install, upgrade, changing the skill selection, status, or uninstall.
 
 ## Rules that hold for every operation

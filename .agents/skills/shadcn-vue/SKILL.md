@@ -129,21 +129,21 @@ These are the most common patterns that differentiate correct shadcn-vue code. F
 
 ## Component Selection
 
-| Need                       | Use                                                                                                 |
-| -------------------------- | --------------------------------------------------------------------------------------------------- |
-| Button/action              | `Button` with appropriate variant                                                                   |
-| Form inputs                | `Input`, `Select`, `Combobox`, `Switch`, `Checkbox`, `RadioGroup`, `Textarea`, `InputOTP`, `Slider` |
-| Toggle between 2–7 options | `ToggleGroup` + `ToggleGroupItem`                                                                   |
-| Data display               | `Table`, `Card`, `Badge`, `Avatar`                                                                  |
-| Navigation                 | `Sidebar`, `NavigationMenu`, `Breadcrumb`, `Tabs`, `Pagination`                                     |
-| Overlays                   | `Dialog` (modal), `Sheet` (side panel), `Drawer` (bottom sheet), `AlertDialog` (confirmation)       |
-| Feedback                   | `vue-sonner` (toast), `Alert`, `Progress`, `Skeleton`, `Spinner`                                    |
-| Command palette            | `Command` inside `Dialog`                                                                           |
-| Charts                     | `Chart` (wraps Unovis)                                                                              |
-| Layout                     | `Card`, `Separator`, `Resizable`, `ScrollArea`, `Accordion`, `Collapsible`                          |
-| Empty states               | `Empty`                                                                                             |
-| Menus                      | `DropdownMenu`, `ContextMenu`, `Menubar`                                                            |
-| Tooltips/info              | `Tooltip`, `HoverCard`, `Popover`                                                                   |
+| Need | Use |
+| --- | --- |
+| Button/action | `Button` with appropriate variant |
+| Form inputs | `Input`, `Select`, `Combobox`, `Switch`, `Checkbox`, `RadioGroup`, `Textarea`, `InputOTP`, `Slider` |
+| Toggle between 2–7 options | `ToggleGroup` + `ToggleGroupItem` |
+| Data display | `Table`, `Card`, `Badge`, `Avatar` |
+| Navigation | `Sidebar`, `NavigationMenu`, `Breadcrumb`, `Tabs`, `Pagination` |
+| Overlays | `Dialog` (modal), `Sheet` (side panel), `Drawer` (bottom sheet), `AlertDialog` (confirmation) |
+| Feedback | `vue-sonner` (toast), `Alert`, `Progress`, `Skeleton`, `Spinner` |
+| Command palette | `Command` inside `Dialog` |
+| Charts | `Chart` (wraps Unovis) |
+| Layout | `Card`, `Separator`, `Resizable`, `ScrollArea`, `Accordion`, `Collapsible` |
+| Empty states | `Empty` |
+| Menus | `DropdownMenu`, `ContextMenu`, `Menubar` |
+| Tooltips/info | `Tooltip`, `HoverCard`, `Popover` |
 
 ## Key Fields
 
@@ -227,9 +227,7 @@ npx shadcn-vue@latest docs button dialog select
 npx shadcn-vue@latest view @shadcn/button
 ```
 
-**Named presets:** `nova`, `vega`, `maia`, `lyra`, `mira`, `luma`
-**Templates:** `nuxt`, `vite`, `astro` and `laravel`
-**Preset codes:** Version-prefixed base62 strings (e.g. `a2r6bw`), from [shadcn-vue.com](https://shadcn-vue.com).
+**Named presets:** `nova`, `vega`, `maia`, `lyra`, `mira`, `luma` **Templates:** `nuxt`, `vite`, `astro` and `laravel` **Preset codes:** Version-prefixed base62 strings (e.g. `a2r6bw`), from [shadcn-vue.com](https://shadcn-vue.com).
 
 ## Detailed References
 

@@ -15,7 +15,7 @@ Author in this order: locate the document in the tree; set its permitted detail;
 Each fact has one home, the tier whose job it is; elsewhere, link there.
 
 | Tier | Job | Does not belong there |
-|---|---|---|
+| --- | --- | --- |
 | Root `AGENTS.md` | Standing orders an agent needs in every session, one to three lines each, linking their home | Stories, worked examples, situational procedures, restated rules |
 | Subtree `AGENTS.md` | Orders specific to that subtree | Repository-wide rules the root already carries |
 | Architecture overview | Ordered map of components, data flow, and extension points | Type catalogs, per-module detail, decision rationale, status annotations |

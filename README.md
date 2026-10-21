@@ -139,16 +139,16 @@ const { status, flush: saveNow } = useAutoSave(form, (value, signal) =>
 useSaveHotkey(saveNow);
 ```
 
-| 模块            | 签名（简化）                                             | 用途                                              |
-| --------------- | -------------------------------------------------------- | ------------------------------------------------- |
-| `useEmitEffect` | `(rules, initialDraft, options?)`                        | 表头变更驱动明细副作用与汇总                      |
-| `useAutoSave`   | `(source, save, options?)` → `{ status, flush, … }`      | 防抖自动保存                                      |
-| `useFormDraft`  | `(form, key, options?)` → `{ restore, clear, flush, … }` | localStorage 草稿（支持 `omit` / `merge` / 基线） |
-| `useSaveHotkey` | `(handler, options?)`                                    | Ctrl/Cmd+S                                        |
-| `useOauth2`     | `(options?)` → `{ code, authorize }`                     | 微信网页授权                                      |
-| `useQrconnect`  | `(options?)` → `{ code, authorize }`                     | 开放平台扫码登录                                  |
-| `useWechat`     | `(options?)` → `{ ready, wx }`                           | 微信 JSSDK                                        |
-| `useWecom`      | `(options?)` → `{ ready, ww }`                           | 企微 JSSDK                                        |
+| 模块 | 签名（简化） | 用途 |
+| --- | --- | --- |
+| `useEmitEffect` | `(rules, initialDraft, options?)` | 表头变更驱动明细副作用与汇总 |
+| `useAutoSave` | `(source, save, options?)` → `{ status, flush, … }` | 防抖自动保存 |
+| `useFormDraft` | `(form, key, options?)` → `{ restore, clear, flush, … }` | localStorage 草稿（支持 `omit` / `merge` / 基线） |
+| `useSaveHotkey` | `(handler, options?)` | Ctrl/Cmd+S |
+| `useOauth2` | `(options?)` → `{ code, authorize }` | 微信网页授权 |
+| `useQrconnect` | `(options?)` → `{ code, authorize }` | 开放平台扫码登录 |
+| `useWechat` | `(options?)` → `{ ready, wx }` | 微信 JSSDK |
+| `useWecom` | `(options?)` → `{ ready, ww }` | 企微 JSSDK |
 
 浏览器全局与 AppId / 开关通过 `options` 注入（`window`、`appId`、`enabled`、`mode` 等），`import.meta.env` 只作默认值。hash 路由读回调 `code` 时传 `mode: 'hash'`。
 
@@ -164,13 +164,13 @@ createApp(App).use(router).mount('#app');
 
 ### 迁移（破坏性）
 
-| 旧写法                                               | 新写法                                                            |
-| ---------------------------------------------------- | ----------------------------------------------------------------- |
-| `useAutoSave({ source, save, debounceMs })`          | `useAutoSave(source, save, { debounceMs })`                       |
-| `useFormDraft({ form, key, … })`                     | `useFormDraft(form, key, { … })`                                  |
-| `useSaveHotkey({ handler, enabled })`                | `useSaveHotkey(handler, { enabled })`                             |
-| `useEmitEffect({ rules, initialDraft, confirm })`    | `useEmitEffect(rules, initialDraft, { confirm })`                 |
+| 旧写法 | 新写法 |
+| --- | --- |
+| `useAutoSave({ source, save, debounceMs })` | `useAutoSave(source, save, { debounceMs })` |
+| `useFormDraft({ form, key, … })` | `useFormDraft(form, key, { … })` |
+| `useSaveHotkey({ handler, enabled })` | `useSaveHotkey(handler, { enabled })` |
+| `useEmitEffect({ rules, initialDraft, confirm })` | `useEmitEffect(rules, initialDraft, { confirm })` |
 | `const [code, authorize] = useOauth2('snsapi_base')` | `const { code, authorize } = useOauth2({ scope: 'snsapi_base' })` |
-| `const [ready, $wx] = useWechat()`                   | `const { ready, wx } = useWechat()`                               |
-| `const [ready, $ww] = useWecom()`                    | `const { ready, ww } = useWecom()`                                |
-| `import '@/utils/sso'`                               | `import { sso } from '@/utils/sso'` 后调用 `sso(router)`          |
+| `const [ready, $wx] = useWechat()` | `const { ready, wx } = useWechat()` |
+| `const [ready, $ww] = useWecom()` | `const { ready, ww } = useWecom()` |
+| `import '@/utils/sso'` | `import { sso } from '@/utils/sso'` 后调用 `sso(router)` |

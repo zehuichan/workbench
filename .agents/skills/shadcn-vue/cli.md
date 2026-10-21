@@ -2,8 +2,7 @@
 
 Configuration is read from `components.json`.
 
-> **IMPORTANT:** Always run commands using the project's package runner: `npx shadcn-vue@latest`, `pnpm dlx shadcn-vue@latest`, or `bunx --bun shadcn-vue@latest`. Check `packageManager` from project context to choose the right one. Examples below use `npx shadcn-vue@latest` but substitute the correct runner for the project.
-> **IMPORTANT:** Only use the flags documented below. Do not invent or guess flags — if a flag isn't listed here, it doesn't exist. The CLI auto-detects the package manager from the project's lockfile; there is no `--package-manager` flag.
+> **IMPORTANT:** Always run commands using the project's package runner: `npx shadcn-vue@latest`, `pnpm dlx shadcn-vue@latest`, or `bunx --bun shadcn-vue@latest`. Check `packageManager` from project context to choose the right one. Examples below use `npx shadcn-vue@latest` but substitute the correct runner for the project. **IMPORTANT:** Only use the flags documented below. Do not invent or guess flags — if a flag isn't listed here, it doesn't exist. The CLI auto-detects the package manager from the project's lockfile; there is no `--package-manager` flag.
 
 ## Contents
 
@@ -24,18 +23,18 @@ npx shadcn-vue@latest init [components...] [options]
 
 Initializes shadcn-vue in an existing project or creates a new project (when `--name` is provided). Optionally installs components in the same step.
 
-| Flag                    | Short | Description                                    | Default |
-| ----------------------- | ----- | ---------------------------------------------- | ------- |
-| `--template <template>` | `-t`  | Template (nuxt, vite, astro, laravel)          | —       |
-| `--preset [name]`       | `-p`  | Preset configuration (named, code, or URL)     | —       |
-| `--yes`                 | `-y`  | Skip confirmation prompt                       | `true`  |
-| `--defaults`            | `-d`  | Use defaults (`--template=nuxt --preset=nova`) | `false` |
-| `--force`               | `-f`  | Force overwrite existing configuration         | `false` |
-| `--cwd <cwd>`           | `-c`  | Working directory                              | current |
-| `--name <name>`         | `-n`  | Name for new project                           | —       |
-| `--silent`              | `-s`  | Mute output                                    | `false` |
-| `--rtl`                 |       | Enable RTL support                             | —       |
-| `--reinstall`           |       | Re-install existing UI components              | `false` |
+| Flag | Short | Description | Default |
+| --- | --- | --- | --- |
+| `--template <template>` | `-t` | Template (nuxt, vite, astro, laravel) | — |
+| `--preset [name]` | `-p` | Preset configuration (named, code, or URL) | — |
+| `--yes` | `-y` | Skip confirmation prompt | `true` |
+| `--defaults` | `-d` | Use defaults (`--template=nuxt --preset=nova`) | `false` |
+| `--force` | `-f` | Force overwrite existing configuration | `false` |
+| `--cwd <cwd>` | `-c` | Working directory | current |
+| `--name <name>` | `-n` | Name for new project | — |
+| `--silent` | `-s` | Mute output | `false` |
+| `--rtl` |  | Enable RTL support | — |
+| `--reinstall` |  | Re-install existing UI components | `false` |
 
 `npx shadcn-vue@latest create` is an alias for `npx shadcn-vue@latest init`.
 
@@ -47,15 +46,14 @@ npx shadcn-vue@latest apply [preset] [options]
 
 Applies a preset to an existing project, overwriting preset-driven config, fonts, CSS variables, and detected UI components.
 
-| Flag                | Short | Description                                | Default |
-| ------------------- | ----- | ------------------------------------------ | ------- |
-| `--preset <preset>` | —     | Preset configuration (named, code, or URL) | —       |
-| `--yes`             | `-y`  | Skip confirmation prompt                   | `false` |
-| `--cwd <cwd>`       | `-c`  | Working directory                          | current |
-| `--silent`          | `-s`  | Mute output                                | `false` |
+| Flag | Short | Description | Default |
+| --- | --- | --- | --- |
+| `--preset <preset>` | — | Preset configuration (named, code, or URL) | — |
+| `--yes` | `-y` | Skip confirmation prompt | `false` |
+| `--cwd <cwd>` | `-c` | Working directory | current |
+| `--silent` | `-s` | Mute output | `false` |
 
-`[preset]` is a shorthand for `--preset <preset>`. If both are provided, they must match.
-If no preset is provided, the CLI offers to open the custom preset builder on `shadcn-vue.com/create`.
+`[preset]` is a shorthand for `--preset <preset>`. If both are provided, they must match. If no preset is provided, the CLI offers to open the custom preset builder on `shadcn-vue.com/create`.
 
 ### `add` — Add components
 
@@ -143,35 +141,35 @@ Displays project info and `components.json` configuration. Run this first to dis
 
 **Project Info fields:**
 
-| Field                | Type      | Meaning                                                 |
-| -------------------- | --------- | ------------------------------------------------------- |
-| `framework`          | `string`  | Detected framework (`nuxt`, `vite`, `astro`, `laravel`) |
-| `frameworkVersion`   | `string`  | Framework version (e.g. `3.15.0`)                       |
-| `isSrcDir`           | `boolean` | Whether the project uses a `src/` directory             |
-| `isTs`               | `boolean` | Whether the project uses TypeScript                     |
-| `tailwindVersion`    | `string`  | `"v3"` or `"v4"`                                        |
-| `tailwindConfigFile` | `string`  | Path to the Tailwind config file                        |
-| `tailwindCssFile`    | `string`  | Path to the global CSS file                             |
-| `aliasPrefix`        | `string`  | Import alias prefix (e.g. `@`, `~`, `@/`)               |
-| `packageManager`     | `string`  | Detected package manager (`npm`, `pnpm`, `yarn`, `bun`) |
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `framework` | `string` | Detected framework (`nuxt`, `vite`, `astro`, `laravel`) |
+| `frameworkVersion` | `string` | Framework version (e.g. `3.15.0`) |
+| `isSrcDir` | `boolean` | Whether the project uses a `src/` directory |
+| `isTs` | `boolean` | Whether the project uses TypeScript |
+| `tailwindVersion` | `string` | `"v3"` or `"v4"` |
+| `tailwindConfigFile` | `string` | Path to the Tailwind config file |
+| `tailwindCssFile` | `string` | Path to the global CSS file |
+| `aliasPrefix` | `string` | Import alias prefix (e.g. `@`, `~`, `@/`) |
+| `packageManager` | `string` | Detected package manager (`npm`, `pnpm`, `yarn`, `bun`) |
 
 **Components.json fields:**
 
-| Field                 | Type      | Meaning                                                                                 |
-| --------------------- | --------- | --------------------------------------------------------------------------------------- |
-| `base`                | `string`  | Primitive library (`reka`) — determines component APIs and available props              |
-| `style`               | `string`  | Visual style (e.g. `nova`, `vega`)                                                      |
-| `typescript`          | `boolean` | TypeScript flag                                                                         |
-| `tailwind.config`     | `string`  | Tailwind config path                                                                    |
-| `tailwind.css`        | `string`  | Global CSS path — this is where custom CSS variables go                                 |
-| `iconLibrary`         | `string`  | Icon library — determines icon import package (e.g. `@lucide/vue`, `@tabler/icons-vue`) |
-| `aliases.components`  | `string`  | Component import alias (e.g. `@/components`)                                            |
-| `aliases.utils`       | `string`  | Utils import alias (e.g. `@/lib/utils`)                                                 |
-| `aliases.ui`          | `string`  | UI component alias (e.g. `@/components/ui`)                                             |
-| `aliases.lib`         | `string`  | Lib alias (e.g. `@/lib`)                                                                |
-| `aliases.composables` | `string`  | Composables/Hooks alias (e.g. `@/composables`)                                          |
-| `resolvedPaths`       | `object`  | Absolute file-system paths for each alias                                               |
-| `registries`          | `object`  | Configured custom registries                                                            |
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `base` | `string` | Primitive library (`reka`) — determines component APIs and available props |
+| `style` | `string` | Visual style (e.g. `nova`, `vega`) |
+| `typescript` | `boolean` | TypeScript flag |
+| `tailwind.config` | `string` | Tailwind config path |
+| `tailwind.css` | `string` | Global CSS path — this is where custom CSS variables go |
+| `iconLibrary` | `string` | Icon library — determines icon import package (e.g. `@lucide/vue`, `@tabler/icons-vue`) |
+| `aliases.components` | `string` | Component import alias (e.g. `@/components`) |
+| `aliases.utils` | `string` | Utils import alias (e.g. `@/lib/utils`) |
+| `aliases.ui` | `string` | UI component alias (e.g. `@/components/ui`) |
+| `aliases.lib` | `string` | Lib alias (e.g. `@/lib`) |
+| `aliases.composables` | `string` | Composables/Hooks alias (e.g. `@/composables`) |
+| `resolvedPaths` | `object` | Absolute file-system paths for each alias |
+| `registries` | `object` | Configured custom registries |
 
 **Links fields:**
 
@@ -211,8 +209,7 @@ Three ways to specify a preset via `--preset`:
 2. **Code:** `--preset a2r6bw` (version-prefixed base62 string, e.g. `a2r6bw`)
 3. **URL:** `--preset "https://shadcn-vue.com/init?base=reka&style=nova&..."`
 
-> **IMPORTANT:** Never try to decode, fetch, or resolve preset codes manually. Preset codes are opaque — pass them directly to `npx shadcn-vue@latest init --preset <code>` and let the CLI handle resolution.
-> Use `npx shadcn-vue@latest apply --preset <code>` when overwriting an existing project's preset.
+> **IMPORTANT:** Never try to decode, fetch, or resolve preset codes manually. Preset codes are opaque — pass them directly to `npx shadcn-vue@latest init --preset <code>` and let the CLI handle resolution. Use `npx shadcn-vue@latest apply --preset <code>` when overwriting an existing project's preset.
 
 ## Switching Presets
 

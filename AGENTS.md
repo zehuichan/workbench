@@ -106,6 +106,7 @@ Adapt a harness rule only when this repo has a place for it. Do not copy deepsee
 Keep each rule to a few lines and link the skill or file that holds the procedure. If a section starts repeating a skill, move the detail back.
 
 <!-- vibe-harness:begin -->
+
 ## Working agreement (vibe-harness)
 
 These standing orders apply to every agent session. Project facts (commands, enabled surfaces, evidence per surface) live in the [project profile](.agents/project-profile.md); reusable workflows live in [.agents/skills/](.agents/skills/). Put project-specific rules outside this managed block: `vibe-harness` upgrades rewrite only the text between its markers.

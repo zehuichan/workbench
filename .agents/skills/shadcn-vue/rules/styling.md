@@ -65,7 +65,9 @@ If you need a success/positive color that doesn't exist as a semantic token, use
 **Incorrect:**
 
 ```html
-<button class="border border-input bg-transparent hover:bg-accent">Click me</button>
+<button class="border border-input bg-transparent hover:bg-accent">
+  Click me
+</button>
 ```
 
 **Correct:**
