@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+
 import { ElMessage } from 'element-plus';
-import { useFormDraft } from '@/composables';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
+import { useFormDraft } from '@/composables';
 
 defineOptions({ name: 'UseFormDraftDemo' });
 
 const DRAFT_KEY = 'composables-demo:form-draft';
 
 interface FormState {
-  name: string;
   email: string;
+  name: string;
   remark: string;
 }
 
@@ -21,16 +23,22 @@ const form = ref<FormState>({ ...defaults });
 const enabled = ref(true);
 const omitRemark = ref(false);
 
-const { error, isPending, restore, clear, flush, withPaused } = useFormDraft(form, DRAFT_KEY, {
-  enabled,
-  defaults,
-  omit: () => (omitRemark.value ? (['remark'] as const) : []),
-  debounceMs: 500,
-});
+const { error, isPending, restore, clear, flush, withPaused } = useFormDraft(
+  form,
+  DRAFT_KEY,
+  {
+    enabled,
+    defaults,
+    omit: () => (omitRemark.value ? (['remark'] as const) : []),
+    debounceMs: 500,
+  },
+);
 
 const errorLabel = computed(() => {
-  if (error.value == null) return '—';
-  return error.value instanceof Error ? error.value.message : String(error.value);
+  if (error.value === null || error.value === undefined) return '—';
+  return error.value instanceof Error
+    ? error.value.message
+    : String(error.value);
 });
 
 function handleRestore() {
@@ -60,7 +68,7 @@ async function handleSimulateServerLoad() {
       merge: (draft, current, fallback) => {
         const next = { ...fallback, ...current };
         for (const [key, value] of Object.entries(draft)) {
-          if (value == null || value === '') continue;
+          if (value === null || value === undefined || value === '') continue;
           next[key as keyof FormState] = value as never;
         }
         return next;
@@ -71,7 +79,9 @@ async function handleSimulateServerLoad() {
   setTimeout(() => {
     form.value.remark = `${form.value.remark} · 迟到回写`;
   }, 50);
-  ElMessage.success('已模拟服务端加载；迟到回写在 omit remark 开启时不会产生幻影草稿');
+  ElMessage.success(
+    '已模拟服务端加载；迟到回写在 omit remark 开启时不会产生幻影草稿',
+  );
 }
 </script>
 
@@ -110,7 +120,9 @@ async function handleSimulateServerLoad() {
         </tr>
         <tr>
           <td><code>omit</code></td>
-          <td><code>MaybeRefOrGetter&lt;ReadonlyArray&lt;keyof T&gt;&gt;</code></td>
+          <td>
+            <code>MaybeRefOrGetter&lt;ReadonlyArray&lt;keyof T&gt;&gt;</code>
+          </td>
           <td>可选。永不持久化、也不恢复的字段（如服务端托管集合）。</td>
         </tr>
         <tr>
@@ -159,8 +171,8 @@ async function handleSimulateServerLoad() {
           <td><code>withPaused</code></td>
           <td><code>(task) =&gt; Promise&lt;R&gt;</code></td>
           <td>
-            执行期间忽略 form 变更；最外层退出时记录干净基线，之后与基线相同的 debounce
-            写入会被跳过。
+            执行期间忽略 form 变更；最外层退出时记录干净基线，之后与基线相同的
+            debounce 写入会被跳过。
           </td>
         </tr>
       </DemoApiTable>
@@ -169,7 +181,10 @@ async function handleSimulateServerLoad() {
     <DemoBlock>
       <template #hint>
         <ol class="demo__rules">
-          <li>先在 <code>withPaused</code> 内加载服务端数据，再调用 <code>restore</code>。</li>
+          <li>
+            先在 <code>withPaused</code> 内加载服务端数据，再调用
+            <code>restore</code>。
+          </li>
           <li>
             异步子组件（如列表）可能在 pause 结束后才回写：配合
             <code>omit</code>
@@ -177,7 +192,8 @@ async function handleSimulateServerLoad() {
           </li>
           <li>服务端托管字段放进 <code>omit</code>，不要让旧草稿冲掉它们。</li>
         </ol>
-        编辑表单 → 等 debounce 或点 Flush → 刷新页面 → 点 Restore 回填。当前 key：
+        编辑表单 → 等 debounce 或点 Flush → 刷新页面 → 点 Restore 回填。当前
+        key：
         <code>{{ DRAFT_KEY }}</code>
       </template>
 
@@ -190,10 +206,14 @@ async function handleSimulateServerLoad() {
           <span>omit remark</span>
           <el-switch v-model="omitRemark" />
         </label>
-        <el-button size="small" type="primary" @click="handleRestore"> Restore </el-button>
+        <el-button size="small" type="primary" @click="handleRestore">
+          Restore
+        </el-button>
         <el-button size="small" @click="handleFlush">Flush</el-button>
         <el-button size="small" @click="handleClear">Clear</el-button>
-        <el-button size="small" @click="handleSimulateServerLoad">模拟服务端加载</el-button>
+        <el-button size="small" @click="handleSimulateServerLoad">
+          模拟服务端加载
+        </el-button>
       </div>
 
       <p class="demo__status">
@@ -224,8 +244,8 @@ async function handleSimulateServerLoad() {
 
 <style scoped>
 .demo__rules {
-  margin: 0 0 0.75rem;
   padding-left: 1.25rem;
+  margin: 0 0 0.75rem;
 }
 
 .demo__rules li + li {

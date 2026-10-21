@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import type { PlaygroundAd, PlaygroundSponsor } from './sponsors';
+
 import { computed } from 'vue';
+
+import { defined } from '@/utils/defined';
+
 import {
   playgroundAds,
   playgroundSponsors,
   SPONSOR_INQUIRY_URL,
-  type PlaygroundAd,
-  type PlaygroundSponsor,
 } from './sponsors';
 
 defineOptions({ name: 'PlaygroundAside' });
@@ -23,7 +26,7 @@ function monogram(name: string): string {
   if (!trimmed) return '?';
   const ascii = trimmed.match(/[A-Za-z0-9]/g)?.join('') ?? '';
   if (ascii.length >= 2) return ascii.slice(0, 2).toUpperCase();
-  return Array.from(trimmed)[0]!.toUpperCase();
+  return defined([...trimmed][0]).toUpperCase();
 }
 
 function sponsorLabel(sponsor: PlaygroundSponsor): string {
@@ -38,7 +41,11 @@ function sponsorLabel(sponsor: PlaygroundSponsor): string {
   >
     <div class="sticky top-8 flex flex-col gap-7">
       <section v-if="ads.length > 0" class="flex flex-col gap-2.5">
-        <h2 class="m-0 text-[12px] font-semibold tracking-wide text-muted-foreground">广告</h2>
+        <h2
+          class="m-0 text-[12px] font-semibold tracking-wide text-muted-foreground"
+        >
+          广告
+        </h2>
         <a
           v-for="ad in ads"
           :key="ad.id"
@@ -68,9 +75,16 @@ function sponsorLabel(sponsor: PlaygroundSponsor): string {
       </section>
 
       <section class="flex flex-col gap-2.5">
-        <h2 class="m-0 text-[12px] font-semibold tracking-wide text-muted-foreground">赞助商</h2>
+        <h2
+          class="m-0 text-[12px] font-semibold tracking-wide text-muted-foreground"
+        >
+          赞助商
+        </h2>
 
-        <ul v-if="sponsors.length > 0" class="m-0 flex list-none flex-col gap-2 p-0">
+        <ul
+          v-if="sponsors.length > 0"
+          class="m-0 flex list-none flex-col gap-2 p-0"
+        >
           <li v-for="sponsor in sponsors" :key="sponsor.id">
             <a
               :href="sponsor.href"
@@ -99,7 +113,9 @@ function sponsorLabel(sponsor: PlaygroundSponsor): string {
                 >
                   {{ sponsor.name }}
                 </span>
-                <span class="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                <span
+                  class="line-clamp-2 text-[11px] leading-snug text-muted-foreground"
+                >
                   {{ sponsor.slogan }}
                 </span>
               </span>

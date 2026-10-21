@@ -1,10 +1,17 @@
+import type { PlaygroundSponsor } from '../sponsors';
+
 import { createApp, h, nextTick } from 'vue';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
 import PlaygroundAside from '../playground-aside.vue';
-import { playgroundAds, SPONSOR_INQUIRY_URL, type PlaygroundSponsor } from '../sponsors';
+import { playgroundAds, SPONSOR_INQUIRY_URL } from '../sponsors';
 
 describe('playground-aside', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
+    [];
 
   async function mountAside(
     props: {
@@ -41,10 +48,10 @@ describe('playground-aside', () => {
     const host = await mountAside();
     const ad = playgroundAds[0];
     expect(ad).toBeDefined();
-    const link = host.querySelector(`a[href="${ad!.href}"]`);
+    const link = host.querySelector(`a[href="${defined(ad).href}"]`);
     expect(link).not.toBeNull();
-    expect(link!.getAttribute('rel')).toContain('sponsored');
-    expect(link!.textContent).toContain(ad!.title);
+    expect(defined(link).getAttribute('rel')).toContain('sponsored');
+    expect(defined(link).textContent).toContain(defined(ad).title);
   });
 
   it('links become-sponsor CTA to inquiry URL', async () => {
@@ -53,7 +60,7 @@ describe('playground-aside', () => {
       el.textContent?.includes('成为赞助商'),
     );
     expect(cta).toBeDefined();
-    expect(cta!.getAttribute('href')).toBe(SPONSOR_INQUIRY_URL);
+    expect(defined(cta).getAttribute('href')).toBe(SPONSOR_INQUIRY_URL);
   });
 
   it('renders sponsor entries when provided', async () => {
@@ -73,7 +80,7 @@ describe('playground-aside', () => {
     expect(host.textContent).toContain('AC');
     const link = host.querySelector('a[href="https://example.com/acme"]');
     expect(link).not.toBeNull();
-    expect(link!.getAttribute('rel')).toContain('sponsored');
+    expect(defined(link).getAttribute('rel')).toContain('sponsored');
   });
 
   it('hides the ads section when ads are empty', async () => {

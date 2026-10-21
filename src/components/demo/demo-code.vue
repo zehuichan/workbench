@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+
 import { highlightCode } from './demo-highlighter';
 
 defineOptions({ name: 'DemoCode' });
@@ -10,7 +11,7 @@ const props = withDefaults(
     lang?: string;
     title?: string;
   }>(),
-  { lang: 'ts' },
+  { lang: 'ts', title: undefined },
 );
 
 const html = ref('');
@@ -54,7 +55,7 @@ async function handleCopy() {
         {{ copied ? '已复制' : '复制' }}
       </el-button>
     </div>
-    <div v-if="html" class="demo-code__body" v-html="html" />
+    <div v-if="html" class="demo-code__body" v-html="html"></div>
     <pre v-else class="demo-code__fallback">{{ code }}</pre>
   </div>
 </template>

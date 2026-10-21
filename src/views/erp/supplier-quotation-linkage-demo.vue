@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import type { QuotationForm } from './supplier-quotation-linkage';
+
+import { computed, ref } from 'vue';
+
 import { ElMessage } from 'element-plus';
 import { cloneDeep } from 'es-toolkit';
-import { computed, ref } from 'vue';
+
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
@@ -10,6 +14,8 @@ import ManualFieldTags from '@/components/demo/manual-field-tags.vue';
 import { useConfirmDialog } from '@/components/demo/use-confirm-dialog';
 import { PlusTable } from '@/components/plus-table';
 import { useEmitEffect } from '@/composables';
+import { defined } from '@/utils/defined';
+
 import { createTempIdFactory } from './emit-helpers';
 import {
   CURRENCY_TYPE_OPTIONS,
@@ -20,7 +26,6 @@ import {
   TRADE_TERM_OPTIONS,
 } from './mock-master-data';
 import {
-  QUOTATION_FIELD_LABELS,
   createFclQuotationSeed,
   createFeeRow,
   createFileRow,
@@ -32,19 +37,23 @@ import {
   miscFeeColumns,
   podFeeColumns,
   polFeeColumns,
+  QUOTATION_FIELD_LABELS,
   quotationItemColumns,
   quotationItemManualFields,
   quotationRules,
-  type QuotationForm,
 } from './supplier-quotation-linkage';
 
 defineOptions({ name: 'SupplierQuotationLinkageDemo' });
 
 const form = ref<QuotationForm>(cloneDeep(defaultQuotationForm));
-const { pending, isManual, restore, normalize } = useEmitEffect(form, quotationRules, {
-  confirm: useConfirmDialog(QUOTATION_FIELD_LABELS),
-  immediate: true,
-});
+const { pending, isManual, restore, normalize } = useEmitEffect(
+  form,
+  quotationRules,
+  {
+    confirm: useConfirmDialog(QUOTATION_FIELD_LABELS),
+    immediate: true,
+  },
+);
 
 const nextId = createTempIdFactory();
 const submitted = ref('');
@@ -58,32 +67,35 @@ const summary = computed(() => [
   { label: '报价总额', value: form.value.quote_amount, primary: true },
 ]);
 
-type FeeTable = 'quote_pol_fee_rows' | 'quote_pod_fee_rows' | 'quote_misc_fee_rows';
-type FileTable = 'quote_pol_files' | 'quote_pod_files';
+type FeeTable =
+  | 'quote_misc_fee_rows'
+  | 'quote_pod_fee_rows'
+  | 'quote_pol_fee_rows';
+type FileTable = 'quote_pod_files' | 'quote_pol_files';
 
 const feeTables: {
-  key: FeeTable;
-  title: string;
   columns: typeof polFeeColumns;
   firstField: string;
+  key: FeeTable;
+  title: string;
 }[] = [
   {
     key: 'quote_pol_fee_rows',
     title: '起运港费用',
     columns: polFeeColumns,
-    firstField: POL_FEE_CATALOG[0]!.field,
+    firstField: defined(POL_FEE_CATALOG[0]).field,
   },
   {
     key: 'quote_pod_fee_rows',
     title: '目的港费用',
     columns: podFeeColumns,
-    firstField: POD_FEE_CATALOG[0]!.field,
+    firstField: defined(POD_FEE_CATALOG[0]).field,
   },
   {
     key: 'quote_misc_fee_rows',
     title: '其他费用',
     columns: miscFeeColumns,
-    firstField: MISC_FEE_CATALOG[0]!.field,
+    firstField: defined(MISC_FEE_CATALOG[0]).field,
   },
 ];
 
@@ -114,13 +126,17 @@ function addFee(table: FeeTable, field: string) {
 function addFile(table: FileTable) {
   const seq = form.value[table].length + 1;
   form.value[table].push(
-    createFileRow(nextId(), `附件-${seq}.pdf`, Math.round(50_000 + Math.random() * 500_000)),
+    createFileRow(
+      nextId(),
+      `附件-${seq}.pdf`,
+      Math.round(50_000 + Math.random() * 500_000),
+    ),
   );
 }
 
 function removeFrom<T>(list: T[], row: T) {
   const index = list.indexOf(row);
-  if (index >= 0) list.splice(index, 1);
+  if (index !== -1) list.splice(index, 1);
 }
 
 async function submit() {
@@ -134,7 +150,8 @@ async function submit() {
   <DemoPage width="wide">
     <template #description>
       供应商报价（<code>gysbjtb</code>）：一张表头 + 六张子表，全部是
-      <code>form</code> 上的数组字段，五张 <code>PlusTable</code> 直接 <code>:data</code>
+      <code>form</code> 上的数组字段，五张 <code>PlusTable</code> 直接
+      <code>:data</code>
       绑定。外币单价 ⇄
       人民币单价双向换算，改哪一边哪一边就是锚；改币种带出汇率并批量重算人民币单价（弹确认，手改行保留）；费用项从目录带出名称
       / 单位 / 单价；FOB 条款下海运费与目的港费用不计入报价总额。
@@ -147,11 +164,19 @@ async function submit() {
       </template>
 
       <div class="mb-3 flex flex-wrap items-center gap-2">
-        <el-button @click="load(createLclQuotationSeed)">载入 LCL 报价</el-button>
-        <el-button @click="load(createFclQuotationSeed)">载入 FCL 报价</el-button>
+        <el-button @click="load(createLclQuotationSeed)">
+          载入 LCL 报价
+        </el-button>
+        <el-button @click="load(createFclQuotationSeed)">
+          载入 FCL 报价
+        </el-button>
         <el-button @click="newDocument">新建空单</el-button>
-        <el-button type="primary" :loading="pending" @click="submit">提交</el-button>
-        <span class="demo__meta">{{ form._id ? `报价单 #${form._id}` : '未保存报价' }}</span>
+        <el-button type="primary" :loading="pending" @click="submit">
+          提交
+        </el-button>
+        <span class="demo__meta">{{
+          form._id ? `报价单 #${form._id}` : '未保存报价'
+        }}</span>
       </div>
 
       <el-form class="erp-page__header" label-position="top" :model="form">
@@ -231,7 +256,10 @@ async function submit() {
           <el-input v-model="form.transit_time" placeholder="如 25" />
         </el-form-item>
         <el-form-item label="包装要求">
-          <el-input v-model="form.package_requirement" placeholder="如 标准出口木箱包装" />
+          <el-input
+            v-model="form.package_requirement"
+            placeholder="如 标准出口木箱包装"
+          />
         </el-form-item>
         <el-form-item label="货重比">
           <el-input v-model="form.cargo_weight_ratio" placeholder="如 1:500" />
@@ -262,7 +290,11 @@ async function submit() {
           />
         </template>
         <template #cell-actions="{ row }">
-          <el-button type="danger" link @click.stop="removeFrom(form.quotation_items, row)">
+          <el-button
+            type="danger"
+            link
+            @click.stop="removeFrom(form.quotation_items, row)"
+          >
             删除
           </el-button>
         </template>
@@ -270,9 +302,18 @@ async function submit() {
 
       <template v-for="table in feeTables" :key="table.key">
         <h3 class="erp-page__section">{{ table.title }}</h3>
-        <PlusTable :data="form[table.key]" :columns="table.columns" row-key="id" mode="cell" border>
+        <PlusTable
+          :data="form[table.key]"
+          :columns="table.columns"
+          row-key="id"
+          mode="cell"
+          border
+        >
           <template #toolbar>
-            <el-button type="primary" @click="addFee(table.key, table.firstField)">
+            <el-button
+              type="primary"
+              @click="addFee(table.key, table.firstField)"
+            >
               新增费用
             </el-button>
           </template>
@@ -286,7 +327,11 @@ async function submit() {
             />
           </template>
           <template #cell-actions="{ row }">
-            <el-button type="danger" link @click.stop="removeFrom(form[table.key], row)">
+            <el-button
+              type="danger"
+              link
+              @click.stop="removeFrom(form[table.key], row)"
+            >
               删除
             </el-button>
           </template>
@@ -296,12 +341,21 @@ async function submit() {
       <div class="grid gap-4 md:grid-cols-2">
         <div v-for="table in fileTables" :key="table.key">
           <h3 class="erp-page__section">{{ table.title }}</h3>
-          <PlusTable :data="form[table.key]" :columns="fileColumns" row-key="id" border>
+          <PlusTable
+            :data="form[table.key]"
+            :columns="fileColumns"
+            row-key="id"
+            border
+          >
             <template #toolbar>
               <el-button @click="addFile(table.key)">模拟上传</el-button>
             </template>
             <template #cell-actions="{ row }">
-              <el-button type="danger" link @click.stop="removeFrom(form[table.key], row)">
+              <el-button
+                type="danger"
+                link
+                @click.stop="removeFrom(form[table.key], row)"
+              >
                 删除
               </el-button>
             </template>
@@ -311,7 +365,11 @@ async function submit() {
 
       <DocumentSummaryBar :items="summary" :pending="pending">
         <span class="text-xs text-[var(--el-text-color-secondary)]">
-          {{ isFob ? 'FOB：海运费与目的港费用不计入' : `${form.trade_term}：全额计入` }}
+          {{
+            isFob
+              ? 'FOB：海运费与目的港费用不计入'
+              : `${form.trade_term}：全额计入`
+          }}
         </span>
       </DocumentSummaryBar>
 

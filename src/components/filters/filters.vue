@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import type { FilterSchemaField } from './constants';
+
 import { onMounted, reactive } from 'vue';
+
 import { ElButton, ElCol, ElRow } from 'element-plus';
 
-import type { FilterSchemaField } from './constants';
 import FiltersItem from './filters-item.vue';
 
 defineOptions({
@@ -28,7 +30,9 @@ const modelValue = defineModel<Record<string, unknown>>({
 const keyMap = reactive<Record<number, string>>({});
 
 function init() {
-  for (const k of Object.keys(keyMap)) delete keyMap[Number(k)];
+  for (const k of Object.keys(keyMap)) {
+    Reflect.deleteProperty(keyMap, Number(k));
+  }
 
   const af = Object.keys(modelValue.value);
   const schema = props.schema ?? [];
@@ -74,7 +78,7 @@ onMounted(() => {
       <ElCol :span="24">
         <div class="filters__actions">
           <div class="filters__slot">
-            <slot />
+            <slot></slot>
           </div>
           <div class="filters__buttons">
             <ElButton @click="onReset">重置</ElButton>
@@ -104,9 +108,6 @@ onMounted(() => {
     gap: 8px;
     align-items: center;
     min-width: 0;
-  }
-
-  &__buttons {
   }
 }
 </style>

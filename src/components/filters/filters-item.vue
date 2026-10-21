@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import type { FilterSchemaField } from './constants';
+
+import type { ComponentType } from '@/adapter';
+
 import { computed } from 'vue';
+
 import { ElInput, ElSelect } from 'element-plus';
 
-import { useGlobalShareState, type ComponentType } from '@/adapter';
-
-import type { FilterSchemaField } from './constants';
+import { useGlobalShareState } from '@/adapter';
 
 defineOptions({
   name: 'FiltersItem',
@@ -32,12 +35,15 @@ const selectOptions = computed(() => {
     label,
     value,
     disabled:
-      Object.entries(km).some(([j, v]) => Number(j) !== props.index && v === value) &&
-      value !== km[props.index],
+      Object.entries(km).some(
+        ([j, v]) => Number(j) !== props.index && v === value,
+      ) && value !== km[props.index],
   }));
 });
 
-const activeItem = computed(() => props.schema.find((s) => s.fieldName === fieldKey.value));
+const activeItem = computed(() =>
+  props.schema.find((s) => s.fieldName === fieldKey.value),
+);
 
 /** schema.modelPropName > Element Plus 默认 modelValue */
 const activeModelPropName = computed(() => {
@@ -51,7 +57,7 @@ const activeModelPropName = computed(() => {
 const valueComponent = computed(() => {
   const name = activeItem.value?.component;
   const components = getComponents();
-  if (name != null && Object.hasOwn(components, name)) {
+  if (name !== null && name !== undefined && Object.hasOwn(components, name)) {
     return components[name as ComponentType] ?? ElInput;
   }
   return components.input ?? ElInput;
@@ -66,7 +72,7 @@ const valueComponentBinds = computed(() => {
   const prop = activeModelPropName.value;
   const mv = modelValue.value;
   return {
-    ...(item.componentProps ?? {}),
+    ...item.componentProps,
     [prop]: mv[field],
     [`onUpdate:${prop}`]: (v: unknown) => {
       modelValue.value = { ...modelValue.value, [field]: v };
@@ -109,6 +115,7 @@ const valueComponentBinds = computed(() => {
   &__label {
     flex-shrink: 0;
     width: 120px;
+
     &-select {
       width: 100%;
       max-width: 100%;

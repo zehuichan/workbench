@@ -1,17 +1,27 @@
-import ElementPlus from 'element-plus';
+import type { Router } from 'vue-router';
+
 import { createApp, h, nextTick } from 'vue';
-import { createMemoryHistory, createRouter, type Router } from 'vue-router';
+import { createMemoryHistory, createRouter } from 'vue-router';
+
+import ElementPlus from 'element-plus';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
 import DemoApiTable from './demo-api-table.vue';
 import DemoBlock from './demo-block.vue';
 import DemoCode from './demo-code.vue';
-import DemoPage from './demo-page.vue';
 import { highlightCode, resolveLang } from './demo-highlighter';
+import DemoPage from './demo-page.vue';
 
 describe('demo components', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
+    [];
 
-  async function mount(component: Parameters<typeof createApp>[0], router?: Router) {
+  async function mount(
+    component: Parameters<typeof createApp>[0],
+    router?: Router,
+  ) {
     const host = document.createElement('div');
     document.body.append(host);
     const app = createApp(component);
@@ -48,11 +58,9 @@ describe('demo components', () => {
     });
 
     expect(host.querySelector('.demo__api-title')?.textContent).toBe('Events');
-    expect([...host.querySelectorAll('th')].map((cell) => cell.textContent)).toEqual([
-      '名称',
-      '载荷',
-      '说明',
-    ]);
+    expect(
+      [...host.querySelectorAll('th')].map((cell) => cell.textContent),
+    ).toEqual(['名称', '载荷', '说明']);
     expect(host.querySelector('tbody code')?.textContent).toBe('page-change');
   });
 
@@ -103,7 +111,8 @@ describe('demo components', () => {
 
   it('renders highlighted code with line spans', async () => {
     const host = await mount({
-      render: () => h(DemoCode, { code: 'const a = 1\nconst b = 2', lang: 'ts' }),
+      render: () =>
+        h(DemoCode, { code: 'const a = 1\nconst b = 2', lang: 'ts' }),
     });
 
     await vi.waitFor(() => {
@@ -130,7 +139,7 @@ describe('demo components', () => {
 
     const button = host.querySelector('button');
     expect(button).not.toBeNull();
-    button!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    defined(button).dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     await vi.waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(source);

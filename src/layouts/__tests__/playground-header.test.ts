@@ -1,15 +1,20 @@
 import { createApp, h, nextTick } from 'vue';
 import { createMemoryHistory, createRouter, RouterLink } from 'vue-router';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
 import PlaygroundHeader from '../playground-header.vue';
 
 describe('playground-header', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
+    [];
 
   async function mountHeader(
     props: {
-      categories: { key: string; groups: readonly string[] }[];
       activeCategory: string;
+      categories: { groups: readonly string[]; key: string }[];
     },
     onSelect = vi.fn(),
   ) {
@@ -65,11 +70,12 @@ describe('playground-header', () => {
       categories: [...categories],
       activeCategory: 'composables',
     });
-    const buttons = [...host.querySelectorAll('button, a')].filter((el) =>
+    const button = [...host.querySelectorAll('button, a')].find((el) =>
       el.textContent?.includes('components'),
     );
-    expect(buttons[0]).toBeTruthy();
-    (buttons[0] as HTMLElement).click();
+    expect(button).toBeInstanceOf(HTMLElement);
+    if (!(button instanceof HTMLElement)) return;
+    button.click();
     await nextTick();
     expect(onSelect).toHaveBeenCalledWith('components');
   });
@@ -83,7 +89,7 @@ describe('playground-header', () => {
       el.textContent?.includes('packages'),
     ) as HTMLElement | undefined;
     expect(packagesEl).toBeTruthy();
-    packagesEl!.click();
+    defined(packagesEl).click();
     await nextTick();
     expect(onSelect).not.toHaveBeenCalled();
   });
@@ -95,7 +101,7 @@ describe('playground-header', () => {
     });
     const brand = host.querySelector('a[href="/"]') as HTMLAnchorElement | null;
     expect(brand).toBeTruthy();
-    expect(brand!.textContent).toContain('Workbench');
+    expect(defined(brand).textContent).toContain('Workbench');
   });
 
   it('renders a GitHub repository link', async () => {
@@ -107,8 +113,10 @@ describe('playground-header', () => {
       'a[href="https://github.com/zehuichan/workbench"]',
     ) as HTMLAnchorElement | null;
     expect(githubLink).toBeTruthy();
-    expect(githubLink!.target).toBe('_blank');
-    expect(githubLink!.rel).toContain('noopener');
-    expect(githubLink!.getAttribute('aria-label')).toBe('GitHub repository');
+    expect(defined(githubLink).target).toBe('_blank');
+    expect(defined(githubLink).rel).toContain('noopener');
+    expect(defined(githubLink).getAttribute('aria-label')).toBe(
+      'GitHub repository',
+    );
   });
 });

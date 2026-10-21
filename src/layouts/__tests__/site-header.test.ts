@@ -1,11 +1,18 @@
+import type { Router } from 'vue-router';
+
 import { createApp, h, nextTick } from 'vue';
-import { createMemoryHistory, createRouter, RouterLink, type Router } from 'vue-router';
+import { createMemoryHistory, createRouter, RouterLink } from 'vue-router';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
 import SiteHeader from '../site-header.vue';
 import { markInkBand } from '../site-ink-band';
 
 describe('site-header', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
+    [];
 
   async function mountHeader(initialPath = '/') {
     const router: Router = createRouter({
@@ -38,12 +45,14 @@ describe('site-header', () => {
     const brand = host.querySelector('a[href="/"]') as HTMLAnchorElement | null;
 
     expect(brand).toBeTruthy();
-    expect(brand!.textContent).toContain('Workbench');
+    expect(defined(brand).textContent).toContain('Workbench');
   });
 
   it('keeps only the GitHub entry beside the brand', async () => {
     const host = await mountHeader();
-    const links = [...host.querySelectorAll('a')].map((node) => node.getAttribute('href'));
+    const links = [...host.querySelectorAll('a')].map((node) =>
+      node.getAttribute('href'),
+    );
 
     expect(links).toEqual(['/', 'https://github.com/zehuichan/workbench']);
   });
@@ -69,6 +78,6 @@ describe('site-header', () => {
     ) as HTMLAnchorElement | null;
 
     expect(github).toBeTruthy();
-    expect(github!.rel).toContain('noopener');
+    expect(defined(github).rel).toContain('noopener');
   });
 });
