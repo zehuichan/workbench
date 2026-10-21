@@ -5,6 +5,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "strict": true,
     "noEmit": true
   },
