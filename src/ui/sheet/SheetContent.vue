@@ -2,17 +2,25 @@
 import type { DialogContentEmits, DialogContentProps } from 'reka-ui';
 
 import type { HTMLAttributes } from 'vue';
+
 import { XIcon } from '@lucide/vue';
 import { reactiveOmit } from '@vueuse/core';
-import { DialogClose, DialogContent, DialogPortal, useForwardPropsEmits } from 'reka-ui';
-import { cn } from '@/utils';
+import {
+  DialogClose,
+  DialogContent,
+  DialogPortal,
+  useForwardPropsEmits,
+} from 'reka-ui';
+
 import { Button } from '@/ui/button';
+import { cn } from '@/utils';
+
 import SheetOverlay from './SheetOverlay.vue';
 
 interface SheetContentProps extends DialogContentProps {
   class?: HTMLAttributes['class'];
-  side?: 'top' | 'right' | 'bottom' | 'left';
   showCloseButton?: boolean;
+  side?: 'bottom' | 'left' | 'right' | 'top';
 }
 
 defineOptions({
@@ -20,8 +28,9 @@ defineOptions({
 });
 
 const props = withDefaults(defineProps<SheetContentProps>(), {
-  side: 'right',
+  class: undefined,
   showCloseButton: true,
+  side: 'right',
 });
 const emits = defineEmits<DialogContentEmits>();
 
@@ -44,7 +53,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
       "
       v-bind="{ ...$attrs, ...forwarded }"
     >
-      <slot />
+      <slot></slot>
 
       <DialogClose v-if="showCloseButton" data-slot="sheet-close" as-child>
         <Button variant="ghost" class="absolute top-3 right-3" size="icon-sm">

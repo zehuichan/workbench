@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
+
 import type { SidebarMenuButtonProps } from './SidebarMenuButtonChild.vue';
+
 import { reactiveOmit } from '@vueuse/core';
+
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
+
 import SidebarMenuButtonChild from './SidebarMenuButtonChild.vue';
 import { useSidebar } from './utils';
 
@@ -13,13 +17,14 @@ defineOptions({
 const props = withDefaults(
   defineProps<
     SidebarMenuButtonProps & {
-      tooltip?: string | Component;
+      tooltip?: Component | string;
     }
   >(),
   {
     as: 'button',
-    variant: 'default',
     size: 'default',
+    tooltip: undefined,
+    variant: 'default',
   },
 );
 
@@ -29,17 +34,24 @@ const delegatedProps = reactiveOmit(props, 'tooltip');
 </script>
 
 <template>
-  <SidebarMenuButtonChild v-if="!tooltip" v-bind="{ ...delegatedProps, ...$attrs }">
-    <slot />
+  <SidebarMenuButtonChild
+    v-if="!tooltip"
+    v-bind="{ ...delegatedProps, ...$attrs }"
+  >
+    <slot></slot>
   </SidebarMenuButtonChild>
 
   <Tooltip v-else>
     <TooltipTrigger as-child>
       <SidebarMenuButtonChild v-bind="{ ...delegatedProps, ...$attrs }">
-        <slot />
+        <slot></slot>
       </SidebarMenuButtonChild>
     </TooltipTrigger>
-    <TooltipContent side="right" align="center" :hidden="state !== 'collapsed' || isMobile">
+    <TooltipContent
+      side="right"
+      align="center"
+      :hidden="state !== 'collapsed' || isMobile"
+    >
       <template v-if="typeof tooltip === 'string'">
         {{ tooltip }}
       </template>

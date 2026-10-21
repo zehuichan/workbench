@@ -1,19 +1,23 @@
 <script setup lang="ts">
 import type { PrimitiveProps } from 'reka-ui';
+
 import type { HTMLAttributes } from 'vue';
+
 import { Primitive } from 'reka-ui';
+
 import { cn } from '@/utils';
 
 const props = withDefaults(
   defineProps<
     PrimitiveProps & {
-      size?: 'sm' | 'md';
-      isActive?: boolean;
       class?: HTMLAttributes['class'];
+      isActive?: boolean;
+      size?: 'md' | 'sm';
     }
   >(),
   {
     as: 'a',
+    class: undefined,
     size: 'md',
   },
 );
@@ -34,6 +38,6 @@ const props = withDefaults(
       )
     "
   >
-    <slot />
+    <slot></slot>
   </Primitive>
 </template>

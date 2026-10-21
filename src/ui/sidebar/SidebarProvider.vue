@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import type { HTMLAttributes, Ref } from 'vue';
-import { defaultDocument, useEventListener, useMediaQuery, useVModel } from '@vueuse/core';
-import { TooltipProvider } from 'reka-ui';
+
 import { computed, ref } from 'vue';
+
+import {
+  defaultDocument,
+  useEventListener,
+  useMediaQuery,
+  useVModel,
+} from '@vueuse/core';
+import { TooltipProvider } from 'reka-ui';
+
 import { cn } from '@/utils';
+
 import {
   provideSidebarContext,
   SIDEBAR_COOKIE_MAX_AGE,
@@ -15,12 +24,15 @@ import {
 
 const props = withDefaults(
   defineProps<{
+    class?: HTMLAttributes['class'];
     defaultOpen?: boolean;
     open?: boolean;
-    class?: HTMLAttributes['class'];
   }>(),
   {
-    defaultOpen: !defaultDocument?.cookie.includes(`${SIDEBAR_COOKIE_NAME}=false`),
+    class: undefined,
+    defaultOpen: !defaultDocument?.cookie.includes(
+      `${SIDEBAR_COOKIE_NAME}=false`,
+    ),
     open: undefined,
   },
 );
@@ -41,6 +53,7 @@ function setOpen(value: boolean) {
   open.value = value; // emits('update:open', value)
 
   // This sets the cookie to keep the sidebar state.
+  // oxlint-disable-next-line unicorn/no-document-cookie -- the open flag is a synchronous cookie
   document.cookie = `${SIDEBAR_COOKIE_NAME}=${open.value}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
 }
 
@@ -50,11 +63,16 @@ function setOpenMobile(value: boolean) {
 
 // Helper to toggle the sidebar.
 function toggleSidebar() {
-  return isMobile.value ? setOpenMobile(!openMobile.value) : setOpen(!open.value);
+  return isMobile.value
+    ? setOpenMobile(!openMobile.value)
+    : setOpen(!open.value);
 }
 
 useEventListener('keydown', (event: KeyboardEvent) => {
-  if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
+  if (
+    event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+    (event.metaKey || event.ctrlKey)
+  ) {
     event.preventDefault();
     toggleSidebar();
   }
@@ -91,7 +109,7 @@ provideSidebarContext({
       "
       v-bind="$attrs"
     >
-      <slot />
+      <slot></slot>
     </div>
   </TooltipProvider>
 </template>
