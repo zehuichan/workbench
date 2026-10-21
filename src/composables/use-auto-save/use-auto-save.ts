@@ -1,43 +1,50 @@
-import { readonly, shallowRef, toValue, type MaybeRefOrGetter, type Ref } from 'vue';
+import type { MaybeRefOrGetter, Ref } from 'vue';
+
+import { readonly, shallowRef, toValue } from 'vue';
+
 import { tryOnScopeDispose, useTimeoutFn } from '@vueuse/core';
+
 import { watchReadable } from '../shared/watch-readable';
 
-export type AutoSaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error';
+export type AutoSaveStatus = 'error' | 'idle' | 'pending' | 'saved' | 'saving';
 
 /**
  * Persists the latest value evaluated when a save starts.
  * Must not call this instance's flush or withPaused controls.
  */
-export type AutoSaveHandler<T> = (value: T, signal: AbortSignal) => void | Promise<void>;
+export type AutoSaveHandler<T> = (
+  value: T,
+  signal: AbortSignal,
+) => Promise<void> | void;
 
 export interface UseAutoSaveOptions<T> {
-  /** Whether source changes may schedule automatic saves. */
-  enabled?: MaybeRefOrGetter<boolean>;
   /** Delay before an automatic save starts. */
   debounceMs?: MaybeRefOrGetter<number>;
-  /** Called after a value is persisted successfully. */
-  onSuccess?: (value: T) => void;
+  /** Whether source changes may schedule automatic saves. */
+  enabled?: MaybeRefOrGetter<boolean>;
   /** Receives source evaluation, persistence, and control failures. */
   onError?: (error: unknown) => void;
+  /** Called after a value is persisted successfully. */
+  onSuccess?: (value: T) => void;
 }
 
 export interface UseAutoSaveReturn {
-  /** Current state of the automatic save pipeline. */
-  status: Readonly<Ref<AutoSaveStatus>>;
-  /** Epoch timestamp of the latest successful save. */
-  lastSavedAt: Readonly<Ref<number | null>>;
   /** Last source evaluation, persistence, or control failure. */
-  error: Readonly<Ref<unknown | null>>;
+  error: Readonly<Ref<null | unknown>>;
   /**
    * Cancels the debounce and persists every revision known when called.
    * Rejects when paused, disposed before completion, or persistence fails.
    */
   flush: () => Promise<void>;
+  /** Epoch timestamp of the latest successful save. */
+  lastSavedAt: Readonly<Ref<null | number>>;
+  /** Current state of the automatic save pipeline. */
+  status: Readonly<Ref<AutoSaveStatus>>;
   /**
    * Discards pending and nested changes while the operation runs.
    * The existing save pipeline settles before the operation starts.
    */
-  withPaused: <R>(task: () => R | Promise<R>) => Promise<R>;
+  withPaused: <R>(task: () => Promise<R> | R) => Promise<R>;
 }
 
 const onSettled = (task: Promise<unknown>, cleanup: () => void): void => {
@@ -66,8 +73,8 @@ export function useAutoSave<T>(
   const { enabled = true, debounceMs = 2000, onSuccess, onError } = options;
 
   const status = shallowRef<AutoSaveStatus>('idle');
-  const lastSavedAt = shallowRef<number | null>(null);
-  const error = shallowRef<unknown | null>(null);
+  const lastSavedAt = shallowRef<null | number>(null);
+  const error = shallowRef<null | unknown>(null);
 
   let revision = 0;
   let savedRevision = 0;
@@ -77,7 +84,7 @@ export function useAutoSave<T>(
   let pauseDepth = 0;
   let disposed = false;
   let invokingSaveSynchronously = false;
-  let inFlight: Promise<void> | null = null;
+  let inFlight: null | Promise<void> = null;
   let activeController: AbortController | null = null;
   const activeFlushes = new Set<Promise<void>>();
 
@@ -96,8 +103,8 @@ export function useAutoSave<T>(
     if (onError) {
       try {
         onError(failure);
-      } catch (onErrorFailure) {
-        console.error('[useAutoSave] Error handler failed.', onErrorFailure);
+      } catch (error_) {
+        console.error('[useAutoSave] Error handler failed.', error_);
       }
     }
   };
@@ -105,9 +112,9 @@ export function useAutoSave<T>(
   const readValue = <Value>(value: MaybeRefOrGetter<Value>): Value => {
     try {
       return toValue(value);
-    } catch (failure) {
-      reportError(failure);
-      throw failure;
+    } catch (error_) {
+      reportError(error_);
+      throw error_;
     }
   };
 
@@ -129,7 +136,7 @@ export function useAutoSave<T>(
       error.value = null;
       if (disposed) throw createDisposedError();
 
-      let saveResult: void | Promise<void>;
+      let saveResult: Promise<void> | void;
       invokingSaveSynchronously = true;
       try {
         saveResult = save(value, controller.signal);
@@ -146,20 +153,20 @@ export function useAutoSave<T>(
       if (onSuccess) {
         try {
           onSuccess(value);
-        } catch (onSuccessFailure) {
-          console.error('[useAutoSave] Success handler failed.', onSuccessFailure);
+        } catch (error_) {
+          console.error('[useAutoSave] Success handler failed.', error_);
         }
       }
       if (disposed) throw createDisposedError();
       if (errorEpoch === startingErrorEpoch) {
         status.value = handledRevision < revision ? 'pending' : 'saved';
       }
-    } catch (failure) {
+    } catch (error_) {
       if (!disposed) {
         handledRevision = Math.max(handledRevision, savingRevision);
-        reportError(failure);
+        reportError(error_);
       }
-      throw failure;
+      throw error_;
     } finally {
       if (activeController === controller) activeController = null;
     }
@@ -191,7 +198,8 @@ export function useAutoSave<T>(
     automatic = false,
     generation?: number,
   ): Promise<void> => {
-    const isComplete = () => (automatic ? handledRevision : savedRevision) >= targetRevision;
+    const isComplete = () =>
+      (automatic ? handledRevision : savedRevision) >= targetRevision;
 
     const stopIfDisposed = (): boolean => {
       if (!disposed) return false;
@@ -213,14 +221,14 @@ export function useAutoSave<T>(
       }
       try {
         await getOrStartSave();
-      } catch (failure) {
+      } catch (error_) {
         if (
           !automatic ||
           disposed ||
           generation !== autoSaveGeneration ||
           handledRevision >= targetRevision
         ) {
-          throw failure;
+          throw error_;
         }
       }
       if (stopIfDisposed()) return;
@@ -249,10 +257,10 @@ export function useAutoSave<T>(
   const startSaveTimer = (): void => {
     try {
       saveTimer.start();
-    } catch (failure) {
+    } catch (error_) {
       cancelScheduledSave();
-      reportError(failure);
-      throw failure;
+      reportError(error_);
+      throw error_;
     }
   };
 
@@ -310,14 +318,18 @@ export function useAutoSave<T>(
     if (disposed) return Promise.reject(createDisposedError());
 
     if (invokingSaveSynchronously) {
-      const failure = new Error('[useAutoSave] flush cannot be called from the save callback.');
+      const failure = new Error(
+        '[useAutoSave] flush cannot be called from the save callback.',
+      );
       reportError(failure);
       return Promise.reject(failure);
     }
 
     cancelScheduledSave();
     if (pauseDepth > 0) {
-      const failure = new Error('[useAutoSave] Cannot flush while auto-save is paused.');
+      const failure = new Error(
+        '[useAutoSave] Cannot flush while auto-save is paused.',
+      );
       reportError(failure);
       return Promise.reject(failure);
     }
@@ -335,7 +347,7 @@ export function useAutoSave<T>(
     return operation;
   };
 
-  const withPaused = async <R>(task: () => R | Promise<R>): Promise<R> => {
+  const withPaused = async <R>(task: () => Promise<R> | R): Promise<R> => {
     if (disposed) throw createDisposedError();
     if (invokingSaveSynchronously) {
       const failure = new Error(
@@ -352,7 +364,8 @@ export function useAutoSave<T>(
       if (activeFlushes.size > 0) {
         const results = await Promise.allSettled([...activeFlushes]);
         const rejected = results.find(
-          (result): result is PromiseRejectedResult => result.status === 'rejected',
+          (result): result is PromiseRejectedResult =>
+            result.status === 'rejected',
         );
         if (rejected) {
           throw rejected.reason;

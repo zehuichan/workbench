@@ -22,7 +22,8 @@ watch(ready, (ok) => {
     <template #description>
       微信 JSSDK 初始化（<code>createGlobalState</code>，全局只
       <code>wx.config</code> 一次）。非微信环境或
-      <code>VITE_JSSDK_ENABLED !== 'true'</code> 时跳过。签名暂走 <code>getJsApiTicket</code>。
+      <code>VITE_JSSDK_ENABLED !== 'true'</code> 时跳过。签名暂走
+      <code>getJsApiTicket</code>。
     </template>
 
     <template #api>
@@ -35,7 +36,10 @@ watch(ready, (ok) => {
         <tr>
           <td><code>window</code></td>
           <td><code>Window</code></td>
-          <td>默认 <code>defaultWindow</code>；UA 判定与 <code>wx</code> 都从这里读。</td>
+          <td>
+            默认 <code>defaultWindow</code>；UA 判定与
+            <code>wx</code> 都从这里读。
+          </td>
         </tr>
       </DemoApiTable>
 
@@ -48,7 +52,9 @@ watch(ready, (ok) => {
         <tr>
           <td><code>wx</code></td>
           <td><code>WeixinJsSdk | undefined</code></td>
-          <td><code>window.wx</code> 引用；未注入脚本时为 <code>undefined</code>。</td>
+          <td>
+            <code>window.wx</code> 引用；未注入脚本时为 <code>undefined</code>。
+          </td>
         </tr>
       </DemoApiTable>
     </template>

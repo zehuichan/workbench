@@ -1,12 +1,15 @@
+import type { RouterHistory } from 'vue-router';
+
 import { createApp } from 'vue';
 import {
   createMemoryHistory,
   createRouter,
   createWebHashHistory,
   createWebHistory,
-  type RouterHistory,
 } from 'vue-router';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import { getToken, removeToken, TOKEN_KEY } from '../auth';
 import { sso } from '../sso';
 
@@ -66,7 +69,9 @@ describe('sso', () => {
   });
 
   it('reads hash credentials even when the base URL already has a query', () => {
-    visit('/?tenant=acme#/permission/page?username=sso&roles=admin&accessToken=eyJ');
+    visit(
+      '/?tenant=acme#/permission/page?username=sso&roles=admin&accessToken=eyJ',
+    );
 
     sso(createTestRouter());
 
@@ -75,7 +80,9 @@ describe('sso', () => {
   });
 
   it('keeps the hash route intact when credentials arrive in the search string', () => {
-    visit('/?username=sso&roles=admin&accessToken=eyJ#/permission/page?tab=list');
+    visit(
+      '/?username=sso&roles=admin&accessToken=eyJ#/permission/page?tab=list',
+    );
 
     sso(createTestRouter());
 
@@ -105,7 +112,9 @@ describe('sso', () => {
   });
 
   it('bails out without a window (SSR)', () => {
-    expect(sso(createTestRouter(createMemoryHistory()), { window: undefined })).toBe(false);
+    expect(
+      sso(createTestRouter(createMemoryHistory()), { window: undefined }),
+    ).toBe(false);
     expect(getToken()).toBeNull();
   });
 });

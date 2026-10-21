@@ -1,23 +1,26 @@
+import type { App, Component } from 'vue';
+
+import type {
+  SaveHotkeyHandler,
+  UseSaveHotkeyOptions,
+} from '../../use-save-hotkey/use-save-hotkey';
+
 import {
-  Fragment,
-  Suspense,
-  Teleport,
   createApp,
   effectScope,
+  Fragment,
   h,
   nextTick,
   onBeforeMount,
   onMounted,
   ref,
-  type App,
-  type Component,
+  Suspense,
+  Teleport,
 } from 'vue';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  useSaveHotkey,
-  type SaveHotkeyHandler,
-  type UseSaveHotkeyOptions,
-} from '../../use-save-hotkey/use-save-hotkey';
+
+import { useSaveHotkey } from '../../use-save-hotkey/use-save-hotkey';
 
 interface MountedHotkey {
   app: App;
@@ -88,7 +91,10 @@ function createNestedRoot(
   };
 }
 
-function dispatchSave(target: Element, init: KeyboardEventInit = {}): KeyboardEvent {
+function dispatchSave(
+  target: Element,
+  init: KeyboardEventInit = {},
+): KeyboardEvent {
   const event = new KeyboardEvent('keydown', {
     key: 's',
     ctrlKey: true,
@@ -222,7 +228,7 @@ describe('useSaveHotkey', () => {
     const failure = new Error('save failed');
     const onError = vi.fn();
     const handler = vi
-      .fn<() => void | Promise<void>>()
+      .fn<() => Promise<void> | void>()
       .mockRejectedValueOnce(failure)
       .mockResolvedValueOnce();
     const item = mountHotkey({ handler, onError });
@@ -303,7 +309,11 @@ describe('useSaveHotkey', () => {
       {
         setup() {
           useSaveHotkey(handler);
-          return () => h(Fragment, [h('button', { id: 'first' }, 'First'), h('button', 'Second')]);
+          return () =>
+            h(Fragment, [
+              h('button', { id: 'first' }, 'First'),
+              h('button', 'Second'),
+            ]);
         },
       },
       (host) => host.querySelector('#first'),
@@ -323,7 +333,8 @@ describe('useSaveHotkey', () => {
       {
         setup() {
           useSaveHotkey(handler);
-          return () => h(Teleport, { to: teleportHost }, [h('button', 'Teleported')]);
+          return () =>
+            h(Teleport, { to: teleportHost }, [h('button', 'Teleported')]);
         },
       },
       () => teleportHost.querySelector('button'),
@@ -444,7 +455,8 @@ describe('useSaveHotkey', () => {
           useSaveHotkey(handler);
           return () =>
             h(Suspense, null, {
-              default: () => h(Teleport, { to: teleportHost }, [h('button', 'Teleported')]),
+              default: () =>
+                h(Teleport, { to: teleportHost }, [h('button', 'Teleported')]),
               fallback: () => h('span', 'Loading'),
             });
         },
@@ -564,6 +576,9 @@ describe('useSaveHotkey', () => {
     const event = dispatchSave(document.body);
     expect(event.defaultPrevented).toBe(false);
     expect(handler).not.toHaveBeenCalled();
-    expect(removeEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
+    expect(removeEventListener).toHaveBeenCalledWith(
+      'keydown',
+      expect.any(Function),
+    );
   });
 });

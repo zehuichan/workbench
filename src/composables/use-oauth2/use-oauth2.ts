@@ -1,27 +1,33 @@
-import { shallowRef, watchEffect, type ShallowRef } from 'vue';
-import { defaultWindow, useUrlSearchParams, type ConfigurableWindow } from '@vueuse/core';
+import type { ConfigurableWindow } from '@vueuse/core';
 
-const AUTHORIZE_ENDPOINT = 'https://open.weixin.qq.com/connect/oauth2/authorize';
+import type { ShallowRef } from 'vue';
+
+import { shallowRef, watchEffect } from 'vue';
+
+import { defaultWindow, useUrlSearchParams } from '@vueuse/core';
+
+const AUTHORIZE_ENDPOINT =
+  'https://open.weixin.qq.com/connect/oauth2/authorize';
 
 export type Oauth2Scope = 'snsapi_base' | 'snsapi_userinfo';
 
 /** Where `code` is read from once WeChat redirects back. */
-export type Oauth2ParamsMode = 'history' | 'hash' | 'hash-params';
+export type Oauth2ParamsMode = 'hash' | 'hash-params' | 'history';
 
 export interface UseOauth2Options extends ConfigurableWindow {
   /** Official account AppId. Defaults to `VITE_WECHAT_APPID`. */
   appId?: string;
-  /** Authorization scope requested from WeChat. */
-  scope?: Oauth2Scope;
   /** Router mode, so hash-routed apps still find `code`. */
   mode?: Oauth2ParamsMode;
+  /** Authorization scope requested from WeChat. */
+  scope?: Oauth2Scope;
 }
 
 export interface UseOauth2Return {
-  /** `code` from the current URL; `undefined` until WeChat redirects back. */
-  code: ShallowRef<string | undefined>;
   /** Leaves for WeChat's authorize endpoint, returning to `redirect`. */
   authorize: (redirect?: string) => void;
+  /** `code` from the current URL; `undefined` until WeChat redirects back. */
+  code: ShallowRef<string | undefined>;
 }
 
 /**
@@ -53,7 +59,11 @@ export function useOauth2(options: UseOauth2Options = {}): UseOauth2Return {
   function authorize(redirect?: string): void {
     if (!window) return;
     const { protocol, host, pathname, search } = window.location;
-    const nextPath = redirect ? (redirect.startsWith('/') ? redirect : `/${redirect}`) : pathname;
+    const nextPath = redirect
+      ? redirect.startsWith('/')
+        ? redirect
+        : `/${redirect}`
+      : pathname;
     const redirectUri = `${protocol}//${host}${nextPath}${search}`;
     window.location.href =
       `${AUTHORIZE_ENDPOINT}?appid=${appId}` +

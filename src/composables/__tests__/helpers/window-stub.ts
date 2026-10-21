@@ -8,10 +8,10 @@ export interface WindowStubOverrides {
 }
 
 export interface WindowStub {
-  /** Pass into a composable's `window` option. */
-  window: Window;
   /** Receives every `window.location.href = ...` navigation. */
   navigate: ReturnType<typeof vi.fn<(value: string) => void>>;
+  /** Pass into a composable's `window` option. */
+  window: Window;
 }
 
 /**
@@ -19,7 +19,9 @@ export interface WindowStub {
  * `ConfigurableWindow` can be driven without stubbing globals. Anything not
  * overridden (`addEventListener`, `history`, `crypto`) keeps working.
  */
-export function createWindowStub(overrides: WindowStubOverrides = {}): WindowStub {
+export function createWindowStub(
+  overrides: WindowStubOverrides = {},
+): WindowStub {
   const navigate = vi.fn<(value: string) => void>();
   const { location, ...rest } = overrides;
 

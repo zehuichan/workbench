@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { createWindowStub } from '../helpers/window-stub';
 
 const { getJsApiTicketMock } = vi.hoisted(() => ({
@@ -17,9 +18,9 @@ async function loadUseWechat() {
 }
 
 function mockWx(handlers?: {
-  onConfig?: (config: Record<string, unknown>) => void;
-  readyMode?: 'ready' | 'error';
   errorPayload?: unknown;
+  onConfig?: (config: Record<string, unknown>) => void;
+  readyMode?: 'error' | 'ready';
 }) {
   const readyMode = handlers?.readyMode ?? 'ready';
   return {
@@ -30,7 +31,8 @@ function mockWx(handlers?: {
       if (readyMode === 'ready') fn();
     }),
     error: vi.fn((fn: (err: unknown) => void) => {
-      if (readyMode === 'error') fn(handlers?.errorPayload ?? new Error('wx error'));
+      if (readyMode === 'error')
+        fn(handlers?.errorPayload ?? new Error('wx error'));
     }),
   };
 }
@@ -55,7 +57,9 @@ describe('useWechat', () => {
     const wx = mockWx();
     const mod = await loadUseWechat();
 
-    const { ready } = mod.useWechat({ window: wechatWindow(wx, 'Mozilla/5.0 Chrome/120') });
+    const { ready } = mod.useWechat({
+      window: wechatWindow(wx, 'Mozilla/5.0 Chrome/120'),
+    });
     await Promise.resolve();
     await Promise.resolve();
 
@@ -81,10 +85,17 @@ describe('useWechat', () => {
   it('honours an explicit enabled flag over the env default', async () => {
     vi.stubEnv('VITE_JSSDK_ENABLED', 'false');
     const wx = mockWx();
-    getJsApiTicketMock.mockResolvedValue({ timestamp: 1, nonceStr: 'n', signature: 's' });
+    getJsApiTicketMock.mockResolvedValue({
+      timestamp: 1,
+      nonceStr: 'n',
+      signature: 's',
+    });
     const mod = await loadUseWechat();
 
-    const { ready } = mod.useWechat({ window: wechatWindow(wx), enabled: true });
+    const { ready } = mod.useWechat({
+      window: wechatWindow(wx),
+      enabled: true,
+    });
     await vi.waitFor(() => {
       expect(ready.value).toBe(true);
     });

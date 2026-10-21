@@ -1,24 +1,25 @@
-import { readonly, shallowRef, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue';
-import {
-  defaultWindow,
-  tryOnScopeDispose,
-  useTimeoutFn,
-  type ConfigurableWindow,
-} from '@vueuse/core';
+import type { ConfigurableWindow } from '@vueuse/core';
+
+import type { MaybeRefOrGetter, Ref } from 'vue';
+
+import { readonly, shallowRef, toValue, watch } from 'vue';
+
+import { defaultWindow, tryOnScopeDispose, useTimeoutFn } from '@vueuse/core';
 import { isPlainObject, isString, omit } from 'es-toolkit';
+
 import { watchReadable } from '../shared/watch-readable';
 
 export interface UseFormDraftOptions<
   T extends object = Record<string, unknown>,
 > extends ConfigurableWindow {
-  /** Whether form changes may currently be persisted. */
-  enabled?: MaybeRefOrGetter<boolean>;
-  /** Values shallowly merged below a restored draft. */
-  defaults?: MaybeRefOrGetter<Partial<T>>;
-  /** Keys never persisted or restored, e.g. collections the server owns once the record exists. */
-  omit?: MaybeRefOrGetter<ReadonlyArray<keyof T>>;
   /** Delay before persisting form changes. */
   debounceMs?: MaybeRefOrGetter<number>;
+  /** Values shallowly merged below a restored draft. */
+  defaults?: MaybeRefOrGetter<Partial<T>>;
+  /** Whether form changes may currently be persisted. */
+  enabled?: MaybeRefOrGetter<boolean>;
+  /** Keys never persisted or restored, e.g. collections the server owns once the record exists. */
+  omit?: MaybeRefOrGetter<ReadonlyArray<keyof T>>;
   /** Receives key, serialization, and storage failures. */
   onError?: (error: unknown) => void;
 }
@@ -28,22 +29,24 @@ export interface FormDraftRestoreOptions<T extends object> {
   merge?: (draft: Partial<T>, current: T, defaults: Partial<T>) => T;
 }
 
-export interface UseFormDraftReturn<T extends object = Record<string, unknown>> {
+export interface UseFormDraftReturn<
+  T extends object = Record<string, unknown>,
+> {
+  /** Removes the draft stored under the current key. */
+  clear: () => boolean;
   /** Last draft operation failure. */
-  error: Readonly<Ref<unknown | null>>;
+  error: Readonly<Ref<null | unknown>>;
+  /** Cancels the debounce and immediately persists the current form. */
+  flush: () => boolean;
   /** Whether a form change is waiting for its debounce window. */
   isPending: Readonly<Ref<boolean>>;
   /** Restores and shallowly merges the draft stored under the current key. */
   restore: (options?: FormDraftRestoreOptions<T>) => boolean;
-  /** Removes the draft stored under the current key. */
-  clear: () => boolean;
-  /** Cancels the debounce and immediately persists the current form. */
-  flush: () => boolean;
   /**
    * Ignores form changes while an operation runs; nested calls are supported.
    * On the outermost exit, records a clean baseline so later equal writes are skipped.
    */
-  withPaused: <R>(task: () => R | Promise<R>) => Promise<R>;
+  withPaused: <R>(task: () => Promise<R> | R) => Promise<R>;
 }
 
 /**
@@ -85,11 +88,12 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
     onError,
   } = options;
 
-  const error = shallowRef<unknown | null>(null);
+  const error = shallowRef<null | unknown>(null);
   let pauseDepth = 0;
   let disposed = false;
-  let baseline: string | null = null;
-  const createDisposedError = (): Error => new Error('[useFormDraft] Scope was disposed.');
+  let baseline: null | string = null;
+  const createDisposedError = (): Error =>
+    new Error('[useFormDraft] Scope was disposed.');
 
   const reportError = (failure: unknown): false => {
     if (disposed) return false;
@@ -98,8 +102,8 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
     if (onError) {
       try {
         onError(failure);
-      } catch (onErrorFailure) {
-        console.error('[useFormDraft] Error handler failed.', onErrorFailure);
+      } catch (error_) {
+        console.error('[useFormDraft] Error handler failed.', error_);
       }
     }
     return false;
@@ -113,15 +117,17 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
   const readValue = <Value>(value: MaybeRefOrGetter<Value>): Value => {
     try {
       return toValue(value);
-    } catch (failure) {
-      return reportAndThrow(failure);
+    } catch (error_) {
+      return reportAndThrow(error_);
     }
   };
 
   const resolveKey = (): string => {
     const value = readValue(key);
     if (!isString(value) || value.trim().length === 0) {
-      return reportAndThrow(new TypeError('[useFormDraft] "key" must be a non-empty string.'));
+      return reportAndThrow(
+        new TypeError('[useFormDraft] "key" must be a non-empty string.'),
+      );
     }
     return value.trim();
   };
@@ -132,66 +138,78 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
     return Array.isArray(keys) ? keys : [];
   };
 
-  const resolveStorage = (): Storage | null => {
+  const resolveStorage = (): null | Storage => {
     try {
       const storage = window?.localStorage;
       if (!storage) {
         throw new Error('[useFormDraft] localStorage is unavailable.');
       }
       return storage;
-    } catch (failure) {
-      reportError(failure);
+    } catch (error_) {
+      reportError(error_);
       return null;
     }
   };
 
   const serializeForm = (): string => {
     if (!isPlainObject(form.value)) {
-      return reportAndThrow(new TypeError('[useFormDraft] Form value must be a plain object.'));
+      return reportAndThrow(
+        new TypeError('[useFormDraft] Form value must be a plain object.'),
+      );
     }
     const keys = resolveOmitKeys();
     const payload =
       keys.length === 0
         ? form.value
-        : (omit(form.value as Record<PropertyKey, unknown>, keys as unknown as PropertyKey[]) as T);
+        : (omit(
+            form.value as Record<PropertyKey, unknown>,
+            keys as unknown as PropertyKey[],
+          ) as T);
     let serialized: string | undefined;
     try {
       serialized = JSON.stringify(payload);
-    } catch (failure) {
-      return reportAndThrow(failure);
+    } catch (error_) {
+      return reportAndThrow(error_);
     }
     if (serialized === undefined) {
-      return reportAndThrow(new TypeError('[useFormDraft] Form cannot be serialized as JSON.'));
+      return reportAndThrow(
+        new TypeError('[useFormDraft] Form cannot be serialized as JSON.'),
+      );
     }
     return serialized;
   };
 
   // The key watcher cancels reactive changes synchronously; expectedKey prevents stale writes for non-reactive getters it cannot observe.
-  const writeDraft = (expectedKey?: string, options?: { skipIfBaseline?: boolean }): boolean => {
+  const writeDraft = (
+    expectedKey?: string,
+    options?: { skipIfBaseline?: boolean },
+  ): boolean => {
     if (disposed || pauseDepth > 0) return false;
     const enabledValue = readValue(enabled);
     if (!enabledValue) return false;
     const currentKey = resolveKey();
     if (expectedKey !== undefined && expectedKey !== currentKey) return false;
     const serialized = serializeForm();
-    if (options?.skipIfBaseline && baseline !== null && serialized === baseline) return false;
+    if (options?.skipIfBaseline && baseline !== null && serialized === baseline)
+      return false;
     const storage = resolveStorage();
     if (!storage) return false;
     try {
       storage.setItem(currentKey, serialized);
       error.value = null;
       return true;
-    } catch (failure) {
-      return reportError(failure);
+    } catch (error_) {
+      return reportError(error_);
     }
   };
 
-  let scheduledKey: string | null = null;
+  let scheduledKey: null | string = null;
   const draftTimer = useTimeoutFn(
     () => {
       const expectedKey = scheduledKey;
       scheduledKey = null;
-      if (expectedKey !== null) writeDraft(expectedKey, { skipIfBaseline: true });
+      if (expectedKey !== null)
+        writeDraft(expectedKey, { skipIfBaseline: true });
     },
     debounceMs,
     { immediate: false },
@@ -205,9 +223,9 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
   const startDraftTimer = (): void => {
     try {
       draftTimer.start();
-    } catch (failure) {
+    } catch (error_) {
       cancelScheduledDraft();
-      reportAndThrow(failure);
+      reportAndThrow(error_);
     }
   };
 
@@ -217,9 +235,9 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
       const enabledValue = readValue(enabled);
       if (!enabledValue) return;
       scheduledKey = resolveKey();
-    } catch (failure) {
+    } catch (error_) {
       cancelScheduledDraft();
-      throw failure;
+      throw error_;
     }
     startDraftTimer();
   };
@@ -247,18 +265,20 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
     },
   );
 
-  const restore = (restoreOptions: FormDraftRestoreOptions<T> = {}): boolean => {
+  const restore = (
+    restoreOptions: FormDraftRestoreOptions<T> = {},
+  ): boolean => {
     if (disposed) return false;
     cancelScheduledDraft();
     const currentKey = resolveKey();
     const storage = resolveStorage();
     if (!storage) return false;
 
-    let raw: string | null;
+    let raw: null | string;
     try {
       raw = storage.getItem(currentKey);
-    } catch (failure) {
-      return reportError(failure);
+    } catch (error_) {
+      return reportError(error_);
     }
     if (raw === null) {
       error.value = null;
@@ -268,16 +288,20 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
     let draft: unknown;
     try {
       draft = JSON.parse(raw);
-    } catch (failure) {
-      return reportError(failure);
+    } catch (error_) {
+      return reportError(error_);
     }
     if (!isPlainObject(draft)) {
-      return reportError(new TypeError('[useFormDraft] Stored draft must be a plain object.'));
+      return reportError(
+        new TypeError('[useFormDraft] Stored draft must be a plain object.'),
+      );
     }
 
     const fallback = defaults === undefined ? {} : readValue(defaults);
     if (!isPlainObject(fallback)) {
-      return reportAndThrow(new TypeError('[useFormDraft] "defaults" must be a plain object.'));
+      return reportAndThrow(
+        new TypeError('[useFormDraft] "defaults" must be a plain object.'),
+      );
     }
 
     const keys = resolveOmitKeys();
@@ -291,9 +315,15 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
 
     let next: T;
     if (restoreOptions.merge) {
-      next = restoreOptions.merge(draftPartial, form.value, fallback as Partial<T>);
+      next = restoreOptions.merge(
+        draftPartial,
+        form.value,
+        fallback as Partial<T>,
+      );
       if (!isPlainObject(next)) {
-        return reportAndThrow(new TypeError('[useFormDraft] "merge" must return a plain object.'));
+        return reportAndThrow(
+          new TypeError('[useFormDraft] "merge" must return a plain object.'),
+        );
       }
     } else {
       next = { ...fallback, ...draftPartial } as T;
@@ -319,8 +349,8 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
       storage.removeItem(currentKey);
       error.value = null;
       return true;
-    } catch (failure) {
-      return reportError(failure);
+    } catch (error_) {
+      return reportError(error_);
     }
   };
 
@@ -330,7 +360,7 @@ export function useFormDraft<T extends object = Record<string, unknown>>(
     return writeDraft();
   };
 
-  const withPaused = async <R>(task: () => R | Promise<R>): Promise<R> => {
+  const withPaused = async <R>(task: () => Promise<R> | R): Promise<R> => {
     if (disposed) throw createDisposedError();
     pauseDepth += 1;
     cancelScheduledDraft();

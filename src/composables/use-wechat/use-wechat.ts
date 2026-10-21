@@ -1,5 +1,11 @@
-import { shallowRef, type ShallowRef } from 'vue';
-import { createGlobalState, defaultWindow, type ConfigurableWindow } from '@vueuse/core';
+import type { ConfigurableWindow } from '@vueuse/core';
+
+import type { ShallowRef } from 'vue';
+
+import { shallowRef } from 'vue';
+
+import { createGlobalState, defaultWindow } from '@vueuse/core';
+
 import { getJsApiTicket } from '@/api/signature';
 
 export interface UseWechatOptions extends ConfigurableWindow {
@@ -11,10 +17,10 @@ export interface UseWechatReturn {
   /** True once `wx.ready` fires. */
   ready: ShallowRef<boolean>;
   /** Global `wx`, `undefined` outside the WeChat browser. */
-  wx: WeixinJsSdk | undefined;
+  wx: undefined | WeixinJsSdk;
 }
 
-function isWechatBrowser(window: Window | undefined): boolean {
+function isWechatBrowser(window: undefined | Window): boolean {
   return /MicroMessenger/i.test(window?.navigator.userAgent ?? '');
 }
 
@@ -29,49 +35,53 @@ function isWechatBrowser(window: Window | undefined): boolean {
  * const { ready, wx } = useWechat()
  * wx?.scanQRCode?.({ needResult: 1, success: console.log })
  */
-export const useWechat = createGlobalState((options: UseWechatOptions = {}): UseWechatReturn => {
-  const { window = defaultWindow, enabled = import.meta.env.VITE_JSSDK_ENABLED === 'true' } =
-    options;
+export const useWechat = createGlobalState(
+  (options: UseWechatOptions = {}): UseWechatReturn => {
+    const {
+      window = defaultWindow,
+      enabled = import.meta.env.VITE_JSSDK_ENABLED === 'true',
+    } = options;
 
-  const ready = shallowRef(false);
-  const wx = window?.wx;
-  let pending: Promise<void> | null = null;
+    const ready = shallowRef(false);
+    const wx = window?.wx;
+    let pending: null | Promise<void> = null;
 
-  async function setup() {
-    if (!enabled || !wx || !isWechatBrowser(window)) {
-      ready.value = false;
-      return;
-    }
-    if (pending) return pending;
-
-    pending = (async () => {
-      try {
-        const data = await getJsApiTicket();
-
-        await new Promise<void>((resolve, reject) => {
-          wx.config({ debug: false, ...data });
-          wx.ready(() => {
-            ready.value = true;
-            resolve();
-          });
-          wx.error((err) => {
-            ready.value = false;
-            pending = null;
-            console.error('[wx.config]', err);
-            reject(err);
-          });
-        });
-      } catch (error) {
+    async function setup() {
+      if (!enabled || !wx || !isWechatBrowser(window)) {
         ready.value = false;
-        pending = null;
-        console.error('[wx.config]', error);
+        return;
       }
-    })();
+      if (pending) return pending;
 
-    return pending;
-  }
+      pending = (async () => {
+        try {
+          const data = await getJsApiTicket();
 
-  void setup();
+          await new Promise<void>((resolve, reject) => {
+            wx.config({ debug: false, ...data });
+            wx.ready(() => {
+              ready.value = true;
+              resolve();
+            });
+            wx.error((err) => {
+              ready.value = false;
+              pending = null;
+              console.error('[wx.config]', err);
+              reject(err);
+            });
+          });
+        } catch (error) {
+          ready.value = false;
+          pending = null;
+          console.error('[wx.config]', error);
+        }
+      })();
 
-  return { ready, wx };
-});
+      return pending;
+    }
+
+    void setup();
+
+    return { ready, wx };
+  },
+);

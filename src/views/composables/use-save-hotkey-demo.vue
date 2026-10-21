@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+
 import { ElMessage } from 'element-plus';
-import { useSaveHotkey } from '@/composables';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
+import { useSaveHotkey } from '@/composables';
+
 import SaveHotkeyDialogPanel from './save-hotkey-dialog-panel.vue';
 
 defineOptions({ name: 'UseSaveHotkeyDemo' });
@@ -42,14 +45,16 @@ useSaveHotkey(save, { enabled, active });
         <tr>
           <td><code>enabled</code></td>
           <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
-          <td>默认 <code>true</code>。为 false 时不执行，但仍可能挡住下层注册。</td>
+          <td>
+            默认 <code>true</code>。为 false 时不执行，但仍可能挡住下层注册。
+          </td>
         </tr>
         <tr>
           <td><code>active</code></td>
           <td><code>MaybeRefOrGetter&lt;boolean&gt;</code></td>
           <td>
-            默认 <code>true</code>。为 false 时注销本注册（例如对话框未打开、KeepAlive
-            失活配合生命周期）。
+            默认 <code>true</code>。为 false
+            时注销本注册（例如对话框未打开、KeepAlive 失活配合生命周期）。
           </td>
         </tr>
         <tr>
@@ -73,8 +78,8 @@ useSaveHotkey(save, { enabled, active });
 
     <DemoBlock>
       <template #hint>
-        在本页按 Ctrl/Cmd+S 或点「保存」→ 主表单计数增加。打开对话框后再按快捷键 → 触发对话框内
-        handler。关掉 enabled/active 可观察主热键失效。
+        在本页按 Ctrl/Cmd+S 或点「保存」→ 主表单计数增加。打开对话框后再按快捷键
+        → 触发对话框内 handler。关掉 enabled/active 可观察主热键失效。
       </template>
 
       <div class="demo__toolbar">
@@ -87,7 +92,9 @@ useSaveHotkey(save, { enabled, active });
           <el-switch v-model="active" />
         </label>
         <el-button size="small" type="primary" @click="save">保存</el-button>
-        <el-button size="small" @click="dialogVisible = true"> 打开对话框 </el-button>
+        <el-button size="small" @click="dialogVisible = true">
+          打开对话框
+        </el-button>
       </div>
 
       <p class="demo__status">主表单保存次数：{{ saveCount }}</p>

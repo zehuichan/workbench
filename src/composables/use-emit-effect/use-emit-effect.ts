@@ -1,29 +1,26 @@
-import {
-  isRef,
-  reactive,
-  readonly,
-  shallowRef,
-  toRaw,
-  toValue,
-  watch,
-  type MaybeRef,
-  type Ref,
-} from 'vue';
+import type { MaybeRef, Ref } from 'vue';
+
+import type {
+  EmitEffectConfirmation,
+  EmitEffectRules,
+  FieldRef,
+  HeaderTrigger,
+  MaybePromise,
+  PropagateOptions,
+  PropagateResult,
+} from './emit-effect';
+
+import { reactive, readonly, shallowRef, toRaw, toValue, watch } from 'vue';
+
 import { tryOnScopeDispose } from '@vueuse/core';
 import { cloneDeep, isEqual } from 'es-toolkit';
+
 import {
   createEmitEngine,
   detectEntities,
   entityKey,
   headerKey,
   rowFieldKey,
-  type EmitEffectConfirmation,
-  type EmitEffectRules,
-  type FieldRef,
-  type HeaderTrigger,
-  type MaybePromise,
-  type PropagateOptions,
-  type PropagateResult,
 } from './emit-effect';
 
 export interface UseEmitEffectOptions {
@@ -38,19 +35,19 @@ export interface UseEmitEffectOptions {
 }
 
 /** Header field name, or `[row, field]` for a row field. */
-export type ManualTarget<F> = keyof F | [row: object, field: string];
+export type ManualTarget<F> = [row: object, field: string] | keyof F;
 
 export interface UseEmitEffectReturn<F extends object> {
-  /** Whether a propagation is running or queued. */
-  pending: Readonly<Ref<boolean>>;
-  /** Whether the field holds a value the user typed over its default rule. */
-  isManual: (target: ManualTarget<F>) => boolean;
-  /** Drops the manual mark and re-derives the field from its rule. */
-  restore: (target: ManualTarget<F>) => Promise<void>;
-  /** Recomputes every `compute` field and fills empty `default` fields. */
-  normalize: () => Promise<void>;
   /** Runs `load` with linkage paused, then rebuilds the baseline without rewriting any value. */
   hydrate: (load: () => MaybePromise<void>) => Promise<void>;
+  /** Whether the field holds a value the user typed over its default rule. */
+  isManual: (target: ManualTarget<F>) => boolean;
+  /** Recomputes every `compute` field and fills empty `default` fields. */
+  normalize: () => Promise<void>;
+  /** Whether a propagation is running or queued. */
+  pending: Readonly<Ref<boolean>>;
+  /** Drops the manual mark and re-derives the field from its rule. */
+  restore: (target: ManualTarget<F>) => Promise<void>;
 }
 
 interface EntityBaseline {
@@ -59,27 +56,31 @@ interface EntityBaseline {
 }
 
 interface Baseline {
-  root: object;
-  header: Map<string, unknown>;
   entities: Map<string, EntityBaseline>;
+  header: Map<string, unknown>;
+  root: object;
 }
 
 interface Job {
+  all?: boolean;
+  dirty: string[];
+  dryRun?: boolean;
+  force?: FieldRef[];
   /** Baseline generation the job was queued against; stale jobs are dropped. */
   generation: number;
-  dirty: string[];
-  triggers: FieldRef[];
   headerTrigger?: HeaderTrigger;
   /** Manual marks added by this edit; undone when the confirmation is rejected. */
   marked: FieldRef[];
-  force?: FieldRef[];
-  all?: boolean;
-  dryRun?: boolean;
+  triggers: FieldRef[];
 }
 
 function isNumeric(value: unknown): boolean {
   if (typeof value === 'number') return !Number.isNaN(value);
-  return typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value));
+  return (
+    typeof value === 'string' &&
+    value.trim() !== '' &&
+    !Number.isNaN(Number(value))
+  );
 }
 
 /** `1023` and `"1023"` are the same edit; el-input rewrites numbers as strings. */
@@ -175,7 +176,10 @@ export function useEmitEffect<F extends object>(
 
   // ---- manual marks ----
 
-  function findEntity(root: Record<string, unknown>, row: object): string | undefined {
+  function findEntity(
+    root: Record<string, unknown>,
+    row: object,
+  ): string | undefined {
     for (const entity of detectEntities(root, rules)) {
       if (rawRows(root, entity).includes(row)) return entity;
     }
@@ -186,12 +190,17 @@ export function useEmitEffect<F extends object>(
     if (Array.isArray(target)) {
       const row = toRaw(target[0]);
       const entity = findEntity(getRoot(), row);
-      return entity === undefined ? undefined : { entity, rowId: idOf(row), field: target[1] };
+      return entity === undefined
+        ? undefined
+        : { entity, rowId: idOf(row), field: target[1] };
     }
     return { field: String(target) };
   }
 
-  function rowOf(ref: FieldRef, rowsById: Map<string, object>): object | undefined {
+  function rowOf(
+    ref: FieldRef,
+    rowsById: Map<string, object>,
+  ): object | undefined {
     return ref.rowId === undefined ? undefined : rowsById.get(ref.rowId);
   }
 
@@ -223,8 +232,8 @@ export function useEmitEffect<F extends object>(
   }
 
   function collectRows(root: Record<string, unknown>): {
-    ids: Record<string, string[]>;
     byId: Map<string, object>;
+    ids: Record<string, string[]>;
   } {
     const ids: Record<string, string[]> = {};
     const byId = new Map<string, object>();
@@ -244,9 +253,9 @@ export function useEmitEffect<F extends object>(
 
   interface Diff {
     dirty: Set<string>;
-    triggers: FieldRef[];
     headerChanges: HeaderTrigger[];
     structural: boolean;
+    triggers: FieldRef[];
   }
 
   function diff(root: Record<string, unknown>): Diff {
@@ -256,7 +265,10 @@ export function useEmitEffect<F extends object>(
     const headerChanges: HeaderTrigger[] = [];
     let structural = false;
 
-    const headerFields = new Set([...baseline.header.keys(), ...Object.keys(root)]);
+    const headerFields = new Set([
+      ...baseline.header.keys(),
+      ...Object.keys(root),
+    ]);
     for (const field of headerFields) {
       if (entities.has(field)) continue;
       const previous = baseline.header.get(field);
@@ -284,7 +296,8 @@ export function useEmitEffect<F extends object>(
         const rowId = idOf(row);
         const fields = new Set([...Object.keys(snapshot), ...Object.keys(row)]);
         for (const field of fields) {
-          if (equals(snapshot[field], (row as Record<string, unknown>)[field])) continue;
+          if (equals(snapshot[field], (row as Record<string, unknown>)[field]))
+            continue;
           dirty.add(rowFieldKey(entity, rowId, field));
           triggers.push({ entity, rowId, field });
         }
@@ -350,7 +363,12 @@ export function useEmitEffect<F extends object>(
     baseline.header.set(field, cloneDeep(value));
   }
 
-  function writeRow(entity: string, row: object, field: string, value: unknown): void {
+  function writeRow(
+    entity: string,
+    row: object,
+    field: string,
+    value: unknown,
+  ): void {
     (reactive(row) as Record<string, unknown>)[field] = value;
     const snapshot = baseline.entities.get(entity)?.values.get(row);
     if (snapshot) snapshot[field] = cloneDeep(value);
@@ -376,7 +394,8 @@ export function useEmitEffect<F extends object>(
   function rollback(job: Job, byId: Map<string, object>): void {
     applying += 1;
     try {
-      if (job.headerTrigger) writeHeader(job.headerTrigger.field, job.headerTrigger.oldValue);
+      if (job.headerTrigger)
+        writeHeader(job.headerTrigger.field, job.headerTrigger.oldValue);
       for (const ref of job.marked) unmarkManual(ref, byId);
     } finally {
       applying -= 1;
@@ -393,7 +412,13 @@ export function useEmitEffect<F extends object>(
     manualRows = new WeakMap();
     touchManual();
     baseline = buildBaseline(root);
-    return enqueue({ dirty: [], triggers: [], marked: [], all: true, dryRun: true });
+    return enqueue({
+      dirty: [],
+      triggers: [],
+      marked: [],
+      all: true,
+      dryRun: true,
+    });
   }
 
   function onFormChange(): void {
@@ -424,7 +449,9 @@ export function useEmitEffect<F extends object>(
     baseline = buildBaseline(root);
 
     const headerTrigger =
-      changes.headerChanges.length === 1 && changes.triggers.length === 1 && !changes.structural
+      changes.headerChanges.length === 1 &&
+      changes.triggers.length === 1 &&
+      !changes.structural
         ? changes.headerChanges[0]
         : undefined;
 
@@ -436,7 +463,10 @@ export function useEmitEffect<F extends object>(
     }).catch(onError);
   }
 
-  const stop = watch(() => toValue(form), onFormChange, { deep: true, flush: 'sync' });
+  const stop = watch(() => toValue(form), onFormChange, {
+    deep: true,
+    flush: 'sync',
+  });
   tryOnScopeDispose(stop);
 
   // ---- public API ----

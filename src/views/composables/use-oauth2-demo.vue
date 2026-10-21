@@ -25,8 +25,9 @@ watch(code, (value) => {
   <DemoPage width="wide">
     <template #description>
       微信网页授权（OAuth）。从 URL search 同步
-      <code>code</code>，并通过 <code>authorize</code> 跳转微信授权页。workbench 使用 History 路由，
-      <code>redirect_uri</code> 不含 hash 路径。需配置 <code>VITE_WECHAT_APPID</code>。
+      <code>code</code>，并通过 <code>authorize</code> 跳转微信授权页。workbench
+      使用 History 路由， <code>redirect_uri</code> 不含 hash 路径。需配置
+      <code>VITE_WECHAT_APPID</code>。
     </template>
 
     <template #api>
@@ -44,12 +45,18 @@ watch(code, (value) => {
         <tr>
           <td><code>mode</code></td>
           <td><code>'history' | 'hash' | 'hash-params'</code></td>
-          <td>默认 <code>'history'</code>。决定回调后从哪一段 query 读 <code>code</code>。</td>
+          <td>
+            默认 <code>'history'</code>。决定回调后从哪一段 query 读
+            <code>code</code>。
+          </td>
         </tr>
         <tr>
           <td><code>window</code></td>
           <td><code>Window</code></td>
-          <td>默认 <code>defaultWindow</code>；SSR 下为 <code>undefined</code> 时自动降级。</td>
+          <td>
+            默认 <code>defaultWindow</code>；SSR 下为
+            <code>undefined</code> 时自动降级。
+          </td>
         </tr>
       </DemoApiTable>
 
@@ -62,7 +69,10 @@ watch(code, (value) => {
         <tr>
           <td><code>authorize</code></td>
           <td><code>(redirect?: string) =&gt; void</code></td>
-          <td>跳转微信授权；可选 <code>redirect</code> 替换当前 pathname（History）。</td>
+          <td>
+            跳转微信授权；可选 <code>redirect</code> 替换当前
+            pathname（History）。
+          </td>
         </tr>
       </DemoApiTable>
 
@@ -77,7 +87,8 @@ watch(code, (value) => {
 
     <DemoBlock title="代码演示">
       <template #hint>
-        playground 无法真实跳转微信授权，此处仅展示用法。需在微信内置浏览器且配置
+        playground
+        无法真实跳转微信授权，此处仅展示用法。需在微信内置浏览器且配置
         <code>VITE_WECHAT_APPID</code> 后使用。
       </template>
       <DemoCode :code="codeDemo" lang="ts" />

@@ -1,23 +1,29 @@
-import { shallowRef, watchEffect, type ShallowRef } from 'vue';
-import { defaultWindow, useUrlSearchParams, type ConfigurableWindow } from '@vueuse/core';
+import type { ConfigurableWindow } from '@vueuse/core';
+
+import type { ShallowRef } from 'vue';
+
 import type { Oauth2ParamsMode } from '../use-oauth2/use-oauth2';
+
+import { shallowRef, watchEffect } from 'vue';
+
+import { defaultWindow, useUrlSearchParams } from '@vueuse/core';
 
 const QRCONNECT_ENDPOINT = 'https://open.weixin.qq.com/connect/qrconnect';
 
 export interface UseQrconnectOptions extends ConfigurableWindow {
   /** Open Platform AppId. Defaults to `VITE_WECHAT_OPEN_APPID`. */
   appId?: string;
-  /** Callback path used when `authorize()` is called without an argument. */
-  redirectPath?: string;
   /** Router mode, so hash-routed apps still find `code`. */
   mode?: Oauth2ParamsMode;
+  /** Callback path used when `authorize()` is called without an argument. */
+  redirectPath?: string;
 }
 
 export interface UseQrconnectReturn {
-  /** `code` from the current URL; `undefined` until WeChat redirects back. */
-  code: ShallowRef<string | undefined>;
   /** Leaves for the qrconnect endpoint, returning to `redirect`. */
   authorize: (redirect?: string) => void;
+  /** `code` from the current URL; `undefined` until WeChat redirects back. */
+  code: ShallowRef<string | undefined>;
 }
 
 /**
@@ -29,11 +35,14 @@ export interface UseQrconnectReturn {
  * const { code, authorize } = useQrconnect()
  * authorize('/auth/wechat')
  */
-export function useQrconnect(options: UseQrconnectOptions = {}): UseQrconnectReturn {
+export function useQrconnect(
+  options: UseQrconnectOptions = {},
+): UseQrconnectReturn {
   const {
     window = defaultWindow,
     appId = import.meta.env.VITE_WECHAT_OPEN_APPID ?? '',
-    redirectPath = import.meta.env.VITE_WECHAT_QR_REDIRECT_PATH || '/auth/wechat',
+    redirectPath = import.meta.env.VITE_WECHAT_QR_REDIRECT_PATH ||
+      '/auth/wechat',
     mode = 'history',
   } = options;
 

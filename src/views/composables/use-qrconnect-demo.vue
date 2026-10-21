@@ -84,12 +84,18 @@ watch(
         <tr>
           <td><code>mode</code></td>
           <td><code>'history' | 'hash' | 'hash-params'</code></td>
-          <td>默认 <code>'history'</code>。决定回调后从哪一段 query 读 <code>code</code>。</td>
+          <td>
+            默认 <code>'history'</code>。决定回调后从哪一段 query 读
+            <code>code</code>。
+          </td>
         </tr>
         <tr>
           <td><code>window</code></td>
           <td><code>Window</code></td>
-          <td>默认 <code>defaultWindow</code>；SSR 下为 <code>undefined</code> 时自动降级。</td>
+          <td>
+            默认 <code>defaultWindow</code>；SSR 下为
+            <code>undefined</code> 时自动降级。
+          </td>
         </tr>
       </DemoApiTable>
 

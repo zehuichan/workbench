@@ -1,12 +1,12 @@
 export interface TokenInfo {
   accessToken: string;
-  username?: string;
   roles?: string[];
+  username?: string;
 }
 
 export const TOKEN_KEY = 'authorized-token';
 
-export function getToken(): TokenInfo | null {
+export function getToken(): null | TokenInfo {
   try {
     const raw = localStorage.getItem(TOKEN_KEY);
     return raw ? (JSON.parse(raw) as TokenInfo) : null;

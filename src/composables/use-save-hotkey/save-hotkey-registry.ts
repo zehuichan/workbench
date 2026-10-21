@@ -1,13 +1,13 @@
 interface SaveHotkeyEntry {
-  handler: () => void | Promise<void>;
-  enabled: () => boolean;
-  onError?: (error: unknown) => void;
-  resolveScopes: () => readonly Node[];
-  owner: object;
   appScope: Node;
-  priority: number;
+  enabled: () => boolean;
   execution: { busy: boolean };
+  handler: () => Promise<void> | void;
+  onError?: (error: unknown) => void;
   order: number;
+  owner: object;
+  priority: number;
+  resolveScopes: () => readonly Node[];
 }
 
 export type SaveHotkeyRegistration = Omit<SaveHotkeyEntry, 'order'>;
@@ -24,8 +24,8 @@ function reportError(entry: SaveHotkeyEntry, error: unknown): void {
   }
   try {
     entry.onError(error);
-  } catch (onErrorFailure) {
-    console.error('[useSaveHotkey] Error handler failed.', onErrorFailure);
+  } catch (error_) {
+    console.error('[useSaveHotkey] Error handler failed.', error_);
   }
 }
 
@@ -53,7 +53,9 @@ function getScopePathIndex(
     const index = path.indexOf(scope);
     if (index !== -1) {
       bestIndex = Math.min(bestIndex, index);
-    } else if (path.some((target) => target instanceof Node && scope.contains(target))) {
+    } else if (
+      path.some((target) => target instanceof Node && scope.contains(target))
+    ) {
       containsPath = true;
     }
   }
@@ -75,10 +77,15 @@ function getScopes(entry: SaveHotkeyEntry, cache: ScopeCache): readonly Node[] {
 }
 
 function isConnectedEntry(entry: SaveHotkeyEntry, cache: ScopeCache): boolean {
-  return entry.appScope.isConnected && getScopes(entry, cache).some((scope) => scope.isConnected);
+  return (
+    entry.appScope.isConnected &&
+    getScopes(entry, cache).some((scope) => scope.isConnected)
+  );
 }
 
-function isDocumentLevelTarget(target: EventTarget | null | undefined): boolean {
+function isDocumentLevelTarget(
+  target: EventTarget | null | undefined,
+): boolean {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return false;
   }
@@ -94,7 +101,10 @@ function isDocumentLevelTarget(target: EventTarget | null | undefined): boolean 
  * Resolves which Vue app owns the shortcut.
  * Nested component priority is applied later; this only picks the app.
  */
-function findEventOwner(path: readonly EventTarget[], cache: ScopeCache): object | undefined {
+function findEventOwner(
+  path: readonly EventTarget[],
+  cache: ScopeCache,
+): object | undefined {
   let owner: object | undefined;
   let bestScopeIndex = Number.POSITIVE_INFINITY;
   for (let index = stack.length - 1; index >= 0; index -= 1) {
@@ -117,7 +127,11 @@ function findEventOwner(path: readonly EventTarget[], cache: ScopeCache): object
   const seenOwners = new Set<object>();
   for (let index = stack.length - 1; index >= 0; index -= 1) {
     const entry = stack[index];
-    if (!entry || !isConnectedEntry(entry, cache) || seenOwners.has(entry.owner)) {
+    if (
+      !entry ||
+      !isConnectedEntry(entry, cache) ||
+      seenOwners.has(entry.owner)
+    ) {
       continue;
     }
     seenOwners.add(entry.owner);
@@ -138,7 +152,10 @@ function findEventOwner(path: readonly EventTarget[], cache: ScopeCache): object
 
   let latest: SaveHotkeyEntry | undefined;
   for (const entry of stack) {
-    if (isConnectedEntry(entry, cache) && (!latest || entry.order > latest.order)) {
+    if (
+      isConnectedEntry(entry, cache) &&
+      (!latest || entry.order > latest.order)
+    ) {
       latest = entry;
     }
   }
@@ -147,10 +164,17 @@ function findEventOwner(path: readonly EventTarget[], cache: ScopeCache): object
 }
 
 /** Highest-priority connected entry for the given app (deeper / later wins). */
-function findTopEntry(owner: object, cache: ScopeCache): SaveHotkeyEntry | undefined {
+function findTopEntry(
+  owner: object,
+  cache: ScopeCache,
+): SaveHotkeyEntry | undefined {
   for (let index = stack.length - 1; index >= 0; index -= 1) {
     const candidate = stack[index];
-    if (candidate && candidate.owner === owner && isConnectedEntry(candidate, cache)) {
+    if (
+      candidate &&
+      candidate.owner === owner &&
+      isConnectedEntry(candidate, cache)
+    ) {
       return candidate;
     }
   }
@@ -196,7 +220,9 @@ function stopListening(): void {
  * Registers one save handler and returns an idempotent disposer.
  * Deeper component scopes win; entries at the same depth use LIFO priority.
  */
-export function registerSaveHotkey(registration: SaveHotkeyRegistration): () => void {
+export function registerSaveHotkey(
+  registration: SaveHotkeyRegistration,
+): () => void {
   if (typeof window === 'undefined') return () => undefined;
 
   const entry: SaveHotkeyEntry = {
@@ -205,7 +231,9 @@ export function registerSaveHotkey(registration: SaveHotkeyRegistration): () => 
   };
   let registered = true;
 
-  const insertAt = stack.findIndex((candidate) => candidate.priority > entry.priority);
+  const insertAt = stack.findIndex(
+    (candidate) => candidate.priority > entry.priority,
+  );
   if (insertAt === -1) stack.push(entry);
   else stack.splice(insertAt, 0, entry);
   ensureListening();

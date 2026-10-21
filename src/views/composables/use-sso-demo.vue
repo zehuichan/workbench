@@ -1,17 +1,23 @@
 <script setup lang="ts">
+import type { TokenInfo } from '@/utils/auth';
+
 import { computed, onMounted, ref } from 'vue';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoCode from '@/components/demo/demo-code.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { getToken, type TokenInfo } from '@/utils/auth';
+import { getToken } from '@/utils/auth';
 
 defineOptions({ name: 'UseSsoDemo' });
 
-const token = ref<TokenInfo | null>(null);
-const CREDENTIALS = 'username=sso&roles=admin&accessToken=eyJhbGciOiJIUzUxMiJ9.demo';
+const token = ref<null | TokenInfo>(null);
+const CREDENTIALS =
+  'username=sso&roles=admin&accessToken=eyJhbGciOiJIUzUxMiJ9.demo';
 const samplePath = computed(() => `${location.origin}/?${CREDENTIALS}`);
-const hashSamplePath = computed(() => `${location.origin}/#/home?${CREDENTIALS}`);
+const hashSamplePath = computed(
+  () => `${location.origin}/#/home?${CREDENTIALS}`,
+);
 
 onMounted(() => {
   token.value = getToken();
@@ -34,9 +40,10 @@ createApp(App).use(router).mount('#app')
     <template #description>
       简版前端 SSO：URL 同时带
       <code>username</code>、<code>roles</code>、<code>accessToken</code>
-      时，清空旧会话、写入本地，并用 router 的 history 原地去掉敏感参数，页面不重载。history / hash
-      两种路由模式都支持，凭证在哪一段 query 就只清理哪一段。<code>main.ts</code> 里在
-      <code>app.use(router)</code> 之前调用一次 <code>sso(router)</code>。
+      时，清空旧会话、写入本地，并用 router 的 history
+      原地去掉敏感参数，页面不重载。history / hash
+      两种路由模式都支持，凭证在哪一段 query 就只清理哪一段。<code>main.ts</code>
+      里在 <code>app.use(router)</code> 之前调用一次 <code>sso(router)</code>。
     </template>
 
     <template #api>
@@ -65,14 +72,20 @@ createApp(App).use(router).mount('#app')
         <code>localStorage['authorized-token']</code>。
       </template>
       <p class="mb-3 break-all font-mono text-xs">
-        <a class="text-primary underline" :href="samplePath" target="_blank" rel="noreferrer">{{
-          samplePath
-        }}</a>
+        <a
+          class="text-primary underline"
+          :href="samplePath"
+          target="_blank"
+          rel="noreferrer"
+          >{{ samplePath }}</a>
       </p>
       <p class="mb-3 break-all font-mono text-xs">
-        <a class="text-primary underline" :href="hashSamplePath" target="_blank" rel="noreferrer">{{
-          hashSamplePath
-        }}</a>
+        <a
+          class="text-primary underline"
+          :href="hashSamplePath"
+          target="_blank"
+          rel="noreferrer"
+          >{{ hashSamplePath }}</a>
       </p>
       <pre class="overflow-x-auto rounded-md bg-muted p-3 text-xs">{{
         token ? JSON.stringify(token, null, 2) : 'null'

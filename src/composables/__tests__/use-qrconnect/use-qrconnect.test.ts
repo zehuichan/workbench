@@ -1,9 +1,14 @@
-import { effectScope, type EffectScope } from 'vue';
+import type { EffectScope } from 'vue';
+
+import { effectScope } from 'vue';
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { useQrconnect } from '../../use-qrconnect/use-qrconnect';
 import { createWindowStub } from '../helpers/window-stub';
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 describe('useQrconnect', () => {
   let scope: EffectScope;
@@ -20,7 +25,11 @@ describe('useQrconnect', () => {
     vi.restoreAllMocks();
   });
 
-  function run(pathname: string, search: string, options: Parameters<typeof useQrconnect>[0] = {}) {
+  function run(
+    pathname: string,
+    search: string,
+    options: Parameters<typeof useQrconnect>[0] = {},
+  ) {
     const stub = createWindowStub({
       location: {
         protocol: 'https:',
@@ -32,7 +41,9 @@ describe('useQrconnect', () => {
         href: `https://example.com${pathname}${search}`,
       },
     });
-    const result = scope.run(() => useQrconnect({ window: stub.window, ...options }));
+    const result = scope.run(() =>
+      useQrconnect({ window: stub.window, ...options }),
+    );
     if (!result) throw new Error('scope did not return useQrconnect');
     return { ...result, navigate: stub.navigate };
   }
@@ -55,7 +66,9 @@ describe('useQrconnect', () => {
     expect(url).toContain('#wechat_redirect');
     expect(url.match(/state=([^&#]+)/)?.[1]).toMatch(UUID_PATTERN);
 
-    const redirectUri = decodeURIComponent(url.match(/redirect_uri=([^&]+)/)?.[1] ?? '');
+    const redirectUri = decodeURIComponent(
+      url.match(/redirect_uri=([^&]+)/)?.[1] ?? '',
+    );
     expect(redirectUri).toBe('https://example.com/auth/wechat');
     expect(redirectUri.includes('#')).toBe(false);
   });
@@ -65,16 +78,22 @@ describe('useQrconnect', () => {
     authorize('/custom/callback');
 
     const url = String(navigate.mock.calls[0]?.[0]);
-    const redirectUri = decodeURIComponent(url.match(/redirect_uri=([^&]+)/)?.[1] ?? '');
+    const redirectUri = decodeURIComponent(
+      url.match(/redirect_uri=([^&]+)/)?.[1] ?? '',
+    );
     expect(redirectUri).toBe('https://example.com/custom/callback');
   });
 
   it('honours an explicit redirectPath over the env default', () => {
-    const { authorize, navigate } = run('/login', '', { redirectPath: '/sso/landing' });
+    const { authorize, navigate } = run('/login', '', {
+      redirectPath: '/sso/landing',
+    });
     authorize();
 
     const url = String(navigate.mock.calls[0]?.[0]);
-    const redirectUri = decodeURIComponent(url.match(/redirect_uri=([^&]+)/)?.[1] ?? '');
+    const redirectUri = decodeURIComponent(
+      url.match(/redirect_uri=([^&]+)/)?.[1] ?? '',
+    );
     expect(redirectUri).toBe('https://example.com/sso/landing');
   });
 });

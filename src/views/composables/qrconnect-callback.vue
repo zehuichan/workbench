@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+
 import { useQrconnect } from '@/composables';
 import { Button } from '@/ui/button';
 
@@ -42,7 +43,8 @@ watch(
     try {
       token.value = await mockExchangeCode(oauthCode);
     } catch (error) {
-      exchangeError.value = error instanceof Error ? error.message : String(error);
+      exchangeError.value =
+        error instanceof Error ? error.message : String(error);
     } finally {
       exchanging.value = false;
     }
@@ -87,7 +89,11 @@ watch(
       </div>
     </dl>
 
-    <Button v-if="token" type="button" @click="router.push('/composables/use-qrconnect')">
+    <Button
+      v-if="token"
+      type="button"
+      @click="router.push('/composables/use-qrconnect')"
+    >
       返回 demo
     </Button>
   </div>

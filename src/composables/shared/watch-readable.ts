@@ -20,10 +20,10 @@ export function watchReadable<Value>(
       readFailed = false;
       try {
         return read();
-      } catch (failure) {
+      } catch (error) {
         readFailed = true;
-        onReadError(failure);
-        throw failure;
+        onReadError(error);
+        throw error;
       }
     },
     (value) => {

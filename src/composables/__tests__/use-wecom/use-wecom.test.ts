@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { createWindowStub } from '../helpers/window-stub';
 
-const { registerMock, getJsApiTicketMock, getAppJsApiTicketMock } = vi.hoisted(() => ({
-  registerMock: vi.fn(),
-  getJsApiTicketMock: vi.fn(),
-  getAppJsApiTicketMock: vi.fn(),
-}));
+const { registerMock, getJsApiTicketMock, getAppJsApiTicketMock } = vi.hoisted(
+  () => ({
+    registerMock: vi.fn(),
+    getJsApiTicketMock: vi.fn(),
+    getAppJsApiTicketMock: vi.fn(),
+  }),
+);
 
 vi.mock('@wecom/jssdk', () => ({
   register: registerMock,
@@ -45,7 +48,9 @@ describe('useWecom', () => {
   it('does not initialize outside WeCom', async () => {
     const mod = await loadUseWecom();
 
-    const { ready } = mod.useWecom({ window: wecomWindow('Mozilla/5.0 MicroMessenger/8.0.0') });
+    const { ready } = mod.useWecom({
+      window: wecomWindow('Mozilla/5.0 MicroMessenger/8.0.0'),
+    });
     await Promise.resolve();
     await Promise.resolve();
 
@@ -98,17 +103,21 @@ describe('useWecom', () => {
     );
 
     const options = registerMock.mock.calls[0]?.[0] as {
-      getConfigSignature: (url: string) => Promise<unknown>;
       getAgentConfigSignature: (url: string) => Promise<unknown>;
+      getConfigSignature: (url: string) => Promise<unknown>;
       onAgentConfigSuccess: () => void;
     };
 
-    await expect(options.getConfigSignature('https://example.com/page')).resolves.toEqual({
+    await expect(
+      options.getConfigSignature('https://example.com/page'),
+    ).resolves.toEqual({
       timestamp: 1,
       nonceStr: 'n1',
       signature: 's1',
     });
-    await expect(options.getAgentConfigSignature('https://example.com/page')).resolves.toEqual({
+    await expect(
+      options.getAgentConfigSignature('https://example.com/page'),
+    ).resolves.toEqual({
       timestamp: 2,
       nonceStr: 'n2',
       signature: 's2',
@@ -132,7 +141,10 @@ describe('useWecom', () => {
 
     await vi.waitFor(() => {
       expect(registerMock).toHaveBeenCalledWith(
-        expect.objectContaining({ corpId: 'ww-explicit', jsApiList: ['getLocation'] }),
+        expect.objectContaining({
+          corpId: 'ww-explicit',
+          jsApiList: ['getLocation'],
+        }),
       );
     });
   });
