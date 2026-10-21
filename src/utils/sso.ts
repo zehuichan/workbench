@@ -1,6 +1,11 @@
-import { defaultWindow, type ConfigurableWindow } from '@vueuse/core';
+import type { ConfigurableWindow } from '@vueuse/core';
+
 import type { Router } from 'vue-router';
+
+import { defaultWindow } from '@vueuse/core';
+
 import { removeToken, setToken } from './auth';
+import { defined } from './defined';
 
 // 三个都在才认定是 SSO 回调；清理时只抹敏感项，username 留着方便排查
 const MUST = ['username', 'roles', 'accessToken'] as const;
@@ -9,9 +14,9 @@ const SENSITIVE = ['roles', 'accessToken'] as const;
 export type SsoOptions = ConfigurableWindow;
 
 interface Credentials {
-  params: URLSearchParams;
   /** 凭证所在位置，决定清理哪一段 query，避免动到另一段 */
-  from: 'search' | 'hash';
+  from: 'hash' | 'search';
+  params: URLSearchParams;
 }
 
 function getHashQuery(hash: string): URLSearchParams {
@@ -21,7 +26,8 @@ function getHashQuery(hash: string): URLSearchParams {
 
 function readCredentials(url: URL): Credentials | null {
   const hashParams = getHashQuery(url.hash);
-  if (MUST.every((key) => hashParams.get(key))) return { params: hashParams, from: 'hash' };
+  if (MUST.every((key) => hashParams.get(key)))
+    return { params: hashParams, from: 'hash' };
   if (MUST.every((key) => url.searchParams.get(key))) {
     return { params: url.searchParams, from: 'search' };
   }
@@ -84,10 +90,9 @@ export function sso(router: Router, options: SsoOptions = {}): boolean {
   const { params } = credentials;
   removeToken();
   setToken({
-    accessToken: params.get('accessToken')!,
-    username: params.get('username')!,
-    roles: params
-      .get('roles')!
+    accessToken: defined(params.get('accessToken')),
+    username: defined(params.get('username')),
+    roles: defined(params.get('roles'))
       .split(/[,\s]+/)
       .filter(Boolean),
   });
