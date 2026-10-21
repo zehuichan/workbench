@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import type { SidebarProps } from '.';
-import { cn } from '@/utils';
+
 import { Sheet, SheetContent } from '@/ui/sheet';
 import SheetDescription from '@/ui/sheet/SheetDescription.vue';
 import SheetHeader from '@/ui/sheet/SheetHeader.vue';
 import SheetTitle from '@/ui/sheet/SheetTitle.vue';
+import { cn } from '@/utils';
+
 import { SIDEBAR_WIDTH_MOBILE, useSidebar } from './utils';
 
 defineOptions({
@@ -24,13 +26,23 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
   <div
     v-if="collapsible === 'none'"
     data-slot="sidebar"
-    :class="cn('bg-sidebar text-sidebar-foreground flex w-(--sidebar-width) flex-col', props.class)"
+    :class="
+      cn(
+        'bg-sidebar text-sidebar-foreground flex w-(--sidebar-width) flex-col',
+        props.class,
+      )
+    "
     v-bind="$attrs"
   >
-    <slot />
+    <slot></slot>
   </div>
 
-  <Sheet v-else-if="isMobile" :open="openMobile" v-bind="$attrs" @update:open="setOpenMobile">
+  <Sheet
+    v-else-if="isMobile"
+    :open="openMobile"
+    v-bind="$attrs"
+    @update:open="setOpenMobile"
+  >
     <SheetContent
       data-sidebar="sidebar"
       data-slot="sidebar"
@@ -46,7 +58,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
         <SheetDescription>Displays the mobile sidebar.</SheetDescription>
       </SheetHeader>
       <div class="flex h-full w-full flex-col">
-        <slot />
+        <slot></slot>
       </div>
     </SheetContent>
   </Sheet>
@@ -73,7 +85,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)',
         )
       "
-    />
+    ></div>
     <div
       data-slot="sidebar-container"
       :data-side="side"
@@ -97,7 +109,7 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
         data-slot="sidebar-inner"
         class="bg-sidebar group-data-[variant=floating]:ring-sidebar-border group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 flex size-full flex-col"
       >
-        <slot />
+        <slot></slot>
       </div>
     </div>
   </div>

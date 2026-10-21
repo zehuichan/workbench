@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DialogRootEmits, DialogRootProps } from 'reka-ui';
+
 import { DialogRoot, useForwardPropsEmits } from 'reka-ui';
 
 const props = defineProps<DialogRootProps>();
@@ -10,6 +11,6 @@ const forwarded = useForwardPropsEmits(props, emits);
 
 <template>
   <DialogRoot v-slot="slotProps" data-slot="sheet" v-bind="forwarded">
-    <slot v-bind="slotProps" />
+    <slot v-bind="slotProps"></slot>
   </DialogRoot>
 </template>

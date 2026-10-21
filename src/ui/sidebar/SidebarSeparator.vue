@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue';
-import { cn } from '@/utils';
+
 import { Separator } from '@/ui/separator';
+import { cn } from '@/utils';
 
 const props = defineProps<{
   class?: HTMLAttributes['class'];
@@ -14,6 +15,6 @@ const props = defineProps<{
     data-sidebar="separator"
     :class="cn('bg-sidebar-border mx-2 w-auto', props.class)"
   >
-    <slot />
+    <slot></slot>
   </Separator>
 </template>

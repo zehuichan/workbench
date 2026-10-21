@@ -1,12 +1,14 @@
 import type { VariantProps } from 'class-variance-authority';
+
 import type { HTMLAttributes } from 'vue';
+
 import { cva } from 'class-variance-authority';
 
 export interface SidebarProps {
-  side?: 'left' | 'right';
-  variant?: 'sidebar' | 'floating' | 'inset';
-  collapsible?: 'offcanvas' | 'icon' | 'none';
   class?: HTMLAttributes['class'];
+  collapsible?: 'icon' | 'none' | 'offcanvas';
+  side?: 'left' | 'right';
+  variant?: 'floating' | 'inset' | 'sidebar';
 }
 
 export { default as Sidebar } from './Sidebar.vue';
@@ -57,4 +59,6 @@ export const sidebarMenuButtonVariants = cva(
   },
 );
 
-export type SidebarMenuButtonVariants = VariantProps<typeof sidebarMenuButtonVariants>;
+export type SidebarMenuButtonVariants = VariantProps<
+  typeof sidebarMenuButtonVariants
+>;

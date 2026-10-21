@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import type { NavigationMenuItemProps } from 'reka-ui';
+
 import type { HTMLAttributes } from 'vue';
+
 import { reactiveOmit } from '@vueuse/core';
 import { NavigationMenuItem } from 'reka-ui';
+
 import { cn } from '@/utils';
 
-const props = defineProps<NavigationMenuItemProps & { class?: HTMLAttributes['class'] }>();
+const props = defineProps<
+  NavigationMenuItemProps & { class?: HTMLAttributes['class'] }
+>();
 
 const delegatedProps = reactiveOmit(props, 'class');
 </script>
@@ -16,6 +21,6 @@ const delegatedProps = reactiveOmit(props, 'class');
     v-bind="delegatedProps"
     :class="cn('relative', props.class)"
   >
-    <slot />
+    <slot></slot>
   </NavigationMenuItem>
 </template>
