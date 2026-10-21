@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import type { PlusTableExpose } from '@/components/plus-table';
+
 import { computed, ref, unref } from 'vue';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { defineColumns, PlusTable, type PlusTableExpose } from '@/components/plus-table';
+import { defineColumns, PlusTable } from '@/components/plus-table';
 
 defineOptions({ name: 'HistoryDirtyDemo' });
 
 interface Row {
+  amount: number;
   id: number;
   name: string;
-  amount: number;
 }
 
 const tableRef = ref<PlusTableExpose<Row>>();
@@ -142,7 +145,8 @@ function handleResetTracking() {
 
     <DemoBlock>
       <template #hint>
-        改名称/金额 → 脏行数增加 → Undo/Redo；点 Reset tracking 后脏行清零（数据保留）。
+        改名称/金额 → 脏行数增加 → Undo/Redo；点 Reset tracking
+        后脏行清零（数据保留）。
       </template>
       <PlusTable
         ref="tableRef"

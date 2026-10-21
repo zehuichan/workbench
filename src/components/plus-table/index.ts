@@ -2,19 +2,25 @@ import PlusTable from './table.vue';
 
 export { PlusTable };
 
-export { PLUS_TABLE_INJECTION_KEY, usePlusTable } from './tokens';
 export { resolveEditor } from './adapter';
+export type {
+  ColumnComponent,
+  EditorColumnFields,
+  EditorTrigger,
+  ResolvedEditor,
+} from './adapter';
+export type {
+  CellView,
+  EditorBinding,
+  EditorSlotProps,
+  HeaderSlotProps,
+} from './cell';
 export { defineColumns } from './column';
-export { useSummaries } from './composables/use-summaries';
 
-export type { ColumnComponent, EditorColumnFields, EditorTrigger, ResolvedEditor } from './adapter';
-export type { ComponentType } from '@/adapter';
-export type { CellView, EditorBinding, EditorSlotProps, HeaderSlotProps } from './cell';
-export type { PlusTableContext } from './tokens';
-export type { UseTableReturn } from './use-table';
 export type { SettingItem } from './composables/use-columns';
 export type { DependencyState } from './composables/use-dependencies';
 export type { DirtyCell } from './composables/use-dirty';
+export { useSummaries } from './composables/use-summaries';
 export type {
   SummaryColumnOptions,
   SummaryColumns,
@@ -38,6 +44,8 @@ export type {
   PlusTableResolvedProps,
   ValidateResult,
 } from './table';
+export { PLUS_TABLE_INJECTION_KEY, usePlusTable } from './tokens';
+export type { PlusTableContext } from './tokens';
 export type {
   CellContext,
   CellError,
@@ -56,3 +64,5 @@ export type {
   RowKey,
   SpecialColumnType,
 } from './types';
+export type { UseTableReturn } from './use-table';
+export type { ComponentType } from '@/adapter';

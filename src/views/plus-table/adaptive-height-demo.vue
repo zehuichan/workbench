@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import type { AdaptiveConfig } from '@/components/plus-table';
+
 import { computed, ref } from 'vue';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { defineColumns, PlusTable, type AdaptiveConfig } from '@/components/plus-table';
+import { defineColumns, PlusTable } from '@/components/plus-table';
 
 defineOptions({ name: 'AdaptiveHeightDemo' });
 
@@ -52,7 +55,8 @@ const columns = defineColumns<Row>([
     editable: true,
     component: 'select',
     componentProps: { options: statusOptions, clearable: true },
-    formatter: (row) => statusOptions.find((o) => o.value === row.status)?.label ?? row.status,
+    formatter: (row) =>
+      statusOptions.find((o) => o.value === row.status)?.label ?? row.status,
   },
 ]);
 
@@ -81,7 +85,8 @@ const pageRows = computed(() => {
   <DemoPage width="wide">
     <template #description>
       <code>adaptive</code> 让表体占满剩余高度并在内部滚动。默认
-      <code>mode: 'viewport'</code>（按窗口剩余空间计算）；卡片 / 弹窗 / 分栏等自身高度受限时用
+      <code>mode: 'viewport'</code>（按窗口剩余空间计算）；卡片 / 弹窗 /
+      分栏等自身高度受限时用
       <code>mode: 'container'</code>，父级需有明确高度并作为 flex 列容器。
     </template>
 
@@ -91,7 +96,8 @@ const pageRows = computed(() => {
           <td><code>adaptive</code></td>
           <td><code>boolean | AdaptiveConfig</code></td>
           <td>
-            默认 <code>false</code>。传 <code>true</code> 等同 <code>{ mode: 'viewport' }</code>。
+            默认 <code>false</code>。传 <code>true</code> 等同
+            <code>{ mode: 'viewport' }</code>。
           </td>
         </tr>
       </DemoApiTable>
@@ -101,8 +107,8 @@ const pageRows = computed(() => {
           <td><code>mode</code></td>
           <td><code>'viewport' | 'container'</code></td>
           <td>
-            默认 <code>viewport</code>。container 时 height 为 <code>100%</code>，由 CSS flex
-            父级撑满。
+            默认 <code>viewport</code>。container 时 height 为
+            <code>100%</code>，由 CSS flex 父级撑满。
           </td>
         </tr>
         <tr>
@@ -120,17 +126,30 @@ const pageRows = computed(() => {
 
     <DemoBlock title="Viewport 模式">
       <template #hint>
-        按视口剩余高度赋值给底层 <code>el-table</code>；改窗口大小或下方 <code>offsetBottom</code> /
+        按视口剩余高度赋值给底层 <code>el-table</code>；改窗口大小或下方
+        <code>offsetBottom</code> /
         <code>minHeight</code> 可观察变化。有分页时会扣除底栏高度。
       </template>
       <div class="adaptive-demo__controls">
         <label class="adaptive-demo__control">
           <span>offsetBottom</span>
-          <el-input-number v-model="offsetBottom" :min="0" :max="120" :step="4" size="small" />
+          <el-input-number
+            v-model="offsetBottom"
+            :min="0"
+            :max="120"
+            :step="4"
+            size="small"
+          />
         </label>
         <label class="adaptive-demo__control">
           <span>minHeight</span>
-          <el-input-number v-model="minHeight" :min="120" :max="480" :step="20" size="small" />
+          <el-input-number
+            v-model="minHeight"
+            :min="120"
+            :max="480"
+            :step="20"
+            size="small"
+          />
         </label>
       </div>
       <PlusTable
@@ -147,9 +166,7 @@ const pageRows = computed(() => {
       >
         <template #title>Viewport · 任务列表</template>
         <template #summary>
-          <span class="demo__meta"
-            >共 {{ allRows.length }} 行 · 当前页 {{ pageRows.length }} 条</span
-          >
+          <span class="demo__meta">共 {{ allRows.length }} 行 · 当前页 {{ pageRows.length }} 条</span>
         </template>
       </PlusTable>
     </DemoBlock>
@@ -158,15 +175,24 @@ const pageRows = computed(() => {
       <template #hint>
         模拟卡片容器：父级固定高度 +
         <code>display: flex; flex-direction: column</code>，表格
-        <code>:adaptive="{ mode: 'container' }"</code> 撑满剩余空间。拖动滑块改容器高度。
+        <code>:adaptive="{ mode: 'container' }"</code>
+        撑满剩余空间。拖动滑块改容器高度。
       </template>
       <div class="adaptive-demo__controls">
         <label class="adaptive-demo__control adaptive-demo__control--grow">
           <span>容器高度 {{ containerHeight }}px</span>
-          <el-slider v-model="containerHeight" :min="220" :max="560" :step="10" />
+          <el-slider
+            v-model="containerHeight"
+            :min="220"
+            :max="560"
+            :step="10"
+          />
         </label>
       </div>
-      <div class="adaptive-demo__shell" :style="{ height: `${containerHeight}px` }">
+      <div
+        class="adaptive-demo__shell"
+        :style="{ height: `${containerHeight}px` }"
+      >
         <PlusTable
           :data="allRows"
           :columns="columns"
@@ -195,8 +221,8 @@ const pageRows = computed(() => {
 
 .adaptive-demo__control {
   display: flex;
-  align-items: center;
   gap: 10px;
+  align-items: center;
   font-size: 13px;
   color: var(--ink-soft);
 }
@@ -215,10 +241,10 @@ const pageRows = computed(() => {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-xs);
   padding: 12px;
   background: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-xs);
 }
 
 .adaptive-demo__shell :deep(.plus-table) {

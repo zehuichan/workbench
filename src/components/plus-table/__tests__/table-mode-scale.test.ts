@@ -1,17 +1,25 @@
-import { nextTick } from 'vue';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createTestTable, type TestTable } from './helpers/create-test-table';
 import type { EditMode } from '../types';
+import type { TestTable } from './helpers/create-test-table';
+
+import { nextTick } from 'vue';
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { createTestTable } from './helpers/create-test-table';
 
 interface Row {
+  amount: number;
   id: number;
   name: string;
-  amount: number;
 }
 
 const columns = [
   { prop: 'name', label: '名称', editable: true },
-  { prop: 'amount', label: '金额', editable: (context: { row: Row }) => context.row.id > 0 },
+  {
+    prop: 'amount',
+    label: '金额',
+    editable: (context: { row: Row }) => context.row.id > 0,
+  },
   { prop: 'id', label: '编号' },
 ];
 

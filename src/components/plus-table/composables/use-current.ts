@@ -1,15 +1,21 @@
-import { nextTick } from 'vue';
-import { clamp } from 'es-toolkit';
-import { focusEditorElement } from '../utils';
-import { useCellRefSlot } from './use-cell-ref';
 import type { TableHost } from '../table';
 import type { CellLocation, CellPosition, CellRef, RowData } from '../types';
 import type { UseColumnsReturn } from './use-columns';
 import type { UseDataReturn } from './use-data';
 
-type UseCurrentProps<T extends RowData> = Pick<UseDataReturn<T>, 'data' | 'keysMap' | 'getRowKey'> &
+import { nextTick } from 'vue';
+
+import { clamp } from 'es-toolkit';
+
+import { focusEditorElement } from '../utils';
+import { useCellRefSlot } from './use-cell-ref';
+
+type UseCurrentProps<T extends RowData> = Pick<
+  TableHost<T>,
+  'gridRef' | 'ids'
+> &
   Pick<UseColumnsReturn<T>, 'columns' | 'getColumnIndex'> &
-  Pick<TableHost<T>, 'gridRef' | 'ids'>;
+  Pick<UseDataReturn<T>, 'data' | 'getRowKey' | 'keysMap'>;
 
 /** 活动格：稳定身份 ↔ 公开下标的换算、导航移动、DOM 定位与聚焦。 */
 export function useCurrent<T extends RowData = RowData>({
@@ -35,7 +41,9 @@ export function useCurrent<T extends RowData = RowData>({
   function resolveCellPosition(ref: CellRef): CellPosition | null {
     const rowIndex = keysMap.value.get(ref.rowKey)?.rowIndex;
     const colIndex = getColumnIndex(ref.colId);
-    return rowIndex === undefined || colIndex < 0 ? null : { rowIndex, colIndex };
+    return rowIndex === undefined || colIndex < 0
+      ? null
+      : { rowIndex, colIndex };
   }
 
   /** 把稳定身份解析为完整单元格上下文。 */
@@ -49,7 +57,10 @@ export function useCurrent<T extends RowData = RowData>({
     return { ...position, row, node, prop, rowKey: ref.rowKey };
   }
 
-  function locateCell(rowIndex: number, colIndex: number): CellLocation<T> | null {
+  function locateCell(
+    rowIndex: number,
+    colIndex: number,
+  ): CellLocation<T> | null {
     const ref = toCellRef(rowIndex, colIndex);
     return ref ? locateCellRef(ref) : null;
   }
@@ -65,18 +76,26 @@ export function useCurrent<T extends RowData = RowData>({
   function getCellElRef(ref: CellRef): HTMLElement | null {
     const grid = gridRef.value;
     if (!grid) return null;
-    return grid.querySelector<HTMLElement>(`#${CSS.escape(ids.cell(ref.rowKey, ref.colId))}`);
+    return grid.querySelector<HTMLElement>(
+      `#${CSS.escape(ids.cell(ref.rowKey, ref.colId))}`,
+    );
   }
 
   function scrollCellRef(ref: CellRef): void {
     getCellElRef(ref)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }
 
-  function setCurrentCell(rowIndex: number, colIndex: number, scroll = true): void {
+  function setCurrentCell(
+    rowIndex: number,
+    colIndex: number,
+    scroll = true,
+  ): void {
     const rows = rowCount();
     const cols = colCount();
     const next =
-      rows && cols ? toCellRef(clamp(rowIndex, 0, rows - 1), clamp(colIndex, 0, cols - 1)) : null;
+      rows && cols
+        ? toCellRef(clamp(rowIndex, 0, rows - 1), clamp(colIndex, 0, cols - 1))
+        : null;
     slot.set(next);
     if (next && scroll) scrollCellRef(next);
   }
@@ -108,7 +127,11 @@ export function useCurrent<T extends RowData = RowData>({
   /** 方向移动（不换行），无活动格时落到首格 */
   function moveCurrent(deltaRow: number, deltaCol: number): void {
     const position = resolveMoveOrigin();
-    if (position) setCurrentCell(position.rowIndex + deltaRow, position.colIndex + deltaCol);
+    if (position)
+      setCurrentCell(
+        position.rowIndex + deltaRow,
+        position.colIndex + deltaCol,
+      );
   }
 
   /** 顺序移动（Tab 流，行尾换行），无活动格时落到首格 */
@@ -118,7 +141,11 @@ export function useCurrent<T extends RowData = RowData>({
     if (total === 0) return;
     const position = resolveMoveOrigin();
     if (!position) return;
-    const flat = clamp(position.rowIndex * cols + position.colIndex + delta, 0, total - 1);
+    const flat = clamp(
+      position.rowIndex * cols + position.colIndex + delta,
+      0,
+      total - 1,
+    );
     setCurrentCell(Math.floor(flat / cols), flat % cols);
   }
 
@@ -175,4 +202,6 @@ export function useCurrent<T extends RowData = RowData>({
   };
 }
 
-export type UseCurrentReturn<T extends RowData = RowData> = ReturnType<typeof useCurrent<T>>;
+export type UseCurrentReturn<T extends RowData = RowData> = ReturnType<
+  typeof useCurrent<T>
+>;

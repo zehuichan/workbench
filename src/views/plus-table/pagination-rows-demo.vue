@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import type { ContextMenuItem } from '@/components/plus-table';
+
 import { computed, ref } from 'vue';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { defineColumns, PlusTable, type ContextMenuItem } from '@/components/plus-table';
+import { defineColumns, PlusTable } from '@/components/plus-table';
 
 defineOptions({ name: 'PaginationRowsDemo' });
 
@@ -66,7 +69,10 @@ function addRow() {
 }
 
 function clampPage() {
-  const maxPage = Math.max(1, Math.ceil(allRows.value.length / pageSize.value) || 1);
+  const maxPage = Math.max(
+    1,
+    Math.ceil(allRows.value.length / pageSize.value) || 1,
+  );
   if (page.value > maxPage) page.value = maxPage;
 }
 
@@ -80,7 +86,7 @@ function handleSelectionChange(rows: Row[]) {
 }
 
 function removeSelectedRows() {
-  if (!selectedRows.value.length) return;
+  if (selectedRows.value.length === 0) return;
   const ids = new Set(selectedRows.value.map((row) => row.id));
   allRows.value = allRows.value.filter((row) => !ids.has(row.id));
   selectedRows.value = [];
@@ -90,7 +96,7 @@ function removeSelectedRows() {
 function duplicateRowById(id: number) {
   const index = allRows.value.findIndex((row) => row.id === id);
   const source = allRows.value[index];
-  if (index < 0 || !source) return;
+  if (index === -1 || !source) return;
   const clone: Row = {
     ...source,
     id: nextId++,
@@ -105,7 +111,7 @@ function duplicateRowById(id: number) {
 function insertRowsAfter(id: number, count: number) {
   const n = Math.min(100, Math.max(1, Math.floor(Number(count)) || 1));
   const index = allRows.value.findIndex((row) => row.id === id);
-  if (index < 0) return;
+  if (index === -1) return;
   const inserts: Row[] = Array.from({ length: n }, () => {
     const rowId = nextId++;
     return { id: rowId, name: `新任务 ${rowId}`, owner: 'Alice' };
@@ -128,7 +134,10 @@ function onInsertItemClick(event: MouseEvent, row: Row, close: () => void) {
 }
 
 function clampInsertCount(value: number | undefined) {
-  insertCount.value = Math.min(100, Math.max(1, Math.floor(Number(value)) || 1));
+  insertCount.value = Math.min(
+    100,
+    Math.max(1, Math.floor(Number(value)) || 1),
+  );
 }
 
 function removeFirstOnPage() {
@@ -183,13 +192,14 @@ function contextMenu(): ContextMenuItem<Row>[] {
 <template>
   <DemoPage width="wide">
     <template #description>
-      传入 <code>total</code> 即启用分页 UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
+      传入 <code>total</code> 即启用分页
+      UI；组件<strong>不切片</strong>，由业务把当前页数据塞进
       <code>data</code>（服务端分页同理）。本页用内存全量 +
       <code>computed</code> 切片演示。行增删改请改全量源，不要对当前页数组调
       <code>insertRow</code>（否则只动这一页）。表体右键菜单通过
       <code>context-menu</code> 声明动作项，自定义内容用
-      <code>#context-menu-item-${'{key}'}</code> 插槽（对齐 <code>#cell-*</code> /
-      <code>#editor-*</code>）。
+      <code>#context-menu-item-${'{key}'}</code> 插槽（对齐
+      <code>#cell-*</code> / <code>#editor-*</code>）。
     </template>
 
     <template #api>
@@ -216,7 +226,9 @@ function contextMenu(): ContextMenuItem<Row>[] {
         </tr>
         <tr>
           <td><code>context-menu</code></td>
-          <td><code>ContextMenuItem[] | (ctx) =&gt; ContextMenuItem[]</code></td>
+          <td>
+            <code>ContextMenuItem[] | (ctx) =&gt; ContextMenuItem[]</code>
+          </td>
           <td>
             表体右键动作列表；自定义项内容用
             <code>#context-menu-item-${'{key}'}</code>，内嵌控件时设
@@ -238,7 +250,10 @@ function contextMenu(): ContextMenuItem<Row>[] {
         </tr>
       </DemoApiTable>
 
-      <DemoApiTable title="Expose（行操作，作用于传入的 data）" :headers="['名称', '说明']">
+      <DemoApiTable
+        title="Expose（行操作，作用于传入的 data）"
+        :headers="['名称', '说明']"
+      >
         <tr>
           <td><code>insertRow(row, index?)</code></td>
           <td>插入行并 <code>update:data</code>。</td>
@@ -260,7 +275,10 @@ function contextMenu(): ContextMenuItem<Row>[] {
       <DemoApiTable title="Slots" :headers="['名称', '说明']">
         <tr>
           <td><code>#title</code></td>
-          <td>顶栏左侧标题区，与 toolbar 同一行（有 title 或 toolbar 时显示顶栏）。</td>
+          <td>
+            顶栏左侧标题区，与 toolbar 同一行（有 title 或 toolbar
+            时显示顶栏）。
+          </td>
         </tr>
         <tr>
           <td><code>#summary</code></td>
@@ -281,8 +299,9 @@ function contextMenu(): ContextMenuItem<Row>[] {
 
     <DemoBlock>
       <template #hint>
-        右键「插入 N 行」：改数字后点输入框以外区域或回车插入；勾选后可批量删除。翻页 / toolbar
-        与菜单均改 <code>allRows</code>。表头右键可隐藏列 / 打开列设置。
+        右键「插入 N
+        行」：改数字后点输入框以外区域或回车插入；勾选后可批量删除。翻页 /
+        toolbar 与菜单均改 <code>allRows</code>。表头右键可隐藏列 / 打开列设置。
       </template>
       <PlusTable
         :data="pageRows"
@@ -309,15 +328,15 @@ function contextMenu(): ContextMenuItem<Row>[] {
             :disabled="!selectedRows.length"
             @click="removeSelectedRows"
           >
-            删除勾选行{{ selectedRows.length ? ` (${selectedRows.length})` : '' }}
+            删除勾选行{{
+              selectedRows.length ? ` (${selectedRows.length})` : ''
+            }}
           </el-button>
           <el-button @click="removeFirstOnPage">删除当前页首行</el-button>
           <el-button @click="duplicateFirstOnPage">复制当前页首行</el-button>
         </template>
         <template #summary>
-          <span class="demo__meta"
-            >共 {{ allRows.length }} 行 · 当前页 {{ pageRows.length }} 条</span
-          >
+          <span class="demo__meta">共 {{ allRows.length }} 行 · 当前页 {{ pageRows.length }} 条</span>
         </template>
         <template #context-menu-item-insert-n="{ row, close }">
           <div @click="onInsertItemClick($event, row, close)">

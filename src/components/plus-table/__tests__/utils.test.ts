@@ -1,5 +1,7 @@
 import { ref } from 'vue';
+
 import { describe, expect, it } from 'vitest';
+
 import { createTableExpose } from '../utils';
 
 describe('PlusTable expose proxy', () => {

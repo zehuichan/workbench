@@ -1,11 +1,24 @@
-import { computed } from 'vue';
-import { useElementBounding, useWindowSize } from '@vueuse/core';
-import { isPlainObject } from 'es-toolkit';
-import { ADAPTIVE_DEFAULT_MIN_HEIGHT, ADAPTIVE_DEFAULT_OFFSET_BOTTOM } from '../constants';
-import type { AdaptiveConfig, PlusTableResolvedProps, TableHost } from '../table';
+import type {
+  AdaptiveConfig,
+  PlusTableResolvedProps,
+  TableHost,
+} from '../table';
 import type { RowData } from '../types';
 
-type UseStylesProps<T extends RowData> = Pick<TableHost<T>, 'gridRef' | 'paginationRef'>;
+import { computed } from 'vue';
+
+import { useElementBounding, useWindowSize } from '@vueuse/core';
+import { isPlainObject } from 'es-toolkit';
+
+import {
+  ADAPTIVE_DEFAULT_MIN_HEIGHT,
+  ADAPTIVE_DEFAULT_OFFSET_BOTTOM,
+} from '../constants';
+
+type UseStylesProps<T extends RowData> = Pick<
+  TableHost<T>,
+  'gridRef' | 'paginationRef'
+>;
 
 /** 按视口剩余空间计算 el-table 的 height，随窗口与布局变化响应 */
 export function useStyles<T extends RowData = RowData>(
@@ -23,7 +36,9 @@ export function useStyles<T extends RowData = RowData>(
   });
 
   /** container 模式：表格放进卡片/弹窗/分栏等自身高度受限的容器，视口像素运算天然算错 */
-  const isContainerMode = computed(() => !!props.adaptive && config.value.mode === 'container');
+  const isContainerMode = computed(
+    () => !!props.adaptive && config.value.mode === 'container',
+  );
 
   /**
    * 关掉 window scroll 监听：它是 capture 阶段挂在 window 上的，表体内部每滚一帧
@@ -32,14 +47,20 @@ export function useStyles<T extends RowData = RowData>(
    */
   const boundingOptions = { windowScroll: false } as const;
   const { top: gridTop } = useElementBounding(gridRef, boundingOptions);
-  const { height: paginationHeight } = useElementBounding(paginationRef, boundingOptions);
+  const { height: paginationHeight } = useElementBounding(
+    paginationRef,
+    boundingOptions,
+  );
   const { height: windowHeight } = useWindowSize();
 
   const tableHeight = computed<number | string | undefined>(() => {
     if (!props.adaptive) return undefined;
     if (isContainerMode.value) return '100%';
     const available =
-      windowHeight.value - gridTop.value - paginationHeight.value - config.value.offsetBottom;
+      windowHeight.value -
+      gridTop.value -
+      paginationHeight.value -
+      config.value.offsetBottom;
     return Math.max(available, config.value.minHeight);
   });
 

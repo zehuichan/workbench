@@ -11,10 +11,17 @@ export const SETTINGS_STORAGE_PREFIX = 'plus-table:settings:';
 export const ROOT_ID = '__root';
 
 /** 由 el-table 原生渲染的特殊列，不接管 default / header 插槽 */
-export const NATIVE_RENDER_COLUMN_TYPES = ['selection', 'index', 'expand'] as const;
+export const NATIVE_RENDER_COLUMN_TYPES = [
+  'selection',
+  'index',
+  'expand',
+] as const;
 
 /** 不绑定行字段、不参与列设置的特殊列 */
-export const SPECIAL_COLUMN_TYPES = [...NATIVE_RENDER_COLUMN_TYPES, 'operation'] as const;
+export const SPECIAL_COLUMN_TYPES = [
+  ...NATIVE_RENDER_COLUMN_TYPES,
+  'operation',
+] as const;
 
 /** 全表校验的并发上限：行之间互不依赖，串行只会把 IO 型规则的耗时线性叠加 */
 export const VALIDATE_ROW_CONCURRENCY = 4;

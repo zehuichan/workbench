@@ -1,15 +1,18 @@
 <script setup lang="ts">
+import type { PlusTableExpose } from '@/components/plus-table';
+
 import { ref } from 'vue';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { defineColumns, PlusTable, type PlusTableExpose } from '@/components/plus-table';
+import { defineColumns, PlusTable } from '@/components/plus-table';
 
 defineOptions({ name: 'DependenciesValidationDemo' });
 
 interface Row {
-  id: number;
   category: string;
+  id: number;
   item: string;
   remark: string;
 }
@@ -53,7 +56,9 @@ const columns = defineColumns<Row>([
       clearable: true,
     },
     formatter: (row) =>
-      (({ hardware: '硬件', software: '软件' }) as Record<string, string>)[row.category] ?? '',
+      ({ hardware: '硬件', software: '软件' } as Record<string, string>)[
+        row.category
+      ] ?? '',
   },
   {
     prop: 'item',
@@ -97,16 +102,20 @@ async function handleValidate() {
     lastValidate.value = '无法校验';
     return;
   }
-  lastValidate.value = result.valid ? '校验通过' : `失败 ${result.errors.length} 项`;
+  lastValidate.value = result.valid
+    ? '校验通过'
+    : `失败 ${result.errors.length} 项`;
 }
 </script>
 
 <template>
   <DemoPage width="wide">
     <template #description>
-      列上的 <code>dependencies</code> 按 <code>triggerFields</code> 响应同行其他字段变化（动态
-      options / disabled、副作用清空）。静态 <code>required</code> / <code>rules</code> 做校验；也可
-      <code>ref.validate()</code> 全表校验。第 3 行故意留空便于看失败提示。
+      列上的 <code>dependencies</code> 按
+      <code>triggerFields</code> 响应同行其他字段变化（动态 options /
+      disabled、副作用清空）。静态 <code>required</code> /
+      <code>rules</code> 做校验；也可 <code>ref.validate()</code> 全表校验。第 3
+      行故意留空便于看失败提示。
     </template>
 
     <template #api>
@@ -130,7 +139,8 @@ async function handleValidate() {
           <td><code>validateEvent</code></td>
           <td><code>boolean</code></td>
           <td>
-            表级 prop，默认 <code>true</code>。为 false 时仅 <code>validate()</code> 触发校验。
+            表级 prop，默认 <code>true</code>。为 false 时仅
+            <code>validate()</code> 触发校验。
           </td>
         </tr>
       </DemoApiTable>
@@ -149,10 +159,14 @@ async function handleValidate() {
         <tr>
           <td><code>trigger</code></td>
           <td><code>(row, api) =&gt; void</code></td>
-          <td>副作用；用 <code>api.setValue(prop, value)</code> 改同行其他字段。</td>
+          <td>
+            副作用；用 <code>api.setValue(prop, value)</code> 改同行其他字段。
+          </td>
         </tr>
         <tr>
-          <td><code>disabled</code> / <code>required</code> / <code>rules</code></td>
+          <td>
+            <code>disabled</code> / <code>required</code> / <code>rules</code>
+          </td>
           <td>函数</td>
           <td>可选。按行动态禁用、必填、规则。</td>
         </tr>
@@ -174,7 +188,8 @@ async function handleValidate() {
 
     <DemoBlock>
       <template #hint>
-        改「类别」→「明细」选项切换，非法明细会被清空。点「校验」看第 3 行空必填失败。
+        改「类别」→「明细」选项切换，非法明细会被清空。点「校验」看第 3
+        行空必填失败。
       </template>
       <PlusTable
         ref="tableRef"

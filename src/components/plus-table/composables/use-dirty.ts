@@ -1,15 +1,20 @@
-import { reactive } from 'vue';
-import { cloneDeep, isEqual } from 'es-toolkit';
 import type { PlusTableResolvedProps } from '../table';
 import type { RowData } from '../types';
 import type { UseDataReturn } from './use-data';
 
+import { reactive } from 'vue';
+
+import { cloneDeep, isEqual } from 'es-toolkit';
+
 export interface DirtyCell {
-  rowKey: string;
   prop: string;
+  rowKey: string;
 }
 
-type UseDirtyProps<T extends RowData> = Pick<UseDataReturn<T>, 'data' | 'keysMap' | 'getRowKey'>;
+type UseDirtyProps<T extends RowData> = Pick<
+  UseDataReturn<T>,
+  'data' | 'getRowKey' | 'keysMap'
+>;
 
 /**
  * 脏行/脏格追踪。以 rowKey 寻址、以 rowKey 存基线快照（不是数组下标），
@@ -130,4 +135,6 @@ export function useDirty<T extends RowData = RowData>(
   };
 }
 
-export type UseDirtyReturn<T extends RowData = RowData> = ReturnType<typeof useDirty<T>>;
+export type UseDirtyReturn<T extends RowData = RowData> = ReturnType<
+  typeof useDirty<T>
+>;

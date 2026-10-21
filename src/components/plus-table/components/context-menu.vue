@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch, type VNodeChild } from 'vue';
+import type { VNodeChild } from 'vue';
+
+import type { ResolvedMenuItem } from '../context-menu';
+
+import { computed, ref, watch } from 'vue';
+
 import {
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -10,8 +15,8 @@ import {
   DropdownMenuTrigger,
   useForwardExpose,
 } from 'reka-ui';
+
 import { usePlusTable } from '../tokens';
-import type { ResolvedMenuItem } from '../context-menu';
 
 defineOptions({ name: 'PlusTableContextMenu' });
 
@@ -30,12 +35,14 @@ const virtualStyled = computed(() => ({
   pointerEvents: 'none' as const,
 }));
 
-const virtualContentKey = computed(() => `vt-${point.value.x}-${point.value.y}`);
+const virtualContentKey = computed(
+  () => `vt-${point.value.x}-${point.value.y}`,
+);
 
 const { forwardRef } = useForwardExpose();
 
 function openMenu(event: MouseEvent, nextItems: ResolvedMenuItem[]) {
-  if (!nextItems.length) return;
+  if (nextItems.length === 0) return;
   event.preventDefault();
   items.value = nextItems;
   point.value = { x: event.clientX, y: event.clientY };
@@ -93,7 +100,10 @@ defineExpose({ open: openMenu });
         @close-auto-focus.prevent
       >
         <DropdownMenuGroup>
-          <template v-for="(item, index) in items" :key="item.key || `${item.label}-${index}`">
+          <template
+            v-for="(item, index) in items"
+            :key="item.key || `${item.label}-${index}`"
+          >
             <DropdownMenuItem
               class="ptbl-context-menu__item"
               :disabled="item.disabled"
@@ -101,7 +111,10 @@ defineExpose({ open: openMenu });
             >
               <component :is="itemContent(item)" />
             </DropdownMenuItem>
-            <DropdownMenuSeparator v-if="item.separator" class="ptbl-context-menu__separator" />
+            <DropdownMenuSeparator
+              v-if="item.separator"
+              class="ptbl-context-menu__separator"
+            />
           </template>
         </DropdownMenuGroup>
       </DropdownMenuContent>

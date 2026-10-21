@@ -1,17 +1,23 @@
-import { nextTick, reactive, shallowRef } from 'vue';
-import { cloneDeep } from 'es-toolkit';
-import { focusEditorElement, resolveEditable } from '../utils';
-import { useCellRefSlot } from './use-cell-ref';
 import type { PlusTableResolvedProps } from '../table';
 import type { CellLocation, CellRef, ColumnNode, RowData } from '../types';
 import type { UseColumnsReturn } from './use-columns';
 import type { UseCurrentReturn } from './use-current';
 import type { UseDataReturn } from './use-data';
-import type { DependencyState, UseDependenciesReturn } from './use-dependencies';
+import type {
+  DependencyState,
+  UseDependenciesReturn,
+} from './use-dependencies';
 import type { UseDirtyReturn } from './use-dirty';
 import type { UseHistoryReturn } from './use-history';
 import type { UseValidationReturn } from './use-validation';
 import type { WriteRowFieldResult } from './utils';
+
+import { nextTick, reactive, shallowRef } from 'vue';
+
+import { cloneDeep } from 'es-toolkit';
+
+import { focusEditorElement, resolveEditable } from '../utils';
+import { useCellRefSlot } from './use-cell-ref';
 
 export interface EditState {
   depState: DependencyState | undefined;
@@ -20,17 +26,32 @@ export interface EditState {
   editing: boolean;
 }
 
-type UseEditingProps<T extends RowData> = Pick<UseDataReturn<T>, 'data' | 'keysMap' | 'getRowKey'> &
+type UseEditingProps<T extends RowData> = Pick<
+  UseDataReturn<T>,
+  'data' | 'getRowKey' | 'keysMap'
+> &
   Pick<UseColumnsReturn<T>, 'getColumnById' | 'getColumnIndex'> &
   Pick<UseDependenciesReturn<T>, 'getDependencyState'> &
   Pick<UseDirtyReturn<T>, 'markDirty'> &
-  Pick<UseHistoryReturn<T>, 'withHistoryBatch' | 'getPushCount' | 'dropRecentRowChanges'> &
-  Pick<UseValidationReturn<T>, 'validateRow' | 'clearRowValidate'> & {
+  Pick<
+    UseHistoryReturn<T>,
+    'dropRecentRowChanges' | 'getPushCount' | 'withHistoryBatch'
+  > &
+  Pick<UseValidationReturn<T>, 'clearRowValidate' | 'validateRow'> & {
     /** 活动格模块整体传入：既作 CellRef 解析器，也提供定位 / 聚焦能力 */
     current: UseCurrentReturn<T>;
-    setCellValue: (row: T, rowIndex: number, prop: string, value: unknown) => void;
-    writeRowField: (row: T, prop: string, value: unknown) => WriteRowFieldResult;
     deleteRowField: (row: T, prop: string) => WriteRowFieldResult;
+    setCellValue: (
+      row: T,
+      rowIndex: number,
+      prop: string,
+      value: unknown,
+    ) => void;
+    writeRowField: (
+      row: T,
+      prop: string,
+      value: unknown,
+    ) => WriteRowFieldResult;
   };
 
 /**
@@ -61,10 +82,10 @@ export function useEditing<T extends RowData = RowData>(
 ) {
   const slot = useCellRefSlot();
   /** row 模式：当前编辑行 key */
-  const editingRowKey = shallowRef<string | null>(null);
+  const editingRowKey = shallowRef<null | string>(null);
 
   /** row 模式：当前编辑行快照，cancel 时回滚 */
-  let editingRowSnapshot: T | null = null;
+  let editingRowSnapshot: null | T = null;
   /**
    * 行编辑会话纪元：会话开闭与会话内草稿的增删都会推进。
    * commitRowEdit 在 flush 之后记录它，await 校验期间只要发生任何新的编辑，
@@ -93,7 +114,10 @@ export function useEditing<T extends RowData = RowData>(
 
   // ---- 草稿仓 ----
 
-  function getDraft(rowKey: string, prop: string): { has: boolean; value: unknown } {
+  function getDraft(
+    rowKey: string,
+    prop: string,
+  ): { has: boolean; value: unknown } {
     const rowDrafts = drafts.get(rowKey);
     return { has: rowDrafts?.has(prop) ?? false, value: rowDrafts?.get(prop) };
   }
@@ -139,7 +163,12 @@ export function useEditing<T extends RowData = RowData>(
   }
 
   /** 失焦提交：把缓冲的草稿经 setCellValue 流水线写回，随后清掉草稿位（row/table 模式文本类编辑器用） */
-  function flushDraft(row: T, rowIndex: number, rowKey: string, prop: string): void {
+  function flushDraft(
+    row: T,
+    rowIndex: number,
+    rowKey: string,
+    prop: string,
+  ): void {
     const draft = getDraft(rowKey, prop);
     if (!draft.has) return;
     discardDraft(rowKey, prop);
@@ -157,7 +186,8 @@ export function useEditing<T extends RowData = RowData>(
     const props = [...(drafts.get(rowKey)?.keys() ?? [])];
     if (props.length === 0) return;
     withHistoryBatch(() => {
-      for (const prop of props) flushDraft(found.row, found.rowIndex, rowKey, prop);
+      for (const prop of props)
+        flushDraft(found.row, found.rowIndex, rowKey, prop);
     });
   }
 
@@ -168,21 +198,27 @@ export function useEditing<T extends RowData = RowData>(
    * 在两处各写一份。
    */
   function resolveEditState(input: {
+    node: ColumnNode<T>;
     row: T;
     rowIndex: number;
     rowKey: string;
-    node: ColumnNode<T>;
   }): EditState {
     const { row, rowIndex, rowKey, node } = input;
     const column = node.column;
     const mode = props.mode;
-    const depState = column.dependencies ? getDependencyState(row, rowIndex, node) : undefined;
-    const rawEditable = mode !== 'none' && !!column.prop && resolveEditable(row, rowIndex, column);
+    const depState = column.dependencies
+      ? getDependencyState(row, rowIndex, node)
+      : undefined;
+    const rawEditable =
+      mode !== 'none' &&
+      !!column.prop &&
+      resolveEditable(row, rowIndex, column);
     const disabled = rawEditable && !!depState?.disabled;
     const editable = rawEditable && !disabled;
     let editing = false;
     if (mode === 'table') editing = editable;
-    else if (mode === 'row') editing = editingRowKey.value === rowKey && editable;
+    else if (mode === 'row')
+      editing = editingRowKey.value === rowKey && editable;
     else if (mode === 'cell') editing = slot.has(rowKey, node.id);
     return { depState, disabled, editable, editing };
   }
@@ -206,7 +242,10 @@ export function useEditing<T extends RowData = RowData>(
     return slot.has(rowKey, colId);
   }
 
-  async function focusEditor(ref: CellRef, hasInitialValue: boolean): Promise<void> {
+  async function focusEditor(
+    ref: CellRef,
+    hasInitialValue: boolean,
+  ): Promise<void> {
     await nextTick();
     focusEditorElement(current.getCellElRef(ref), {
       select: hasInitialValue ? 'end' : 'all',
@@ -255,7 +294,11 @@ export function useEditing<T extends RowData = RowData>(
     }
     if (slot.get()) commitEdit();
     const hasInitial = 'defaultValue' in opts;
-    setDraft(cell.rowKey, cell.prop, hasInitial ? opts.defaultValue : cell.row[cell.prop]);
+    setDraft(
+      cell.rowKey,
+      cell.prop,
+      hasInitial ? opts.defaultValue : cell.row[cell.prop],
+    );
     slot.set(ref);
     current.setCurrentCell(rowIndex, colIndex);
     void focusEditor(ref, hasInitial);
@@ -308,7 +351,8 @@ export function useEditing<T extends RowData = RowData>(
     const ref = slot.get();
     if (!ref || props.mode !== 'row') return;
     const cell = current.locateCellRef(ref);
-    if (flush && cell) flushDraft(cell.row, cell.rowIndex, cell.rowKey, cell.prop);
+    if (flush && cell)
+      flushDraft(cell.row, cell.rowIndex, cell.rowKey, cell.prop);
     slot.set(null);
     discardRefDraft(ref);
   }
@@ -363,7 +407,7 @@ export function useEditing<T extends RowData = RowData>(
     // 本次提交自身的写入已全部落地，此后纪元再变说明校验期间又发生了编辑
     const epoch = editingSessionEpoch;
     const errors = await validateRow(rowIndex);
-    if (errors.length) return false;
+    if (errors.length > 0) return false;
     if (
       editingSessionEpoch !== epoch ||
       editingRowKey.value !== key ||
@@ -428,4 +472,6 @@ export function useEditing<T extends RowData = RowData>(
   };
 }
 
-export type UseEditingReturn<T extends RowData = RowData> = ReturnType<typeof useEditing<T>>;
+export type UseEditingReturn<T extends RowData = RowData> = ReturnType<
+  typeof useEditing<T>
+>;

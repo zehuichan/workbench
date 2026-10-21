@@ -1,11 +1,15 @@
+import type { Component } from 'vue';
+
+import type { RowContext, RowData } from './types';
+
+import type { ComponentType } from '@/adapter';
+
 /**
  * PlusTable 编辑器解析：从全局组件表取组件，叠本地 trigger / modelProp / componentProps。
  */
 import { isFunction, isPlainObject, isString } from 'es-toolkit';
-import type { Component } from 'vue';
 
-import { useGlobalShareState, type ComponentType } from '@/adapter';
-import type { RowContext, RowData } from './types';
+import { useGlobalShareState } from '@/adapter';
 
 /** 提交时机：blur=失焦提交（文本类）；change=变更即提交（选择类） */
 export type EditorTrigger = 'blur' | 'change';
@@ -23,7 +27,7 @@ const EDITOR_TRIGGER = {
 } as const satisfies Record<ComponentType, EditorTrigger>;
 
 /** 编辑控件：内置标识或自定义 Vue 组件 */
-export type ColumnComponent = ComponentType | Component;
+export type ColumnComponent = Component | ComponentType;
 
 export interface EditorColumnFields<T extends RowData = RowData> {
   /**
@@ -32,7 +36,9 @@ export interface EditorColumnFields<T extends RowData = RowData> {
    */
   component?: ColumnComponent;
   /** 透传给编辑控件的 props；dependencies.componentProps 覆盖同名项 */
-  componentProps?: Record<string, unknown> | ((ctx: RowContext<T>) => Record<string, unknown>);
+  componentProps?:
+    | ((ctx: RowContext<T>) => Record<string, unknown>)
+    | Record<string, unknown>;
   /** 自定义组件的 v-model prop 名，默认 modelValue */
   modelProp?: string;
 }
@@ -42,8 +48,8 @@ export interface ResolvedEditor {
   /** 列 componentProps（包装层默认 props 已在 adapter/component 内）；
    * dependencies.componentProps 覆盖同名项由渲染层负责，不在此处合并 */
   componentProps: Record<string, unknown>;
-  trigger: EditorTrigger;
   modelProp: string;
+  trigger: EditorTrigger;
 }
 
 function isComponentType(name: string): name is ComponentType {
@@ -57,7 +63,9 @@ function resolveBuiltin(name: string): Component {
   }
   const registered = useGlobalShareState().getComponents()[name];
   if (!registered) {
-    throw new TypeError(`[adapter] 组件 "${name}" 尚未注册，请先调用 initComponentAdapter()。`);
+    throw new TypeError(
+      `[adapter] 组件 "${name}" 尚未注册，请先调用 initComponentAdapter()。`,
+    );
   }
   return registered;
 }
@@ -69,7 +77,9 @@ export function resolveEditor<T extends RowData = RowData>(
 ): ResolvedEditor {
   const component = fields?.component ?? 'input';
   const configProps = fields?.componentProps;
-  const resolvedProps = isFunction(configProps) ? configProps(ctx) : configProps;
+  const resolvedProps = isFunction(configProps)
+    ? configProps(ctx)
+    : configProps;
   if (resolvedProps !== undefined && !isPlainObject(resolvedProps)) {
     throw new TypeError(
       '[adapter] componentProps 必须是普通对象，函数式 componentProps 也必须返回普通对象。',
@@ -79,7 +89,12 @@ export function resolveEditor<T extends RowData = RowData>(
   const componentProps = { ...resolvedProps };
   if (isString(component)) {
     const builtin = resolveBuiltin(component);
-    return { component: builtin, componentProps, trigger: EDITOR_TRIGGER[component], modelProp };
+    return {
+      component: builtin,
+      componentProps,
+      trigger: EDITOR_TRIGGER[component],
+      modelProp,
+    };
   }
   return { component, componentProps, trigger: 'blur', modelProp };
 }
@@ -94,6 +109,7 @@ export function typedCharToDraft<T extends RowData = RowData>(
 ): unknown {
   const component = fields?.component ?? 'input';
   if (component === 'input') return char;
-  if (component === 'input-number') return /^[0-9]$/.test(char) ? Number(char) : undefined;
+  if (component === 'input-number')
+    return /^[0-9]$/.test(char) ? Number(char) : undefined;
   return undefined;
 }

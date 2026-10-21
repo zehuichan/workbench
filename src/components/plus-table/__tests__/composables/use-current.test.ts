@@ -1,12 +1,15 @@
+import type { TestTable } from '../helpers/create-test-table';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { cellPosition } from '../helpers/cell-position';
-import { createTestTable, type TestTable } from '../helpers/create-test-table';
+import { createTestTable } from '../helpers/create-test-table';
 
 interface Row {
-  id: number;
   a: string;
   b: string;
   c: string;
+  id: number;
 }
 
 const data: Row[] = [

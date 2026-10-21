@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import { defineColumns, PlusTable, useSummaries } from '@/components/plus-table';
+import {
+  defineColumns,
+  PlusTable,
+  useSummaries,
+} from '@/components/plus-table';
 
 defineOptions({ name: 'SummaryDemo' });
 
@@ -81,20 +86,22 @@ const { summaryMethod: feeSummary } = useSummaries(
 <template>
   <DemoPage width="wide">
     <template #description>
-      <code>useSummaries</code> 返回可直接绑到 <code>summary-method</code> 的函数（经
-      <code>$attrs</code> 透传给 <code>el-table</code>），同时需传 <code>show-summary</code>。数组 /
+      <code>useSummaries</code> 返回可直接绑到
+      <code>summary-method</code> 的函数（经 <code>$attrs</code> 透传给
+      <code>el-table</code>），同时需传 <code>show-summary</code>。数组 /
       对象配置做按列求和；<code>groupBy</code> 做分组合计。
     </template>
 
     <template #api>
-      <DemoApiTable title="useSummaries(columns, options?)" :headers="['参数', '类型', '说明']">
+      <DemoApiTable
+        title="useSummaries(columns, options?)"
+        :headers="['参数', '类型', '说明']"
+      >
         <tr>
           <td><code>columns</code></td>
           <td>
-            <code
-              >MaybeRefOrGetter&lt;string[] | Record&lt;prop, number |
-              SummaryColumnOptions&gt;&gt;</code
-            >
+            <code>MaybeRefOrGetter&lt;string[] | Record&lt;prop, number |
+              SummaryColumnOptions&gt;&gt;</code>
           </td>
           <td>
             必填。数组：参与求和的列；对象：每列精度数字或
@@ -132,7 +139,10 @@ const { summaryMethod: feeSummary } = useSummaries(
         <tr>
           <td><code>summaryMethod</code></td>
           <td><code>SummaryMethod&lt;T&gt;</code></td>
-          <td>绑到 <code>:summary-method</code>；需同时传 <code>show-summary</code>。</td>
+          <td>
+            绑到 <code>:summary-method</code>；需同时传
+            <code>show-summary</code>。
+          </td>
         </tr>
       </DemoApiTable>
     </template>

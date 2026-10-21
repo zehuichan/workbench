@@ -206,7 +206,8 @@
   }
 
   &--editing {
-    padding: var(--ptbl-cell-editing-padding-y, 2px) var(--ptbl-cell-editing-padding-x, 4px);
+    padding: var(--ptbl-cell-editing-padding-y, 2px)
+      var(--ptbl-cell-editing-padding-x, 4px);
     cursor: default;
   }
 

@@ -1,5 +1,6 @@
-import { beforeAll, describe, expect, it } from 'vitest';
 import { defineComponent } from 'vue';
+
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { initComponentAdapter, useGlobalShareState } from '@/adapter';
 
@@ -14,7 +15,9 @@ beforeAll(() => {
 describe('resolveEditor', () => {
   it('defaults to input when component is omitted', () => {
     const resolved = resolveEditor({}, ctx);
-    expect(resolved.component).toBe(useGlobalShareState().getComponents().input);
+    expect(resolved.component).toBe(
+      useGlobalShareState().getComponents().input,
+    );
     expect(resolved.trigger).toBe('blur');
     expect(resolved.modelProp).toBe('modelValue');
   });
@@ -27,14 +30,18 @@ describe('resolveEditor', () => {
       },
       ctx,
     );
-    expect(resolved.component).toBe(useGlobalShareState().getComponents().textarea);
+    expect(resolved.component).toBe(
+      useGlobalShareState().getComponents().textarea,
+    );
     expect(resolved.componentProps).toEqual({ placeholder: '备注' });
     expect(resolved.trigger).toBe('blur');
   });
 
   it('resolves input-number with blur trigger (defaults live in wrapper)', () => {
     const resolved = resolveEditor({ component: 'input-number' }, ctx);
-    expect(resolved.component).toBe(useGlobalShareState().getComponents()['input-number']);
+    expect(resolved.component).toBe(
+      useGlobalShareState().getComponents()['input-number'],
+    );
     expect(resolved.componentProps).toEqual({});
     expect(resolved.trigger).toBe('blur');
   });
@@ -47,15 +54,26 @@ describe('resolveEditor', () => {
       },
       ctx,
     );
-    expect(resolved.component).toBe(useGlobalShareState().getComponents().select);
+    expect(resolved.component).toBe(
+      useGlobalShareState().getComponents().select,
+    );
     expect(resolved.trigger).toBe('change');
-    expect(resolved.componentProps.options).toEqual([{ label: 'A', value: 'a' }]);
+    expect(resolved.componentProps.options).toEqual([
+      { label: 'A', value: 'a' },
+    ]);
   });
 
   it('accepts a Vue component and custom modelProp', () => {
-    const Comp = defineComponent({ name: 'CustomEditor', setup: () => () => null });
+    const Comp = defineComponent({
+      name: 'CustomEditor',
+      setup: () => () => null,
+    });
     const resolved = resolveEditor(
-      { component: Comp, modelProp: 'value', componentProps: { size: 'small' } },
+      {
+        component: Comp,
+        modelProp: 'value',
+        componentProps: { size: 'small' },
+      },
       ctx,
     );
     expect(resolved.component).toBe(Comp);
@@ -76,9 +94,9 @@ describe('resolveEditor', () => {
   });
 
   it('rejects unknown builtin component name', () => {
-    expect(() => resolveEditor({ component: 'not-a-editor' as 'input' }, ctx)).toThrow(
-      /未知的 component/,
-    );
+    expect(() =>
+      resolveEditor({ component: 'not-a-editor' as 'input' }, ctx),
+    ).toThrow(/未知的 component/);
   });
 });
 
@@ -89,7 +107,9 @@ describe('typedCharToDraft', () => {
 
   it('seeds input-number only for digits', () => {
     expect(typedCharToDraft({ component: 'input-number' }, '3')).toBe(3);
-    expect(typedCharToDraft({ component: 'input-number' }, 'x')).toBeUndefined();
+    expect(
+      typedCharToDraft({ component: 'input-number' }, 'x'),
+    ).toBeUndefined();
   });
 
   it('does not seed select', () => {

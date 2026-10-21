@@ -1,15 +1,20 @@
-import { isVNode, type VNode } from 'vue';
-import { describe, expect, it } from 'vitest';
-import { useSummaries } from '../../composables/use-summaries';
 import type { TableColumnCtx } from 'element-plus';
 
+import type { VNode } from 'vue';
+
+import { isVNode } from 'vue';
+
+import { describe, expect, it } from 'vitest';
+
+import { useSummaries } from '../../composables/use-summaries';
+
 interface Row {
+  amount: null | number;
+  currency: string;
   id: number;
   name: string;
-  piece: number | null;
-  weight: number | string | null;
-  amount: number | null;
-  currency: string;
+  piece: null | number;
+  weight: null | number | string;
 }
 
 function col(property?: string): TableColumnCtx<Row> {
@@ -24,7 +29,7 @@ function call(
   return summaryMethod({ columns, data });
 }
 
-function groupTexts(cell: string | VNode | undefined): string[] {
+function groupTexts(cell: string | undefined | VNode): string[] {
   if (!isVNode(cell)) return [];
   const children = cell.children;
   if (!Array.isArray(children)) return [];
@@ -38,7 +43,14 @@ function groupTexts(cell: string | VNode | undefined): string[] {
 const sampleRows: Row[] = [
   { id: 1, name: 'A', piece: 2, weight: 1.25, amount: 10.5, currency: 'CNY' },
   { id: 2, name: 'B', piece: 3, weight: 2.5, amount: 20, currency: 'USD' },
-  { id: 3, name: 'C', piece: null, weight: 'x', amount: 5.555, currency: 'CNY' },
+  {
+    id: 3,
+    name: 'C',
+    piece: null,
+    weight: 'x',
+    amount: 5.555,
+    currency: 'CNY',
+  },
 ];
 
 describe('useSummaries', () => {
@@ -85,8 +97,22 @@ describe('useSummaries', () => {
       summaryMethod,
       [col('#'), col('piece'), col('weight')],
       [
-        { id: 1, name: 'a', piece: null, weight: 'bad', amount: null, currency: 'CNY' },
-        { id: 2, name: 'b', piece: 4, weight: 1.5, amount: null, currency: 'CNY' },
+        {
+          id: 1,
+          name: 'a',
+          piece: null,
+          weight: 'bad',
+          amount: null,
+          currency: 'CNY',
+        },
+        {
+          id: 2,
+          name: 'b',
+          piece: 4,
+          weight: 1.5,
+          amount: null,
+          currency: 'CNY',
+        },
       ],
     );
 
@@ -97,7 +123,11 @@ describe('useSummaries', () => {
   it('only fills columns present in the table column list', () => {
     const { summaryMethod } = useSummaries<Row>(['piece', 'weight', 'amount']);
     // Simulate hidden weight column + reordered amount before piece
-    const result = call(summaryMethod, [col('#'), col('amount'), col('piece')], sampleRows);
+    const result = call(
+      summaryMethod,
+      [col('#'), col('amount'), col('piece')],
+      sampleRows,
+    );
 
     expect(result).toHaveLength(3);
     expect(result[1]).toBe('36.06');
@@ -112,7 +142,11 @@ describe('useSummaries', () => {
         groupLabel: (key) => (key === 'CNY' ? '人民币' : key),
       },
     );
-    const result = call(summaryMethod, [col('#'), col('currency'), col('amount')], sampleRows);
+    const result = call(
+      summaryMethod,
+      [col('#'), col('currency'), col('amount')],
+      sampleRows,
+    );
 
     expect(result[0]).toBe('合计');
     expect(groupTexts(result[1] as VNode)).toEqual(['人民币', 'USD']);
@@ -150,7 +184,11 @@ describe('useSummaries', () => {
         groupLabelProp: 'name',
       },
     );
-    const result = call(summaryMethod, [col('#'), col('name'), col('amount')], sampleRows);
+    const result = call(
+      summaryMethod,
+      [col('#'), col('name'), col('amount')],
+      sampleRows,
+    );
 
     expect(groupTexts(result[1] as VNode)).toEqual(['CNY', 'USD']);
     expect(groupTexts(result[2] as VNode)).toEqual(['16', '20']);

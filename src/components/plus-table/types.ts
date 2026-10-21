@@ -1,26 +1,28 @@
-import type { VNodeChild } from 'vue';
 import type { RuleItem } from 'async-validator';
 import type { TableColumnCtx } from 'element-plus';
+
+import type { VNodeChild } from 'vue';
+
 import type { EditorColumnFields } from './adapter';
 
 /** 行对象字段名与值类型由业务决定；表格热路径按字符串键读写，无法在库内收窄为具体形状。 */
 export type RowData = Record<string, any>;
 
 export type RowKey<T extends RowData = RowData> =
-  | (keyof T & string)
+  | ((row: T) => number | string)
   /** 函数必须是纯函数，并仅从行字段派生稳定身份；不可依赖对象引用。 */
-  | ((row: T) => string | number);
+  | (keyof T & string);
 
 /** 编辑模式：不可编辑 / 单元格 / 整行 / 全表常驻 */
-export type EditMode = 'none' | 'cell' | 'row' | 'table';
+export type EditMode = 'cell' | 'none' | 'row' | 'table';
 
 export type CellRule = RuleItem;
 
 export interface CellError {
-  rowKey: string;
-  rowIndex: number;
-  prop: string;
   message: string;
+  prop: string;
+  rowIndex: number;
+  rowKey: string;
 }
 
 /** 行级上下文：editable / dependencies.componentProps 等回调的最小参数集 */
@@ -30,7 +32,9 @@ export interface RowContext<T extends RowData = RowData> {
 }
 
 /** 单元格级上下文：render 回调参数，在行上下文基础上附带列与当前值 */
-export interface CellContext<T extends RowData = RowData> extends RowContext<T> {
+export interface CellContext<
+  T extends RowData = RowData,
+> extends RowContext<T> {
   column: PlusTableColumn<T>;
   value: unknown;
 }
@@ -40,50 +44,54 @@ export interface CellContext<T extends RowData = RowData> extends RowContext<T> 
  */
 
 export interface DependencyApi<T extends RowData = RowData> {
-  row: T;
-  rowIndex: number;
   /** 声明该 dependencies 的列字段 */
   prop: string;
+  row: T;
+  rowIndex: number;
   /** 写本行其他字段（会继续触发联动与校验流水线） */
   setValue: (prop: string, value: unknown) => void;
 }
 
 /** vben form 风格的字段联动配置（values 换成当前行数据） */
 export interface ColumnDependencies<T extends RowData = RowData> {
-  /** 仅这些字段变动时触发 trigger 副作用 */
-  triggerFields: string[];
+  /** 动态编辑器参数（如下拉选项）；覆盖列静态 componentProps 同名项 */
+  componentProps?: (row: T, api: DependencyApi<T>) => Record<string, unknown>;
   /** 动态禁用本格编辑 */
   disabled?: (row: T, api: DependencyApi<T>) => boolean;
   /** 动态必填 */
   required?: (row: T, api: DependencyApi<T>) => boolean;
   /** 动态校验规则（与列静态 rules 合并） */
   rules?: (row: T, api: DependencyApi<T>) => CellRule[] | null | undefined;
-  /** 动态编辑器参数（如下拉选项）；覆盖列静态 componentProps 同名项 */
-  componentProps?: (row: T, api: DependencyApi<T>) => Record<string, unknown>;
   /** 依赖字段变更时的副作用，经 api.setValue 改本行其他字段 */
   trigger?: (row: T, api: DependencyApi<T>) => void;
+  /** 仅这些字段变动时触发 trigger 副作用 */
+  triggerFields: string[];
 }
 
-export type SpecialColumnType = 'index' | 'selection' | 'expand' | 'operation';
+export type SpecialColumnType = 'expand' | 'index' | 'operation' | 'selection';
 
 /** 数据列与特殊列共有的字段，不单独对外使用 */
 interface PlusTableColumnBase<T extends RowData = RowData>
-  extends Partial<Omit<TableColumnCtx<T>, 'children' | 'prop' | 'type'>>, EditorColumnFields<T> {
+  extends
+    EditorColumnFields<T>,
+    Partial<Omit<TableColumnCtx<T>, 'children' | 'prop' | 'type'>> {
   /** 多级表头，组节点只需 label */
   children?: PlusTableColumn<T>[];
-  /** 单元格是否可编辑 */
-  editable?: boolean | ((ctx: RowContext<T>) => boolean);
-  required?: boolean;
-  rules?: CellRule[];
   dependencies?: ColumnDependencies<T>;
+  /** 单元格是否可编辑 */
+  editable?: ((ctx: RowContext<T>) => boolean) | boolean;
   /** 展示态自定义渲染，优先级高于 formatter */
   render?: (ctx: CellContext<T>) => VNodeChild;
+  required?: boolean;
+  rules?: CellRule[];
   /** 初始是否可见（列设置） */
   visible?: boolean;
 }
 
 /** 数据列 / 分组表头：prop 取自行字段名 */
-export interface PlusTableDataColumn<T extends RowData = RowData> extends PlusTableColumnBase<T> {
+export interface PlusTableDataColumn<
+  T extends RowData = RowData,
+> extends PlusTableColumnBase<T> {
   prop?: keyof T & string;
   type?: undefined;
 }
@@ -105,7 +113,8 @@ export interface PlusTableSpecialColumn<
  * 编辑控件字段（component / componentProps / modelProp）对齐 vben FormSchema。
  */
 export type PlusTableColumn<T extends RowData = RowData> =
-  PlusTableDataColumn<T> | PlusTableSpecialColumn<T>;
+  | PlusTableDataColumn<T>
+  | PlusTableSpecialColumn<T>;
 
 /**
  * 默认列配置路径：允许直接传普通对象数组，不要求业务侧声明行类型或调用辅助函数。
@@ -113,15 +122,18 @@ export type PlusTableColumn<T extends RowData = RowData> =
  *
  * 需要 prop / 回调参数的严格类型检查时，可选用 PlusTableColumn<T> 或 defineColumns<T>()。
  */
-export type PlusTableColumnDef<_T extends RowData = RowData> = Record<string, any> & {
+export type PlusTableColumnDef<_T extends RowData = RowData> = Record<
+  string,
+  any
+> & {
   children?: PlusTableColumnDef<_T>[];
 };
 
 /** 归一化后的列节点（列设置 / 渲染共用） */
 export interface ColumnNode<T extends RowData = RowData> {
-  id: string;
-  column: PlusTableColumn<T>;
   children?: ColumnNode<T>[];
+  column: PlusTableColumn<T>;
+  id: string;
   /**
    * 分组节点在列视图构建期算好的子树可见叶子 id 指纹，供渲染层做重挂载 key。
    * 归一化树上的节点没有这个字段，只有 buildColumnView 产出的分组节点带。
@@ -138,20 +150,22 @@ export interface RowLocation<T extends RowData = RowData> {
   rowIndex: number;
 }
 
-export interface CellLocation<T extends RowData = RowData> extends RowLocation<T> {
-  node: ColumnNode<T>;
+export interface CellLocation<
+  T extends RowData = RowData,
+> extends RowLocation<T> {
   colIndex: number;
+  node: ColumnNode<T>;
   prop: string;
   rowKey: string;
 }
 
 export interface CellPosition {
-  rowIndex: number;
   colIndex: number;
+  rowIndex: number;
 }
 
 /** 表格内部的稳定单元格身份；公开 API 仍只使用 CellPosition。 */
 export interface CellRef {
-  rowKey: string;
   colId: string;
+  rowKey: string;
 }

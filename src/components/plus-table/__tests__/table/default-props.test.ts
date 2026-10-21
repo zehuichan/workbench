@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import PlusTable from '../../table.vue';
-import { DEFAULT_PROPS } from '../../table';
 
-type RuntimeProps = Record<string, { default?: unknown } | undefined>;
+import { DEFAULT_PROPS } from '../../table';
+import PlusTable from '../../table.vue';
+
+type RuntimeProps = Record<string, undefined | { default?: unknown }>;
 
 /**
  * withDefaults 现在接的是共享常量而不是字面量，编译产物走 mergeDefaults；

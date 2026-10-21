@@ -1,20 +1,24 @@
-import { computed, ref } from 'vue';
-import { HISTORY_STACK_LIMIT } from '../constants';
-import { devWarn } from '../utils';
 import type { PlusTableResolvedProps } from '../table';
 import type { RowData } from '../types';
 import type { UseDataReturn } from './use-data';
 import type { WriteRowFieldResult } from './utils';
 
+import { computed, ref } from 'vue';
+
+import { HISTORY_STACK_LIMIT } from '../constants';
+import { devWarn } from '../utils';
+
 export interface HistoryChangeRecord {
-  rowKey: string;
-  prop: string;
-  oldValue: unknown;
   newValue: unknown;
+  oldValue: unknown;
+  prop: string;
+  rowKey: string;
 }
 
 /** undo/redo 后实际生效的变更，带上现场解析出的行引用与下标，供外层 emit cell-change / markDirty */
-export interface AppliedHistoryChange<T extends RowData = RowData> extends HistoryChangeRecord {
+export interface AppliedHistoryChange<
+  T extends RowData = RowData,
+> extends HistoryChangeRecord {
   row: T;
   rowIndex: number;
 }
@@ -63,7 +67,9 @@ export function useHistory<T extends RowData = RowData>(
   }
 
   /** 记一条变更；row 模式一次提交可传多条，作为一个原子撤销单元 */
-  function pushChange(change: HistoryChangeRecord | HistoryChangeRecord[]): void {
+  function pushChange(
+    change: HistoryChangeRecord | HistoryChangeRecord[],
+  ): void {
     if (!enabled()) return;
     const entries = Array.isArray(change) ? change : [change];
     if (entries.length === 0) return;
@@ -117,7 +123,7 @@ export function useHistory<T extends RowData = RowData>(
    */
   function applyEntries(
     entries: HistoryEntry,
-    direction: 'undo' | 'redo',
+    direction: 'redo' | 'undo',
   ): AppliedHistoryChange<T>[] {
     const rows = keysMap.value;
     const applied: AppliedHistoryChange<T>[] = [];
@@ -189,4 +195,6 @@ export function useHistory<T extends RowData = RowData>(
   };
 }
 
-export type UseHistoryReturn<T extends RowData = RowData> = ReturnType<typeof useHistory<T>>;
+export type UseHistoryReturn<T extends RowData = RowData> = ReturnType<
+  typeof useHistory<T>
+>;

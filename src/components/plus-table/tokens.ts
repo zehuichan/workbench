@@ -1,8 +1,10 @@
-import { inject } from 'vue';
 import type { InjectionKey } from 'vue';
+
 import type { PlusTableResolvedProps, TableHost } from './table';
 import type { RowData } from './types';
 import type { UseTableReturn } from './use-table';
+
+import { inject } from 'vue';
 
 /**
  * 注入给子组件（列 / 单元格 / 列设置 / 右键菜单）的表格上下文：
@@ -14,9 +16,12 @@ export type PlusTableContext<T extends RowData = RowData> = TableHost<T> &
   };
 
 /** InjectionKey 在运行期只有一份，不能按行泛型各建一把；消费方经 usePlusTable<T>() 再收窄。 */
-export const PLUS_TABLE_INJECTION_KEY: InjectionKey<PlusTableContext<any>> = Symbol('plus-table');
+export const PLUS_TABLE_INJECTION_KEY: InjectionKey<PlusTableContext<any>> =
+  Symbol('plus-table');
 
-export function usePlusTable<T extends RowData = RowData>(): PlusTableContext<T> {
+export function usePlusTable<
+  T extends RowData = RowData,
+>(): PlusTableContext<T> {
   const table = inject(PLUS_TABLE_INJECTION_KEY);
   if (!table) {
     throw new Error('[PlusTable] 当前组件必须在 PlusTable 内部使用');

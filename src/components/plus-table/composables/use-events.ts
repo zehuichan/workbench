@@ -1,15 +1,19 @@
-import { isFunction } from 'es-toolkit';
-import { isControl } from '../utils';
 import type { ResolvedMenuItem } from '../context-menu';
 import type { ContextMenuContext, ContextMenuItem } from '../table';
 import type { PlusTableContext } from '../tokens';
 import type { RowData } from '../types';
 
+import { isFunction } from 'es-toolkit';
+
+import { isControl } from '../utils';
+
 /**
  * el-table 回传事件 → PlusTable 行为。接收整份上下文而不是拆成 props + deps：
  * 它在根组件完成 provide 之后才接线，消费面几乎覆盖所有模块，逐项列举只会更啰嗦。
  */
-export function useEvents<T extends RowData = RowData>(table: PlusTableContext<T>) {
+export function useEvents<T extends RowData = RowData>(
+  table: PlusTableContext<T>,
+) {
   function handlePageChange(page: number) {
     table.emit('update:page', page);
     table.emit('page-change', { page, pageSize: table.props.pageSize });
@@ -30,10 +34,15 @@ export function useEvents<T extends RowData = RowData>(table: PlusTableContext<T
   }
 
   /** 表头右键：内置「隐藏 / 设置」；columnKey 渲染时已设为 node.id */
-  function handleHeaderContextmenu(column: { columnKey?: string }, event: MouseEvent) {
+  function handleHeaderContextmenu(
+    column: { columnKey?: string },
+    event: MouseEvent,
+  ) {
     if (!table.props.contextMenuEnabled || !column.columnKey) return;
     const columnId = column.columnKey;
-    const setting = table.settingItems.value.find((item) => item.id === columnId);
+    const setting = table.settingItems.value.find(
+      (item) => item.id === columnId,
+    );
     const hideDisabled = !!setting?.disabled;
     const items: ResolvedMenuItem[] = [
       {
@@ -63,11 +72,15 @@ export function useEvents<T extends RowData = RowData>(table: PlusTableContext<T
   function getCellPosition(row: T, column: { columnKey?: string }) {
     const rowKey = table.getRowKey(row);
     const rowIndex = table.keysMap.value.get(rowKey)?.rowIndex ?? -1;
-    const colIndex = column.columnKey ? table.getColumnIndex(column.columnKey) : -1;
+    const colIndex = column.columnKey
+      ? table.getColumnIndex(column.columnKey)
+      : -1;
     return { rowIndex, colIndex };
   }
 
-  function resolveCellMenuItems(ctx: ContextMenuContext<T>): ResolvedMenuItem[] {
+  function resolveCellMenuItems(
+    ctx: ContextMenuContext<T>,
+  ): ResolvedMenuItem[] {
     const source = table.props.contextMenu;
     if (!source) return [];
     const raw = isFunction(source) ? source(ctx) : source;
@@ -75,7 +88,9 @@ export function useEvents<T extends RowData = RowData>(table: PlusTableContext<T
     for (let index = 0; index < raw.length; index++) {
       const item = raw[index] as ContextMenuItem<T>;
       if (item.when && !item.when(ctx)) continue;
-      const disabled = isFunction(item.disabled) ? !!item.disabled(ctx) : !!item.disabled;
+      const disabled = isFunction(item.disabled)
+        ? !!item.disabled(ctx)
+        : !!item.disabled;
       resolved.push({
         key: item.key ?? `${item.label}-${index}`,
         label: item.label,
@@ -130,7 +145,11 @@ export function useEvents<T extends RowData = RowData>(table: PlusTableContext<T
     if (mode === 'row' && table.isRowEditing(row)) {
       if (table.canEditCell(rowIndex, colIndex)) {
         const editing = table.getEditingCellLocation();
-        if (!fromControl || editing?.rowIndex !== rowIndex || editing.colIndex !== colIndex) {
+        if (
+          !fromControl ||
+          editing?.rowIndex !== rowIndex ||
+          editing.colIndex !== colIndex
+        ) {
           table.setRowEditingCell(rowIndex, colIndex);
         }
       } else {
@@ -146,7 +165,11 @@ export function useEvents<T extends RowData = RowData>(table: PlusTableContext<T
     else table.focusGrid();
   }
 
-  function handleCellDblclick(row: T, column: { columnKey?: string }, _cell: HTMLElement) {
+  function handleCellDblclick(
+    row: T,
+    column: { columnKey?: string },
+    _cell: HTMLElement,
+  ) {
     const mode = table.props.mode;
     const { rowIndex, colIndex } = getCellPosition(row, column);
     if (rowIndex < 0) return;
@@ -169,4 +192,6 @@ export function useEvents<T extends RowData = RowData>(table: PlusTableContext<T
   };
 }
 
-export type UseEventsReturn<T extends RowData = RowData> = ReturnType<typeof useEvents<T>>;
+export type UseEventsReturn<T extends RowData = RowData> = ReturnType<
+  typeof useEvents<T>
+>;

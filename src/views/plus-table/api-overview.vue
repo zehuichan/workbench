@@ -9,8 +9,9 @@ defineOptions({ name: 'ApiOverview' });
   <DemoPage width="wide">
     <template #description>
       PlusTable 完整公开 API 参考。交互与场景说明见侧栏其它 demo。未列出的
-      <code>el-table</code> 属性经 <code>$attrs</code> 透传；列上 <code>width</code> /
-      <code>align</code> / <code>fixed</code> / <code>sortable</code> / <code>formatter</code> 等
+      <code>el-table</code> 属性经 <code>$attrs</code> 透传；列上
+      <code>width</code> / <code>align</code> / <code>fixed</code> /
+      <code>sortable</code> / <code>formatter</code> 等
       <code>el-table-column</code> 字段可直通。
     </template>
 
@@ -29,7 +30,8 @@ defineOptions({ name: 'ApiOverview' });
           <td><code>columns</code></td>
           <td><code>PlusTableColumn&lt;T&gt;[]</code></td>
           <td>
-            必填。列配置；字面量数组用 <code>defineColumns&lt;Row&gt;([...])</code>
+            必填。列配置；字面量数组用
+            <code>defineColumns&lt;Row&gt;([...])</code>
             包一层即可获得行类型（prop 收敛到字段名，回调参数带类型）。
           </td>
         </tr>
@@ -46,14 +48,17 @@ defineOptions({ name: 'ApiOverview' });
         <tr>
           <td><code>validate-event</code></td>
           <td><code>boolean</code></td>
-          <td>默认 <code>true</code>。为 false 时仅 <code>ref.validate()</code> 触发校验。</td>
+          <td>
+            默认 <code>true</code>。为 false 时仅
+            <code>ref.validate()</code> 触发校验。
+          </td>
         </tr>
         <tr>
           <td><code>cache</code></td>
           <td><code>boolean</code></td>
           <td>
-            默认 <code>false</code>。缓存列设置（显隐 / 顺序 / 列宽）；为 true 时需同时传
-            <code>id</code>。
+            默认 <code>false</code>。缓存列设置（显隐 / 顺序 / 列宽）；为 true
+            时需同时传 <code>id</code>。
           </td>
         </tr>
         <tr>
@@ -111,7 +116,9 @@ defineOptions({ name: 'ApiOverview' });
         </tr>
         <tr>
           <td><code>context-menu</code></td>
-          <td><code>ContextMenuItem[] | (ctx) =&gt; ContextMenuItem[]</code></td>
+          <td>
+            <code>ContextMenuItem[] | (ctx) =&gt; ContextMenuItem[]</code>
+          </td>
           <td>
             表体自定义右键菜单；不传或解析为空则保留浏览器原生菜单。项内容可用
             <code>#context-menu-item-${'{key}'}</code> 插槽自定义。
@@ -129,7 +136,8 @@ defineOptions({ name: 'ApiOverview' });
           <td><code>update:data</code></td>
           <td><code>T[]</code></td>
           <td>
-            行结构变更回写新数组（配合 <code>v-model:data</code>）。字段编辑不走此事件，见
+            行结构变更回写新数组（配合
+            <code>v-model:data</code>）。字段编辑不走此事件，见
             <code>cell-change</code>。
           </td>
         </tr>
@@ -153,7 +161,10 @@ defineOptions({ name: 'ApiOverview' });
       <DemoApiTable title="Slots" :headers="['名称', '说明']">
         <tr>
           <td><code>#title</code></td>
-          <td>顶栏左侧标题区，与 toolbar 同一行（有 title 或 toolbar 时显示顶栏）。</td>
+          <td>
+            顶栏左侧标题区，与 toolbar 同一行（有 title 或 toolbar
+            时显示顶栏）。
+          </td>
         </tr>
         <tr>
           <td><code>#toolbar</code></td>
@@ -182,15 +193,16 @@ defineOptions({ name: 'ApiOverview' });
           <td><code>#editor-&#123;prop&#125;</code></td>
           <td>
             编辑态插槽；参数含
-            <code>value</code> / <code>setValue</code> / <code>commit</code> / <code>cancel</code>。
+            <code>value</code> / <code>setValue</code> / <code>commit</code> /
+            <code>cancel</code>。
           </td>
         </tr>
         <tr>
           <td><code>#context-menu-item-&#123;key&#125;</code></td>
           <td>
             右键菜单项自定义内容；参数为
-            <code>ContextMenuItemSlotProps</code>（含 <code>close</code>，对齐 editor 的
-            commit/cancel）。
+            <code>ContextMenuItemSlotProps</code>（含 <code>close</code>，对齐
+            editor 的 commit/cancel）。
           </td>
         </tr>
       </DemoApiTable>
@@ -199,8 +211,8 @@ defineOptions({ name: 'ApiOverview' });
         <tr>
           <td><code>useSummaries</code></td>
           <td>
-            返回 <code>summaryMethod</code>，配合 <code>show-summary</code> 做列合计 /
-            分组合计。详见侧栏「合计行」。
+            返回 <code>summaryMethod</code>，配合
+            <code>show-summary</code> 做列合计 / 分组合计。详见侧栏「合计行」。
           </td>
         </tr>
       </DemoApiTable>
@@ -273,13 +285,17 @@ defineOptions({ name: 'ApiOverview' });
           <td><code>setColumnWidth</code></td>
           <td><code>(prop, width: number | null) =&gt; void</code></td>
           <td>
-            设置列宽；传 <code>null</code> 为强制自动宽度，会压过列配置里的 <code>width</code>。
+            设置列宽；传 <code>null</code> 为强制自动宽度，会压过列配置里的
+            <code>width</code>。
           </td>
         </tr>
         <tr>
           <td><code>clearColumnWidth</code></td>
           <td><code>(prop) =&gt; void</code></td>
-          <td>撤掉列宽覆盖，回到列配置的 <code>width</code>；未配置则由 el-table 自动分配。</td>
+          <td>
+            撤掉列宽覆盖，回到列配置的 <code>width</code>；未配置则由 el-table
+            自动分配。
+          </td>
         </tr>
       </DemoApiTable>
 
@@ -354,8 +370,9 @@ defineOptions({ name: 'ApiOverview' });
           <td><code>component</code></td>
           <td><code>ComponentType | Component</code></td>
           <td>
-            编辑控件。内置：<code>input</code> / <code>textarea</code> / <code>input-number</code> /
-            <code>select</code> / <code>date-picker</code> / <code>time-picker</code> /
+            编辑控件。内置：<code>input</code> / <code>textarea</code> /
+            <code>input-number</code> / <code>select</code> /
+            <code>date-picker</code> / <code>time-picker</code> /
             <code>switch</code> / <code>checkbox</code>。
           </td>
         </tr>

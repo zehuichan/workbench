@@ -1,27 +1,41 @@
-import { isFunction, isNumber, isString } from 'es-toolkit';
-import { NATIVE_RENDER_COLUMN_TYPES, SPECIAL_COLUMN_TYPES } from './constants';
 import type { Ref } from 'vue';
+
 import type { PlusTableColumn, RowData, RowKey } from './types';
+
+import { isFunction, isNumber, isString } from 'es-toolkit';
+
+import { NATIVE_RENDER_COLUMN_TYPES, SPECIAL_COLUMN_TYPES } from './constants';
 
 interface ColumnTypeLike {
   type?: string;
 }
 
 export function isSpecialColumn(column: ColumnTypeLike): boolean {
-  return !!column.type && (SPECIAL_COLUMN_TYPES as readonly string[]).includes(column.type);
+  return (
+    !!column.type &&
+    (SPECIAL_COLUMN_TYPES as readonly string[]).includes(column.type)
+  );
 }
 
 export function isNativeRenderColumn(column: ColumnTypeLike): boolean {
-  return !!column.type && (NATIVE_RENDER_COLUMN_TYPES as readonly string[]).includes(column.type);
+  return (
+    !!column.type &&
+    (NATIVE_RENDER_COLUMN_TYPES as readonly string[]).includes(column.type)
+  );
 }
 
 export function assertRowKey(rowKey: unknown): asserts rowKey is RowKey {
   if ((!isString(rowKey) || rowKey.length === 0) && !isFunction(rowKey)) {
-    throw new TypeError('[PlusTable] rowKey 必须是非空字段名或返回 string/number 的函数。');
+    throw new TypeError(
+      '[PlusTable] rowKey 必须是非空字段名或返回 string/number 的函数。',
+    );
   }
 }
 
-export function getRowIdentity<T extends RowData = RowData>(row: T, rowKey: RowKey<T>): string {
+export function getRowIdentity<T extends RowData = RowData>(
+  row: T,
+  rowKey: RowKey<T>,
+): string {
   assertRowKey(rowKey);
   const raw = isFunction(rowKey) ? rowKey(row) : row[rowKey];
   if (raw === undefined || raw === null || raw === '') {
@@ -85,15 +99,24 @@ const FOCUSABLE_EDITOR_SELECTOR =
   ':not(input[type="hidden"])' +
   ':not(label)';
 
-export function isControl(target: EventTarget | null, boundary?: EventTarget | null): boolean {
+export function isControl(
+  target: EventTarget | null,
+  boundary?: EventTarget | null,
+): boolean {
   if (!(target instanceof Element)) return false;
   const control = target.closest(CONTROL_SELECTOR);
   if (!control) return false;
   if (boundary === undefined) return true;
-  return boundary instanceof Element && control !== boundary && boundary.contains(control);
+  return (
+    boundary instanceof Element &&
+    control !== boundary &&
+    boundary.contains(control)
+  );
 }
 
-function isTextInput(el: HTMLElement): el is HTMLInputElement | HTMLTextAreaElement {
+function isTextInput(
+  el: HTMLElement,
+): el is HTMLInputElement | HTMLTextAreaElement {
   return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
 }
 
@@ -154,7 +177,10 @@ export function createTableExpose<Local extends object, Table extends object>(
 ): Local & Partial<Table> {
   type Method = (...args: unknown[]) => unknown;
   let boundTable: Table | undefined;
-  const boundMethods = new Map<PropertyKey, { source: Method; bound: Method }>();
+  const boundMethods = new Map<
+    PropertyKey,
+    { bound: Method; source: Method }
+  >();
 
   return new Proxy(local, {
     get(target, property, receiver) {
@@ -178,7 +204,8 @@ export function createTableExpose<Local extends object, Table extends object>(
     },
     has(target, property) {
       return (
-        Reflect.has(target, property) || (!!tableRef.value && Reflect.has(tableRef.value, property))
+        Reflect.has(target, property) ||
+        (!!tableRef.value && Reflect.has(tableRef.value, property))
       );
     },
   }) as Local & Partial<Table>;

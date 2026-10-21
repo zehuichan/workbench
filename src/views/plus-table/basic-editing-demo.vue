@@ -1,29 +1,27 @@
 <script setup lang="ts">
+import type { EditMode, PlusTableExpose } from '@/components/plus-table';
+
 import { computed, ref, watch } from 'vue';
+
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
-import {
-  defineColumns,
-  PlusTable,
-  type EditMode,
-  type PlusTableExpose,
-} from '@/components/plus-table';
+import { defineColumns, PlusTable } from '@/components/plus-table';
 
 defineOptions({ name: 'BasicEditingDemo' });
 
 interface Row {
-  id: number;
-  name: string;
   amount: number;
-  status: string;
   dueDate: string;
   enabled: boolean;
+  id: number;
+  name: string;
+  status: string;
 }
 
 const mode = ref<EditMode>('cell');
 const tableRef = ref<PlusTableExpose<Row>>();
-const editingRowId = ref<number | null>(null);
+const editingRowId = ref<null | number>(null);
 
 const data = ref<Row[]>([
   {
@@ -85,7 +83,8 @@ const baseColumns = defineColumns<Row>([
     editable: true,
     component: 'select',
     componentProps: { options: statusOptions, clearable: true },
-    formatter: (row) => statusOptions.find((o) => o.value === row.status)?.label ?? row.status,
+    formatter: (row) =>
+      statusOptions.find((o) => o.value === row.status)?.label ?? row.status,
   },
   {
     prop: 'dueDate',
@@ -162,11 +161,11 @@ function handleCellDblclick(row: Row) {
   <DemoPage width="wide">
     <template #description>
       用 toolbar 切换
-      <code>mode</code>： <code>none</code>（只读）/ <code>cell</code>（单元格进编）/
-      <code>row</code>（整行进编，含操作列）/
-      <code>table</code>（全表常驻编辑器）。本页覆盖内置编辑器 <code>input</code> /
-      <code>input-number</code> / <code>select</code> / <code>date-picker</code> /
-      <code>switch</code>。
+      <code>mode</code>： <code>none</code>（只读）/
+      <code>cell</code>（单元格进编）/ <code>row</code>（整行进编，含操作列）/
+      <code>table</code>（全表常驻编辑器）。本页覆盖内置编辑器
+      <code>input</code> / <code>input-number</code> / <code>select</code> /
+      <code>date-picker</code> / <code>switch</code>。
     </template>
 
     <template #api>
@@ -204,7 +203,9 @@ function handleCellDblclick(row: Row) {
         <tr>
           <td><code>prop</code></td>
           <td><code>string</code></td>
-          <td>字段名；特殊列可用 <code>type: 'index' | 'selection' | …</code>。</td>
+          <td>
+            字段名；特殊列可用 <code>type: 'index' | 'selection' | …</code>。
+          </td>
         </tr>
         <tr>
           <td><code>editable</code></td>
@@ -217,9 +218,11 @@ function handleCellDblclick(row: Row) {
             <code>ComponentType | Component</code>
           </td>
           <td>
-            编辑控件。内置：<code>input</code> / <code>textarea</code> / <code>input-number</code> /
-            <code>select</code> / <code>date-picker</code> / <code>time-picker</code> /
-            <code>switch</code> / <code>checkbox</code>；可用 <code>componentProps</code> 透传参数。
+            编辑控件。内置：<code>input</code> / <code>textarea</code> /
+            <code>input-number</code> / <code>select</code> /
+            <code>date-picker</code> / <code>time-picker</code> /
+            <code>switch</code> / <code>checkbox</code>；可用
+            <code>componentProps</code> 透传参数。
           </td>
         </tr>
         <tr>
@@ -253,12 +256,23 @@ function handleCellDblclick(row: Row) {
         </template>
         <template #cell-actions="{ row, rowIndex }">
           <template v-if="isEditingRow(row)">
-            <el-button type="primary" link @click.stop="handleSave(row, rowIndex)">
+            <el-button
+              type="primary"
+              link
+              @click.stop="handleSave(row, rowIndex)"
+            >
               保存
             </el-button>
-            <el-button link @click.stop="handleCancel(row, rowIndex)"> 取消 </el-button>
+            <el-button link @click.stop="handleCancel(row, rowIndex)">
+              取消
+            </el-button>
           </template>
-          <el-button v-else type="primary" link @click.stop="handleEdit(row, rowIndex)">
+          <el-button
+            v-else
+            type="primary"
+            link
+            @click.stop="handleEdit(row, rowIndex)"
+          >
             编辑
           </el-button>
         </template>

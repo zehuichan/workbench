@@ -1,5 +1,6 @@
-import { reactive, shallowRef } from 'vue';
 import type { CellRef } from '../types';
+
+import { reactive, shallowRef } from 'vue';
 
 /**
  * reactive Set 使用的内部 key。rowKey 经 getRowIdentity 归一化、colId 由列归一化生成，

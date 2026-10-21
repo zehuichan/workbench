@@ -1,25 +1,27 @@
-import { nextTick } from 'vue';
-import { resolveEditor } from '../adapter';
 import type { CellView, EditorBinding, EditorSlotProps } from '../cell';
 import type { DependencyState } from '../composables/use-dependencies';
 import type { PlusTableContext } from '../tokens';
 import type { ColumnNode, EditMode, PlusTableColumn, RowData } from '../types';
 
+import { nextTick } from 'vue';
+
+import { resolveEditor } from '../adapter';
+
 /** 编辑器绑定所需的单元格上下文；prop 已由调用方确认非空 */
 interface EditorContext<T extends RowData = RowData> {
-  table: PlusTableContext<T>;
+  column: PlusTableColumn<T>;
+  mode: EditMode;
+  prop: string;
   row: T;
   rowIndex: number;
   rowKey: string;
-  column: PlusTableColumn<T>;
-  prop: string;
-  mode: EditMode;
+  table: PlusTableContext<T>;
 }
 
 interface CellRenderLocation {
-  rowKey: string;
-  rowIndex: number;
   colIndex: number;
+  rowIndex: number;
+  rowKey: string;
 }
 
 /**
@@ -71,11 +73,14 @@ export function getEditorBinding<T extends RowData = RowData>(
   const isCellMode = mode === 'cell';
   const resolved = resolveEditor(column, { row, rowIndex });
   const modelProp = resolved.modelProp;
-  const { value, setValue, flush } = getCellBinding(ctx, resolved.trigger === 'blur');
+  const { value, setValue, flush } = getCellBinding(
+    ctx,
+    resolved.trigger === 'blur',
+  );
 
   const bind: Record<string, unknown> = {
     ...resolved.componentProps,
-    ...(depState?.componentProps ?? {}),
+    ...depState?.componentProps,
     [modelProp]: value,
     [`onUpdate:${modelProp}`]: (next: unknown) => {
       setValue(next);
@@ -136,7 +141,15 @@ export function getCellView<T extends RowData = RowData>(
   let editorBind: EditorBinding | null = null;
   let editorSlotProps: EditorSlotProps<T> | null = null;
   if (editing && prop) {
-    const ctx: EditorContext<T> = { table, row, rowIndex, rowKey, column, prop, mode };
+    const ctx: EditorContext<T> = {
+      table,
+      row,
+      rowIndex,
+      rowKey,
+      column,
+      prop,
+      mode,
+    };
     if (hasEditorSlot) editorSlotProps = getEditorSlotProps(ctx);
     else editorBind = getEditorBinding(ctx, depState);
   }
@@ -166,7 +179,8 @@ export function getCellClasses(view: CellView) {
       'ptbl-cell--editing-focus': view.editing && view.mode === 'cell',
       // row 模式整行进编：编辑器平时无边框，仅聚焦格高亮
       'ptbl-cell--editing-quiet': view.editing && view.mode === 'row',
-      'ptbl-cell--editable': view.editable && !view.editing && view.mode === 'cell',
+      'ptbl-cell--editable':
+        view.editable && !view.editing && view.mode === 'cell',
       'ptbl-cell--disabled': view.disabled,
       'ptbl-cell--error': !!view.error,
       'ptbl-cell--required': view.required,
@@ -177,6 +191,6 @@ export function getCellClasses(view: CellView) {
 
 export function getEditorWrapperClass(
   align: string | undefined,
-): (string | Record<string, boolean>)[] {
+): (Record<string, boolean> | string)[] {
   return ['ptbl-cell__editor', align ? `ptbl-cell__editor--${align}` : ''];
 }

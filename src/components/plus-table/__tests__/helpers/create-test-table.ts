@@ -1,8 +1,5 @@
-import { effectScope, reactive, shallowRef, type EffectScope, type Slots } from 'vue';
-import { vi } from 'vitest';
-import { initComponentAdapter } from '@/adapter';
-import { DEFAULT_PROPS } from '../../table';
-import { useTable } from '../../use-table';
+import type { EffectScope, Slots } from 'vue';
+
 import type {
   PlusTableEmits,
   PlusTableProps,
@@ -11,6 +8,15 @@ import type {
 } from '../../table';
 import type { PlusTableContext } from '../../tokens';
 import type { RowData } from '../../types';
+
+import { effectScope, reactive, shallowRef } from 'vue';
+
+import { vi } from 'vitest';
+
+import { initComponentAdapter } from '@/adapter';
+
+import { DEFAULT_PROPS } from '../../table';
+import { useTable } from '../../use-table';
 
 initComponentAdapter();
 
@@ -21,12 +27,14 @@ initComponentAdapter();
 export type TestColumnDef = Record<string, any>;
 
 export interface TestTable<T extends RowData> {
+  dispose: () => void;
+  emit: ReturnType<typeof vi.fn>;
+  props: Omit<PlusTableResolvedProps<T>, 'columns'> & {
+    columns: TestColumnDef[];
+  };
   scope: EffectScope;
   /** 与根组件 provide 的上下文同构：props + host + useTable 全部返回 */
   table: PlusTableContext<T>;
-  props: Omit<PlusTableResolvedProps<T>, 'columns'> & { columns: TestColumnDef[] };
-  emit: ReturnType<typeof vi.fn>;
-  dispose: () => void;
 }
 
 /** 与 table.vue 的 withDefaults 等价：pageSizes 这类数组默认值在 DEFAULT_PROPS 里是工厂函数 */
@@ -38,10 +46,10 @@ function resolveDefaults() {
 }
 
 export function createTestTable<T extends RowData>(
-  options: {
-    data: T[];
+  options: Partial<Omit<PlusTableProps<T>, 'columns' | 'data'>> & {
     columns: TestColumnDef[];
-  } & Partial<Omit<PlusTableProps<T>, 'data' | 'columns'>>,
+    data: T[];
+  },
 ): TestTable<T> {
   const props = reactive({
     ...resolveDefaults(),

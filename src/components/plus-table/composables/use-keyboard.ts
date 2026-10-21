@@ -1,9 +1,12 @@
-import { computed } from 'vue';
-import { partition } from 'es-toolkit';
-import { typedCharToDraft } from '../adapter';
 import type { HotkeyBinding, HotkeyContext } from '../table';
 import type { PlusTableContext } from '../tokens';
 import type { RowData } from '../types';
+
+import { computed } from 'vue';
+
+import { partition } from 'es-toolkit';
+
+import { typedCharToDraft } from '../adapter';
 
 const ARROW_DELTAS: Record<string, [number, number]> = {
   ArrowUp: [-1, 0],
@@ -42,12 +45,12 @@ const NATIVE_ENTER_SELECTOR = [
 ].join(', ');
 
 /** 焦点在控件内部时这次按键的归属：网格导航（grid）或编辑器本地（editor） */
-type KeyRoute = 'grid' | 'editor';
+type KeyRoute = 'editor' | 'grid';
 
 interface ActiveEditorKeyActions {
+  afterMove: () => void;
   cancel: () => void;
   commit: () => void;
-  afterMove: () => void;
 }
 
 function isIme(event: KeyboardEvent): boolean {
@@ -56,7 +59,8 @@ function isIme(event: KeyboardEvent): boolean {
 
 function isTextEntry(target: EventTarget | null): boolean {
   if (target instanceof HTMLTextAreaElement) return true;
-  if (target instanceof HTMLInputElement) return !NON_TEXT_INPUT_TYPES.has(target.type);
+  if (target instanceof HTMLInputElement)
+    return !NON_TEXT_INPUT_TYPES.has(target.type);
   return target instanceof HTMLElement && target.isContentEditable === true;
 }
 
@@ -66,7 +70,9 @@ function hasNativeEnterAction(target: EventTarget | null): boolean {
 
 function isTextAreaLineBreak(event: KeyboardEvent): boolean {
   const target = event.target as HTMLElement | null;
-  return target instanceof HTMLTextAreaElement && (event.shiftKey || event.altKey);
+  return (
+    target instanceof HTMLTextAreaElement && (event.shiftKey || event.altKey)
+  );
 }
 
 /**
@@ -78,23 +84,29 @@ function routeKey(event: KeyboardEvent): KeyRoute {
   if (isIme(event)) return 'editor';
   const ctrl = event.ctrlKey || event.metaKey;
   switch (event.key) {
-    case 'ArrowUp':
     case 'ArrowDown':
-    case 'Tab':
+    case 'ArrowUp':
     case 'Escape':
     case 'F2':
+    case 'Tab': {
       return 'grid';
+    }
     case 'ArrowLeft':
     case 'ArrowRight':
-    case 'Home':
     case 'End':
+    case 'Home': {
       // 文本控件里不带 Ctrl 的左右 / 行首尾是插入符移动，网格不能抢
       return ctrl || !isTextEntry(event.target) ? 'grid' : 'editor';
-    case 'Delete':
+    }
     case 'Backspace':
+    case 'Delete': {
       return isTextEntry(event.target) ? 'editor' : 'grid';
-    case 'Enter':
-      return isTextAreaLineBreak(event) || hasNativeEnterAction(event.target) ? 'editor' : 'grid';
+    }
+    case 'Enter': {
+      return isTextAreaLineBreak(event) || hasNativeEnterAction(event.target)
+        ? 'editor'
+        : 'grid';
+    }
     default: {
       const key = event.key.toLowerCase();
       return ctrl && (key === 'z' || key === 'y') ? 'grid' : 'editor';
@@ -104,7 +116,11 @@ function routeKey(event: KeyboardEvent): KeyRoute {
 
 function isPrintableKey(event: KeyboardEvent): boolean {
   return (
-    !isIme(event) && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey
+    !isIme(event) &&
+    event.key.length === 1 &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey
   );
 }
 
@@ -114,7 +130,9 @@ function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
     .toLowerCase()
     .split('+')
     .map((s) => s.trim());
-  const mainKey = parts.find((p) => !['ctrl', 'shift', 'alt', 'meta'].includes(p));
+  const mainKey = parts.find(
+    (p) => !['alt', 'ctrl', 'meta', 'shift'].includes(p),
+  );
   if (!mainKey) return false;
   return (
     event.ctrlKey === parts.includes('ctrl') &&
@@ -130,7 +148,9 @@ function matchesHotkey(event: KeyboardEvent, hotkey: string): boolean {
  * 编辑器内的按键经冒泡到达这里，按编辑态分流处理。
  * 与 useEvents 一样接收整份上下文：接线发生在 provide 之后，消费面覆盖大半模块。
  */
-export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext<T>) {
+export function useKeyboard<T extends RowData = RowData>(
+  table: PlusTableContext<T>,
+) {
   function buildContext(event: KeyboardEvent): HotkeyContext<T> {
     const cell = table.getCurrentCellLocation();
     const rowIndex = cell?.rowIndex ?? -1;
@@ -161,13 +181,22 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
 
   const customHotkeyGroups = computed(() => {
     if (!table.props.hotkeyEnabled) {
-      return { overrides: [] as HotkeyBinding<T>[], normals: [] as HotkeyBinding<T>[] };
+      return {
+        overrides: [] as HotkeyBinding<T>[],
+        normals: [] as HotkeyBinding<T>[],
+      };
     }
-    const [overrides, normals] = partition(table.props.hotkeys ?? [], (h) => !!h.override);
+    const [overrides, normals] = partition(
+      table.props.hotkeys ?? [],
+      (h) => !!h.override,
+    );
     return { overrides, normals };
   });
 
-  function runHotkeyBindings(bindings: HotkeyBinding<T>[], event: KeyboardEvent): boolean {
+  function runHotkeyBindings(
+    bindings: HotkeyBinding<T>[],
+    event: KeyboardEvent,
+  ): boolean {
     for (const binding of bindings) {
       if (!matchesHotkey(event, binding.key)) continue;
       const ctx = buildContext(event);
@@ -181,15 +210,11 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
   }
 
   /** cell / row 模式编辑器打开期间的按键 */
-  function handleActiveEditorKeydown(event: KeyboardEvent, actions: ActiveEditorKeyActions) {
+  function handleActiveEditorKeydown(
+    event: KeyboardEvent,
+    actions: ActiveEditorKeyActions,
+  ) {
     switch (event.key) {
-      case 'Escape': {
-        actions.cancel();
-        table.focusGrid();
-        event.preventDefault();
-        event.stopPropagation();
-        break;
-      }
       case 'Enter': {
         if (isIme(event)) return;
         // 仿 Excel：textarea 中 Alt/Shift+Enter 换行，Enter 提交
@@ -200,6 +225,13 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
         event.preventDefault();
         break;
       }
+      case 'Escape': {
+        actions.cancel();
+        table.focusGrid();
+        event.preventDefault();
+        event.stopPropagation();
+        break;
+      }
       case 'Tab': {
         actions.commit();
         table.moveSequential(event.shiftKey ? -1 : 1);
@@ -207,14 +239,19 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
         event.preventDefault();
         break;
       }
-      default:
+      default: {
         break;
+      }
     }
   }
 
   function openRowEditorAtCurrentOrFocusGrid() {
     const cell = table.getCurrentCellLocation();
-    if (cell && table.isRowEditing(cell.row) && table.canEditCell(cell.rowIndex, cell.colIndex)) {
+    if (
+      cell &&
+      table.isRowEditing(cell.row) &&
+      table.canEditCell(cell.rowIndex, cell.colIndex)
+    ) {
       table.setRowEditingCell(cell.rowIndex, cell.colIndex);
       return;
     }
@@ -271,7 +308,10 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
       table.undo();
       return handled();
     }
-    if (ctrl && ((event.shiftKey && key === 'z') || (!event.shiftKey && key === 'y'))) {
+    if (
+      ctrl &&
+      ((event.shiftKey && key === 'z') || (!event.shiftKey && key === 'y'))
+    ) {
       if (!table.canRedo.value) return false;
       table.redo();
       return handled();
@@ -285,8 +325,16 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
     }
 
     switch (event.key) {
-      case 'Home':
-      case 'End': {
+      case 'Backspace':
+      case 'Delete': {
+        if (mode === 'none' || !cell) return false;
+        if (table.canEditCell(cell.rowIndex, cell.colIndex)) {
+          table.clearCell(cell.rowIndex, cell.colIndex);
+        }
+        return handled();
+      }
+      case 'End':
+      case 'Home': {
         const end = event.key === 'End';
         if (ctrl) table.moveToTableCorner(end);
         else table.moveToRowEdge(end);
@@ -295,7 +343,10 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
       }
       case 'Enter': {
         if (isIme(event) || !cell) return false;
-        if (mode === 'cell' && table.canEditCell(cell.rowIndex, cell.colIndex)) {
+        if (
+          mode === 'cell' &&
+          table.canEditCell(cell.rowIndex, cell.colIndex)
+        ) {
           table.startEdit(cell.rowIndex, cell.colIndex);
         } else {
           table.moveCurrent(1, 0);
@@ -307,14 +358,6 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
         if (mode === 'none' || !cell) return false;
         if (mode === 'cell') {
           table.startEdit(cell.rowIndex, cell.colIndex);
-        }
-        return handled();
-      }
-      case 'Delete':
-      case 'Backspace': {
-        if (mode === 'none' || !cell) return false;
-        if (table.canEditCell(cell.rowIndex, cell.colIndex)) {
-          table.clearCell(cell.rowIndex, cell.colIndex);
         }
         return handled();
       }
@@ -358,7 +401,8 @@ export function useKeyboard<T extends RowData = RowData>(table: PlusTableContext
           colId: editingLocation.node.id,
         })
       : null;
-    const fromActiveEditor = event.target instanceof Node && !!editingCell?.contains(event.target);
+    const fromActiveEditor =
+      event.target instanceof Node && !!editingCell?.contains(event.target);
     if (mode === 'cell' && editingLocation && fromActiveEditor) {
       handleActiveEditorKeydown(event, {
         cancel: table.cancelEdit,
