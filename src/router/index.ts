@@ -21,6 +21,7 @@ import FiltersApiOverview from '@/views/filters/api-overview.vue';
 import FiltersBasicDemo from '@/views/filters/basic-demo.vue';
 import FiltersPresetDemo from '@/views/filters/preset-demo.vue';
 import SiteHome from '@/views/home/site-home.vue';
+import PlusDialogBasicDemo from '@/views/plus-dialog/basic-demo.vue';
 import AdaptiveHeightDemo from '@/views/plus-table/adaptive-height-demo.vue';
 import ApiOverview from '@/views/plus-table/api-overview.vue';
 import BasicEditingDemo from '@/views/plus-table/basic-editing-demo.vue';
@@ -95,6 +96,12 @@ export const router = createRouter({
           name: 'plus-table-summary',
           component: SummaryDemo,
           meta: { title: '合计行', group: 'PlusTable', order: 6 },
+        },
+        {
+          path: 'plus-dialog/basic',
+          name: 'plus-dialog-basic',
+          component: PlusDialogBasicDemo,
+          meta: { title: '基础弹框', group: 'PlusDialog', order: 0 },
         },
         {
           path: 'filters/api-overview',
