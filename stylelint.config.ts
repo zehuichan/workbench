@@ -44,7 +44,28 @@ export default {
   plugins: ['stylelint-order'],
   rules: {
     'at-rule-no-deprecated': null,
-    'at-rule-no-unknown': true,
+    'at-rule-no-unknown': [
+      true,
+      {
+        ignoreAtRules: [
+          'apply',
+          'config',
+          'custom-variant',
+          'plugin',
+          'reference',
+          'source',
+          'theme',
+          'utility',
+          'variant',
+        ],
+      },
+    ],
+    'at-rule-prelude-no-invalid': [
+      true,
+      {
+        ignoreAtRules: ['apply'],
+      },
+    ],
     'font-family-no-missing-generic-family-keyword': null,
     'function-no-unknown': null,
     'import-notation': null,
