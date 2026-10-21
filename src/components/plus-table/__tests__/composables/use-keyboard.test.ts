@@ -1,15 +1,21 @@
-import { nextTick } from 'vue';
-import { afterEach, describe, expect, it } from 'vitest';
-import { useKeyboard } from '../../composables/use-keyboard';
-import { cellPosition } from '../helpers/cell-position';
-import { createTestTable, type TestTable } from '../helpers/create-test-table';
 import type { HotkeyBinding } from '../../table';
 import type { EditMode } from '../../types';
+import type { TestTable } from '../helpers/create-test-table';
+
+import { nextTick } from 'vue';
+
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
+import { useKeyboard } from '../../composables/use-keyboard';
+import { cellPosition } from '../helpers/cell-position';
+import { createTestTable } from '../helpers/create-test-table';
 
 interface Row {
+  amount: null | number;
   id: number;
   name: string;
-  amount: number | null;
 }
 
 const columns = [
@@ -25,7 +31,10 @@ describe('PlusTable keyboard routing', () => {
    * 造一个最小可用的网格 DOM：外层 tabindex 容器 + 每格一个常驻文本编辑器，
    * 再挂一个操作列风格的按钮，用来区分「有文本插入符的控件」与「有原生 Enter 语义的控件」。
    */
-  function setup(mode: EditMode, options: { hotkeys?: HotkeyBinding<Row>[] } = {}) {
+  function setup(
+    mode: EditMode,
+    options: { hotkeys?: HotkeyBinding<Row>[] } = {},
+  ) {
     const data: Row[] = [
       { id: 1, name: 'one', amount: 10 },
       { id: 2, name: 'two', amount: 20 },
@@ -66,12 +75,16 @@ describe('PlusTable keyboard routing', () => {
     grid.addEventListener('keydown', keyboard.handleKeydown);
 
     function editorAt(rowIndex: number, colIndex: number): HTMLInputElement {
-      const rowKey = String(data[rowIndex]!.id);
-      const colId = table.columns.value[colIndex]!.id;
-      return editors.get(`${rowKey}:${colId}`)!;
+      const rowKey = String(defined(data[rowIndex]).id);
+      const colId = defined(table.columns.value[colIndex]).id;
+      return defined(editors.get(`${rowKey}:${colId}`));
     }
 
-    function press(target: HTMLElement, key: string, init: KeyboardEventInit = {}) {
+    function press(
+      target: HTMLElement,
+      key: string,
+      init: KeyboardEventInit = {},
+    ) {
       const event = new KeyboardEvent('keydown', {
         key,
         bubbles: true,
@@ -125,7 +138,7 @@ describe('PlusTable keyboard routing', () => {
       expect(press(grid, 'x').defaultPrevented).toBe(false);
       expect(press(grid, 'Delete').defaultPrevented).toBe(false);
       expect(isEditingAt(2, 0)).toBe(false);
-      expect(rows[2]!.name).toBe('three');
+      expect(defined(rows[2]).name).toBe('three');
     });
   });
 
@@ -148,7 +161,7 @@ describe('PlusTable keyboard routing', () => {
       table.setCurrentCell(0, 1, false);
 
       expect(press(grid, 'Delete').defaultPrevented).toBe(true);
-      expect(rows[0]!.amount).toBeNull();
+      expect(defined(rows[0]).amount).toBeNull();
     });
 
     it('keeps arrow keys local inside the active editor and cancels on Escape', () => {
@@ -171,7 +184,7 @@ describe('PlusTable keyboard routing', () => {
       table.setDraft('1', 'name', 'edited');
 
       expect(press(editorAt(0, 0), 'Enter').defaultPrevented).toBe(true);
-      expect(rows[0]!.name).toBe('edited');
+      expect(defined(rows[0]).name).toBe('edited');
       expect(current()).toEqual({ rowIndex: 1, colIndex: 0 });
     });
   });
@@ -197,7 +210,7 @@ describe('PlusTable keyboard routing', () => {
       expect(table.startRowEdit(0)).toBe(true);
 
       expect(press(editorAt(0, 1), 'Escape').defaultPrevented).toBe(true);
-      expect(table.isRowEditing(rows[0]!)).toBe(false);
+      expect(table.isRowEditing(defined(rows[0]))).toBe(false);
     });
 
     it('cancels the whole row on Escape from the active editor', () => {
@@ -207,7 +220,7 @@ describe('PlusTable keyboard routing', () => {
       expect(table.setRowEditingCell(0, 0)).toBe(true);
 
       expect(press(editorAt(0, 0), 'Escape').defaultPrevented).toBe(true);
-      expect(table.isRowEditing(rows[0]!)).toBe(false);
+      expect(table.isRowEditing(defined(rows[0]))).toBe(false);
     });
   });
 
@@ -235,17 +248,21 @@ describe('PlusTable keyboard routing', () => {
       expect(press(editor, 'a').defaultPrevented).toBe(false);
       expect(current()).toEqual({ rowIndex: 0, colIndex: 1 });
 
-      expect(press(editor, 'ArrowLeft', { ctrlKey: true }).defaultPrevented).toBe(true);
+      expect(
+        press(editor, 'ArrowLeft', { ctrlKey: true }).defaultPrevented,
+      ).toBe(true);
       expect(current()).toEqual({ rowIndex: 0, colIndex: 0 });
     });
 
     it('owns undo from inside an editor', () => {
       const { table, rows, editorAt, press } = setup('table');
       table.setCurrentCell(0, 0, false);
-      table.setCellValue(rows[0]!, 0, 'name', 'changed');
+      table.setCellValue(defined(rows[0]), 0, 'name', 'changed');
 
-      expect(press(editorAt(0, 0), 'z', { ctrlKey: true }).defaultPrevented).toBe(true);
-      expect(rows[0]!.name).toBe('one');
+      expect(
+        press(editorAt(0, 0), 'z', { ctrlKey: true }).defaultPrevented,
+      ).toBe(true);
+      expect(defined(rows[0]).name).toBe('one');
     });
 
     it('moves down on Enter and refocuses the editor of the new cell', async () => {
@@ -266,10 +283,10 @@ describe('PlusTable keyboard routing', () => {
 
       expect(press(editorAt(0, 0), 'Delete').defaultPrevented).toBe(false);
       expect(press(editorAt(0, 0), 'Backspace').defaultPrevented).toBe(false);
-      expect(rows[0]!.name).toBe('one');
+      expect(defined(rows[0]).name).toBe('one');
 
       expect(press(actionButton, 'Delete').defaultPrevented).toBe(true);
-      expect(rows[0]!.name).toBeNull();
+      expect(defined(rows[0]).name).toBeNull();
     });
 
     it('leaves Enter to controls that activate natively', () => {
@@ -286,7 +303,11 @@ describe('PlusTable keyboard routing', () => {
       const calls: string[] = [];
       const { table, editorAt, press, current } = setup('table', {
         hotkeys: [
-          { key: 'ArrowDown', override: true, handler: () => void calls.push('override') },
+          {
+            key: 'ArrowDown',
+            override: true,
+            handler: () => void calls.push('override'),
+          },
           { key: 'Ctrl+S', handler: () => void calls.push('save') },
         ],
       });

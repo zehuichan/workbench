@@ -1,11 +1,18 @@
-import { clamp, cloneDeep } from 'es-toolkit';
-import { devWarn, getRowIdentity } from '../utils';
 import type { PlusTableResolvedProps, TableHost } from '../table';
 import type { RowData } from '../types';
 import type { UseDataReturn } from './use-data';
 
-type UseRowsProps<T extends RowData> = Pick<UseDataReturn<T>, 'data' | 'keysMap'> &
-  Pick<TableHost<T>, 'emit' | 'hasDataListener'>;
+import { clamp, cloneDeep } from 'es-toolkit';
+
+import { defined } from '@/utils/defined';
+
+import { devWarn, getRowIdentity } from '../utils';
+
+type UseRowsProps<T extends RowData> = Pick<
+  TableHost<T>,
+  'emit' | 'hasDataListener'
+> &
+  Pick<UseDataReturn<T>, 'data' | 'keysMap'>;
 
 /** 行结构操作：全部以新数组经 update:data 回传，父级是唯一数据源 */
 export function useRows<T extends RowData = RowData>(
@@ -16,7 +23,9 @@ export function useRows<T extends RowData = RowData>(
   function assertUniqueRowKey(row: T): void {
     const key = getRowIdentity(row, props.rowKey);
     if (keysMap.value.has(key)) {
-      throw new Error(`[PlusTable] insertRow 失败：rowKey="${key}" 已存在，不能插入重复行。`);
+      throw new Error(
+        `[PlusTable] insertRow 失败：rowKey="${key}" 已存在，不能插入重复行。`,
+      );
     }
   }
 
@@ -80,7 +89,7 @@ export function useRows<T extends RowData = RowData>(
       return false;
     }
     const [moved] = list.splice(from, 1);
-    list.splice(to, 0, moved!);
+    list.splice(to, 0, defined(moved));
     emitData(list, 'moveRow');
     return true;
   }
@@ -104,4 +113,6 @@ export function useRows<T extends RowData = RowData>(
   };
 }
 
-export type UseRowsReturn<T extends RowData = RowData> = ReturnType<typeof useRows<T>>;
+export type UseRowsReturn<T extends RowData = RowData> = ReturnType<
+  typeof useRows<T>
+>;

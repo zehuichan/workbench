@@ -1,12 +1,16 @@
-import { isProxy, shallowRef } from 'vue';
-import { assertRowKey, devWarn, getRowIdentity } from '../utils';
 import type { PlusTableResolvedProps } from '../table';
 import type { RowData, RowLocation } from '../types';
 
+import { isProxy, shallowRef } from 'vue';
+
+import { defined } from '@/utils/defined';
+
+import { assertRowKey, devWarn, getRowIdentity } from '../utils';
+
 export interface DataSnapshot<T extends RowData> {
-  rows: T[];
   /** 与 rows 一一对应的稳定身份，由 readDataSnapshot 一次解析出来 */
   keys: string[];
+  rows: T[];
 }
 
 export interface RowRegistry<T extends RowData> {
@@ -21,7 +25,9 @@ export interface RowRegistry<T extends RowData> {
  * 身份只在 readDataSnapshot 解析一次；setData 用同一份 keys 建 registry 并查重，
  * 不再经 computed 重扫。
  */
-export function useData<T extends RowData = RowData>(props: PlusTableResolvedProps<T>) {
+export function useData<T extends RowData = RowData>(
+  props: PlusTableResolvedProps<T>,
+) {
   const data = shallowRef<T[]>([]);
   const keysMap = shallowRef(new Map<string, RowLocation<T>>());
   const rowKeyMap = shallowRef(new WeakMap<T, string>());
@@ -42,8 +48,10 @@ export function useData<T extends RowData = RowData>(props: PlusTableResolvedPro
     assertRowKey(option);
     const rows = [...props.data];
     const keys = rows.map((row) => getRowIdentity(row, option));
-    const plainIndex = rows.findIndex((row) => !isProxy(row) && !Object.isFrozen(row));
-    if (plainIndex >= 0) {
+    const plainIndex = rows.findIndex(
+      (row) => !isProxy(row) && !Object.isFrozen(row),
+    );
+    if (plainIndex !== -1) {
       devWarn(
         `[PlusTable] 第 ${plainIndex} 行（rowKey="${keys[plainIndex]}"）不是响应式对象：` +
           '字段编辑就地修改行对象，非响应式行可能导致单元格不自动重绘。请对 data 使用 reactive / ref。',
@@ -59,7 +67,7 @@ export function useData<T extends RowData = RowData>(props: PlusTableResolvedPro
     const nextKeysMap = new Map<string, RowLocation<T>>();
     const nextRowKeyMap = new WeakMap<T, string>();
     rows.forEach((row, rowIndex) => {
-      const key = keys[rowIndex]!;
+      const key = defined(keys[rowIndex]);
       const existing = nextKeysMap.get(key);
       if (existing) {
         throw new Error(
@@ -95,4 +103,6 @@ export function useData<T extends RowData = RowData>(props: PlusTableResolvedPro
   };
 }
 
-export type UseDataReturn<T extends RowData = RowData> = ReturnType<typeof useData<T>>;
+export type UseDataReturn<T extends RowData = RowData> = ReturnType<
+  typeof useData<T>
+>;

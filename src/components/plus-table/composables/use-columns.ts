@@ -1,21 +1,26 @@
-import { computed, ref, watch } from 'vue';
-import { defaultWindow } from '@vueuse/core';
-import { isNumber, isPlainObject, isString, sortBy } from 'es-toolkit';
-import { ROOT_ID, SETTINGS_STORAGE_PREFIX } from '../constants';
-import { isSpecialColumn } from '../utils';
-import { assertColumnDependencies } from './use-dependencies';
 import type { PlusTableResolvedProps } from '../table';
 import type { ColumnNode, PlusTableColumn, RowData } from '../types';
 
+import { computed, ref, watch } from 'vue';
+
+import { defaultWindow } from '@vueuse/core';
+import { isNumber, isPlainObject, isString, sortBy } from 'es-toolkit';
+
+import { defined } from '@/utils/defined';
+
+import { ROOT_ID, SETTINGS_STORAGE_PREFIX } from '../constants';
+import { isSpecialColumn } from '../utils';
+import { assertColumnDependencies } from './use-dependencies';
+
 export interface SettingItem {
+  checked: boolean;
+  disabled: boolean;
   id: string;
+  indeterminate: boolean;
+  isGroup: boolean;
+  level: number;
   parentId: string;
   title: string;
-  level: number;
-  isGroup: boolean;
-  checked: boolean;
-  indeterminate: boolean;
-  disabled: boolean;
 }
 
 interface PersistedSettings {
@@ -25,21 +30,26 @@ interface PersistedSettings {
   widths: WidthMap;
 }
 
-type WidthMap = Record<string, number | null>;
+type WidthMap = Record<string, null | number>;
 
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every(isString);
+  return Array.isArray(value) && value.every((item) => isString(item));
 }
 
 function isOrderMap(value: unknown): value is Record<string, string[]> {
-  return isPlainObject(value) && Object.values(value).every(isStringArray);
+  return (
+    isPlainObject(value) &&
+    Object.values(value).every((item) => isStringArray(item))
+  );
 }
 
 function isWidthMap(value: unknown): value is WidthMap {
   return (
     isPlainObject(value) &&
     Object.values(value).every(
-      (width) => width === null || (isNumber(width) && Number.isFinite(width) && width > 0),
+      (width) =>
+        width === null ||
+        (isNumber(width) && Number.isFinite(width) && width > 0),
     )
   );
 }
@@ -62,32 +72,34 @@ function parsePersistedSettings(raw: string): PersistedSettings {
 }
 
 interface NormalizedColumns<T extends RowData> {
-  tree: ColumnNode<T>[];
-  byId: Map<string, ColumnNode<T>>;
-  parentById: Map<string, string>;
-  byProp: Map<string, ColumnNode<T>[]>;
-  leafIdsById: Map<string, readonly string[]>;
-  configurableLeafIdsById: Map<string, readonly string[]>;
   allDataColumns: ColumnNode<T>[];
+  byId: Map<string, ColumnNode<T>>;
+  byProp: Map<string, ColumnNode<T>[]>;
+  configurableLeafIdsById: Map<string, readonly string[]>;
+  defaultHiddenIds: Set<string>;
+  leafIdsById: Map<string, readonly string[]>;
+  parentById: Map<string, string>;
+  tree: ColumnNode<T>[];
   /** dependencies.triggerFields 反向索引：字段名 → 声明依赖了该字段的叶子数据列 */
   triggerIndex: Map<string, ColumnNode<T>[]>;
-  defaultHiddenIds: Set<string>;
 }
 
 interface ColumnView<T extends RowData> {
-  originColumns: ColumnNode<T>[];
-  columns: ColumnNode<T>[];
   columnIndexMap: Map<string, number>;
-  visibleById: Map<string, ColumnNode<T>>;
-  settingItems: SettingItem[];
+  columns: ColumnNode<T>[];
+  originColumns: ColumnNode<T>[];
   settingById: Map<string, SettingItem>;
+  settingItems: SettingItem[];
   siblingIdsByParent: Map<string, readonly string[]>;
+  visibleById: Map<string, ColumnNode<T>>;
 }
 
-function normalize<T extends RowData>(columns: PlusTableColumn<T>[]): NormalizedColumns<T> {
+function normalize<T extends RowData>(
+  columns: PlusTableColumn<T>[],
+): NormalizedColumns<T> {
   const nextSuffix = new Map<string, number>();
   const usedIds = new Set([ROOT_ID]);
-  const firstColumnKeyByProp = new Map<string, string | null>();
+  const firstColumnKeyByProp = new Map<string, null | string>();
   const byId = new Map<string, ColumnNode<T>>();
   const parentById = new Map<string, string>();
   const byProp = new Map<string, ColumnNode<T>[]>();
@@ -97,11 +109,17 @@ function normalize<T extends RowData>(columns: PlusTableColumn<T>[]): Normalized
   const triggerIndex = new Map<string, ColumnNode<T>[]>();
   const defaultHiddenIds = new Set<string>();
 
-  const walk = (list: PlusTableColumn<T>[], path: string, parentId: string): ColumnNode<T>[] =>
+  const walk = (
+    list: PlusTableColumn<T>[],
+    path: string,
+    parentId: string,
+  ): ColumnNode<T>[] =>
     list.map((column, index) => {
       assertColumnDependencies(column);
       const explicitId =
-        isString(column.columnKey) && column.columnKey.length > 0 ? column.columnKey : null;
+        isString(column.columnKey) && column.columnKey.length > 0
+          ? column.columnKey
+          : null;
       if (!column.children?.length && !isSpecialColumn(column) && column.prop) {
         if (
           firstColumnKeyByProp.has(column.prop) &&
@@ -116,11 +134,17 @@ function normalize<T extends RowData>(columns: PlusTableColumn<T>[]): Normalized
         }
       }
       const base =
-        explicitId ?? column.prop ?? column.label ?? column.type ?? `col-${path}${index}`;
+        explicitId ??
+        column.prop ??
+        column.label ??
+        column.type ??
+        `col-${path}${index}`;
       let id = explicitId;
       if (id) {
         if (usedIds.has(id)) {
-          throw new Error(`[PlusTable] columnKey="${id}" 重复或与内部保留标识冲突。`);
+          throw new Error(
+            `[PlusTable] columnKey="${id}" 重复或与内部保留标识冲突。`,
+          );
         }
       } else {
         let suffix = nextSuffix.get(base) ?? 0;
@@ -137,7 +161,9 @@ function normalize<T extends RowData>(columns: PlusTableColumn<T>[]): Normalized
         ? children.flatMap((child) => leafIdsById.get(child.id) ?? [])
         : [id];
       const configurableLeafIds = children
-        ? children.flatMap((child) => configurableLeafIdsById.get(child.id) ?? [])
+        ? children.flatMap(
+            (child) => configurableLeafIdsById.get(child.id) ?? [],
+          )
         : isSpecialColumn(column)
           ? []
           : [id];
@@ -154,7 +180,7 @@ function normalize<T extends RowData>(columns: PlusTableColumn<T>[]): Normalized
           else byProp.set(column.prop, [node]);
         }
         // 建反向索引，字段提交时不必再全列扫描找依赖方（triggerFields 已在上面断言过）
-        for (const field of new Set(column.dependencies?.triggerFields ?? [])) {
+        for (const field of new Set(column.dependencies?.triggerFields)) {
           const dependents = triggerIndex.get(field);
           if (dependents) dependents.push(node);
           else triggerIndex.set(field, [node]);
@@ -204,10 +230,12 @@ function orderSiblings<T extends RowData>(
     }
   });
   const position = new Map(order.map((id, index) => [id, index]));
-  const sorted = sortBy(orderable, [(node) => position.get(node.id) ?? order.length]);
+  const sorted = sortBy(orderable, [
+    (node) => position.get(node.id) ?? order.length,
+  ]);
   const result = [...nodes];
   orderableIndexes.forEach((originalIndex, index) => {
-    result[originalIndex] = sorted[index]!;
+    result[originalIndex] = defined(sorted[index]);
   });
   return result;
 }
@@ -221,7 +249,11 @@ function buildColumnView<T extends RowData>(
   const settingById = new Map<string, SettingItem>();
   const siblingIdsByParent = new Map<string, readonly string[]>();
 
-  const visible = (nodes: ColumnNode<T>[], parentId: string, level: number): ColumnNode<T>[] => {
+  const visible = (
+    nodes: ColumnNode<T>[],
+    parentId: string,
+    level: number,
+  ): ColumnNode<T>[] => {
     const ordered = orderSiblings(nodes, parentId, orderMap);
     siblingIdsByParent.set(
       parentId,
@@ -231,8 +263,11 @@ function buildColumnView<T extends RowData>(
 
     for (const node of ordered) {
       if (!isSpecialColumn(node.column)) {
-        const configurableIds = normalized.configurableLeafIdsById.get(node.id) ?? [];
-        const visibleCount = configurableIds.filter((id) => !hiddenIds.has(id)).length;
+        const configurableIds =
+          normalized.configurableLeafIdsById.get(node.id) ?? [];
+        const visibleCount = configurableIds.filter(
+          (id) => !hiddenIds.has(id),
+        ).length;
         const item: SettingItem = {
           id: node.id,
           parentId,
@@ -240,7 +275,8 @@ function buildColumnView<T extends RowData>(
           level,
           isGroup: !!node.children?.length,
           checked: visibleCount === configurableIds.length,
-          indeterminate: visibleCount > 0 && visibleCount < configurableIds.length,
+          indeterminate:
+            visibleCount > 0 && visibleCount < configurableIds.length,
           disabled: configurableIds.length === 0,
         };
         settingItems.push(item);
@@ -249,12 +285,14 @@ function buildColumnView<T extends RowData>(
 
       if (node.children?.length) {
         const children = visible(node.children, node.id, level + 1);
-        if (children.length) {
+        if (children.length > 0) {
           /**
            * 子树可见叶子 id 的有序指纹。分组列的重挂载 key 直接读它；
            * 子节点自身的指纹已算好，逐层拼接即可自底向上得到整棵子树的叶子序列。
            */
-          const subtreeKey = children.map((child) => child.subtreeKey ?? child.id).join('|');
+          const subtreeKey = children
+            .map((child) => child.subtreeKey ?? child.id)
+            .join('|');
           result.push({ ...node, children, subtreeKey });
         }
       } else if (isSpecialColumn(node.column) || !hiddenIds.has(node.id)) {
@@ -288,7 +326,9 @@ function buildColumnView<T extends RowData>(
 }
 
 /** 列归一化、可见性 / 顺序 / 列宽设置及其持久化。 */
-export function useColumns<T extends RowData = RowData>(props: PlusTableResolvedProps<T>) {
+export function useColumns<T extends RowData = RowData>(
+  props: PlusTableResolvedProps<T>,
+) {
   const normalized = computed<NormalizedColumns<T>>(() => {
     if (!Array.isArray(props.columns)) {
       throw new TypeError('[PlusTable] columns 必须是数组。');
@@ -307,8 +347,15 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
     props.cache && props.id ? `${SETTINGS_STORAGE_PREFIX}${props.id}` : null,
   );
 
-  function reportStorageError(action: '读取' | '写入' | '重置', key: string, error: unknown): void {
-    console.error(`[PlusTable] 列设置缓存${action}失败（key="${key}"）。`, error);
+  function reportStorageError(
+    action: '写入' | '读取' | '重置',
+    key: string,
+    error: unknown,
+  ): void {
+    console.error(
+      `[PlusTable] 列设置缓存${action}失败（key="${key}"）。`,
+      error,
+    );
   }
 
   function getSettingsStorage(): Storage {
@@ -337,12 +384,16 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
     settings: PersistedSettings,
     model = normalized.value,
   ): PersistedSettings {
-    const configurableIds = new Set(model.allDataColumns.map((column) => column.id));
+    const configurableIds = new Set(
+      model.allDataColumns.map((column) => column.id),
+    );
     const order: Record<string, string[]> = {};
     for (const [parentId, ids] of Object.entries(settings.order)) {
       if (parentId !== ROOT_ID && !model.byId.has(parentId)) continue;
-      const retained = ids.filter((id) => model.parentById.get(id) === parentId);
-      if (retained.length) order[parentId] = retained;
+      const retained = ids.filter(
+        (id) => model.parentById.get(id) === parentId,
+      );
+      if (retained.length > 0) order[parentId] = retained;
     }
     return {
       hidden: settings.hidden.filter((id) => configurableIds.has(id)),
@@ -363,7 +414,7 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
    * 唯一落盘出口：settings 为 null 表示清除缓存条目。
    * 每个列设置写入点显式调用；重置写 null，后续改动再写一次。
    */
-  function persist(settings: PersistedSettings | null): void {
+  function persist(settings: null | PersistedSettings): void {
     const key = storageKey.value;
     if (!key) return;
     try {
@@ -375,7 +426,7 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
     }
   }
 
-  function loadPersisted(): PersistedSettings | null {
+  function loadPersisted(): null | PersistedSettings {
     const key = storageKey.value;
     if (!key) return null;
     try {
@@ -472,14 +523,19 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
   }
 
   /** 列设置拖拽排序：把 dragId 放到同级 targetId 的前 / 后（跨级拖拽不生效） */
-  function updateColumnOrder(dragId: string, targetId: string, position: 'before' | 'after') {
+  function updateColumnOrder(
+    dragId: string,
+    targetId: string,
+    position: 'after' | 'before',
+  ) {
     if (dragId === targetId) return;
     const drag = getSettingItem(dragId);
     const target = getSettingItem(targetId);
-    if (!drag || drag.disabled || !target || drag.parentId !== target.parentId) return;
+    if (!drag || drag.disabled || !target || drag.parentId !== target.parentId)
+      return;
     const ids = getSiblingIds(drag.parentId).filter((id) => id !== dragId);
     const targetIndex = ids.indexOf(targetId);
-    if (targetIndex < 0) return;
+    if (targetIndex === -1) return;
     const insertionIndex = targetIndex + (position === 'after' ? 1 : 0);
     ids.splice(insertionIndex, 0, dragId);
     orderMap.value = { ...orderMap.value, [drag.parentId]: ids };
@@ -490,11 +546,11 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
    * 写入列宽覆盖（持久化）。width 传 null 表示强制自动宽度——它会压过列配置里的
    * width，这是「回落列配置」（clearColumnWidth）做不到的。
    */
-  function setColumnWidth(id: string, width: number | null) {
+  function setColumnWidth(id: string, width: null | number) {
     if (!getColumnById(id)) {
       throw new Error(`[PlusTable] setColumnWidth 失败：未知列 id="${id}"。`);
     }
-    let next: number | null = null;
+    let next: null | number = null;
     if (width !== null) {
       const rounded = Math.round(width);
       if (!Number.isFinite(rounded) || rounded <= 0) {
@@ -518,7 +574,7 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
     }
     if (!(id in widthMap.value)) return;
     const next = { ...widthMap.value };
-    delete next[id];
+    Reflect.deleteProperty(next, id);
     widthMap.value = next;
     persist(snapshotSettings());
   }
@@ -556,4 +612,6 @@ export function useColumns<T extends RowData = RowData>(props: PlusTableResolved
   };
 }
 
-export type UseColumnsReturn<T extends RowData = RowData> = ReturnType<typeof useColumns<T>>;
+export type UseColumnsReturn<T extends RowData = RowData> = ReturnType<
+  typeof useColumns<T>
+>;

@@ -1,11 +1,16 @@
+import type { TestTable } from './helpers/create-test-table';
+
 import { afterEach, describe, expect, it } from 'vitest';
-import { createTestTable, type TestTable } from './helpers/create-test-table';
+
+import { defined } from '@/utils/defined';
+
+import { createTestTable } from './helpers/create-test-table';
 
 interface Row {
-  id: number;
-  name: string;
   amount: number;
   extra?: string;
+  id: number;
+  name: string;
 }
 
 const columns = [
@@ -27,7 +32,7 @@ describe('PlusTable row field write contract', () => {
       dirtyTracking: true,
     });
     tables.push(testTable);
-    return { ...testTable, row: testTable.table.data.value[0]! };
+    return { ...testTable, row: defined(testTable.table.data.value[0]) };
   }
 
   afterEach(() => {
@@ -44,7 +49,11 @@ describe('PlusTable row field write contract', () => {
     expect(emit).not.toHaveBeenCalledWith('update:data', expect.anything());
     expect(emit).toHaveBeenCalledWith(
       'cell-change',
-      expect.objectContaining({ prop: 'name', value: 'edited', oldValue: 'one' }),
+      expect.objectContaining({
+        prop: 'name',
+        value: 'edited',
+        oldValue: 'one',
+      }),
     );
   });
 
@@ -84,7 +93,9 @@ describe('PlusTable row field write contract', () => {
   it('refuses writes that would change the resolved row identity', () => {
     const { table, row } = setup('cell');
 
-    expect(() => table.setCellValue(row, 0, 'id', 2)).toThrow(/rowKey.*不可修改/);
+    expect(() => table.setCellValue(row, 0, 'id', 2)).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.id).toBe(1);
   });
 });

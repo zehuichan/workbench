@@ -1,14 +1,6 @@
 <script setup lang="ts" generic="T extends RowData = RowData">
-import { computed, getCurrentInstance, provide, ref, useId, useSlots } from 'vue';
-import { ElPagination, ElTable } from 'element-plus';
-import './styles/index.scss';
-import { PLUS_TABLE_INJECTION_KEY } from './tokens';
-import { useTable } from './use-table';
-import { useEvents, useKeyboard, useStyles } from './composables';
-import { createTableExpose } from './utils';
-import { PlusTableColumnNode, PlusTableColumnSettings, PlusTableContextMenu } from './components';
-import { DEFAULT_PROPS } from './table';
 import type { TableInstance } from 'element-plus';
+
 import type { EditorSlotProps, HeaderSlotProps } from './cell';
 import type { ColumnSettingsExpose } from './column-settings';
 import type { ContextMenuExpose } from './context-menu';
@@ -23,30 +15,57 @@ import type {
 import type { PlusTableContext } from './tokens';
 import type { CellContext, RowData } from './types';
 
+import {
+  computed,
+  getCurrentInstance,
+  provide,
+  ref,
+  useId,
+  useSlots,
+} from 'vue';
+
+import { ElPagination, ElTable } from 'element-plus';
+
+import { defined } from '@/utils/defined';
+
+import {
+  PlusTableColumnNode,
+  PlusTableColumnSettings,
+  PlusTableContextMenu,
+} from './components';
+import { useEvents, useKeyboard, useStyles } from './composables';
+import { DEFAULT_PROPS } from './table';
+import { PLUS_TABLE_INJECTION_KEY } from './tokens';
+import { useTable } from './use-table';
+import { createTableExpose } from './utils';
+
+import './styles/index.scss';
+
 defineOptions({ name: 'PlusTable', inheritAttrs: false });
 
 const props = withDefaults(defineProps<PlusTableProps<T>>(), DEFAULT_PROPS);
 
 const emit = defineEmits<PlusTableEmits<T>>();
-const slots = useSlots();
-/** setup 期抓一次实例，供运行期判断是否挂了 update:data 监听 */
-const instance = getCurrentInstance()!;
-
 /**
  * header-${prop} / editor-${prop} 是按列 prop 动态生成的插槽名，模板里不会字面出现，
  * 只能靠显式声明让消费方在使用处获得类型提示。
  */
 defineSlots<{
-  title?: () => unknown;
-  summary?: () => unknown;
-  toolbar?: () => unknown;
-  empty?: () => unknown;
   [key: `cell-${string}`]: (props: CellContext<T>) => unknown;
-  [key: `header-${string}`]: (props: HeaderSlotProps<T>) => unknown;
-  [key: `editor-${string}`]: (props: EditorSlotProps<T>) => unknown;
   /** 右键菜单项自定义内容；与 contextMenu 项的 key 对应 */
-  [key: `context-menu-item-${string}`]: (props: ContextMenuItemSlotProps<T>) => unknown;
+  [key: `context-menu-item-${string}`]: (
+    props: ContextMenuItemSlotProps<T>,
+  ) => unknown;
+  [key: `editor-${string}`]: (props: EditorSlotProps<T>) => unknown;
+  [key: `header-${string}`]: (props: HeaderSlotProps<T>) => unknown;
+  empty?: () => unknown;
+  summary?: () => unknown;
+  title?: () => unknown;
+  toolbar?: () => unknown;
 }>();
+const slots = useSlots();
+/** setup 期抓一次实例，供运行期判断是否挂了 update:data 监听 */
+const instance = defined(getCurrentInstance());
 
 /**
  * 把 rowKey / colId 收敛成 id 片段：[A-Za-z0-9] 原样保留，其余字符转义成 `_<码点 base36>_`。
@@ -54,14 +73,19 @@ defineSlots<{
  * 不同的 rowKey / colId 组合不会撞出同一个 id。
  */
 function idPart(value: string): string {
-  return value.replace(/[^A-Za-z0-9]/g, (char) => `_${char.charCodeAt(0).toString(36)}_`);
+  return value.replaceAll(/[^A-Za-z0-9]/g, (char) => {
+    const point = char.codePointAt(0);
+    return point === undefined ? char : `_${point.toString(36)}_`;
+  });
 }
 
 const idPrefix = `ptbl-${idPart(useId())}`;
 const ids = {
   description: `${idPrefix}-description`,
-  cell: (rowKey: string, colId: string) => `${idPrefix}-cell-${idPart(rowKey)}-${idPart(colId)}`,
-  error: (rowKey: string, colId: string) => `${idPrefix}-error-${idPart(rowKey)}-${idPart(colId)}`,
+  cell: (rowKey: string, colId: string) =>
+    `${idPrefix}-cell-${idPart(rowKey)}-${idPart(colId)}`,
+  error: (rowKey: string, colId: string) =>
+    `${idPrefix}-error-${idPart(rowKey)}-${idPart(colId)}`,
 };
 
 const gridRef = ref<HTMLElement>();
@@ -78,14 +102,23 @@ const host: TableHost<T> = {
   columnSettingsRef,
   contextMenuRef,
   ids,
-  hasDataListener: () => instance.vnode.props?.['onUpdate:data'] != null,
+  hasDataListener: () =>
+    instance.vnode.props?.['onUpdate:data'] !== null &&
+    instance.vnode.props?.['onUpdate:data'] !== undefined,
 };
 const resolvedProps = props as PlusTableResolvedProps<T>;
 const table = useTable<T>(resolvedProps, host);
-const context: PlusTableContext<T> = { props: resolvedProps, ...host, ...table };
+const context: PlusTableContext<T> = {
+  props: resolvedProps,
+  ...host,
+  ...table,
+};
 provide(PLUS_TABLE_INJECTION_KEY, context);
 
-const { tableHeight, isContainerMode: isAdaptiveContainer } = useStyles(resolvedProps, host);
+const { tableHeight, isContainerMode: isAdaptiveContainer } = useStyles(
+  resolvedProps,
+  host,
+);
 const events = useEvents(context);
 const keyboard = useKeyboard(context);
 
@@ -97,11 +130,15 @@ const activeCellId = computed(() => {
 });
 
 // el-table 的 row-key 类型签名比本组件窄（函数变体只接受返回 string），做一次适配
-const rowKeyProp = computed(() => props.rowKey as string | ((row: T) => string));
+const rowKeyProp = computed(
+  () => props.rowKey as ((row: T) => string) | string,
+);
 
 const paginationEnabled = computed(() => props.total !== undefined);
 
-const footerEnabled = computed(() => !!slots.summary || paginationEnabled.value);
+const footerEnabled = computed(
+  () => !!slots.summary || paginationEnabled.value,
+);
 
 const headerEnabled = computed(() => !!slots.title || !!slots.toolbar);
 
@@ -147,13 +184,16 @@ defineExpose(createTableExpose(localExpose, tableRef));
 </script>
 
 <template>
-  <div class="plus-table" :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }">
+  <div
+    class="plus-table"
+    :class="{ 'plus-table--adaptive-container': isAdaptiveContainer }"
+  >
     <div v-if="headerEnabled" class="plus-table__header">
       <div v-if="$slots.title" class="plus-table__title">
-        <slot name="title" />
+        <slot name="title"></slot>
       </div>
       <div v-if="$slots.toolbar" class="plus-table__toolbar">
-        <slot name="toolbar" />
+        <slot name="toolbar"></slot>
       </div>
     </div>
 
@@ -166,9 +206,10 @@ defineExpose(createTableExpose(localExpose, tableRef));
       @keydown="keyboard.handleKeydown"
     >
       <span :id="ids.description" class="ptbl-visually-hidden">
-        使用方向键或 Tab 在数据单元格间移动；按 Enter 或 F2 开始编辑，编辑时按 Escape 取消。
+        使用方向键或 Tab 在数据单元格间移动；按 Enter 或 F2 开始编辑，编辑时按
+        Escape 取消。
       </span>
-      <el-table
+      <ElTable
         ref="tableRef"
         :data="tableData"
         :row-key="rowKeyProp"
@@ -186,17 +227,17 @@ defineExpose(createTableExpose(localExpose, tableRef));
           :node="node"
         />
         <template v-if="$slots.empty" #empty>
-          <slot name="empty" />
+          <slot name="empty"></slot>
         </template>
-      </el-table>
+      </ElTable>
     </div>
 
     <div v-if="footerEnabled" ref="paginationRef" class="plus-table__footer">
       <div v-if="$slots.summary" class="plus-table__summary">
-        <slot name="summary" />
+        <slot name="summary"></slot>
       </div>
       <div v-if="paginationEnabled" class="plus-table__pagination">
-        <el-pagination
+        <ElPagination
           background
           layout="total, sizes, prev, pager, next, jumper"
           :total="total"

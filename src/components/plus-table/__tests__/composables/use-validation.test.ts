@@ -1,18 +1,29 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cellPosition } from '../helpers/cell-position';
-import { createTestTable, type TestTable } from '../helpers/create-test-table';
 import type { RuleItem } from 'async-validator';
 
+import type { TestTable } from '../helpers/create-test-table';
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
+import { cellPosition } from '../helpers/cell-position';
+import { createTestTable } from '../helpers/create-test-table';
+
 interface Row {
-  id: number;
   a: string;
   b: string;
+  id: number;
 }
 
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 function createRows(count: number): Row[] {
-  return Array.from({ length: count }, (_, index) => ({ id: index + 1, a: '', b: '' }));
+  return Array.from({ length: count }, (_, index) => ({
+    id: index + 1,
+    a: '',
+    b: '',
+  }));
 }
 
 describe('PlusTable validation', () => {
@@ -42,7 +53,9 @@ describe('PlusTable validation', () => {
         active -= 1;
       },
     };
-    const { table } = setup(createRows(12), [{ prop: 'a', label: 'A', rules: [rule] }]);
+    const { table } = setup(createRows(12), [
+      { prop: 'a', label: 'A', rules: [rule] },
+    ]);
 
     const result = await table.validate(false);
 
@@ -65,7 +78,11 @@ describe('PlusTable validation', () => {
       },
     });
     const testTable = setup(createRows(2), [
-      { prop: 'a', label: 'A', rules: [failAfter((row) => (row.id === 1 ? 20 : 0))] },
+      {
+        prop: 'a',
+        label: 'A',
+        rules: [failAfter((row) => (row.id === 1 ? 20 : 0))],
+      },
       { prop: 'b', label: 'B', fixed: 'left', rules: [failAfter(() => 40)] },
     ]);
     return testTable.table;
@@ -76,7 +93,10 @@ describe('PlusTable validation', () => {
 
     const result = await table.validate(false);
 
-    expect(table.columns.value.map((node) => node.column.prop)).toEqual(['b', 'a']);
+    expect(table.columns.value.map((node) => node.column.prop)).toEqual([
+      'b',
+      'a',
+    ]);
     expect(result.errors.map((error) => [error.rowIndex, error.prop])).toEqual([
       [0, 'b'],
       [0, 'a'],
@@ -91,7 +111,10 @@ describe('PlusTable validation', () => {
 
     await table.validate();
 
-    expect(cellPosition(table.getCurrentCellLocation())).toEqual({ rowIndex: 0, colIndex: 0 });
+    expect(cellPosition(table.getCurrentCellLocation())).toEqual({
+      rowIndex: 0,
+      colIndex: 0,
+    });
   });
 
   it('keeps hidden-column errors last and skips scrolling to them', async () => {
@@ -103,7 +126,10 @@ describe('PlusTable validation', () => {
     const result = await table.validate();
 
     expect(result.errors.map((error) => error.prop)).toEqual(['b', 'a']);
-    expect(cellPosition(table.getCurrentCellLocation())).toEqual({ rowIndex: 0, colIndex: 0 });
+    expect(cellPosition(table.getCurrentCellLocation())).toEqual({
+      rowIndex: 0,
+      colIndex: 0,
+    });
   });
 
   it('stops retrying a row that keeps being preempted by newer input', async () => {
@@ -122,7 +148,9 @@ describe('PlusTable validation', () => {
         await delay(0);
       },
     };
-    testTable = setup(createRows(1), [{ prop: 'a', label: 'A', rules: [preemptedRule] }]);
+    testTable = setup(createRows(1), [
+      { prop: 'a', label: 'A', rules: [preemptedRule] },
+    ]);
 
     await expect(testTable.table.validateRow(0)).resolves.toEqual([]);
 
@@ -132,15 +160,19 @@ describe('PlusTable validation', () => {
   });
 
   it('rebuilds required-field messages after the column label changes', async () => {
-    const testTable = setup(createRows(1), [{ prop: 'a', label: 'A', required: true }]);
-    const row = testTable.table.data.value[0]!;
+    const testTable = setup(createRows(1), [
+      { prop: 'a', label: 'A', required: true },
+    ]);
+    const row = defined(testTable.table.data.value[0]);
 
     await testTable.table.validateCell(row, 0, 'a');
     expect(testTable.table.getCellError(row, 'a')?.message).toBe('A不能为空');
 
-    testTable.props.columns[0]!.label = 'A 列';
+    defined(testTable.props.columns[0]).label = 'A 列';
     await testTable.table.validateCell(row, 0, 'a');
 
-    expect(testTable.table.getCellError(row, 'a')?.message).toBe('A 列不能为空');
+    expect(testTable.table.getCellError(row, 'a')?.message).toBe(
+      'A 列不能为空',
+    );
   });
 });

@@ -1,10 +1,21 @@
-import { computed, defineComponent, h, ref } from 'vue';
-import { ElTooltip } from 'element-plus';
-import { getCellClasses, getCellView, getEditorWrapperClass } from '../renderers/cell';
-import { usePlusTable } from '../tokens';
-import type { ComputedRef, PropType, Ref, VNodeChild } from 'vue';
 import type { TableColumnCtx } from 'element-plus';
+
+import type { ComputedRef, PropType, Ref, VNodeChild } from 'vue';
+
 import type { ColumnNode, RowData } from '../types';
+
+import { computed, defineComponent, h, ref } from 'vue';
+
+import { ElTooltip } from 'element-plus';
+
+import { defined } from '@/utils/defined';
+
+import {
+  getCellClasses,
+  getCellView,
+  getEditorWrapperClass,
+} from '../renderers/cell';
+import { usePlusTable } from '../tokens';
 
 /**
  * 单元格纯渲染：全部状态与编辑绑定来自 getCellView 一次性算出的视图模型，
@@ -28,11 +39,11 @@ export default defineComponent({
      *
      * 这套状态本身也按需创建：从没报过错的格子只多一个 null 字段。
      */
-    let tooltip: {
+    let tooltip: null | {
       mounted: Ref<boolean>;
-      visible: ComputedRef<boolean>;
       triggerProps: Record<string, unknown>;
-    } | null = null;
+      visible: ComputedRef<boolean>;
+    } = null;
 
     function errorTooltip() {
       if (tooltip) return tooltip;
@@ -72,9 +83,14 @@ export default defineComponent({
         return column.render({ row, rowIndex, column, value });
       }
       if (column.formatter) {
-        return column.formatter(row, column as TableColumnCtx<RowData>, value, rowIndex);
+        return column.formatter(
+          row,
+          column as TableColumnCtx<RowData>,
+          value,
+          rowIndex,
+        );
       }
-      return value == null ? '' : String(value);
+      return value === null || value === undefined ? '' : String(value);
     }
 
     return () => {
@@ -97,7 +113,7 @@ export default defineComponent({
       const content = view.editing
         ? h('div', { class: getEditorWrapperClass(column.align) }, [
             view.editorSlotProps
-              ? editorSlot!(view.editorSlotProps)
+              ? defined(editorSlot)(view.editorSlotProps)
               : view.editorBind
                 ? h(view.editorBind.component, view.editorBind.bind)
                 : null,
@@ -108,7 +124,11 @@ export default defineComponent({
       const children: VNodeChild[] = [content];
       if (view.error) {
         children.push(
-          h('span', { id: errorId, class: 'ptbl-visually-hidden' }, view.error.message),
+          h(
+            'span',
+            { id: errorId, class: 'ptbl-visually-hidden' },
+            view.error.message,
+          ),
         );
       }
 

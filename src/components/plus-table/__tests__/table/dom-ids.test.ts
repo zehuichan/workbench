@@ -1,5 +1,9 @@
 import { createApp, defineComponent, h, nextTick } from 'vue';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import PlusTable from '../../table.vue';
+import { usePlusTable } from '../../tokens';
 
 vi.mock('../../components/column-settings.vue', () => ({
   default: { name: 'PlusTableColumnSettings', render: () => null },
@@ -29,9 +33,6 @@ vi.mock('element-plus', async (importOriginal) => {
   };
 });
 
-import PlusTable from '../../table.vue';
-import { usePlusTable } from '../../tokens';
-
 /** rowKey 由业务数据决定，可能带空格、中文、`-`、`_` 等 id 不友好的字符 */
 const KEY_SAMPLES: Array<[rowKey: string, colId: string]> = [
   ['1', 'name'],
@@ -46,7 +47,8 @@ const KEY_SAMPLES: Array<[rowKey: string, colId: string]> = [
 ];
 
 describe('PlusTable dom ids', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
+    [];
 
   async function mountIds() {
     const host = document.createElement('div');
@@ -63,7 +65,11 @@ describe('PlusTable dom ids', () => {
       render: () =>
         h(
           PlusTable,
-          { data: [], columns: [{ prop: 'name', label: '名称' }], rowKey: 'id' },
+          {
+            data: [],
+            columns: [{ prop: 'name', label: '名称' }],
+            rowKey: 'id',
+          },
           { toolbar: () => h(Probe) },
         ),
     });

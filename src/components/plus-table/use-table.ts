@@ -1,4 +1,10 @@
+import type { DataSnapshot } from './composables/use-data';
+import type { AppliedHistoryChange } from './composables/use-history';
+import type { PlusTableResolvedProps, TableHost } from './table';
+import type { RowData } from './types';
+
 import { watch, watchEffect } from 'vue';
+
 import {
   useColumns,
   useCurrent,
@@ -10,13 +16,12 @@ import {
   useRows,
   useValidation,
 } from './composables';
-import { deleteRowField as deleteField, writeRowField as writeField } from './composables/utils';
+import {
+  deleteRowField as deleteField,
+  writeRowField as writeField,
+} from './composables/utils';
 import { TABLE_MODE_EDITOR_LIMIT } from './constants';
 import { devWarn } from './utils';
-import type { AppliedHistoryChange } from './composables/use-history';
-import type { DataSnapshot } from './composables/use-data';
-import type { PlusTableResolvedProps, TableHost } from './table';
-import type { RowData } from './types';
 
 /**
  * 装配层：按依赖顺序调用各 composable，显式解构、显式传参、显式返回。
@@ -29,8 +34,14 @@ export function useTable<T extends RowData = RowData>(
 ) {
   const { emit, gridRef, ids, hasDataListener } = host;
 
-  const { data, keysMap, getRowKey, readDataSnapshot, buildRegistry, commitData } =
-    useData<T>(props);
+  const {
+    data,
+    keysMap,
+    getRowKey,
+    readDataSnapshot,
+    buildRegistry,
+    commitData,
+  } = useData<T>(props);
 
   const {
     widthMap,
@@ -86,8 +97,6 @@ export function useTable<T extends RowData = RowData>(
   } = useDependencies<T>({ keysMap, getRowKey, triggerIndex, setCellValue });
 
   const {
-    undoStack,
-    redoStack,
     canUndo,
     canRedo,
     pushChange,
@@ -101,7 +110,6 @@ export function useTable<T extends RowData = RowData>(
   } = useHistory<T>(props, { keysMap, writeRowField });
 
   const {
-    dirtyCells,
     touchRow,
     markDirty,
     isCellDirty,
@@ -155,7 +163,6 @@ export function useTable<T extends RowData = RowData>(
     setDraft,
     flushDraft,
     discardDraft,
-    discardDraftsForRow,
     invalidateEditingRow,
   } = useEditing<T>(props, {
     data,
@@ -191,14 +198,20 @@ export function useTable<T extends RowData = RowData>(
    */
   function writeRowField(row: T, prop: string, value: unknown) {
     const key = getRowKey(row);
-    const result = writeField(row, prop, value, { rowKey: key, rowKeyOption: props.rowKey });
+    const result = writeField(row, prop, value, {
+      rowKey: key,
+      rowKeyOption: props.rowKey,
+    });
     if (result.wrote) bumpDependencyGeneration(key);
     return result;
   }
 
   function deleteRowField(row: T, prop: string) {
     const key = getRowKey(row);
-    const result = deleteField(row, prop, { rowKey: key, rowKeyOption: props.rowKey });
+    const result = deleteField(row, prop, {
+      rowKey: key,
+      rowKeyOption: props.rowKey,
+    });
     if (result.wrote) bumpDependencyGeneration(key);
     return result;
   }
@@ -215,7 +228,12 @@ export function useTable<T extends RowData = RowData>(
    * 所有编辑路径（cell 提交 / row·table 直绑 / Delete 清空 / 联动 setValue / 自定义热键 setValue）统一走这里。
    * 公开事件与联动一律用 keysMap 解析出的最新下标；调用方传入的 rowIndex 只作提示。
    */
-  function setCellValue(row: T, _rowIndex: number, prop: string, value: unknown): void {
+  function setCellValue(
+    row: T,
+    _rowIndex: number,
+    prop: string,
+    value: unknown,
+  ): void {
     // 同值写入提前退出，避免为一次空写建立脏基线快照；writeRowField 内部同样会兜底
     if (Object.is(row[prop], value)) return;
     const key = getRowKey(row);
@@ -246,7 +264,10 @@ export function useTable<T extends RowData = RowData>(
 
   /** 撤销 / 重做：只回滚 row[prop] 并重新对比脏基线、emit('cell-change')、按需重新校验；
    * 不重新触发 dependencies.trigger，避免联动副作用在历史回放时被重复执行 */
-  function applyHistoryChanges(applied: AppliedHistoryChange<T>[], direction: 'undo' | 'redo') {
+  function applyHistoryChanges(
+    applied: AppliedHistoryChange<T>[],
+    direction: 'redo' | 'undo',
+  ) {
     for (const change of applied) {
       const { row, rowIndex, prop } = change;
       const [value, oldValue] =
@@ -298,12 +319,18 @@ export function useTable<T extends RowData = RowData>(
     visibleColumnsById,
     (next, previous) => {
       const nextProps = new Set(
-        [...next.values()].map((node) => node.column.prop).filter((prop): prop is string => !!prop),
+        [...next.values()]
+          .map((node) => node.column.prop)
+          .filter((prop): prop is string => !!prop),
       );
       const removedProps = new Set<string>();
       for (const [id, node] of previous) {
         const prop = node.column.prop;
-        if (prop && next.get(id)?.column.prop !== prop && !nextProps.has(prop)) {
+        if (
+          prop &&
+          next.get(id)?.column.prop !== prop &&
+          !nextProps.has(prop)
+        ) {
           removedProps.add(prop);
         }
       }
@@ -453,4 +480,6 @@ export function useTable<T extends RowData = RowData>(
   };
 }
 
-export type UseTableReturn<T extends RowData = RowData> = ReturnType<typeof useTable<T>>;
+export type UseTableReturn<T extends RowData = RowData> = ReturnType<
+  typeof useTable<T>
+>;

@@ -1,12 +1,18 @@
+import type { TestTable } from './helpers/create-test-table';
+
 import { nextTick } from 'vue';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
 import { cellPosition } from './helpers/cell-position';
-import { createTestTable, type TestTable } from './helpers/create-test-table';
+import { createTestTable } from './helpers/create-test-table';
 
 interface Row {
+  amount: number;
   id: number;
   name: string;
-  amount: number;
 }
 
 const columns = [
@@ -26,7 +32,7 @@ const columns = [
 describe('PlusTable cell identity and row lifecycle', () => {
   const tables: TestTable<Row>[] = [];
 
-  function setup(options: { history?: boolean; dirtyTracking?: boolean } = {}) {
+  function setup(options: { dirtyTracking?: boolean; history?: boolean } = {}) {
     const data: Row[] = [
       { id: 1, name: 'one', amount: 10 },
       { id: 2, name: 'two', amount: 20 },
@@ -51,7 +57,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
     table.setCurrentCell(0, 1, false);
     expect(table.startEdit(0, 1)).toBe(true);
 
-    props.data = [rows[1]!, rows[0]!];
+    props.data = [defined(rows[1]), defined(rows[0])];
     await nextTick();
 
     expect(table.isCurrentRef('1', 'amount')).toBe(true);
@@ -85,19 +91,22 @@ describe('PlusTable cell identity and row lifecycle', () => {
   });
 
   it('invalidates every row-keyed domain when an object is replaced at the same key', async () => {
-    const { table, props, rows } = setup({ history: true, dirtyTracking: true });
+    const { table, props, rows } = setup({
+      history: true,
+      dirtyTracking: true,
+    });
     table.setCurrentCell(0, 0, false);
     expect(table.startEdit(0, 0)).toBe(true);
     table.setDraft('1', 'name', 'draft');
-    table.setCellValue(rows[0]!, 0, 'name', '');
-    await table.validateCell(rows[0]!, 0, 'name');
+    table.setCellValue(defined(rows[0]), 0, 'name', '');
+    await table.validateCell(defined(rows[0]), 0, 'name');
 
     expect(table.canUndo.value).toBe(true);
     expect(table.isRowDirty('1')).toBe(true);
     expect(table.getErrors()).toHaveLength(1);
 
     const replacement = { id: 1, name: 'replacement', amount: 100 };
-    props.data = [replacement, rows[1]!];
+    props.data = [replacement, defined(rows[1])];
     await nextTick();
 
     expect(table.getCurrentCellLocation()).toBeNull();
@@ -112,9 +121,9 @@ describe('PlusTable cell identity and row lifecycle', () => {
     const { table, rows } = setup({ history: true, dirtyTracking: true });
     table.setCurrentCell(0, 0, false);
     expect(table.startEdit(0, 0)).toBe(true);
-    table.setCellValue(rows[0]!, 0, 'name', 'changed');
+    table.setCellValue(defined(rows[0]), 0, 'name', 'changed');
 
-    rows[0]!.id = 3;
+    defined(rows[0]).id = 3;
     await nextTick();
 
     expect(table.getCurrentCellLocation()).toBeNull();
@@ -124,11 +133,14 @@ describe('PlusTable cell identity and row lifecycle', () => {
   });
 
   it('preserves keyed state and reindexes validation errors for a pure reorder', async () => {
-    const { table, props, rows } = setup({ history: true, dirtyTracking: true });
-    table.setCellValue(rows[0]!, 0, 'name', '');
-    await table.validateCell(rows[0]!, 0, 'name');
+    const { table, props, rows } = setup({
+      history: true,
+      dirtyTracking: true,
+    });
+    table.setCellValue(defined(rows[0]), 0, 'name', '');
+    await table.validateCell(defined(rows[0]), 0, 'name');
 
-    props.data = [rows[1]!, rows[0]!];
+    props.data = [defined(rows[1]), defined(rows[0])];
     await nextTick();
 
     expect(table.canUndo.value).toBe(true);
@@ -143,7 +155,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
     table.setCurrentCell(0, 0, false);
     expect(table.startEdit(0, 0)).toBe(true);
 
-    expect(table.removeRow(0)!.id).toBe(1);
+    expect(defined(table.removeRow(0)).id).toBe(1);
     await nextTick();
 
     expect(table.data.value.map((row) => row.id)).toEqual([2]);
@@ -157,7 +169,9 @@ describe('PlusTable cell identity and row lifecycle', () => {
       { id: 1, name: 'dup', amount: 20 },
     ];
 
-    expect(() => createTestTable({ data: rows, columns })).toThrow(/rowKey="1".*重复/);
+    expect(() => createTestTable({ data: rows, columns })).toThrow(
+      /rowKey="1".*重复/,
+    );
   });
 
   it('allows an async row commit to finish after the same row is reordered', async () => {
@@ -196,12 +210,14 @@ describe('PlusTable cell identity and row lifecycle', () => {
 
     const committing = testTable.table.commitRowEdit(0);
     await validationStarted;
-    testTable.props.data = [rows[1]!, rows[0]!];
+    testTable.props.data = [defined(rows[1]), defined(rows[0])];
     await nextTick();
     releaseValidation();
 
     await expect(committing).resolves.toBe(true);
-    expect(testTable.table.isRowEditing(testTable.table.data.value[1]!)).toBe(false);
+    expect(
+      testTable.table.isRowEditing(defined(testTable.table.data.value[1])),
+    ).toBe(false);
   });
 
   it('does not commit a row when its validation is superseded', async () => {
@@ -254,7 +270,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
       mode: 'row',
     });
     tables.push(testTable);
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
     expect(testTable.table.startRowEdit(0)).toBe(true);
 
     const committing = testTable.table.commitRowEdit(0);
@@ -374,7 +390,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
 
     const validating = testTable.table.validate(false);
     await firstStarted;
-    testTable.props.data = [rows[1]!, rows[0]!];
+    testTable.props.data = [defined(rows[1]), defined(rows[0])];
     await nextTick();
     releaseFirst();
 
@@ -423,7 +439,7 @@ describe('PlusTable cell identity and row lifecycle', () => {
 
     const validating = testTable.table.validate(false);
     await secondStarted;
-    testTable.props.data = [rows[1]!];
+    testTable.props.data = [defined(rows[1])];
     await nextTick();
     releaseSecond();
 
@@ -443,18 +459,20 @@ describe('PlusTable cell identity and row lifecycle', () => {
       ],
       rowKey: 'key',
     });
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
 
-    expect(() => testTable.table.setCellValue(row, 0, 'key', 'next')).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.table.setCellValue(row, 0, 'key', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.key).toBe('one');
     testTable.dispose();
   });
 
   it('also protects identities derived by a rowKey function', () => {
     interface KeyedRow {
-      tenant: string;
       code: string;
       name: string;
+      tenant: string;
     }
     const testTable = createTestTable<KeyedRow>({
       data: [{ tenant: 'acme', code: 'one', name: 'One' }],
@@ -464,9 +482,11 @@ describe('PlusTable cell identity and row lifecycle', () => {
       ],
       rowKey: (row) => `${row.tenant}:${row.code}`,
     });
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
 
-    expect(() => testTable.table.setCellValue(row, 0, 'code', 'next')).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.table.setCellValue(row, 0, 'code', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.code).toBe('one');
     testTable.dispose();
   });
@@ -488,9 +508,11 @@ describe('PlusTable cell identity and row lifecycle', () => {
       columns: [{ prop: 'code', editable: true }],
       rowKey: 'id',
     });
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
 
-    expect(() => testTable.table.setCellValue(row, 0, 'code', 'next')).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.table.setCellValue(row, 0, 'code', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.code).toBe('one');
     testTable.dispose();
   });
@@ -519,18 +541,20 @@ describe('PlusTable cell identity and row lifecycle', () => {
       columns: [{ prop: 'code', editable: true }],
       rowKey: 'id',
     });
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
 
-    expect(() => testTable.table.setCellValue(row, 0, 'code', 'next')).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.table.setCellValue(row, 0, 'code', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.code).toBe('one');
     testTable.dispose();
   });
 
   it('does not mutate shared nested state while checking accessor setters', () => {
     interface NestedAccessorRow {
-      state: { code: string };
       code: string;
       readonly id: string;
+      state: { code: string };
     }
     const testTable = createTestTable<NestedAccessorRow>({
       data: [
@@ -550,9 +574,11 @@ describe('PlusTable cell identity and row lifecycle', () => {
       columns: [{ prop: 'code', editable: true }],
       rowKey: 'id',
     });
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
 
-    expect(() => testTable.table.setCellValue(row, 0, 'code', 'next')).toThrow(/rowKey.*不可修改/);
+    expect(() => testTable.table.setCellValue(row, 0, 'code', 'next')).toThrow(
+      /rowKey.*不可修改/,
+    );
     expect(row.state.code).toBe('one');
     testTable.dispose();
   });
@@ -560,6 +586,8 @@ describe('PlusTable cell identity and row lifecycle', () => {
   it('skips automatic validation for writable fields without a column', async () => {
     const { table, rows } = setup();
 
-    await expect(table.validateCell(rows[0]!, 0, 'derivedField')).resolves.toBeNull();
+    await expect(
+      table.validateCell(defined(rows[0]), 0, 'derivedField'),
+    ).resolves.toBeNull();
   });
 });

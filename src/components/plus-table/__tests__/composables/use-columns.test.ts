@@ -1,13 +1,19 @@
+import type { TestTable } from '../helpers/create-test-table';
+
 import { nextTick } from 'vue';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
 import { cellPosition } from '../helpers/cell-position';
-import { createTestTable, type TestTable } from '../helpers/create-test-table';
+import { createTestTable } from '../helpers/create-test-table';
 
 interface Row {
-  id: number;
   a: string;
   b: string;
   c: string;
+  id: number;
 }
 
 const data: Row[] = [{ id: 1, a: '', b: 'b', c: 'c' }];
@@ -45,8 +51,15 @@ describe('PlusTable columns', () => {
       { type: 'operation', label: '操作' },
     ]);
 
-    expect(table.originColumns.value.map((node) => node.id)).toEqual(['#', 'Group', '操作']);
-    expect(table.columns.value.map((node) => node.id)).toEqual(['a-primary', 'a-secondary']);
+    expect(table.originColumns.value.map((node) => node.id)).toEqual([
+      '#',
+      'Group',
+      '操作',
+    ]);
+    expect(table.columns.value.map((node) => node.id)).toEqual([
+      'a-primary',
+      'a-secondary',
+    ]);
     expect(table.settingItems.value.map((item) => item.id)).toEqual([
       'Group',
       'a-primary',
@@ -70,16 +83,23 @@ describe('PlusTable columns', () => {
     table.toggleColumnVisible('Group', false);
 
     expect(table.columns.value.map((node) => node.id)).toEqual(['c']);
-    expect(table.settingItems.value.map((item) => item.id)).toEqual(['Group', 'a', 'b', 'c']);
-    expect(table.settingItems.value.find((item) => item.id === 'Group')).toEqual(
+    expect(table.settingItems.value.map((item) => item.id)).toEqual([
+      'Group',
+      'a',
+      'b',
+      'c',
+    ]);
+    expect(
+      table.settingItems.value.find((item) => item.id === 'Group'),
+    ).toEqual(
       expect.objectContaining({ checked: false, indeterminate: false }),
     );
 
     table.toggleColumnVisible('a', true);
     expect(table.columns.value.map((node) => node.id)).toEqual(['a', 'c']);
-    expect(table.settingItems.value.find((item) => item.id === 'Group')).toEqual(
-      expect.objectContaining({ checked: false, indeterminate: true }),
-    );
+    expect(
+      table.settingItems.value.find((item) => item.id === 'Group'),
+    ).toEqual(expect.objectContaining({ checked: false, indeterminate: true }));
   });
 
   it('reorders configurable siblings without moving special-column anchors', () => {
@@ -92,7 +112,12 @@ describe('PlusTable columns', () => {
 
     table.updateColumnOrder('b', 'a', 'before');
 
-    expect(table.originColumns.value.map((node) => node.id)).toEqual(['#', 'b', 'a', '操作']);
+    expect(table.originColumns.value.map((node) => node.id)).toEqual([
+      '#',
+      'b',
+      'a',
+      '操作',
+    ]);
     expect(table.columns.value.map((node) => node.id)).toEqual(['b', 'a']);
   });
 
@@ -107,8 +132,16 @@ describe('PlusTable columns', () => {
 
       table.updateColumnOrder('c', 'missing', position);
 
-      expect(table.originColumns.value.map((node) => node.id)).toEqual(['a', 'b', 'c']);
-      expect(table.columns.value.map((node) => node.id)).toEqual(['a', 'b', 'c']);
+      expect(table.originColumns.value.map((node) => node.id)).toEqual([
+        'a',
+        'b',
+        'c',
+      ]);
+      expect(table.columns.value.map((node) => node.id)).toEqual([
+        'a',
+        'b',
+        'c',
+      ]);
     },
   );
 
@@ -119,7 +152,11 @@ describe('PlusTable columns', () => {
       { prop: 'c', label: 'C', fixed: 'left' },
     ]);
 
-    expect(table.originColumns.value.map((node) => node.id)).toEqual(['c', 'a', 'b']);
+    expect(table.originColumns.value.map((node) => node.id)).toEqual([
+      'c',
+      'a',
+      'b',
+    ]);
     expect(table.columns.value.map((node) => node.id)).toEqual(['c', 'a', 'b']);
     expect(table.getColumnIndex('a')).toBe(1);
   });
@@ -210,7 +247,9 @@ describe('PlusTable columns', () => {
     expect(table.settingItems.value.find((item) => item.id === 'a')).toEqual(
       expect.objectContaining({ checked: false }),
     );
-    expect(table.settingItems.value.find((item) => item.id === 'Group')).toEqual(
+    expect(
+      table.settingItems.value.find((item) => item.id === 'Group'),
+    ).toEqual(
       expect.objectContaining({ checked: false, indeterminate: false }),
     );
     expect(table.originColumns.value).toHaveLength(1);
@@ -243,7 +282,11 @@ describe('PlusTable columns', () => {
     first.table.setColumnWidth('a', 120.6);
     await nextTick();
 
-    expect(JSON.parse(localStorage.getItem('plus-table:settings:columns-test')!)).toEqual({
+    expect(
+      JSON.parse(
+        defined(localStorage.getItem('plus-table:settings:columns-test')),
+      ),
+    ).toEqual({
       hidden: ['b'],
       order: { __root: ['b', 'a'] },
       widths: { a: 121 },
@@ -297,9 +340,9 @@ describe('PlusTable columns', () => {
     await nextTick();
 
     expect(testTable.table.columns.value.map((node) => node.id)).toEqual(['c']);
-    expect(testTable.table.settingItems.value.find((item) => item.id === 'b')).toEqual(
-      expect.objectContaining({ checked: false }),
-    );
+    expect(
+      testTable.table.settingItems.value.find((item) => item.id === 'b'),
+    ).toEqual(expect.objectContaining({ checked: false }));
     expect(testTable.table.widthMap.value).toEqual({});
   });
 
@@ -348,7 +391,7 @@ describe('PlusTable columns', () => {
       },
       { prop: 'b', label: 'B' },
     ]);
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
 
     const validating = testTable.table.validateCell(row, 0, 'a');
     await started;
@@ -362,11 +405,11 @@ describe('PlusTable columns', () => {
 
   it('invalidates errors when validation rules mutate in place', async () => {
     const testTable = setup([{ prop: 'a', label: 'A', required: true }]);
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
     await testTable.table.validateCell(row, 0, 'a');
     expect(testTable.table.getErrors()).toHaveLength(1);
 
-    testTable.props.columns[0]!.required = false;
+    defined(testTable.props.columns[0]).required = false;
     await nextTick();
 
     expect(testTable.table.getErrors()).toEqual([]);
@@ -385,14 +428,14 @@ describe('PlusTable columns', () => {
     expect(localStorage.getItem(key)).toBeNull();
 
     table.toggleColumnVisible('b', false);
-    expect(JSON.parse(localStorage.getItem(key)!)).toEqual({
+    expect(JSON.parse(defined(localStorage.getItem(key)))).toEqual({
       hidden: ['b'],
       order: {},
       widths: {},
     });
 
     table.setColumnWidth('a', 120);
-    expect(JSON.parse(localStorage.getItem(key)!)).toEqual({
+    expect(JSON.parse(defined(localStorage.getItem(key)))).toEqual({
       hidden: ['b'],
       order: {},
       widths: { a: 120 },
@@ -405,7 +448,9 @@ describe('PlusTable columns', () => {
       id: 'reset-test',
     });
     table.setColumnWidth('a', 120);
-    expect(localStorage.getItem('plus-table:settings:reset-test')).not.toBeNull();
+    expect(
+      localStorage.getItem('plus-table:settings:reset-test'),
+    ).not.toBeNull();
 
     table.resetSettings();
 
@@ -429,7 +474,7 @@ describe('PlusTable columns', () => {
     testTable.props.columns = [{ prop: 'b', label: 'B' }];
     await nextTick();
 
-    expect(JSON.parse(localStorage.getItem(key)!)).toEqual({
+    expect(JSON.parse(defined(localStorage.getItem(key)))).toEqual({
       hidden: ['b'],
       order: {},
       widths: {},
@@ -446,7 +491,13 @@ describe('PlusTable columns', () => {
     table.setColumnWidth('a', 140);
     await nextTick();
 
-    expect(JSON.parse(localStorage.getItem('plus-table:settings:reset-follow-up-test')!)).toEqual({
+    expect(
+      JSON.parse(
+        defined(
+          localStorage.getItem('plus-table:settings:reset-follow-up-test'),
+        ),
+      ),
+    ).toEqual({
       hidden: [],
       order: {},
       widths: { a: 140 },
@@ -501,7 +552,9 @@ describe('PlusTable columns', () => {
     // 缺 key = 回落列配置；key 存在但为 null = 强制自动，两者必须可区分
     expect(table.widthMap.value).toEqual({ a: null });
     expect('a' in table.widthMap.value).toBe(true);
-    expect(JSON.parse(localStorage.getItem(key)!).widths).toEqual({ a: null });
+    expect(JSON.parse(defined(localStorage.getItem(key))).widths).toEqual({
+      a: null,
+    });
 
     table.clearColumnWidth('a');
     expect(table.widthMap.value).toEqual({});
@@ -536,7 +589,9 @@ describe('PlusTable columns', () => {
     table.clearColumnWidth('a');
 
     expect(table.widthMap.value).toEqual({ b: 200 });
-    expect(JSON.parse(localStorage.getItem(key)!).widths).toEqual({ b: 200 });
+    expect(JSON.parse(defined(localStorage.getItem(key))).widths).toEqual({
+      b: 200,
+    });
 
     // 列配置里的 width 不受覆盖层影响，清除后仍是列自己的宽度
     table.clearColumnWidth('b');

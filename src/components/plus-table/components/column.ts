@@ -1,11 +1,17 @@
+import type { PropType, VNodeChild } from 'vue';
+
+import type { ColumnNode, PlusTableColumn, RowData } from '../types';
+
 import { defineComponent, h } from 'vue';
+
 import { ElTableColumn } from 'element-plus';
 import { omit } from 'es-toolkit';
+
+import { defined } from '@/utils/defined';
+
 import { usePlusTable } from '../tokens';
 import { isNativeRenderColumn } from '../utils';
 import PlusTableCell from './cell';
-import type { PropType, VNodeChild } from 'vue';
-import type { ColumnNode, PlusTableColumn, RowData } from '../types';
 
 const PLUS_TABLE_COLUMN_PROPS = [
   'component',
@@ -40,20 +46,29 @@ export default defineComponent({
     const table = usePlusTable();
 
     function renderHeader(column: PlusTableColumn): VNodeChild {
-      const headerSlot = column.prop ? table.slots[`header-${column.prop}`] : undefined;
+      const headerSlot = column.prop
+        ? table.slots[`header-${column.prop}`]
+        : undefined;
       return h(
         'span',
         {
-          class: ['ptbl-header-cell', { 'ptbl-header-cell--required': column.required }],
+          class: [
+            'ptbl-header-cell',
+            { 'ptbl-header-cell--required': column.required },
+          ],
         },
-        headerSlot ? headerSlot({ column }) : (column.label ?? column.prop ?? ''),
+        headerSlot
+          ? headerSlot({ column })
+          : (column.label ?? column.prop ?? ''),
       );
     }
 
     /** 列宽覆盖优先：null 为强制自动（压过列配置的 width），缺 key 才回落列配置 */
     function effectiveWidth(node: ColumnNode): PlusTableColumn['width'] {
       const widths = table.widthMap.value;
-      return node.id in widths ? (widths[node.id] ?? undefined) : node.column.width;
+      return node.id in widths
+        ? (widths[node.id] ?? undefined)
+        : node.column.width;
     }
 
     function renderNode(node: ColumnNode, index: number): VNodeChild {
@@ -78,7 +93,9 @@ export default defineComponent({
               // 分组 slot 由 el-table-column 内部渲染器执行，闭包里的 children 只是普通数组。
               // 读一次列视图，把该渲染副作用挂到视图重建上，子列显隐 / 排序才能推动 slot 重跑。
               void table.originColumns.value;
-              return node.children!.map((child, i) => renderNode(child, i));
+              return defined(node.children).map((child, i) =>
+                renderNode(child, i),
+              );
             },
           },
         );
@@ -105,7 +122,7 @@ export default defineComponent({
         },
         {
           header: () => renderHeader(column),
-          default: (scope: { row: RowData; $index: number }) =>
+          default: (scope: { $index: number; row: RowData }) =>
             scope.$index >= 0
               ? h(PlusTableCell, {
                   row: scope.row,

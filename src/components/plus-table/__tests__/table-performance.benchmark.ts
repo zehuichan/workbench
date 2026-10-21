@@ -1,15 +1,20 @@
-import { nextTick } from 'vue';
-import { afterAll, bench, describe } from 'vitest';
-import { createTestTable } from './helpers/create-test-table';
 import type { ColumnNode } from '../types';
 
+import { nextTick } from 'vue';
+
+import { afterAll, bench, describe } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
+import { createTestTable } from './helpers/create-test-table';
+
 interface Row {
+  [key: string]: number | string;
+  amount: number;
   id: number;
   name: string;
-  amount: number;
-  status: string;
   note: string;
-  [key: string]: string | number;
+  status: string;
 }
 
 const BENCHMARK_OPTIONS = { time: 1000, warmupTime: 200 } as const;
@@ -101,14 +106,18 @@ const rowModeTable = createTestTable<Row>({
   dirtyTracking: true,
 });
 
-const dependentNodes: ColumnNode<Row>[] = Array.from({ length: DEPENDENT_COUNT }, (_, index) => {
-  const node = dependencyTable.table.getColumnById(`dep${index}`);
-  if (!node) throw new Error(`[benchmark] missing dependent column dep${index}`);
-  return node;
-});
+const dependentNodes: ColumnNode<Row>[] = Array.from(
+  { length: DEPENDENT_COUNT },
+  (_, index) => {
+    const node = dependencyTable.table.getColumnById(`dep${index}`);
+    if (!node)
+      throw new Error(`[benchmark] missing dependent column dep${index}`);
+    return node;
+  },
+);
 
-const dependencyRow = dependencyTable.table.data.value[0]!;
-const editRow = editTable.table.data.value[EDIT_ROW_INDEX]!;
+const dependencyRow = defined(dependencyTable.table.data.value[0]);
+const editRow = defined(editTable.table.data.value[EDIT_ROW_INDEX]);
 const editRowKey = String(editRow.id);
 
 // Seed one history entry so undo / redo always has work.
@@ -118,7 +127,12 @@ editTable.table.setCellValue(editRow, EDIT_ROW_INDEX, 'name', 'seed');
 for (const row of validationTable.table.data.value) {
   const location = validationTable.table.keysMap.value.get(String(row.id));
   if (!location) throw new Error('[benchmark] missing validation row');
-  validationTable.table.setCellValue(location.row, location.rowIndex, 'name', '');
+  validationTable.table.setCellValue(
+    location.row,
+    location.rowIndex,
+    'name',
+    '',
+  );
 }
 await validationTable.table.validate(false);
 
@@ -153,7 +167,7 @@ describe('table data sync performance', () => {
   bench(
     'reorder 1000 rows in place',
     async () => {
-      syncTable.props.data = [...syncTable.table.data.value].reverse();
+      syncTable.props.data = [...syncTable.table.data.value].toReversed();
       await nextTick();
     },
     BENCHMARK_OPTIONS,
@@ -179,7 +193,12 @@ describe('table write pipeline performance', () => {
     'write one cell with history and dirty tracking',
     () => {
       writeIteration += 1;
-      editTable.table.setCellValue(editRow, EDIT_ROW_INDEX, 'name', `v${writeIteration}`);
+      editTable.table.setCellValue(
+        editRow,
+        EDIT_ROW_INDEX,
+        'name',
+        `v${writeIteration}`,
+      );
     },
     BENCHMARK_OPTIONS,
   );
@@ -267,7 +286,7 @@ describe('table editing performance', () => {
     'start and commit one row edit',
     async () => {
       rowEditIteration += 1;
-      const row = rowModeTable.table.data.value[EDIT_ROW_INDEX]!;
+      const row = defined(rowModeTable.table.data.value[EDIT_ROW_INDEX]);
       const rowKey = String(row.id);
       rowModeTable.table.startRowEdit(EDIT_ROW_INDEX);
       rowModeTable.table.setDraft(rowKey, 'name', `row-${rowEditIteration}`);

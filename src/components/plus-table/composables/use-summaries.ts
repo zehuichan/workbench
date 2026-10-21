@@ -1,16 +1,23 @@
-import { h, toValue, type MaybeRefOrGetter, type VNode } from 'vue';
-import { groupBy, round, sumBy } from 'es-toolkit';
 import type { SummaryMethod } from 'element-plus';
+
+import type { MaybeRefOrGetter, VNode } from 'vue';
+
 import type { RowData } from '../types';
 
+import { h, toValue } from 'vue';
+
+import { groupBy, round, sumBy } from 'es-toolkit';
+
 export interface SummaryFormatContext<T extends RowData = RowData> {
-  prop: string;
-  rows: T[];
   /** Set when the cell is one group inside a `groupBy` stack. */
   groupKey?: string;
+  prop: string;
+  rows: T[];
 }
 
 export interface SummaryColumnOptions<T extends RowData = RowData> {
+  /** Replaces `round(total, precision).toFixed(precision)`. */
+  format?: (total: number, ctx: SummaryFormatContext<T>) => string;
   /** Decimal places. Falls back to `options.precision` (default 2). */
   precision?: number;
   /**
@@ -18,8 +25,6 @@ export interface SummaryColumnOptions<T extends RowData = RowData> {
    * `null`, `''`, and non-finite numbers count as 0.
    */
   value?: (row: T) => unknown;
-  /** Replaces `round(total, precision).toFixed(precision)`. */
-  format?: (total: number, ctx: SummaryFormatContext<T>) => string;
 }
 
 /**
@@ -27,22 +32,23 @@ export interface SummaryColumnOptions<T extends RowData = RowData> {
  * Object: per-prop precision, or a full {@link SummaryColumnOptions}.
  */
 export type SummaryColumns<T extends RowData = RowData> =
-  (keyof T & string)[] | { [K in keyof T & string]?: number | SummaryColumnOptions<T> };
+  | (keyof T & string)[]
+  | { [K in keyof T & string]?: number | SummaryColumnOptions<T> };
 
 export interface UseSummariesOptions<T extends RowData = RowData> {
-  /** Text in column index 0. Default `'合计'`. */
-  label?: string;
-  /** Default decimal places. Default `2`. */
-  precision?: number;
   /**
    * Group key. Each configured column then renders one stacked row per group
    * instead of a single total.
    */
-  groupBy?: (keyof T & string) | ((row: T) => string);
-  /** Column that shows the group key. Defaults to `groupBy` when that is a field name. */
-  groupLabelProp?: keyof T & string;
+  groupBy?: ((row: T) => string) | (keyof T & string);
   /** Group key text. Default `String(key)`. */
   groupLabel?: (key: string, rows: T[]) => string;
+  /** Column that shows the group key. Defaults to `groupBy` when that is a field name. */
+  groupLabelProp?: keyof T & string;
+  /** Text in column index 0. Default `'合计'`. */
+  label?: string;
+  /** Default decimal places. Default `2`. */
+  precision?: number;
 }
 
 export interface UseSummariesReturn<T extends RowData = RowData> {
@@ -54,9 +60,9 @@ export interface UseSummariesReturn<T extends RowData = RowData> {
 }
 
 interface ResolvedColumn<T extends RowData> {
+  format?: SummaryColumnOptions<T>['format'];
   precision: number;
   value: (row: T) => unknown;
-  format?: SummaryColumnOptions<T>['format'];
 }
 
 function toNumber(value: unknown): number {
@@ -94,7 +100,10 @@ function resolveColumnMap<T extends RowData>(
     return map;
   }
   for (const [prop, entry] of Object.entries(columns)) {
-    if (typeof entry === 'number' || (entry != null && typeof entry === 'object')) {
+    if (
+      typeof entry === 'number' ||
+      (entry !== null && entry !== undefined && typeof entry === 'object')
+    ) {
       map.set(prop, resolveColumn(prop, entry, defaultPrecision));
     }
   }
@@ -122,7 +131,7 @@ function renderGroupStack(texts: string[]): VNode {
 function resolveGroupKey<T extends RowData>(
   groupByOption: UseSummariesOptions<T>['groupBy'],
 ): ((row: T) => string) | undefined {
-  if (groupByOption == null) return undefined;
+  if (groupByOption === null || groupByOption === undefined) return undefined;
   if (typeof groupByOption === 'function') return groupByOption;
   return (row) => String(row[groupByOption] ?? '');
 }
@@ -154,11 +163,17 @@ export function useSummaries<T extends RowData = RowData>(
 
   const getGroupKey = resolveGroupKey(groupByOption);
   const resolvedGroupLabelProp =
-    groupLabelProp ?? (typeof groupByOption === 'string' ? groupByOption : undefined);
+    groupLabelProp ??
+    (typeof groupByOption === 'string' ? groupByOption : undefined);
 
-  const summaryMethod: SummaryMethod<NoInfer<T>> = ({ columns: tableColumns, data }) => {
+  const summaryMethod: SummaryMethod<NoInfer<T>> = ({
+    columns: tableColumns,
+    data,
+  }) => {
     const columnMap = resolveColumnMap(toValue(columns), defaultPrecision);
-    const grouped = getGroupKey ? groupBy(data, (row) => getGroupKey(row)) : undefined;
+    const grouped = getGroupKey
+      ? groupBy(data, (row) => getGroupKey(row))
+      : undefined;
     const groupKeys = grouped ? Object.keys(grouped) : [];
 
     return tableColumns.map((column, index) => {
@@ -168,7 +183,9 @@ export function useSummaries<T extends RowData = RowData>(
       if (!prop) return '';
 
       if (grouped && prop === resolvedGroupLabelProp) {
-        return renderGroupStack(groupKeys.map((key) => groupLabel(key, grouped[key] ?? [])));
+        return renderGroupStack(
+          groupKeys.map((key) => groupLabel(key, grouped[key] ?? [])),
+        );
       }
 
       const config = columnMap.get(prop);

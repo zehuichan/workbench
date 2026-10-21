@@ -1,16 +1,28 @@
-import { computed, shallowRef } from 'vue';
-import { isBoolean, isFunction, isPlainObject, isString } from 'es-toolkit';
-import { isSpecialColumn } from '../utils';
 import type { ComputedRef, ShallowRef } from 'vue';
-import type { CellRule, ColumnNode, DependencyApi, PlusTableColumn, RowData } from '../types';
+
+import type {
+  CellRule,
+  ColumnNode,
+  DependencyApi,
+  PlusTableColumn,
+  RowData,
+} from '../types';
 import type { UseColumnsReturn } from './use-columns';
 import type { UseDataReturn } from './use-data';
 
+import { computed, shallowRef } from 'vue';
+
+import { isBoolean, isFunction, isPlainObject, isString } from 'es-toolkit';
+
+import { defined } from '@/utils/defined';
+
+import { isSpecialColumn } from '../utils';
+
 export interface DependencyState {
+  componentProps: Record<string, unknown>;
   disabled: boolean;
   required: boolean;
   rules: CellRule[] | null;
-  componentProps: Record<string, unknown>;
 }
 
 const EMPTY_PROPS: Record<string, unknown> = {};
@@ -42,14 +54,24 @@ export function assertColumnDependencies<T extends RowData = RowData>(
   if (!isPlainObject(dependencies)) {
     throw new TypeError('[PlusTable] column.dependencies 必须是配置对象。');
   }
-  if (!column.prop || isSpecialColumn(column) || Boolean(column.children?.length)) {
-    throw new TypeError('[PlusTable] dependencies 只能配置在具有非空 prop 的叶子数据列上。');
+  if (
+    !column.prop ||
+    isSpecialColumn(column) ||
+    Boolean(column.children?.length)
+  ) {
+    throw new TypeError(
+      '[PlusTable] dependencies 只能配置在具有非空 prop 的叶子数据列上。',
+    );
   }
   if (
     !Array.isArray(dependencies.triggerFields) ||
-    dependencies.triggerFields.some((field) => !isString(field) || field.length === 0)
+    dependencies.triggerFields.some(
+      (field) => !isString(field) || field.length === 0,
+    )
   ) {
-    throw new TypeError('[PlusTable] dependencies.triggerFields 必须是字段名数组。');
+    throw new TypeError(
+      '[PlusTable] dependencies.triggerFields 必须是字段名数组。',
+    );
   }
   for (const key of DEPENDENCY_CALLBACK_KEYS) {
     const callback = dependencies[key];
@@ -59,7 +81,10 @@ export function assertColumnDependencies<T extends RowData = RowData>(
   }
 }
 
-function isSameProps(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+function isSameProps(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+): boolean {
   if (a === b) return true;
   const keys = Object.keys(a);
   if (keys.length !== Object.keys(b).length) return false;
@@ -72,10 +97,18 @@ function isSameRules(a: CellRule[] | null, b: CellRule[] | null): boolean {
   return a.every((rule, index) => rule === b[index]);
 }
 
-type UseDependenciesProps<T extends RowData> = Pick<UseDataReturn<T>, 'keysMap' | 'getRowKey'> &
+type UseDependenciesProps<T extends RowData> = Pick<
+  UseDataReturn<T>,
+  'getRowKey' | 'keysMap'
+> &
   Pick<UseColumnsReturn<T>, 'triggerIndex'> & {
     /** 单元格写值流水线（由 useTable 以函数声明提供，只在运行期被调用） */
-    setCellValue: (row: T, rowIndex: number, prop: string, value: unknown) => void;
+    setCellValue: (
+      row: T,
+      rowIndex: number,
+      prop: string,
+      value: unknown,
+    ) => void;
   };
 
 /** 字段联动：按 (rowKey, colId) 缓存联动状态的 computed，并在字段提交后广播 trigger 副作用。 */
@@ -144,23 +177,31 @@ export function useDependencies<T extends RowData = RowData>({
     column: PlusTableColumn<T>,
     previous: DependencyState | undefined,
   ): DependencyState {
-    const dep = column.dependencies!;
-    const api = makeApi(row, rowIndex, column.prop!);
+    const dep = defined(column.dependencies);
+    const api = makeApi(row, rowIndex, defined(column.prop));
     const disabled = dep.disabled?.(row, api);
     const required = dep.required?.(row, api);
     const rules = dep.rules?.(row, api);
     const componentProps = dep.componentProps?.(row, api);
     if (disabled !== undefined && !isBoolean(disabled)) {
-      throw new TypeError('[PlusTable] dependencies.disabled 必须返回 boolean。');
+      throw new TypeError(
+        '[PlusTable] dependencies.disabled 必须返回 boolean。',
+      );
     }
     if (required !== undefined && !isBoolean(required)) {
-      throw new TypeError('[PlusTable] dependencies.required 必须返回 boolean。');
+      throw new TypeError(
+        '[PlusTable] dependencies.required 必须返回 boolean。',
+      );
     }
     if (rules !== undefined && rules !== null && !Array.isArray(rules)) {
-      throw new TypeError('[PlusTable] dependencies.rules 必须返回规则数组、null 或 undefined。');
+      throw new TypeError(
+        '[PlusTable] dependencies.rules 必须返回规则数组、null 或 undefined。',
+      );
     }
     if (componentProps !== undefined && !isPlainObject(componentProps)) {
-      throw new TypeError('[PlusTable] dependencies.componentProps 必须返回普通对象或 undefined。');
+      throw new TypeError(
+        '[PlusTable] dependencies.componentProps 必须返回普通对象或 undefined。',
+      );
     }
 
     const next: DependencyState = {
@@ -192,13 +233,18 @@ export function useDependencies<T extends RowData = RowData>({
    * 条目只按 (rowKey, colId) 建一次：行对象与行下标在 computed 内部按 rowKey 现查，
    * 换页 / 重排不必重建 computed，也不会把旧行引用留在缓存里。
    */
-  function getDependencyState(row: T, rowIndex: number, node: ColumnNode<T>): DependencyState {
+  function getDependencyState(
+    row: T,
+    rowIndex: number,
+    node: ColumnNode<T>,
+  ): DependencyState {
     const column = node.column;
     if (!column.dependencies) return EMPTY_STATE;
     const rowKey = getRowKey(row);
     // 游离行引用（已被移出当前数据）直接算一次即返回：不建缓存，免得同 rowKey 的新行命中旧结果
     const resident = keysMap.value.get(rowKey);
-    if (resident?.row !== row) return computeState(row, rowIndex, column, undefined);
+    if (resident?.row !== row)
+      return computeState(row, rowIndex, column, undefined);
 
     let rowCache = cache.get(rowKey);
     let state = rowCache?.get(node.id);
@@ -229,10 +275,10 @@ export function useDependencies<T extends RowData = RowData>({
     const rowKey = getRowKey(row);
     const isRoot = chain === null;
     if (isRoot) chain = new Map();
-    let props = chain!.get(rowKey);
+    let props = defined(chain).get(rowKey);
     if (!props) {
       props = new Set();
-      chain!.set(rowKey, props);
+      defined(chain).set(rowKey, props);
     }
     if (props.has(changedProp)) return;
     props.add(changedProp);
@@ -240,7 +286,7 @@ export function useDependencies<T extends RowData = RowData>({
       for (const node of dependents) {
         const dep = node.column.dependencies;
         if (!dep?.trigger) continue;
-        dep.trigger(row, makeApi(row, rowIndex, node.column.prop!));
+        dep.trigger(row, makeApi(row, rowIndex, defined(node.column.prop)));
       }
     } finally {
       if (isRoot) chain = null;

@@ -1,14 +1,20 @@
-import { nextTick, toRaw } from 'vue';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createTestTable, type TestTable } from '../helpers/create-test-table';
 import type { DependencyApi } from '../../types';
+import type { TestTable } from '../helpers/create-test-table';
+
+import { nextTick, toRaw } from 'vue';
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
+import { createTestTable } from '../helpers/create-test-table';
 
 interface Row {
-  id: number;
   a: string;
   b: string;
   c: string;
   d: string;
+  id: number;
 }
 
 /** 稳定引用的下拉项，用来验证等价重算后 componentProps 不换引用 */
@@ -47,9 +53,9 @@ describe('PlusTable dependencies', () => {
   });
 
   it('rejects malformed trigger fields while normalizing', () => {
-    expect(() => setup([{ prop: 'a', label: 'A', dependencies: { triggerFields: [''] } }])).toThrow(
-      /triggerFields 必须是字段名数组/,
-    );
+    expect(() =>
+      setup([{ prop: 'a', label: 'A', dependencies: { triggerFields: [''] } }]),
+    ).toThrow(/triggerFields 必须是字段名数组/);
   });
 
   it('asserts dependency config only while normalizing, never on the hot paths', () => {
@@ -66,24 +72,30 @@ describe('PlusTable dependencies', () => {
         },
       },
     ]);
-    const node = testTable.table.getColumnById('b')!;
-    const row = testTable.table.data.value[0]!;
+    const node = defined(testTable.table.getColumnById('b'));
+    const row = defined(testTable.table.data.value[0]);
 
     /**
      * 绕开响应式把配置改成 normalize 会拒绝的形状：归一化不会重跑，
      * 于是只要取状态 / 广播变更还在断言配置，这里就会抛。
      */
-    const raw = toRaw(testTable.props.columns[1]!) as { dependencies: { triggerFields: string[] } };
+    const raw = toRaw(defined(testTable.props.columns[1])) as {
+      dependencies: { triggerFields: string[] };
+    };
     raw.dependencies.triggerFields = [''];
 
     for (let index = 0; index < 5; index += 1) {
-      expect(testTable.table.getDependencyState(row, 0, node).disabled).toBe(false);
+      expect(testTable.table.getDependencyState(row, 0, node).disabled).toBe(
+        false,
+      );
       testTable.table.setCellValue(row, 0, 'a', `v${index}`);
     }
     testTable.table.setCellValue(row, 0, 'a', 'lock');
 
     expect(trigger).toHaveBeenCalledTimes(6);
-    expect(testTable.table.getDependencyState(row, 0, node).disabled).toBe(true);
+    expect(testTable.table.getDependencyState(row, 0, node).disabled).toBe(
+      true,
+    );
   });
 
   it('runs triggers for hidden dependents of a changed field', () => {
@@ -97,9 +109,13 @@ describe('PlusTable dependencies', () => {
         visible: false,
         dependencies: { triggerFields: ['a', 'a'], trigger: onHidden },
       },
-      { prop: 'c', label: 'C', dependencies: { triggerFields: ['a', 'd'], trigger: onVisible } },
+      {
+        prop: 'c',
+        label: 'C',
+        dependencies: { triggerFields: ['a', 'd'], trigger: onVisible },
+      },
     ]);
-    const row = table.data.value[0]!;
+    const row = defined(table.data.value[0]);
 
     table.setCellValue(row, 0, 'a', 'next');
     // 同一字段重复声明只触发一次，隐藏列同样收到广播
@@ -116,10 +132,18 @@ describe('PlusTable dependencies', () => {
     const onD = vi.fn();
     const { table } = setup([
       { prop: 'a', label: 'A' },
-      { prop: 'b', label: 'B', dependencies: { triggerFields: ['a'], trigger: onA } },
-      { prop: 'c', label: 'C', dependencies: { triggerFields: ['d'], trigger: onD } },
+      {
+        prop: 'b',
+        label: 'B',
+        dependencies: { triggerFields: ['a'], trigger: onA },
+      },
+      {
+        prop: 'c',
+        label: 'C',
+        dependencies: { triggerFields: ['d'], trigger: onD },
+      },
     ]);
-    const row = table.data.value[0]!;
+    const row = defined(table.data.value[0]);
 
     table.setCellValue(row, 0, 'a', 'next');
     expect(onA).toHaveBeenCalledTimes(1);
@@ -161,7 +185,7 @@ describe('PlusTable dependencies', () => {
         },
       },
     ]);
-    const row = table.data.value[0]!;
+    const row = defined(table.data.value[0]);
 
     table.setCellValue(row, 0, 'b', 'x');
 
@@ -173,22 +197,33 @@ describe('PlusTable dependencies', () => {
 
   it('returns a shared empty state for columns without dependencies', () => {
     const { table } = setup([{ prop: 'a', label: 'A' }]);
-    const node = table.getColumnById('a')!;
-    const row = table.data.value[0]!;
+    const node = defined(table.getColumnById('a'));
+    const row = defined(table.data.value[0]);
 
     const state = table.getDependencyState(row, 0, node);
-    expect(state).toEqual({ disabled: false, required: false, rules: null, componentProps: {} });
+    expect(state).toEqual({
+      disabled: false,
+      required: false,
+      rules: null,
+      componentProps: {},
+    });
     expect(table.getDependencyState(row, 0, node)).toBe(state);
   });
 
   it('caches by row identity and generation; rowIndex argument is ignored for residents', () => {
-    const componentProps = vi.fn((row: Row) => ({ options: OPTION_SETS[row.a] ?? [] }));
+    const componentProps = vi.fn((row: Row) => ({
+      options: OPTION_SETS[row.a] ?? [],
+    }));
     const { table } = setup([
       { prop: 'a', label: 'A' },
-      { prop: 'b', label: 'B', dependencies: { triggerFields: ['a'], componentProps } },
+      {
+        prop: 'b',
+        label: 'B',
+        dependencies: { triggerFields: ['a'], componentProps },
+      },
     ]);
-    const node = table.getColumnById('b')!;
-    const row = table.data.value[0]!;
+    const node = defined(table.getColumnById('b'));
+    const row = defined(table.data.value[0]);
 
     const first = table.getDependencyState(row, 0, node);
     expect(table.getDependencyState(row, 0, node)).toBe(first);
@@ -203,24 +238,32 @@ describe('PlusTable dependencies', () => {
     const afterTriggerField = table.getDependencyState(row, 0, node);
     expect(componentProps).toHaveBeenCalledTimes(2);
     expect(afterTriggerField).not.toBe(first);
-    expect(afterTriggerField.componentProps).toEqual({ options: ['x-1', 'x-2'] });
+    expect(afterTriggerField.componentProps).toEqual({
+      options: ['x-1', 'x-2'],
+    });
 
     // 同行其他字段写入推进代数：重算，但等价结果保持引用稳定
     table.setCellValue(row, 0, 'd', 'noise');
     const afterOtherField = table.getDependencyState(row, 0, node);
     expect(componentProps).toHaveBeenCalledTimes(3);
     expect(afterOtherField).toBe(afterTriggerField);
-    expect(afterOtherField.componentProps).toBe(afterTriggerField.componentProps);
+    expect(afterOtherField.componentProps).toBe(
+      afterTriggerField.componentProps,
+    );
   });
 
   it('recomputes after a bare generation bump and after the row identity is replaced', async () => {
     const disabled = vi.fn((row: Row) => row.a === 'lock');
     const testTable = setup([
       { prop: 'a', label: 'A' },
-      { prop: 'b', label: 'B', dependencies: { triggerFields: ['a'], disabled } },
+      {
+        prop: 'b',
+        label: 'B',
+        dependencies: { triggerFields: ['a'], disabled },
+      },
     ]);
-    const node = testTable.table.getColumnById('b')!;
-    const row = testTable.table.data.value[0]!;
+    const node = defined(testTable.table.getColumnById('b'));
+    const row = defined(testTable.table.data.value[0]);
 
     testTable.table.getDependencyState(row, 0, node);
     expect(disabled).toHaveBeenCalledTimes(1);
@@ -233,9 +276,11 @@ describe('PlusTable dependencies', () => {
     // 同 rowKey 换了行对象：缓存随行身份一起作废
     testTable.props.data = [{ id: 1, a: 'lock', b: '', c: '', d: '' }];
     await nextTick();
-    const nextRow = testTable.table.data.value[0]!;
+    const nextRow = defined(testTable.table.data.value[0]);
     expect(nextRow).not.toBe(row);
-    expect(testTable.table.getDependencyState(nextRow, 0, node).disabled).toBe(true);
+    expect(testTable.table.getDependencyState(nextRow, 0, node).disabled).toBe(
+      true,
+    );
     expect(disabled).toHaveBeenCalledTimes(3);
   });
 
@@ -248,17 +293,27 @@ describe('PlusTable dependencies', () => {
         dependencies: { triggerFields: ['a'], disabled: () => false },
       },
     ]);
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
     expect(
-      testTable.table.getDependencyState(row, 0, testTable.table.getColumnById('b')!).disabled,
+      testTable.table.getDependencyState(
+        row,
+        0,
+        defined(testTable.table.getColumnById('b')),
+      ).disabled,
     ).toBe(false);
 
-    const config = testTable.props.columns[1] as { dependencies: { disabled: () => boolean } };
+    const config = testTable.props.columns[1] as {
+      dependencies: { disabled: () => boolean };
+    };
     config.dependencies.disabled = () => true;
     await nextTick();
 
     expect(
-      testTable.table.getDependencyState(row, 0, testTable.table.getColumnById('b')!).disabled,
+      testTable.table.getDependencyState(
+        row,
+        0,
+        defined(testTable.table.getColumnById('b')),
+      ).disabled,
     ).toBe(true);
   });
 
@@ -271,8 +326,8 @@ describe('PlusTable dependencies', () => {
         dependencies: { triggerFields: ['a'], required: () => 'yes' },
       },
     ]);
-    const node = table.getColumnById('b')!;
-    const row = table.data.value[0]!;
+    const node = defined(table.getColumnById('b'));
+    const row = defined(table.data.value[0]);
 
     expect(() => table.getDependencyState(row, 0, node)).toThrow(
       /dependencies.required 必须返回 boolean/,

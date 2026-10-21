@@ -1,9 +1,15 @@
+import type { ColumnNode } from '../../types';
+import type { TestTable } from '../helpers/create-test-table';
+
 import { createApp, h, nextTick } from 'vue';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
 import PlusTableCell from '../../components/cell';
 import { PLUS_TABLE_INJECTION_KEY } from '../../tokens';
-import { createTestTable, type TestTable } from '../helpers/create-test-table';
-import type { ColumnNode } from '../../types';
+import { createTestTable } from '../helpers/create-test-table';
 
 interface Row {
   id: number;
@@ -23,7 +29,10 @@ function flushTransitions(): Promise<void> {
 
 describe('PlusTable cell error tooltip', () => {
   const tables: TestTable<Row>[] = [];
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: HTMLElement }> = [];
+  const mounted: Array<{
+    app: ReturnType<typeof createApp>;
+    host: HTMLElement;
+  }> = [];
 
   async function setup() {
     const testTable = createTestTable<Row>({
@@ -34,9 +43,11 @@ describe('PlusTable cell error tooltip', () => {
     tables.push(testTable);
     await testTable.table.validate(false);
 
-    const row = testTable.table.data.value[0]!;
+    const row = defined(testTable.table.data.value[0]);
     // PlusTableCell 的 props 按 RowData 声明（列节点由 el-table 的 slot 透传，泛型在那里已被擦除）
-    const node = testTable.table.columns.value[0]! as unknown as ColumnNode;
+    const node = defined(
+      testTable.table.columns.value[0],
+    ) as unknown as ColumnNode;
     const host = document.createElement('div');
     document.body.append(host);
     const app = createApp({
@@ -47,7 +58,12 @@ describe('PlusTable cell error tooltip', () => {
     await nextTick();
     mounted.push({ app, host });
 
-    return { host, trigger: host.querySelector<HTMLElement>('.ptbl-cell-tooltip-trigger')! };
+    return {
+      host,
+      trigger: defined(
+        host.querySelector<HTMLElement>('.ptbl-cell-tooltip-trigger'),
+      ),
+    };
   }
 
   afterEach(async () => {
@@ -63,10 +79,12 @@ describe('PlusTable cell error tooltip', () => {
     const { host, trigger } = await setup();
 
     expect(trigger).toBeTruthy();
-    const cell = trigger.querySelector<HTMLElement>('.ptbl-cell')!;
+    const cell = defined(trigger.querySelector<HTMLElement>('.ptbl-cell'));
     expect(cell.getAttribute('aria-invalid')).toBe('true');
-    const describedBy = cell.getAttribute('aria-describedby')!;
-    expect(host.querySelector(`#${CSS.escape(describedBy)}`)?.textContent).toBe(ERROR_MESSAGE);
+    const describedBy = defined(cell.getAttribute('aria-describedby'));
+    expect(host.querySelector(`#${CSS.escape(describedBy)}`)?.textContent).toBe(
+      ERROR_MESSAGE,
+    );
     // 未交互前不挂载 ElTooltip：整表报错时能省下成百上千个 popper 实例
     expect(popper()).toBeNull();
   });

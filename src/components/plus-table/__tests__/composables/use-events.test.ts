@@ -1,14 +1,19 @@
+import type { ResolvedMenuItem } from '../../context-menu';
+import type { ContextMenuItem } from '../../table';
+import type { TestTable } from '../helpers/create-test-table';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
 import { useEvents } from '../../composables/use-events';
 import { cellPosition } from '../helpers/cell-position';
-import { createTestTable, type TestTable } from '../helpers/create-test-table';
-import type { ContextMenuItem } from '../../table';
-import type { ResolvedMenuItem } from '../../context-menu';
+import { createTestTable } from '../helpers/create-test-table';
 
 interface Row {
+  amount: null | number;
   id: number;
   name: string;
-  amount: number | null;
 }
 
 const columns = [
@@ -36,7 +41,7 @@ describe('PlusTable context menu events', () => {
     tables.push(testTable);
 
     const open = vi.fn((event: MouseEvent, items: ResolvedMenuItem[]) => {
-      if (!items.length) return;
+      if (items.length === 0) return;
       event.preventDefault();
     });
     testTable.table.contextMenuRef.value = { open };
@@ -59,14 +64,14 @@ describe('PlusTable context menu events', () => {
 
   it('opens header menu with hide and settings items', () => {
     const { testTable, events, open } = setup();
-    const columnId = testTable.table.columns.value[0]!.id;
+    const columnId = defined(testTable.table.columns.value[0]).id;
     const event = mouseEvent();
 
     events.handleHeaderContextmenu({ columnKey: columnId }, event);
 
     expect(event.defaultPrevented).toBe(true);
     expect(open).toHaveBeenCalledTimes(1);
-    const items = open.mock.calls[0]![1];
+    const items = defined(open.mock.calls[0])[1];
     expect(items.map((item) => item.key)).toEqual(['hide', 'settings']);
   });
 
@@ -81,8 +86,8 @@ describe('PlusTable context menu events', () => {
         },
       ],
     });
-    const row = testTable.props.data[0]!;
-    const columnId = testTable.table.columns.value[1]!.id;
+    const row = defined(testTable.props.data[0]);
+    const columnId = defined(testTable.table.columns.value[1]).id;
     const cell = document.createElement('td');
     const event = mouseEvent(cell);
 
@@ -90,7 +95,9 @@ describe('PlusTable context menu events', () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(open).toHaveBeenCalledTimes(1);
-    expect(open.mock.calls[0]![1].map((item) => item.key)).toEqual(['copy']);
+    expect(defined(open.mock.calls[0])[1].map((item) => item.key)).toEqual([
+      'copy',
+    ]);
     expect(cellPosition(testTable.table.getCurrentCellLocation())).toEqual({
       rowIndex: 0,
       colIndex: 1,
@@ -99,8 +106,8 @@ describe('PlusTable context menu events', () => {
 
   it('does not preventDefault when contextMenu is empty', () => {
     const { testTable, events, open } = setup();
-    const row = testTable.props.data[0]!;
-    const columnId = testTable.table.columns.value[0]!.id;
+    const row = defined(testTable.props.data[0]);
+    const columnId = defined(testTable.table.columns.value[0]).id;
     const cell = document.createElement('td');
     const event = mouseEvent(cell);
 
@@ -126,14 +133,16 @@ describe('PlusTable context menu events', () => {
         },
       ],
     });
-    const row = testTable.props.data[0]!;
-    const columnId = testTable.table.columns.value[0]!.id;
+    const row = defined(testTable.props.data[0]);
+    const columnId = defined(testTable.table.columns.value[0]).id;
     const cell = document.createElement('td');
     const event = mouseEvent(cell);
 
     events.handleCellContextmenu(row, { columnKey: columnId }, cell, event);
 
-    expect(open.mock.calls[0]![1].map((item) => item.key)).toEqual(['visible']);
+    expect(defined(open.mock.calls[0])[1].map((item) => item.key)).toEqual([
+      'visible',
+    ]);
   });
 
   it('resolves closeOnSelect and slotProps for menu item slots', () => {
@@ -147,14 +156,14 @@ describe('PlusTable context menu events', () => {
         },
       ],
     });
-    const row = testTable.props.data[0]!;
-    const columnId = testTable.table.columns.value[0]!.id;
+    const row = defined(testTable.props.data[0]);
+    const columnId = defined(testTable.table.columns.value[0]).id;
     const cell = document.createElement('td');
     const event = mouseEvent(cell);
 
     events.handleCellContextmenu(row, { columnKey: columnId }, cell, event);
 
-    const item = open.mock.calls[0]![1][0]!;
+    const item = defined(defined(open.mock.calls[0])[1][0]);
     expect(item.key).toBe('insert-n');
     expect(item.closeOnSelect).toBe(false);
     expect(item.slotProps).toEqual(
@@ -169,8 +178,8 @@ describe('PlusTable context menu events', () => {
     const { testTable, events, open } = setup({
       contextMenu: [{ key: 'copy', label: '复制', handler: () => undefined }],
     });
-    const row = testTable.props.data[0]!;
-    const columnId = testTable.table.columns.value[0]!.id;
+    const row = defined(testTable.props.data[0]);
+    const columnId = defined(testTable.table.columns.value[0]).id;
     const cell = document.createElement('td');
     const input = document.createElement('input');
     cell.append(input);

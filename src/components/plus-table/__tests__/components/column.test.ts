@@ -1,8 +1,14 @@
-import { createApp, h, nextTick, ref, shallowRef, type Ref, type Slots } from 'vue';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PLUS_TABLE_INJECTION_KEY } from '../../tokens';
+import type { Ref, Slots } from 'vue';
+
 import type { PlusTableContext } from '../../tokens';
 import type { ColumnNode } from '../../types';
+
+import { createApp, h, nextTick, ref, shallowRef } from 'vue';
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import PlusTableColumnNode from '../../components/column';
+import { PLUS_TABLE_INJECTION_KEY } from '../../tokens';
 
 const renderedProps = vi.hoisted(() => [] as Record<string, unknown>[]);
 /** 每个 el-table-column 实例挂载时的 vnode key，用来观察分组列何时被重挂载 */
@@ -16,7 +22,9 @@ vi.mock('element-plus', async (importOriginal) => {
     ElTableColumn: defineComponent({
       inheritAttrs: false,
       setup(_, { attrs, slots }) {
-        mountedKeys.push(getCurrentInstance()!.vnode.key);
+        const instance = getCurrentInstance();
+        if (!instance) throw new Error('Expected a component instance.');
+        mountedKeys.push(instance.vnode.key);
         return () => {
           renderedProps.push({ ...attrs });
           // 与 el-table-column 一致：default slot 始终带 scope，$index<0 表示非数据行渲染
@@ -26,8 +34,6 @@ vi.mock('element-plus', async (importOriginal) => {
     }),
   };
 });
-
-import PlusTableColumnNode from '../../components/column';
 
 function leaf(id: string): ColumnNode {
   return { id, column: { prop: id, label: id.toUpperCase() } };
@@ -44,13 +50,14 @@ function group(id: string, children: ColumnNode[]): ColumnNode {
 }
 
 describe('PlusTable column rendering', () => {
-  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> = [];
+  const mounted: Array<{ app: ReturnType<typeof createApp>; host: Element }> =
+    [];
 
   function mountNode(
     node: Ref<ColumnNode>,
     states: {
-      widthMap?: Ref<Record<string, number | null>>;
       originColumns?: Ref<ColumnNode[]>;
+      widthMap?: Ref<Record<string, null | number>>;
     } = {},
   ) {
     const host = document.createElement('div');
@@ -91,7 +98,9 @@ describe('PlusTable column rendering', () => {
     mountNode(node, { widthMap: ref({ '#': 88 }) });
     await nextTick();
 
-    expect(renderedProps.at(-1)).toEqual(expect.objectContaining({ columnKey: '#', width: 88 }));
+    expect(renderedProps.at(-1)).toEqual(
+      expect.objectContaining({ columnKey: '#', width: 88 }),
+    );
   });
 
   it('drops the configured width when the override forces auto', async () => {
@@ -102,7 +111,9 @@ describe('PlusTable column rendering', () => {
     mountNode(node, { widthMap: ref({ '#': null }) });
     await nextTick();
 
-    expect(renderedProps.at(-1)).toEqual(expect.objectContaining({ width: undefined }));
+    expect(renderedProps.at(-1)).toEqual(
+      expect.objectContaining({ width: undefined }),
+    );
   });
 
   it('keys a group by its precomputed subtree fingerprint', async () => {
@@ -111,7 +122,11 @@ describe('PlusTable column rendering', () => {
     await nextTick();
 
     expect(mountedKeys).toEqual(['0:g:a|b', '0:a', '1:b']);
-    expect(renderedProps.map((props) => props.columnKey)).toEqual(['g', 'a', 'b']);
+    expect(renderedProps.map((props) => props.columnKey)).toEqual([
+      'g',
+      'a',
+      'b',
+    ]);
   });
 
   it('remounts the group when the visible subtree changes', async () => {

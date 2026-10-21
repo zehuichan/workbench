@@ -1,10 +1,12 @@
-import { toRaw } from 'vue';
-import { getRowIdentity } from '../utils';
 import type { RowData, RowKey } from '../types';
 
+import { toRaw } from 'vue';
+
+import { getRowIdentity } from '../utils';
+
 export interface WriteRowFieldResult {
-  wrote: boolean;
   oldValue: unknown;
+  wrote: boolean;
 }
 
 interface WriteRowFieldOptions<T extends RowData> {
@@ -12,8 +14,11 @@ interface WriteRowFieldOptions<T extends RowData> {
   rowKeyOption: RowKey<T>;
 }
 
-function findDescriptor(target: object, prop: string): PropertyDescriptor | undefined {
-  let owner: object | null = target;
+function findDescriptor(
+  target: object,
+  prop: string,
+): PropertyDescriptor | undefined {
+  let owner: null | object = target;
   while (owner) {
     const descriptor = Object.getOwnPropertyDescriptor(owner, prop);
     if (descriptor) return descriptor;
@@ -26,7 +31,10 @@ function findDescriptor(target: object, prop: string): PropertyDescriptor | unde
  * 字符串 rowKey 且身份字段本身是数据属性时，写其它字段不可能改变身份，可跳过克隆探测；
  * 函数式 rowKey 或访问器身份字段（如 get id() { return this.code }）仍必须实探。
  */
-function hasPlainRowKeyField<T extends RowData>(raw: object, rowKeyOption: RowKey<T>): boolean {
+function hasPlainRowKeyField<T extends RowData>(
+  raw: object,
+  rowKeyOption: RowKey<T>,
+): boolean {
   if (typeof rowKeyOption !== 'string') return false;
   const descriptor = findDescriptor(raw, rowKeyOption);
   return !!descriptor && 'value' in descriptor;
@@ -37,7 +45,7 @@ function cloneCandidate<T extends RowData>(raw: object, omitProp?: string): T {
     PropertyKey,
     PropertyDescriptor
   >;
-  if (omitProp !== undefined) delete descriptors[omitProp];
+  if (omitProp !== undefined) Reflect.deleteProperty(descriptors, omitProp);
   return Object.create(Object.getPrototypeOf(raw), descriptors) as T;
 }
 
@@ -118,6 +126,6 @@ export function deleteRowField<T extends RowData>(
       );
     }
   }
-  delete (row as RowData)[prop];
+  Reflect.deleteProperty(row, prop);
   return { wrote: true, oldValue };
 }

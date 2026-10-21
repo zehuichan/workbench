@@ -1,11 +1,17 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import type { TestTable } from '../helpers/create-test-table';
+
 import { nextTick } from 'vue';
-import { createTestTable, type TestTable } from '../helpers/create-test-table';
+
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { defined } from '@/utils/defined';
+
+import { createTestTable } from '../helpers/create-test-table';
 
 interface Row {
+  amount: number;
   id: number;
   name: string;
-  amount: number;
 }
 
 /** 可手动放行的异步校验闸门，用于把编辑动作插到 commitRowEdit 的 await 中间 */
@@ -42,7 +48,9 @@ describe('PlusTable row editing session', () => {
           prop: 'name',
           label: '名称',
           editable: true,
-          rules: options.validator ? [{ asyncValidator: options.validator }] : undefined,
+          rules: options.validator
+            ? [{ asyncValidator: options.validator }]
+            : undefined,
         },
         { prop: 'amount', label: '金额', editable: true },
       ],
@@ -66,7 +74,7 @@ describe('PlusTable row editing session', () => {
 
     expect(rows[0]).toMatchObject({ name: 'edited', amount: 99 });
     expect(table.getDraft('1', 'name').has).toBe(false);
-    expect(table.isRowEditing(rows[0]!)).toBe(false);
+    expect(table.isRowEditing(defined(rows[0]))).toBe(false);
   });
 
   it('does not commit when a draft is written while validation is in flight', async () => {
@@ -81,9 +89,9 @@ describe('PlusTable row editing session', () => {
     gate.release();
 
     await expect(committing).resolves.toBe(false);
-    expect(table.isRowEditing(rows[0]!)).toBe(true);
+    expect(table.isRowEditing(defined(rows[0]))).toBe(true);
     expect(table.getDraft('1', 'name').value).toBe('second');
-    expect(rows[0]!.name).toBe('first');
+    expect(defined(rows[0]).name).toBe('first');
   });
 
   it('does not commit when the row edit is cancelled while validation is in flight', async () => {
@@ -98,8 +106,8 @@ describe('PlusTable row editing session', () => {
     gate.release();
 
     await expect(committing).resolves.toBe(false);
-    expect(table.isRowEditing(rows[0]!)).toBe(false);
-    expect(rows[0]!.name).toBe('one');
+    expect(table.isRowEditing(defined(rows[0]))).toBe(false);
+    expect(defined(rows[0]).name).toBe('one');
   });
 
   it('does not commit when the row object is replaced at the same key', async () => {
@@ -109,12 +117,15 @@ describe('PlusTable row editing session', () => {
 
     const committing = table.commitRowEdit(0);
     await gate.entered;
-    props.data = [{ id: 1, name: 'replacement', amount: 100 }, rows[1]!];
+    props.data = [
+      { id: 1, name: 'replacement', amount: 100 },
+      defined(rows[1]),
+    ];
     await nextTick();
     gate.release();
 
     await expect(committing).resolves.toBe(false);
-    expect(table.isRowEditing(table.data.value[0]!)).toBe(false);
+    expect(table.isRowEditing(defined(table.data.value[0]))).toBe(false);
   });
 
   it('does not commit a session that was restarted on another row', async () => {
@@ -128,20 +139,20 @@ describe('PlusTable row editing session', () => {
     gate.release();
 
     await expect(committing).resolves.toBe(false);
-    expect(table.isRowEditing(rows[1]!)).toBe(true);
+    expect(table.isRowEditing(defined(rows[1]))).toBe(true);
   });
 
   it('rolls back to the session snapshot and drops drafts on cancel', () => {
     const { table, rows } = setup();
     expect(table.startRowEdit(0)).toBe(true);
-    table.setCellValue(rows[0]!, 0, 'amount', 42);
+    table.setCellValue(defined(rows[0]), 0, 'amount', 42);
     table.setDraft('1', 'name', 'never committed');
 
     table.cancelRowEdit(0);
 
     expect(rows[0]).toMatchObject({ name: 'one', amount: 10 });
     expect(table.getDraft('1', 'name').has).toBe(false);
-    expect(table.isRowEditing(rows[0]!)).toBe(false);
+    expect(table.isRowEditing(defined(rows[0]))).toBe(false);
   });
 
   it('drops session history on cancel so redo cannot resurrect the edit', () => {
@@ -159,7 +170,7 @@ describe('PlusTable row editing session', () => {
     });
     tables.push(testTable);
     const { table } = testTable;
-    const row = table.data.value[0]!;
+    const row = defined(table.data.value[0]);
 
     expect(table.startRowEdit(0)).toBe(true);
     table.setCellValue(row, 0, 'amount', 500);
@@ -187,7 +198,7 @@ describe('PlusTable row editing session', () => {
     });
     tables.push(testTable);
     const { table } = testTable;
-    const row = table.data.value[0]!;
+    const row = defined(table.data.value[0]);
 
     expect(table.startRowEdit(0)).toBe(true);
     table.setDraft('1', 'name', 'edited');
@@ -212,7 +223,7 @@ describe('PlusTable row editing session', () => {
     });
     tables.push(testTable);
     const { table } = testTable;
-    const row = table.data.value[0]!;
+    const row = defined(table.data.value[0]);
 
     table.setDraft('1', 'amount', 999);
     table.setCellValue(row, 0, 'amount', 7000);
@@ -241,7 +252,7 @@ describe('PlusTable row editing session', () => {
 
     await expect(table.commitRowEdit(0)).resolves.toBe(false);
 
-    expect(table.isRowEditing(table.data.value[0]!)).toBe(true);
+    expect(table.isRowEditing(defined(table.data.value[0]))).toBe(true);
     expect(table.getErrors()).toHaveLength(1);
   });
 });

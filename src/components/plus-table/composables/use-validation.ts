@@ -1,15 +1,21 @@
-import { computed, reactive } from 'vue';
-import Schema from 'async-validator';
-import { isString } from 'es-toolkit';
-import { MAX_STALE_RETRIES, VALIDATE_ROW_CONCURRENCY } from '../constants';
-import { devWarn } from '../utils';
 import type { ValidateError } from 'async-validator';
+
 import type { ValidateResult } from '../table';
 import type { CellError, CellRule, ColumnNode, RowData } from '../types';
 import type { UseColumnsReturn } from './use-columns';
 import type { UseCurrentReturn } from './use-current';
 import type { UseDataReturn } from './use-data';
 import type { UseDependenciesReturn } from './use-dependencies';
+
+import { computed, reactive } from 'vue';
+
+import Schema from 'async-validator';
+import { isString } from 'es-toolkit';
+
+import { defined } from '@/utils/defined';
+
+import { MAX_STALE_RETRIES, VALIDATE_ROW_CONCURRENCY } from '../constants';
+import { devWarn } from '../utils';
 
 const staleValidation = Symbol('stale-validation');
 type CellValidationResult = CellError | null | typeof staleValidation;
@@ -19,28 +25,34 @@ const HIDDEN_COL_INDEX = Number.MAX_SAFE_INTEGER;
 
 /** 纯静态规则的 Schema 缓存条目；signature 变化即说明列配置被换过，需要重建 */
 interface StaticSchemaEntry {
-  signature: readonly unknown[];
   schema: Schema;
+  signature: readonly unknown[];
 }
 
 interface CellRuleBuild {
-  rules: CellRule[];
   /** 联动没有追加 required / rules 时，这批规则完全由列静态配置决定，Schema 可缓存复用 */
   isStatic: boolean;
+  rules: CellRule[];
   signature: unknown[];
 }
 
-function isSameSignature(a: readonly unknown[], b: readonly unknown[]): boolean {
-  return a.length === b.length && a.every((value, index) => Object.is(value, b[index]));
+function isSameSignature(
+  a: readonly unknown[],
+  b: readonly unknown[],
+): boolean {
+  return (
+    a.length === b.length &&
+    a.every((value, index) => Object.is(value, b[index]))
+  );
 }
 
 type UseValidationProps<T extends RowData> = Pick<
-  UseDataReturn<T>,
-  'data' | 'keysMap' | 'getRowKey'
+  UseColumnsReturn<T>,
+  'allColumns' | 'columns' | 'getColumnsByProp'
 > &
-  Pick<UseColumnsReturn<T>, 'columns' | 'allColumns' | 'getColumnsByProp'> &
-  Pick<UseDependenciesReturn<T>, 'getDependencyState'> &
-  Pick<UseCurrentReturn<T>, 'setCurrentCell'>;
+  Pick<UseCurrentReturn<T>, 'setCurrentCell'> &
+  Pick<UseDataReturn<T>, 'data' | 'getRowKey' | 'keysMap'> &
+  Pick<UseDependenciesReturn<T>, 'getDependencyState'>;
 
 /** 单元格 / 行 / 全表校验，错误按 rowKey 寻址，异步结果按版本号去重。 */
 export function useValidation<T extends RowData = RowData>({
@@ -73,7 +85,11 @@ export function useValidation<T extends RowData = RowData>({
     return next;
   }
 
-  function isLatestVersion(rowKey: string, prop: string, version: number): boolean {
+  function isLatestVersion(
+    rowKey: string,
+    prop: string,
+    version: number,
+  ): boolean {
     return versions.get(rowKey)?.get(prop) === version;
   }
 
@@ -117,10 +133,13 @@ export function useValidation<T extends RowData = RowData>({
     for (const rowErrors of errors.values()) {
       result.push(...rowErrors.values());
     }
-    const colIndexOf = (error: CellError) => colIndexes.get(error.prop) ?? HIDDEN_COL_INDEX;
-    return result.sort(
+    const colIndexOf = (error: CellError) =>
+      colIndexes.get(error.prop) ?? HIDDEN_COL_INDEX;
+    return result.toSorted(
       (a, b) =>
-        a.rowIndex - b.rowIndex || colIndexOf(a) - colIndexOf(b) || a.prop.localeCompare(b.prop),
+        a.rowIndex - b.rowIndex ||
+        colIndexOf(a) - colIndexOf(b) ||
+        a.prop.localeCompare(b.prop),
     );
   }
 
@@ -161,7 +180,8 @@ export function useValidation<T extends RowData = RowData>({
   function getSchema(prop: string, build: CellRuleBuild): Schema {
     if (!build.isStatic) return new Schema({ [prop]: build.rules });
     const cached = staticSchemas.get(prop);
-    if (cached && isSameSignature(cached.signature, build.signature)) return cached.schema;
+    if (cached && isSameSignature(cached.signature, build.signature))
+      return cached.schema;
     const schema = new Schema({ [prop]: build.rules });
     staticSchemas.set(prop, { signature: build.signature, schema });
     return schema;
@@ -177,7 +197,7 @@ export function useValidation<T extends RowData = RowData>({
     const rowKey = getRowKey(row);
     const version = bumpVersion(rowKey, prop);
     const build = buildCellRules(row, rowIndex, nodes);
-    if (!build.rules.length) {
+    if (build.rules.length === 0) {
       deleteCellError(rowKey, prop);
       return null;
     }
@@ -190,8 +210,8 @@ export function useValidation<T extends RowData = RowData>({
         suppressWarning: true,
         suppressValidatorError: true,
       });
-    } catch (err) {
-      failure = err;
+    } catch (error) {
+      failure = error;
     }
 
     // 非最新版本（被后一次输入触发的校验抢先）时结果作废；该行已被移除时无处落错误
@@ -203,19 +223,31 @@ export function useValidation<T extends RowData = RowData>({
       deleteCellError(rowKey, prop);
       return null;
     }
-    const message = (failure as { errors?: ValidateError[] })?.errors?.[0]?.message;
+    const message = (failure as { errors?: ValidateError[] })?.errors?.[0]
+      ?.message;
     if (!isString(message)) throw failure;
-    const cellError: CellError = { rowKey, rowIndex: location.rowIndex, prop, message };
+    const cellError: CellError = {
+      rowKey,
+      rowIndex: location.rowIndex,
+      prop,
+      message,
+    };
     setCellError(cellError);
     return cellError;
   }
 
-  async function validateCell(row: T, rowIndex: number, prop: string): Promise<CellError | null> {
+  async function validateCell(
+    row: T,
+    rowIndex: number,
+    prop: string,
+  ): Promise<CellError | null> {
     if (!Number.isInteger(rowIndex) || data.value[rowIndex] !== row) {
-      throw new RangeError(`[PlusTable] validateCell 失败：第 ${rowIndex} 行与当前数据不匹配。`);
+      throw new RangeError(
+        `[PlusTable] validateCell 失败：第 ${rowIndex} 行与当前数据不匹配。`,
+      );
     }
     const nodes = getColumnsByProp(prop);
-    if (!nodes.length) return null;
+    if (nodes.length === 0) return null;
     const result = await validateCellNodes(row, rowIndex, nodes);
     return result === staleValidation ? null : result;
   }
@@ -238,7 +270,9 @@ export function useValidation<T extends RowData = RowData>({
           .filter((prop): prop is string => !!prop),
       );
       results = await Promise.all(
-        [...props].map((prop) => validateCellNodes(row, currentIndex, getColumnsByProp(prop))),
+        [...props].map((prop) =>
+          validateCellNodes(row, currentIndex, getColumnsByProp(prop)),
+        ),
       );
       if (!results.includes(staleValidation)) {
         return results.filter((result): result is CellError => result !== null);
@@ -249,17 +283,22 @@ export function useValidation<T extends RowData = RowData>({
         '本次结果可能不完整，后续编辑会重新触发校验。',
     );
     return results.filter(
-      (result): result is CellError => result !== null && result !== staleValidation,
+      (result): result is CellError =>
+        result !== null && result !== staleValidation,
     );
   }
 
   async function validateRow(rowIndex: number): Promise<CellError[]> {
     if (!Number.isInteger(rowIndex)) {
-      throw new RangeError(`[PlusTable] validateRow 失败：行下标 ${rowIndex} 不是整数。`);
+      throw new RangeError(
+        `[PlusTable] validateRow 失败：行下标 ${rowIndex} 不是整数。`,
+      );
     }
     const row = data.value[rowIndex];
     if (!row) {
-      throw new RangeError(`[PlusTable] validateRow 失败：行下标 ${rowIndex} 超出有效范围。`);
+      throw new RangeError(
+        `[PlusTable] validateRow 失败：行下标 ${rowIndex} 超出有效范围。`,
+      );
     }
 
     const previous = rowValidationTails.get(row);
@@ -287,19 +326,22 @@ export function useValidation<T extends RowData = RowData>({
     let cursor = 0;
     const runWorker = async (): Promise<void> => {
       while (cursor < rows.length) {
-        const row = rows[cursor++]!;
+        const row = defined(rows[cursor++]);
         const rowKey = getRowKey(row);
         const current = keysMap.value.get(rowKey);
         if (current?.row === row) await validateRow(current.rowIndex);
       }
     };
     await Promise.all(
-      Array.from({ length: Math.min(VALIDATE_ROW_CONCURRENCY, rows.length) }, runWorker),
+      Array.from(
+        { length: Math.min(VALIDATE_ROW_CONCURRENCY, rows.length) },
+        runWorker,
+      ),
     );
 
     const canonicalErrors = getErrors();
-    if (scrollToFirstError && canonicalErrors.length) {
-      const first = canonicalErrors[0]!;
+    if (scrollToFirstError && canonicalErrors.length > 0) {
+      const first = defined(canonicalErrors[0]);
       const colIndex = visibleColIndexes.value.get(first.prop);
       if (colIndex !== undefined) setCurrentCell(first.rowIndex, colIndex);
     }
@@ -319,15 +361,15 @@ export function useValidation<T extends RowData = RowData>({
 
   function invalidateColumnProps(props: Iterable<string>): void {
     const removed = new Set(props);
-    if (!removed.size) return;
+    if (removed.size === 0) return;
     for (const prop of removed) staticSchemas.delete(prop);
     for (const [rowKey, rowErrors] of errors) {
       for (const prop of removed) rowErrors.delete(prop);
-      if (!rowErrors.size) errors.delete(rowKey);
+      if (rowErrors.size === 0) errors.delete(rowKey);
     }
     for (const [rowKey, propVersions] of versions) {
       for (const prop of removed) propVersions.delete(prop);
-      if (!propVersions.size) versions.delete(rowKey);
+      if (propVersions.size === 0) versions.delete(rowKey);
     }
   }
 
@@ -363,4 +405,6 @@ export function useValidation<T extends RowData = RowData>({
   };
 }
 
-export type UseValidationReturn<T extends RowData = RowData> = ReturnType<typeof useValidation<T>>;
+export type UseValidationReturn<T extends RowData = RowData> = ReturnType<
+  typeof useValidation<T>
+>;
