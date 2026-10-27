@@ -125,7 +125,7 @@ import { Filters } from '@/components/filters';
 
 ## Composables
 
-签名对齐 [VueUse](https://github.com/vueuse/vueuse)：主参数位置传入，可选配置走末尾 `options`；多值返回对象（不是元组）。约定细则见 [`.cursor/rules/vueuse-composables.mdc`](.cursor/rules/vueuse-composables.mdc)。
+签名对齐 [VueUse](https://github.com/vueuse/vueuse)：主参数位置传入，可选配置走末尾 `options`；多值返回对象（不是元组）。约定细则见 [`AGENTS.md`](AGENTS.md) 的 Composable shape 一条。
 
 从 `@/composables` 按需导出：
 

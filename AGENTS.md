@@ -55,7 +55,7 @@ WeChat and WeCom demos read `VITE_WECHAT_APPID`, `VITE_WORK_WECHAT_CORP_ID`, `VI
 ## Conventions
 
 - ESM (`"type": "module"`). Import app code through the aliases in `components.json`: `@/components`, `@/composables`, `@/ui`, `@/utils`.
-- **Composable shape** for `src/composables/` and `src/utils/` is the [vueuse rule](.cursor/rules/vueuse-composables.mdc): positional required args, trailing options, `UseXxxOptions` / `UseXxxReturn`, object returns, `MaybeRefOrGetter` + `toValue`, `tryOnScopeDispose`, `ConfigurableWindow`, no import-time side effects. File names stay kebab-case (`use-auto-save/use-auto-save.ts`).
+- **Composable shape** for `src/composables/` and `src/utils/` mirrors [VueUse](https://github.com/vueuse/vueuse): positional required args, trailing options, `UseXxxOptions` / `UseXxxReturn`, object returns, `MaybeRefOrGetter` + `toValue`, `tryOnScopeDispose`, `ConfigurableWindow`, no import-time side effects. File names stay kebab-case (`use-auto-save/use-auto-save.ts`).
 - **Field controls register once.** `initComponentAdapter()` writes `useGlobalShareState`. PlusTable resolves editors with `resolveEditor`; Filters use the same `component` ids. Do not open a second map. `input-number` stays `controls: false` so a cell can leave edit mode on blur.
 - **PlusTable** renders an `el-table`. `defineColumns` returns its array unchanged. New table behavior is a composable under `src/components/plus-table/composables/`, wired in `useTable` by explicit arguments. Descendants read context only through `usePlusTable()`.
 - **emit-effect.** A bare function is `{ compute }`. `compute` overwrites user edits; `default` is a suggestion the user may override. `defineEmitRules` returns its argument unchanged.
