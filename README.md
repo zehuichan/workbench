@@ -13,6 +13,7 @@
 ```
 workbench/
 ├── brand/                    # Logo、预览页
+├── server/                   # 开发期 h3 mock（/api/*），由 Vite 中间件挂载
 ├── src/
 │   ├── api/
 │   ├── components/
@@ -42,6 +43,8 @@ pnpm dev
 ```
 
 访问 http://localhost:9527 。
+
+`pnpm dev` 同一进程内还托管 `/api/*`：[`server/`](server/) 是挂在 Vite 中间件上的 h3 应用，新增接口在 `server/routes/` 加一个 `register*Routes` 并在 `server/app.ts` 调用。构建产物不含它。
 
 ## Playground
 
