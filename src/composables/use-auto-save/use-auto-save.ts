@@ -20,7 +20,10 @@ export type AutoSaveHandler<T> = (
 export interface UseAutoSaveOptions<T> {
   /** Delay before an automatic save starts. */
   debounceMs?: MaybeRefOrGetter<number>;
-  /** Whether source changes may schedule automatic saves. */
+  /**
+   * Whether source changes may schedule automatic saves. Changes made while
+   * disabled are not saved automatically after re-enabling; `flush` persists them.
+   */
   enabled?: MaybeRefOrGetter<boolean>;
   /** Receives source evaluation, persistence, and control failures. */
   onError?: (error: unknown) => void;
@@ -305,7 +308,10 @@ export function useAutoSave<T>(
       if (disposed || pauseDepth > 0) return;
       revision += 1;
       const enabledValue = readValue(enabled);
-      if (!enabledValue) return;
+      if (!enabledValue) {
+        discardThrough(revision);
+        return;
+      }
       if (!inFlight) status.value = 'pending';
       scheduleSave();
     },

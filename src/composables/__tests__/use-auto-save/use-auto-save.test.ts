@@ -149,6 +149,29 @@ describe('useAutoSave', () => {
     expect(save).toHaveBeenCalledOnce();
   });
 
+  it('settles a disabled flush as saved when edits arrive during the save', async () => {
+    const operation = deferred();
+    const source = ref<FormState>({ name: '' });
+    const save = vi.fn(() => operation.promise);
+    const autoSave = createAutoSave({
+      source,
+      save,
+      enabled: false,
+      debounceMs: 100,
+    });
+
+    source.value.name = 'flushed';
+    const flushing = autoSave.flush();
+    await vi.advanceTimersByTimeAsync(0);
+    source.value.name = 'edited during save';
+    operation.resolve();
+    await flushing;
+    await vi.runAllTimersAsync();
+
+    expect(autoSave.status.value).toBe('saved');
+    expect(save).toHaveBeenCalledOnce();
+  });
+
   it('discards nested paused changes and resumes on the next change', async () => {
     const source = ref<FormState>({ name: '' });
     const values: string[] = [];
