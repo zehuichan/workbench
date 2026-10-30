@@ -276,10 +276,10 @@ const config: Linter.Config[] = [
     },
   },
 
-  // Business code must use @/utils/request; forbid deep relative imports.
+  // Business code must use @/api/request; forbid deep relative imports.
   {
     files: ['src/**/*.{ts,tsx,vue}'],
-    ignores: ['src/utils/request.ts'],
+    ignores: ['src/api/request.ts'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -288,7 +288,7 @@ const config: Linter.Config[] = [
             {
               importNames: ['default'],
               message:
-                'Import the shared axios instance from `@/utils/request` instead of creating a new one.',
+                'Import the shared axios instance from `@/api/request` instead of creating a new one.',
               name: 'axios',
             },
           ],
@@ -304,7 +304,7 @@ const config: Linter.Config[] = [
     },
   },
   {
-    files: ['src/utils/request.ts'],
+    files: ['src/api/request.ts'],
     rules: {
       'no-restricted-imports': 'off',
     },
