@@ -1,4 +1,5 @@
 import type {
+  EmitEffectRules,
   FieldRef,
   PropagateOptions,
   PropagateResult,
@@ -500,6 +501,53 @@ describe('emit-effect · compute vs default', () => {
     ]);
   });
 
+  it('counts a preserved manual field once when several rounds reach it', async () => {
+    interface DiscountForm {
+      discount: number;
+      factor: null | number;
+      items: { id: number; price: null | number }[];
+    }
+    const engine = createEmitEngine(
+      defineEmitRules<DiscountForm>({
+        factor: ({ form }) => 1 - form.discount,
+        items: {
+          price: {
+            default: ({ form }) => 100 * form.discount * (form.factor ?? 1),
+            confirm: true,
+          },
+        },
+      }),
+    );
+    const form: DiscountForm = {
+      discount: 0,
+      factor: 1,
+      items: [
+        { id: 1, price: 5 },
+        { id: 2, price: 0 },
+      ],
+    };
+    const manualRef: FieldRef = {
+      entity: 'items',
+      rowId: 'r1',
+      field: 'price',
+    };
+    const base = {
+      form,
+      rowIds: { items: ['r1', 'r2'] },
+      manual: { has: (ref: FieldRef) => refKey(ref) === refKey(manualRef) },
+    };
+    await engine.propagate({ ...base, all: true, dryRun: true });
+
+    form.discount = 0.5;
+    const result = await engine.propagate({
+      ...base,
+      dirty: [headerKey('discount')],
+      triggers: [{ field: 'discount' }],
+      headerTrigger: { field: 'discount', oldValue: 0, newValue: 0.5 },
+    });
+    expect(result.confirmation?.preservedCount).toBe(1);
+  });
+
   it('collects a confirmation only when a header trigger is supplied', async () => {
     const { form, run } = createHarness();
     await run({ all: true });
@@ -537,6 +585,66 @@ describe('emit-effect · convergence', () => {
         all: true,
       }),
     ).rejects.toThrow(new RegExp(`${MAX_ROUNDS} 轮`));
+  });
+
+  it('converges on a chain exactly MAX_ROUNDS deep', async () => {
+    type ChainForm = Record<string, number>;
+    const chain: EmitEffectRules<ChainForm> = {};
+    for (let i = MAX_ROUNDS; i >= 1; i--) {
+      chain[`n${i}`] = ({ form }) => defined(form[`n${i - 1}`]) + 1;
+    }
+    const form: ChainForm = {};
+    for (let i = 0; i <= MAX_ROUNDS; i++) form[`n${i}`] = i;
+    const engine = createEmitEngine(chain);
+    const base = { form, rowIds: {}, manual: { has: () => false } };
+    await engine.propagate({ ...base, all: true, dryRun: true });
+
+    form[headerKey('n0')] = 100;
+    const result = await engine.propagate({
+      ...base,
+      dirty: [headerKey('n0')],
+    });
+    expect(result.changes).toContainEqual({
+      field: `n${MAX_ROUNDS}`,
+      value: 100 + MAX_ROUNDS,
+    });
+  });
+
+  it('rejects only after the whole round settles, and records no dependencies', async () => {
+    interface PairForm {
+      fast: null | string;
+      slow: null | string;
+    }
+    let lookupUp = false;
+    let releaseSlow: (value: string) => void = () => undefined;
+    const engine = createEmitEngine(
+      defineEmitRules<PairForm>({
+        fast: () =>
+          lookupUp ? Promise.resolve('F') : Promise.reject(new Error('boom')),
+        slow: () =>
+          new Promise<string>((resolve) => {
+            releaseSlow = resolve;
+          }),
+      }),
+    );
+    const form: PairForm = { fast: null, slow: null };
+    const base = { form, rowIds: {}, manual: { has: () => false } };
+
+    let rejected = false;
+    const failed = engine.propagate({ ...base, all: true }).catch(() => {
+      rejected = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(rejected).toBe(false);
+    releaseSlow('S');
+    await failed;
+    expect(rejected).toBe(true);
+
+    lookupUp = true;
+    const retry = engine.propagate({ ...base, dirty: [] });
+    releaseSlow('S');
+    const { changes } = await retry;
+    expect(changes.map((change) => change.field)).toEqual(['fast', 'slow']);
   });
 
   it('runs async row rules of one round in parallel', async () => {

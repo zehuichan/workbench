@@ -1,5 +1,6 @@
 import type { EffectScope, Ref } from 'vue';
 
+import type { EmitEffectRules } from '../../use-emit-effect/emit-effect';
 import type {
   UseEmitEffectOptions,
   UseEmitEffectReturn,
@@ -70,7 +71,15 @@ function createForm(): Form {
   };
 }
 
-async function settle(api: UseEmitEffectReturn<Form>): Promise<void> {
+function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
+  let resolve: (value: T) => void = () => undefined;
+  const promise = new Promise<T>((settle) => {
+    resolve = settle;
+  });
+  return { promise, resolve };
+}
+
+async function settle(api: { pending: Readonly<Ref<boolean>> }): Promise<void> {
   for (let i = 0; i < 200 && api.pending.value; i++) {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
@@ -377,6 +386,150 @@ describe('useEmitEffect', () => {
     expect(
       String((defined(onError.mock.calls[0])[0] as Error).message),
     ).toMatch(/total/);
+  });
+
+  describe('async rules', () => {
+    interface LookupForm {
+      code: string;
+      items: { id: number; price: null | number; productId: string }[];
+      label: null | string;
+    }
+
+    function mountLookup(
+      form: Ref<LookupForm>,
+      rules: EmitEffectRules<LookupForm>,
+      options: UseEmitEffectOptions = {},
+    ): UseEmitEffectReturn<LookupForm> {
+      return defined(scope.run(() => useEmitEffect(form, rules, options)));
+    }
+
+    /** A `label` rule that stays pending for `code === 'slow'` until `lookup` resolves. */
+    function slowLabel() {
+      const started = deferred<undefined>();
+      const lookup = deferred<string>();
+      const rules = defineEmitRules<LookupForm>({
+        label: ({ form }) => {
+          if (form.code !== 'slow') return undefined;
+          started.resolve(undefined);
+          return lookup.promise;
+        },
+      });
+      return { lookup, rules, started };
+    }
+
+    it('keeps a document loaded while an earlier propagation was running', async () => {
+      const { lookup, rules, started } = slowLabel();
+      const form = ref<LookupForm>({ code: 'a', label: null, items: [] });
+      const api = mountLookup(form, rules);
+      await settle(api);
+
+      form.value.code = 'slow';
+      await started.promise;
+      form.value = { code: 'loaded', label: 'from-server', items: [] };
+      lookup.resolve('STALE');
+      await settle(api);
+      expect(form.value.label).toBe('from-server');
+    });
+
+    it('discards a running propagation when hydrate starts', async () => {
+      const { lookup, rules, started } = slowLabel();
+      const form = ref<LookupForm>({ code: 'a', label: null, items: [] });
+      const api = mountLookup(form, rules);
+      await settle(api);
+
+      form.value.code = 'slow';
+      await started.promise;
+      await api.hydrate(() => {
+        lookup.resolve('STALE');
+        Object.assign(form.value, { code: 'loaded' });
+      });
+      expect(form.value.label).toBeNull();
+    });
+
+    it('keeps a value the user typed while a propagation was running', async () => {
+      const started = deferred<undefined>();
+      const lookup = deferred<number>();
+      const form = ref<LookupForm>({
+        code: '',
+        label: null,
+        items: [{ id: 1, productId: 'pen', price: 10 }],
+      });
+      const api = mountLookup(
+        form,
+        {
+          items: {
+            price: {
+              default: ({ row }) => {
+                if (row.productId !== 'slow') return 10;
+                started.resolve(undefined);
+                return lookup.promise;
+              },
+            },
+          },
+        },
+        { immediate: true },
+      );
+      await settle(api);
+
+      const row = defined(form.value.items[0]);
+      row.productId = 'slow';
+      await started.promise;
+      row.price = 8;
+      lookup.resolve(99);
+      await settle(api);
+      expect(row.price).toBe(8);
+      expect(api.isManual([row, 'price'])).toBe(true);
+    });
+  });
+
+  it('retries the edits of a failed propagation with the next one', async () => {
+    interface QtyForm {
+      amount: null | number;
+      label: null | string;
+      note: string;
+      qty: number;
+    }
+    let lookupUp = false;
+    const onError = vi.fn();
+    const form = ref<QtyForm>({ qty: 1, amount: null, label: null, note: '' });
+    const api = defined(
+      scope.run(() =>
+        useEmitEffect(
+          form,
+          defineEmitRules<QtyForm>({
+            amount: ({ form }) => form.qty * 2,
+            label: ({ form }) => {
+              if (form.qty === 5 && !lookupUp) throw new Error('lookup down');
+              return `q${form.qty}`;
+            },
+          }),
+          { immediate: true, onError },
+        ),
+      ),
+    );
+    await settle(api);
+
+    form.value.qty = 5;
+    await settle(api);
+    expect(onError).toHaveBeenCalled();
+    expect(form.value.amount).toBe(2);
+
+    lookupUp = true;
+    form.value.note = 'unrelated';
+    await settle(api);
+    expect(form.value.amount).toBe(10);
+    expect(form.value.label).toBe('q5');
+  });
+
+  it('restore() rejects a row outside the form and a field without a rule', async () => {
+    const form = ref(createForm());
+    const api = mount(form, { immediate: true });
+    await settle(api);
+
+    await expect(
+      api.restore([{ id: 9, productId: 'pen', qty: 1 }, 'price']),
+    ).rejects.toThrow(/行不在表单/);
+    await expect(api.restore('currency')).rejects.toThrow(/currency 没有规则/);
   });
 
   it('stops watching when the scope is disposed', async () => {

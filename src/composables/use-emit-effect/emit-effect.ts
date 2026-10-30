@@ -124,6 +124,12 @@ export interface PropagateResult {
 export interface EmitEngine {
   /** Fields whose rule is a row-rule table. */
   entities: string[];
+  /**
+   * Runs the affected rules to a fixpoint on a copy of `options.form`.
+   *
+   * A rejection records no dependency, and settles only after every rule of the failing round
+   * has settled, so a retry with the same `dirty` keys re-runs the same rules.
+   */
   propagate: (options: PropagateOptions) => Promise<PropagateResult>;
   /** Forget every recorded dependency (hydrate). */
   reset: () => void;
@@ -444,35 +450,39 @@ export function createEmitEngine<F extends object>(
     const clearedManual: FieldRef[] = [];
     const cleared = new Set<string>();
     const affected = new Map<string, FieldRef>();
-    let preservedCount = 0;
+    const preserved = new Set<string>();
+    // Committed to `deps` only when the propagation resolves.
+    const recordedNow = new Map<string, Set<string>>();
+    const depsOf = (key: string): Set<string> | undefined =>
+      recordedNow.get(key) ?? deps.get(key);
 
     const decide = (node: Node, hitOrigins: Set<string>): Plan => {
       if (options.dryRun) return 'dry';
       if (node.rule.kind === 'compute') return 'write';
       if (triggers.has(node.key)) return 'skip';
       if (force.has(node.key)) return 'write';
-      const recorded = deps.get(node.key);
+      const recorded = depsOf(node.key);
       // First sight of a default field: fill it only when empty, otherwise just learn its dependencies.
       if (!recorded || options.all) {
         return isEmptyValue(readNode(snapshot, node)) ? 'write' : 'dry';
       }
       if (options.manual.has(node.ref) && !cleared.has(node.key)) {
         if (!hitOrigins.has(levelOf(node))) {
-          if (node.rule.confirm && collectConfirm) preservedCount += 1;
+          if (node.rule.confirm && collectConfirm) preserved.add(node.key);
           return 'skip';
         }
         cleared.add(node.key);
         clearedManual.push(node.ref);
+        preserved.delete(node.key);
       }
       return 'write';
     };
 
-    let round = 0;
-    for (; round < MAX_ROUNDS; round++) {
+    for (let round = 0; ; round++) {
       const eligible = nodes.filter((node) => {
         if (options.all || force.has(node.key)) return true;
-        const recorded = deps.get(node.key);
-        if (!recorded) return true;
+        const recorded = depsOf(node.key);
+        if (!recorded) return round === 0;
         if (
           round === 0 &&
           node.rule.kind === 'compute' &&
@@ -483,13 +493,23 @@ export function createEmitEngine<F extends object>(
         return false;
       });
       if (eligible.length === 0) break;
+      if (round === MAX_ROUNDS) {
+        throw new Error(
+          `[useEmitEffect] 规则在 ${MAX_ROUNDS} 轮内未收敛，可能存在循环依赖：${[...dirty.keys()].join(', ')}`,
+        );
+      }
 
       const nextDirty = new Map<string, Set<string>>();
       const pending: Promise<void>[] = [];
+      // The first failure of the round; later rules of the round still settle before it is thrown.
+      let failure: unknown;
+      const fail = (error: unknown): void => {
+        failure ??= error;
+      };
 
       for (const node of eligible) {
         const hitOrigins = new Set<string>();
-        for (const key of deps.get(node.key) ?? []) {
+        for (const key of depsOf(node.key) ?? []) {
           for (const origin of dirty.get(key) ?? []) hitOrigins.add(origin);
         }
         // Nodes that run for structural reasons (new row, force, normalize) originate at their own level.
@@ -515,7 +535,7 @@ export function createEmitEngine<F extends object>(
               };
 
         const finish = (value: unknown): void => {
-          deps.set(node.key, reads);
+          recordedNow.set(node.key, reads);
           if (plan === 'dry' || value === undefined) return;
           if (isEqual(readNode(snapshot, node), value)) return;
           writeNode(snapshot, node, value);
@@ -529,13 +549,16 @@ export function createEmitEngine<F extends object>(
         try {
           output = node.rule.run(ctx);
         } catch (error) {
-          throw ruleError(node, error);
+          fail(ruleError(node, error));
+          break;
         }
         if (output instanceof Promise) {
           pending.push(
-            output.then(finish, (error: unknown) => {
-              throw ruleError(node, error);
-            }),
+            output
+              .then(finish, (error: unknown) => {
+                throw ruleError(node, error);
+              })
+              .catch(fail),
           );
         } else {
           finish(output);
@@ -543,6 +566,7 @@ export function createEmitEngine<F extends object>(
       }
 
       await Promise.all(pending);
+      if (failure !== undefined) throw failure;
       dirty = nextDirty;
       // Forced / never-run nodes were satisfied in this round; later rounds follow dirtiness only.
       force.clear();
@@ -552,12 +576,7 @@ export function createEmitEngine<F extends object>(
       }
     }
 
-    if (round >= MAX_ROUNDS) {
-      throw new Error(
-        `[useEmitEffect] 规则在 ${MAX_ROUNDS} 轮内未收敛，可能存在循环依赖：${[...dirty.keys()].join(', ')}`,
-      );
-    }
-
+    for (const [key, reads] of recordedNow) deps.set(key, reads);
     const result: PropagateResult = {
       changes: [...changes.values()],
       clearedManual,
@@ -566,7 +585,7 @@ export function createEmitEngine<F extends object>(
       result.confirmation = {
         ...defined(options.headerTrigger),
         affected: [...affected.values()],
-        preservedCount,
+        preservedCount: preserved.size,
       };
     }
     return result;

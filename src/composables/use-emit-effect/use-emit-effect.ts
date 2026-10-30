@@ -20,6 +20,7 @@ import {
   detectEntities,
   entityKey,
   headerKey,
+  refKey,
   rowFieldKey,
 } from './emit-effect';
 
@@ -30,7 +31,10 @@ export interface UseEmitEffectOptions {
   equals?: (a: unknown, b: unknown) => boolean;
   /** Run `normalize()` right after attaching (new documents / demos). */
   immediate?: boolean;
-  /** Receives propagation failures raised by form edits. */
+  /**
+   * Receives propagation failures raised by form edits; defaults to `console.error`.
+   * A failed propagation writes nothing, and its edits are retried with the next propagation.
+   */
   onError?: (error: unknown) => void;
 }
 
@@ -38,7 +42,10 @@ export interface UseEmitEffectOptions {
 export type ManualTarget<F> = [row: object, field: string] | keyof F;
 
 export interface UseEmitEffectReturn<F extends object> {
-  /** Runs `load` with linkage paused, then rebuilds the baseline without rewriting any value. */
+  /**
+   * Runs `load` with linkage paused, then rebuilds the baseline without rewriting any value.
+   * Propagations queued or running when it starts write nothing.
+   */
   hydrate: (load: () => MaybePromise<void>) => Promise<void>;
   /** Whether the field holds a value the user typed over its default rule. */
   isManual: (target: ManualTarget<F>) => boolean;
@@ -46,7 +53,10 @@ export interface UseEmitEffectReturn<F extends object> {
   normalize: () => Promise<void>;
   /** Whether a propagation is running or queued. */
   pending: Readonly<Ref<boolean>>;
-  /** Drops the manual mark and re-derives the field from its rule. */
+  /**
+   * Drops the manual mark and re-derives the field from its rule.
+   * Rejects when the row is not in the form or the field has no rule.
+   */
   restore: (target: ManualTarget<F>) => Promise<void>;
 }
 
@@ -72,6 +82,16 @@ interface Job {
   /** Manual marks added by this edit; undone when the confirmation is rejected. */
   marked: FieldRef[];
   triggers: FieldRef[];
+}
+
+interface PendingWork {
+  dirty: string[];
+  force: FieldRef[];
+  triggers: FieldRef[];
+}
+
+function refLabel(ref: FieldRef): string {
+  return ref.entity === undefined ? ref.field : `${ref.entity}.${ref.field}`;
 }
 
 function isNumeric(value: unknown): boolean {
@@ -139,8 +159,10 @@ export function useEmitEffect<F extends object>(
     manualVersion.value += 1;
   };
 
-  const getReactiveRoot = (): Record<string, unknown> =>
-    toValue(form) as unknown as Record<string, unknown>;
+  const getReactiveRoot = (): Record<string, unknown> => {
+    const root: object = toValue(form);
+    return root as Record<string, unknown>;
+  };
   const getRoot = (): Record<string, unknown> => toRaw(getReactiveRoot());
 
   let baseline: Baseline = { root: {}, header: new Map(), entities: new Map() };
@@ -186,15 +208,17 @@ export function useEmitEffect<F extends object>(
     return undefined;
   }
 
-  function toRef(target: ManualTarget<F>): FieldRef | undefined {
-    if (Array.isArray(target)) {
-      const row = toRaw(target[0]);
-      const entity = findEntity(getRoot(), row);
-      return entity === undefined
-        ? undefined
-        : { entity, rowId: idOf(row), field: target[1] };
+  function toRef(target: ManualTarget<F>): { ref: FieldRef; row?: object } {
+    if (!Array.isArray(target)) return { ref: { field: String(target) } };
+    const [row, field] = target;
+    const raw = toRaw(row);
+    const entity = findEntity(getRoot(), raw);
+    if (entity === undefined) {
+      throw new Error(
+        `[useEmitEffect] 行不在表单的任何明细表中，无法定位字段 ${field}。`,
+      );
     }
-    return { field: String(target) };
+    return { ref: { entity, rowId: idOf(raw), field }, row: raw };
   }
 
   function rowOf(
@@ -311,6 +335,10 @@ export function useEmitEffect<F extends object>(
 
   let tail: Promise<void> = Promise.resolve();
   let depth = 0;
+  /** Work of a failed propagation; the next job of the same generation runs it again. */
+  let unsettled: PendingWork | undefined;
+  /** Keys of fields the user edited while the running job propagated; its write-back leaves them alone. */
+  let editedDuringRun: Set<string> | undefined;
 
   function enqueue(job: Omit<Job, 'generation'>): Promise<void> {
     depth += 1;
@@ -327,6 +355,12 @@ export function useEmitEffect<F extends object>(
   async function runJob(job: Job): Promise<void> {
     // The form was replaced after this edit was queued; the hydrate that follows owns the new baseline.
     if (job.generation !== generation) return;
+    const work: PendingWork = {
+      dirty: [...(unsettled?.dirty ?? []), ...job.dirty],
+      force: [...(unsettled?.force ?? []), ...(job.force ?? [])],
+      triggers: [...(unsettled?.triggers ?? []), ...job.triggers],
+    };
+    unsettled = undefined;
     const root = getRoot();
     const { ids, byId } = collectRows(root);
     const request: PropagateOptions = {
@@ -339,23 +373,46 @@ export function useEmitEffect<F extends object>(
           return row ? (manualRows.get(row)?.has(ref.field) ?? false) : false;
         },
       },
-      dirty: job.dirty,
-      triggers: job.triggers,
+      ...work,
       headerTrigger: job.headerTrigger,
-      force: job.force,
       all: job.all,
       dryRun: job.dryRun,
     };
-    const result = await engine.propagate(request);
+    const edited = new Set<string>();
+    editedDuringRun = edited;
+    try {
+      await settleJob(job, request, work, byId, edited);
+    } finally {
+      editedDuringRun = undefined;
+    }
+  }
+
+  async function settleJob(
+    job: Job,
+    request: PropagateOptions,
+    work: PendingWork,
+    byId: Map<string, object>,
+    edited: Set<string>,
+  ): Promise<void> {
+    let result: PropagateResult;
+    try {
+      result = await engine.propagate(request);
+    } catch (error) {
+      if (job.generation === generation) unsettled = work;
+      throw error;
+    }
+    // A load replaced the form while the rules ran; its rebase owns the new document.
+    if (job.generation !== generation) return;
 
     if (result.confirmation && confirm) {
       const accepted = await confirm(result.confirmation);
+      if (job.generation !== generation) return;
       if (!accepted) {
-        rollback(job, byId);
+        rollback(job, byId, edited);
         return;
       }
     }
-    apply(result, byId);
+    apply(result, byId, edited);
   }
 
   function writeHeader(field: string, value: unknown): void {
@@ -374,10 +431,15 @@ export function useEmitEffect<F extends object>(
     if (snapshot) snapshot[field] = cloneDeep(value);
   }
 
-  function apply(result: PropagateResult, byId: Map<string, object>): void {
+  function apply(
+    result: PropagateResult,
+    byId: Map<string, object>,
+    edited: Set<string>,
+  ): void {
     applying += 1;
     try {
       for (const change of result.changes) {
+        if (edited.has(refKey(change))) continue;
         if (change.entity === undefined) {
           writeHeader(change.field, change.value);
           continue;
@@ -385,17 +447,24 @@ export function useEmitEffect<F extends object>(
         const row = rowOf(change, byId);
         if (row) writeRow(change.entity, row, change.field, change.value);
       }
-      for (const ref of result.clearedManual) unmarkManual(ref, byId);
+      for (const ref of result.clearedManual) {
+        if (!edited.has(refKey(ref))) unmarkManual(ref, byId);
+      }
     } finally {
       applying -= 1;
     }
   }
 
-  function rollback(job: Job, byId: Map<string, object>): void {
+  function rollback(
+    job: Job,
+    byId: Map<string, object>,
+    edited: Set<string>,
+  ): void {
     applying += 1;
     try {
-      if (job.headerTrigger)
-        writeHeader(job.headerTrigger.field, job.headerTrigger.oldValue);
+      const trigger = job.headerTrigger;
+      if (trigger && !edited.has(headerKey(trigger.field)))
+        writeHeader(trigger.field, trigger.oldValue);
       for (const ref of job.marked) unmarkManual(ref, byId);
     } finally {
       applying -= 1;
@@ -407,6 +476,7 @@ export function useEmitEffect<F extends object>(
   function rebase(): Promise<void> {
     const root = getRoot();
     generation += 1;
+    unsettled = undefined;
     engine.reset();
     manualHeader.clear();
     manualRows = new WeakMap();
@@ -435,6 +505,7 @@ export function useEmitEffect<F extends object>(
     const { byId } = collectRows(root);
     const marked: FieldRef[] = [];
     for (const ref of changes.triggers) {
+      editedDuringRun?.add(refKey(ref));
       const rule = engine.ruleOf(ref);
       if (!rule) continue;
       if (rule.kind === 'default') {
@@ -442,7 +513,7 @@ export function useEmitEffect<F extends object>(
         marked.push(ref);
       } else if (import.meta.env.DEV) {
         console.warn(
-          `[useEmitEffect] 字段 ${ref.entity ? `${ref.entity}.` : ''}${ref.field} 是 compute 规则，人工输入会被重算覆盖。`,
+          `[useEmitEffect] 字段 ${refLabel(ref)} 是 compute 规则，人工输入会被重算覆盖。`,
         );
       }
     }
@@ -486,16 +557,20 @@ export function useEmitEffect<F extends object>(
     return manualHeader.has(String(target));
   }
 
-  function restore(target: ManualTarget<F>): Promise<void> {
-    const ref = toRef(target);
-    if (!ref) return Promise.resolve();
-    if (ref.entity === undefined) {
-      manualHeader.delete(ref.field);
+  async function restore(target: ManualTarget<F>): Promise<void> {
+    const { ref, row } = toRef(target);
+    if (!engine.ruleOf(ref)) {
+      throw new Error(
+        `[useEmitEffect] 字段 ${refLabel(ref)} 没有规则，无法恢复。`,
+      );
+    }
+    if (row) {
+      manualRows.get(row)?.delete(ref.field);
     } else {
-      manualRows.get(toRaw((target as [object, string])[0]))?.delete(ref.field);
+      manualHeader.delete(ref.field);
     }
     touchManual();
-    return enqueue({ dirty: [], triggers: [], marked: [], force: [ref] });
+    await enqueue({ dirty: [], triggers: [], marked: [], force: [ref] });
   }
 
   function normalize(): Promise<void> {
@@ -503,6 +578,8 @@ export function useEmitEffect<F extends object>(
   }
 
   async function hydrate(load: () => MaybePromise<void>): Promise<void> {
+    // Drops queued and in-flight propagations so none writes into the document being loaded.
+    generation += 1;
     applying += 1;
     try {
       await load();

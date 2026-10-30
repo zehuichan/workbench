@@ -113,7 +113,7 @@ const rulesSnippet = `export const orderRules = defineEmitRules<OrderForm>({
           <td>异步</td>
           <td>
             支持返回 Promise；同一轮的异步规则并行，<code>await</code>
-            之后的读取同样计入依赖。
+            之后的读取同样计入依赖。等待期间用户改过的字段不会被结果覆盖。
           </td>
         </tr>
       </DemoApiTable>
@@ -162,7 +162,7 @@ const rulesSnippet = `export const orderRules = defineEmitRules<OrderForm>({
           <td><code>(error) =&gt; void</code></td>
           <td>
             可选。表单改动触发的传播失败时回调；默认
-            <code>console.error</code>。
+            <code>console.error</code>。失败的传播不写任何值，其改动随下一次传播重试。
           </td>
         </tr>
       </DemoApiTable>
@@ -181,7 +181,10 @@ const rulesSnippet = `export const orderRules = defineEmitRules<OrderForm>({
         <tr>
           <td><code>restore</code></td>
           <td><code>(field | [row, field]) =&gt; Promise&lt;void&gt;</code></td>
-          <td>清除人工标记并按规则重算该字段（含其下游）。</td>
+          <td>
+            清除人工标记并按规则重算该字段（含其下游）；行不在表单中或字段没有规则时
+            reject。
+          </td>
         </tr>
         <tr>
           <td><code>normalize</code></td>
@@ -226,7 +229,17 @@ const rulesSnippet = `export const orderRules = defineEmitRules<OrderForm>({
         </tr>
         <tr>
           <td><code>form.value = data</code> / <code>hydrate(fn)</code></td>
-          <td>只学习依赖、不写任何值、清空人工标记。</td>
+          <td>
+            只学习依赖、不写任何值、清空人工标记；排队中 / 执行中的传播作废。
+          </td>
+        </tr>
+        <tr>
+          <td>规则抛错 / reject</td>
+          <td>
+            本次传播不写任何值并交给
+            <code>onError</code>；改动并入下一次传播重试，也可调
+            <code>normalize()</code> 全量重算。
+          </td>
         </tr>
         <tr>
           <td><code>normalize()</code></td>
