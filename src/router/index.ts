@@ -125,7 +125,7 @@ export const router = createRouter({
           path: 'erp/api-overview',
           name: 'erp-api-overview',
           component: ErpApiOverview,
-          meta: { title: 'API Overview', group: 'ERP 场景', order: 0 },
+          meta: { title: 'API Overview', group: '总览', order: 0 },
         },
         {
           path: 'erp/sales-order-linkage',
@@ -133,8 +133,8 @@ export const router = createRouter({
           component: SalesOrderLinkageDemo,
           meta: {
             title: '销售订单联动',
-            group: 'ERP 场景',
-            order: 1,
+            group: '销售',
+            order: 0,
             badge: 'beta',
           },
         },
@@ -144,8 +144,8 @@ export const router = createRouter({
           component: PurchaseOrderLinkageDemo,
           meta: {
             title: '采购订单联动',
-            group: 'ERP 场景',
-            order: 2,
+            group: '采购',
+            order: 0,
             badge: 'beta',
           },
         },
@@ -155,8 +155,8 @@ export const router = createRouter({
           component: ExpenseReportLinkageDemo,
           meta: {
             title: '费用报销联动',
-            group: 'ERP 场景',
-            order: 3,
+            group: '财务',
+            order: 0,
             badge: 'beta',
           },
         },
@@ -166,8 +166,8 @@ export const router = createRouter({
           component: SupplierQuotationLinkageDemo,
           meta: {
             title: '供应商报价（多子表）',
-            group: 'ERP 场景',
-            order: 4,
+            group: '采购',
+            order: 1,
             badge: 'beta',
           },
         },

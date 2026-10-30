@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { PlaygroundCategoryKey } from './playground-categories';
+
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
@@ -7,6 +9,7 @@ import { sortBy } from 'es-toolkit';
 import { SidebarInset, SidebarProvider } from '@/ui/sidebar';
 
 import PlaygroundAside from './playground-aside.vue';
+import { PLAYGROUND_CATEGORIES } from './playground-categories';
 import PlaygroundHeader from './playground-header.vue';
 import PlaygroundSidebar from './playground-sidebar.vue';
 
@@ -14,25 +17,9 @@ import '@/styles/index.scss';
 
 defineOptions({ name: 'PlaygroundLayout' });
 
-type CategoryKey = 'components' | 'composables' | 'packages';
-
-interface CategoryConfig {
-  groups: readonly string[];
-  key: CategoryKey;
-}
-
-const categories: readonly CategoryConfig[] = [
-  {
-    key: 'components',
-    groups: ['PlusTable', 'PlusDialog', 'Filters', 'ERP 场景'],
-  },
-  { key: 'composables', groups: ['Form', 'Auth', 'WeChat'] },
-  { key: 'packages', groups: [] },
-];
-
 const route = useRoute();
 const router = useRouter();
-const activeCategory = ref<CategoryKey>('components');
+const activeCategory = ref<PlaygroundCategoryKey>('components');
 
 function groupRoutes(group: string) {
   return sortBy(
@@ -41,15 +28,18 @@ function groupRoutes(group: string) {
   );
 }
 
-function categoryForGroup(group: unknown): CategoryKey | undefined {
+function categoryForGroup(group: unknown): PlaygroundCategoryKey | undefined {
   if (typeof group !== 'string') return undefined;
-  return categories.find((category) => category.groups.includes(group))?.key;
+  return PLAYGROUND_CATEGORIES.find((category) =>
+    category.groups.includes(group),
+  )?.key;
 }
 
 const navGroups = computed(() => {
   const groups =
-    categories.find((category) => category.key === activeCategory.value)
-      ?.groups ?? [];
+    PLAYGROUND_CATEGORIES.find(
+      (category) => category.key === activeCategory.value,
+    )?.groups ?? [];
 
   return groups.map((group) => ({
     name: group,
@@ -71,7 +61,7 @@ watch(
 );
 
 function selectCategory(key: string): void {
-  const category = categories.find((item) => item.key === key);
+  const category = PLAYGROUND_CATEGORIES.find((item) => item.key === key);
   if (!category) return;
 
   const firstRoute = category.groups.flatMap(groupRoutes)[0];
@@ -85,7 +75,7 @@ function selectCategory(key: string): void {
 <template>
   <div class="flex h-svh flex-col overflow-hidden bg-background">
     <PlaygroundHeader
-      :categories="[...categories]"
+      :categories="[...PLAYGROUND_CATEGORIES]"
       :active-category="activeCategory"
       @select="selectCategory"
     />

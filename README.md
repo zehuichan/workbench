@@ -62,15 +62,14 @@ pnpm dev
 - `/filters/basic`
 - `/filters/preset`
 
-### ERP 场景
+### Scene
 
-完整单据 demo；引擎 API 在 `/composables/use-emit-effect`。
+顶栏 `scene` 分类，侧栏按业务域分组。完整单据 demo；引擎 API 在 `/composables/use-emit-effect`。
 
-- `/erp/api-overview`
-- `/erp/sales-order-linkage`
-- `/erp/purchase-order-linkage`
-- `/erp/expense-report-linkage`
-- `/erp/supplier-quotation-linkage`
+- 总览：`/erp/api-overview`
+- 销售：`/erp/sales-order-linkage`
+- 采购：`/erp/purchase-order-linkage`、`/erp/supplier-quotation-linkage`
+- 财务：`/erp/expense-report-linkage`
 
 ### Form Composables
 

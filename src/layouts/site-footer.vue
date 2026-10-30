@@ -12,7 +12,6 @@ const columns = [
     links: [
       { label: 'PlusTable', to: '/plus-table/api-overview' },
       { label: 'Filters', to: '/filters/api-overview' },
-      { label: 'ERP 场景', to: '/erp/api-overview' },
     ],
   },
   {
@@ -23,6 +22,10 @@ const columns = [
       { label: 'use-auto-save', to: '/composables/use-auto-save' },
       { label: 'use-save-hotkey', to: '/composables/use-save-hotkey' },
     ],
+  },
+  {
+    label: 'SCENE',
+    links: [{ label: 'ERP 场景', to: '/erp/api-overview' }],
   },
 ] as const;
 </script>
