@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, shallowRef } from 'vue';
 
+import { getDraft, saveDraft } from '@/api/draft';
 import DemoApiTable from '@/components/demo/demo-api-table.vue';
 import DemoBlock from '@/components/demo/demo-block.vue';
 import DemoPage from '@/components/demo/demo-page.vue';
@@ -8,65 +9,53 @@ import { useAutoSave } from '@/composables';
 
 defineOptions({ name: 'UseAutoSaveDemo' });
 
-const SERVER_KEY = 'composables-demo:auto-save-server';
-
 interface FormState {
   note: string;
   title: string;
 }
 
-function readServerSnapshot(): FormState | null {
-  try {
-    const raw = localStorage.getItem(SERVER_KEY);
-    if (raw === null) return null;
-    return JSON.parse(raw) as FormState;
-  } catch {
-    return null;
-  }
+function isFormState(value: unknown): value is FormState {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'title' in value &&
+    typeof value.title === 'string' &&
+    'note' in value &&
+    typeof value.note === 'string'
+  );
 }
 
 const form = ref<FormState>({ title: '草稿标题', note: '' });
-const serverSnapshot = ref<FormState | null>(readServerSnapshot());
+const serverSnapshot = ref<FormState | null>(null);
+const loadError = shallowRef<unknown>(null);
 const enabled = ref(true);
 const debounceMs = ref(500);
-
-function delay(ms: number, signal?: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!signal) {
-      setTimeout(resolve, ms);
-      return;
-    }
-
-    const abortReason = () =>
-      signal.reason ??
-      new DOMException('The operation was aborted.', 'AbortError');
-    if (signal.aborted) return reject(abortReason());
-
-    const handleAbort = () => {
-      clearTimeout(timer);
-      reject(abortReason());
-    };
-    const timer = setTimeout(() => {
-      signal.removeEventListener('abort', handleAbort);
-      resolve();
-    }, ms);
-    signal.addEventListener('abort', handleAbort, { once: true });
-  });
-}
 
 const { status, lastSavedAt, error, flush, withPaused } = useAutoSave(
   form,
   async (value, signal) => {
-    await delay(400, signal);
     const next: FormState = {
       title: value.title,
       note: value.note,
     };
-    localStorage.setItem(SERVER_KEY, JSON.stringify(next));
+    await saveDraft(next, signal);
     serverSnapshot.value = next;
   },
   { enabled, debounceMs },
 );
+
+onMounted(async () => {
+  try {
+    const stored = await getDraft();
+    if (stored === null) return;
+    if (!isFormState(stored)) {
+      throw new TypeError('The saved draft is not a form state.');
+    }
+    serverSnapshot.value = stored;
+  } catch (error_) {
+    loadError.value = error_;
+  }
+});
 
 const lastSavedLabel = computed(() => {
   if (lastSavedAt.value === null) return '—';
@@ -74,10 +63,9 @@ const lastSavedLabel = computed(() => {
 });
 
 const errorLabel = computed(() => {
-  if (error.value === null || error.value === undefined) return '—';
-  return error.value instanceof Error
-    ? error.value.message
-    : String(error.value);
+  const failure = error.value ?? loadError.value;
+  if (failure === null || failure === undefined) return '—';
+  return failure instanceof Error ? failure.message : String(failure);
 });
 
 async function handleFlush() {
@@ -85,12 +73,11 @@ async function handleFlush() {
 }
 
 async function handlePausedEdit() {
-  await withPaused(async () => {
+  await withPaused(() => {
     form.value = {
       ...form.value,
       note: `${form.value.note}[paused]`,
     };
-    await delay(300);
   });
 }
 </script>
@@ -178,8 +165,8 @@ async function handlePausedEdit() {
       <template #hint>
         改标题/备注 → 看 <code>status</code> 从 pending → saving → saved；点
         Flush 跳过等待；点 withPaused 编辑时备注会变但不会触发自动保存。
-        <code>save</code> 目前用
-        <code>localStorage</code> 模拟服务端，刷新后快照仍在。
+        <code>save</code> 经 <code>saveDraft</code>
+        落盘，刷新后快照仍在。
       </template>
 
       <div class="demo__toolbar">
@@ -219,9 +206,7 @@ async function handlePausedEdit() {
         </el-form>
 
         <div class="demo__snapshot">
-          <div class="demo__snapshot-title">
-            服务端快照（localStorage · <code>{{ SERVER_KEY }}</code>）
-          </div>
+          <div class="demo__snapshot-title">服务端快照</div>
           <pre>{{
             serverSnapshot
               ? JSON.stringify(serverSnapshot, null, 2)
