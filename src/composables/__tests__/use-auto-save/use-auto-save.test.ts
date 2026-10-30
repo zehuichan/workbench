@@ -174,6 +174,48 @@ describe('useAutoSave', () => {
     expect(values).toEqual(['resumed']);
   });
 
+  it('runs a paused task after an in-flight automatic save fails', async () => {
+    const failure = new Error('save failed');
+    const operation = deferred();
+    const source = ref<FormState>({ name: '' });
+    const onError = vi.fn();
+    const autoSave = createAutoSave({
+      source,
+      save: () => operation.promise,
+      onError,
+      debounceMs: 100,
+    });
+
+    source.value.name = 'saving';
+    await vi.advanceTimersByTimeAsync(100);
+    const paused = autoSave.withPaused(() => 'navigated');
+    operation.reject(failure);
+
+    await expect(paused).resolves.toBe('navigated');
+    expect(autoSave.status.value).toBe('error');
+    expect(onError).toHaveBeenCalledWith(failure);
+  });
+
+  it('runs a paused task after an in-flight flush fails', async () => {
+    const failure = new Error('flush failed');
+    const operation = deferred();
+    const source = ref<FormState>({ name: '' });
+    const autoSave = createAutoSave({
+      source,
+      save: () => operation.promise,
+      debounceMs: 100,
+    });
+
+    source.value.name = 'flushing';
+    const flushing = autoSave.flush();
+    const paused = autoSave.withPaused(() => 'navigated');
+    operation.reject(failure);
+
+    await expect(flushing).rejects.toBe(failure);
+    await expect(paused).resolves.toBe('navigated');
+    expect(autoSave.error.value).toBe(failure);
+  });
+
   it('restarts a pending timer when debounceMs changes', async () => {
     const debounceMs = ref(100);
     const source = ref<FormState>({ name: '' });

@@ -41,8 +41,10 @@ export interface UseAutoSaveReturn {
   /** Current state of the automatic save pipeline. */
   status: Readonly<Ref<AutoSaveStatus>>;
   /**
-   * Discards pending and nested changes while the operation runs.
-   * The existing save pipeline settles before the operation starts.
+   * Discards pending and nested changes while the task runs.
+   * In-flight saves and flushes settle before the task starts; their failures
+   * surface through `error`, `onError`, and the flush caller, not here.
+   * Rejects when disposed, when called from the save callback, or when the task rejects.
    */
   withPaused: <R>(task: () => Promise<R> | R) => Promise<R>;
 }
@@ -361,17 +363,9 @@ export function useAutoSave<T>(
     cancelScheduledSave();
     discardThrough(revision);
     try {
-      if (activeFlushes.size > 0) {
-        const results = await Promise.allSettled([...activeFlushes]);
-        const rejected = results.find(
-          (result): result is PromiseRejectedResult =>
-            result.status === 'rejected',
-        );
-        if (rejected) {
-          throw rejected.reason;
-        }
-      }
-      if (inFlight) await inFlight;
+      await Promise.allSettled(
+        inFlight ? [...activeFlushes, inFlight] : [...activeFlushes],
+      );
       if (disposed) throw createDisposedError();
       return await task();
     } finally {
