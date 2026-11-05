@@ -2,9 +2,9 @@
   "lockVersion": 1,
   "kit": {
     "repository": "https://github.com/zehuichan/vibe-harness",
-    "version": "0.1.4",
-    "ref": "v0.1.4",
-    "commit": "f2a915382260b5728330306f191304e2479397c8"
+    "version": "0.1.6",
+    "ref": "v0.1.6",
+    "commit": "7cc562cde7f1de2f50b3797c6f3a44f3828b8ef7"
   },
   "variables": {
     "PROJECT_NAME": "workbench"
@@ -44,7 +44,7 @@
     },
     ".agents/notes/README.md": {
       "source": "templates/agent-notes/README.md",
-      "upstream": "84d09e4e791a2a5a9693b859dfe70a0b545188878f79b36e55ad3f182d89fbca"
+      "upstream": "3a477fd6b21b30b0293a1404c782ff8f295685a781b963a1d2a72e1e93d9cf09"
     },
     ".agents/skills/agent-experience/SKILL.md": {
       "source": "skills/agent-experience/SKILL.md",
@@ -52,15 +52,15 @@
     },
     ".agents/skills/agent-notes/SKILL.md": {
       "source": "skills/agent-notes/SKILL.md",
-      "upstream": "c5db831a6893be8483b9bd9b37989d7103498ec71aee2b1ef22b5c89fdd3bb94"
+      "upstream": "6bf1f962fba29c6c42d58e5764c90a1da66c827e9dd5283bc3f00b7894a8d9b9"
     },
     ".agents/skills/code-review/SKILL.md": {
       "source": "skills/code-review/SKILL.md",
-      "upstream": "1e6da148c8d7277b4693dca7590bf0ade4f8a5575194680ba0e7514005971fd3"
+      "upstream": "32f59dc15b8f6c1313d954903ed48119877cb3ab3450908bd3e53ff134cf92d6"
     },
     ".agents/skills/docs-standard/references/page-structure.md": {
       "source": "skills/docs-standard/references/page-structure.md",
-      "upstream": "a7a0a9f2ac3ac11563351c6bea7c49cd83107e6c6a9526197d8c2b598b36f285"
+      "upstream": "f8483655146b214219b85f976a6dc9fc67ed1f3503e173898f558c536896a83b"
     },
     ".agents/skills/docs-standard/references/review.md": {
       "source": "skills/docs-standard/references/review.md",
@@ -68,7 +68,7 @@
     },
     ".agents/skills/docs-standard/SKILL.md": {
       "source": "skills/docs-standard/SKILL.md",
-      "upstream": "3ac1309527bdade0b3f27b851affd68038d1381168b58fa41d1b03b8601e1602"
+      "upstream": "b0aeddf1cbc88786f13ad9145fc86e5b86dff0013f45f74431c402ff748cbab1"
     },
     ".agents/skills/error-handling/SKILL.md": {
       "source": "skills/error-handling/SKILL.md",
@@ -80,19 +80,19 @@
     },
     ".agents/skills/find-simplifications/SKILL.md": {
       "source": "skills/find-simplifications/SKILL.md",
-      "upstream": "8b0da6e6365cc2643379940e6baf1d84e785f57adbfceb528eb0be9884e5f2e2"
+      "upstream": "452fc576ac5ea508e84e61168b1a0ef6d4e51c6434f2b5513df1a984a98abf19"
     },
     ".agents/skills/lifecycle-review/SKILL.md": {
       "source": "skills/lifecycle-review/SKILL.md",
-      "upstream": "8e61220ca7ff44cfd4b5fa136b8a22d7f22ed2a5d0b431dec64ec3b07db3e11a"
+      "upstream": "a334b0fd9641d6204ea14d02280faef5380b74b0093ec56d81d9d648e1b541ed"
     },
     ".agents/skills/perf-evidence/SKILL.md": {
       "source": "skills/perf-evidence/SKILL.md",
-      "upstream": "1820961fe302f5200a4a76723064d91cb911d42dce46f5afc4d52aed94a889a2"
+      "upstream": "5ca77955d185a5df27bfeb83cbd8bf3a44b82fc61a66023add716ee884357099"
     },
     ".agents/skills/pre-push-checks/SKILL.md": {
       "source": "skills/pre-push-checks/SKILL.md",
-      "upstream": "b8e6950609707e45f665be332c45e7e23de36a7caef8547a397ba6165edcb0e4"
+      "upstream": "e09b2c8fe6f69c248762efc1ee15abd07cc4d5e1c84a1085465931d4e5b9824a"
     },
     ".agents/skills/prose-standard/references/examples.md": {
       "source": "skills/prose-standard/references/examples.md",
@@ -100,7 +100,7 @@
     },
     ".agents/skills/prose-standard/SKILL.md": {
       "source": "skills/prose-standard/SKILL.md",
-      "upstream": "f97716de9c1270ba0230e5145ee242ca100fc5328ec89e6636c627e986e3045d"
+      "upstream": "e61f8769a9ceb816c06ae8ef429eadddd1800af6a500fd9290e132007b21d65d"
     },
     ".agents/skills/record-browser-gif/scripts/encode_gif.py": {
       "source": "skills/record-browser-gif/scripts/encode_gif.py",
@@ -112,11 +112,11 @@
     },
     ".agents/skills/record-browser-gif/SKILL.md": {
       "source": "skills/record-browser-gif/SKILL.md",
-      "upstream": "7a23363e08890c784a4317d1529e27d993844134d87ff7f2c567a2e4413374a2"
+      "upstream": "dbdec4d6c5eeaa15f7f85140e35f959d0c7a0036598200d72fc972b732124481"
     },
     ".agents/skills/responsive-ui/SKILL.md": {
       "source": "skills/responsive-ui/SKILL.md",
-      "upstream": "416e35b099ca2ba57ba2a9e4b685954097ffaef4af5f1ee1a8f1453ecdf38ab7"
+      "upstream": "e147269796de8087268946183e575a405718313b7e652000a67e80bab28404d5"
     },
     ".agents/skills/test-reliability/references/ci-flake-diagnosis.md": {
       "source": "skills/test-reliability/references/ci-flake-diagnosis.md",
@@ -128,7 +128,7 @@
     },
     ".agents/skills/trim-cot-leakage/references/examples.md": {
       "source": "skills/trim-cot-leakage/references/examples.md",
-      "upstream": "c38674864510113b0068b6e482b376da779e84476a0e058b501a5dbc42149664"
+      "upstream": "b37d5e1067b9f0d8bc87ad8a54346eadf31234f8fd9c476e8028ef55c402a913"
     },
     ".agents/skills/trim-cot-leakage/references/recall-batteries.md": {
       "source": "skills/trim-cot-leakage/references/recall-batteries.md",
@@ -136,11 +136,31 @@
     },
     ".agents/skills/trim-cot-leakage/SKILL.md": {
       "source": "skills/trim-cot-leakage/SKILL.md",
-      "upstream": "a72eb91133c36f0c7039f56606c13b9ee77eb5fe96c6af8853e8faa0ad1f1217"
+      "upstream": "de2c40fd1737b98a45b7fe9848a75beea42471f18aad93484b71c1c7f0617705"
+    },
+    ".agents/skills/ui-ux-review/references/alignment.md": {
+      "source": "skills/ui-ux-review/references/alignment.md",
+      "upstream": "3fe63c41c2bddf34dd1ebe58ecd67e44a8b82e8f68e03bce3a634b6913a3bb2d"
+    },
+    ".agents/skills/ui-ux-review/references/icons.md": {
+      "source": "skills/ui-ux-review/references/icons.md",
+      "upstream": "f5c7a6d2ba697b1e9f39631d771626a5fa203be2efe6a303dc48c5441cc3be2e"
+    },
+    ".agents/skills/ui-ux-review/references/review-cases.md": {
+      "source": "skills/ui-ux-review/references/review-cases.md",
+      "upstream": "1b3801b8483b2c41e827f7d6275dd3131acf3fe133ede361a6de297b8fedb4f2"
+    },
+    ".agents/skills/ui-ux-review/references/review-workflow.md": {
+      "source": "skills/ui-ux-review/references/review-workflow.md",
+      "upstream": "3a5c42b275f63a3cbfcd101e163eba5773af96326fd908f3f3c2411305ee1924"
+    },
+    ".agents/skills/ui-ux-review/references/spacing.md": {
+      "source": "skills/ui-ux-review/references/spacing.md",
+      "upstream": "d1420dd837b790d4fcdca8d4b204ab57870496151adf82ba8727d0c0fd982a65"
     },
     ".agents/skills/ui-ux-review/SKILL.md": {
       "source": "skills/ui-ux-review/SKILL.md",
-      "upstream": "bbad34e9c01273e241967fc2ae971a15d331a6b1091baa60c22ee12223f2c927"
+      "upstream": "87e06372afe820ab604c2ab6cd4312f3749ec50e9f9b5cee012639427633a75a"
     },
     ".agents/skills/upgrade-guide/references/template.md": {
       "source": "skills/upgrade-guide/references/template.md",
@@ -148,7 +168,7 @@
     },
     ".agents/skills/upgrade-guide/SKILL.md": {
       "source": "skills/upgrade-guide/SKILL.md",
-      "upstream": "6b4160612d5d416ff007fea98f9da1cae30b9366531c8502258a69621e7e77aa"
+      "upstream": "d0b629f899a0a8e0753d1cd1e87172812ed39747cda6f13dced10c34b328db81"
     },
     ".agents/skills/vibe-harness-bootstrap/SKILL.md": {
       "source": "skills/vibe-harness-bootstrap/SKILL.md",
@@ -156,15 +176,15 @@
     },
     "docs/AGENTS.md": {
       "source": "templates/docs-AGENTS.md",
-      "upstream": "434ac6a1292e2448bf3821b10777ee88c29335e15868e59b44cd2aea041ee971"
+      "upstream": "087b25eca9c89e82fcbc2f0a941b79d10455c1761398d38dba29a08fa7822331"
     },
     "docs/defensive-patterns/general.md": {
       "source": "templates/defensive-patterns/general.md",
-      "upstream": "ceac005b78fa483f770e1299c1fa963416f8f1fc6aceceaa28fe10a86ceaab71"
+      "upstream": "a58cc1909fe0a4d906c491ff8569f022feb6acdf0c7c3a0d2183e5c3509e0cdc"
     },
     "docs/defensive-patterns/README.md": {
       "source": "templates/defensive-patterns/README.md",
-      "upstream": "5bc07ef1594868b1ae7722543ff50a8cbcf7f23575ff20efd0b8720198a6635c"
+      "upstream": "d8c9d5737ceec0ab8dc715a3958d520e3c8b3fc5f2c37620d39bd609a6ed2e81"
     }
   },
   "blocks": {
@@ -174,7 +194,7 @@
     },
     "AGENTS.md": {
       "source": "templates/AGENTS.md.tmpl",
-      "upstream": "dccbc59faf8f41f7725e6f717e334d36d851ae3b71d2e49c1068b9765e482009"
+      "upstream": "84d52548f4a962068174d667fa03873a246a220613cf8adbb8bf3b9d2f90259d"
     }
   },
   "seeds": {
