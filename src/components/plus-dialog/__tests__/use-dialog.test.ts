@@ -1,12 +1,44 @@
+import type { PagedRow } from './helpers/paged-records';
+
 import { createApp, h, nextTick } from 'vue';
 
-import ElementPlus from 'element-plus';
+import ElementPlus, { ElMessage } from 'element-plus';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { useDialog } from '../use-dialog';
 import DialogHost from './helpers/dialog-host.vue';
 import { createPagedRecords } from './helpers/paged-records';
 
 describe('useDialog', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('resolves a stored create and warns when the page reload fails', async () => {
+    const warning = vi
+      .spyOn(ElMessage, 'warning')
+      .mockImplementation(() => ({ close: () => undefined }) as never);
+    const dialog = useDialog<PagedRow>(
+      {
+        page: 1,
+        pageSize: 3,
+        rows: [],
+        total: 0,
+        loadPage: () => Promise.reject(new Error('offline')),
+      },
+      {
+        empty: () => ({ id: 0, name: '' }),
+        fetch: async (row) => row,
+        create: async () => undefined,
+      },
+    );
+
+    await expect(
+      dialog.bindings.value.create?.({ id: 0, name: 'new' }),
+    ).resolves.toBeUndefined();
+    expect(warning).toHaveBeenCalledWith('列表刷新失败，显示的可能是旧数据');
+  });
+
   it('opens a row at its whole-list position', async () => {
     const { dialog, loadPage, rowAt } = createPagedRecords();
     await loadPage(2);

@@ -4,6 +4,8 @@ import type { PlusDialogMode } from './types';
 
 import { computed, nextTick, ref, shallowRef, toRaw, toValue } from 'vue';
 
+import { ElMessage } from 'element-plus';
+
 /**
  * The server-paged list that opens the dialog. `rows` hold page `page`, so a
  * row's position in the whole list is `(page - 1) * pageSize + its row index`.
@@ -11,7 +13,9 @@ import { computed, nextTick, ref, shallowRef, toRaw, toValue } from 'vue';
 export interface UseDialogList<T extends object> {
   /**
    * Loads a 1-based page into `page`, `rows`, and `total`, resolving once they
-   * reflect it. A rejection fails the dialog step that asked for the page.
+   * reflect it. A rejection fails the dialog step that asked for the page; the
+   * reload after a save, create, or remove only warns, since the write is
+   * already stored.
    */
   loadPage: (page: number) => Promise<void>;
   /** 1-based page currently held in `rows`. */
@@ -67,7 +71,8 @@ export interface UseDialogReturn<T extends object> {
 /**
  * Wires a `PlusDialog` to a server-paged list: maps rows to whole-list
  * positions, pages the list while the dialog steps across page edges, and
- * reloads the current page after every save, create, and remove.
+ * reloads the current page after every save, create, and remove. A failed
+ * reload shows a warning and leaves the stored write successful.
  *
  * The list stays owned by the caller; the dialog only reads it and asks for
  * pages through `list.loadPage`. Permissions, actions, and validation stay
@@ -97,7 +102,13 @@ export function useDialog<T extends object>(
   const index = shallowRef<number | undefined>(undefined);
   const form = ref(api.empty()) as Ref<T>;
 
-  const reloadPage = (): Promise<void> => list.loadPage(toValue(list.page));
+  async function reloadAfterWrite(): Promise<void> {
+    try {
+      await list.loadPage(toValue(list.page));
+    } catch {
+      ElMessage.warning('列表刷新失败，显示的可能是旧数据');
+    }
+  }
 
   async function load(target: number): Promise<T> {
     const size = toValue(list.pageSize);
@@ -122,7 +133,7 @@ export function useDialog<T extends object>(
     persistSave &&
     (async (record: T): Promise<T> => {
       const saved = await persistSave(record);
-      await reloadPage();
+      await reloadAfterWrite();
       return saved;
     });
 
@@ -130,14 +141,14 @@ export function useDialog<T extends object>(
     persistCreate &&
     (async (record: T): Promise<void> => {
       await persistCreate(record);
-      await reloadPage();
+      await reloadAfterWrite();
     });
 
   const remove =
     persistRemove &&
     (async (record: T): Promise<void> => {
       await persistRemove(record);
-      await reloadPage();
+      await reloadAfterWrite();
     });
 
   function open(row: T, nextMode: Exclude<PlusDialogMode, 'create'>): void {
