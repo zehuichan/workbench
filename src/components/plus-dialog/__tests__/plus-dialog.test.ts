@@ -320,6 +320,34 @@ describe('PlusDialog', () => {
     expect(form.value).toEqual({ id: 1, name: 'A' });
   });
 
+  it('loads a record once when stepping to the next one', async () => {
+    const dialog = await mountDialog({ mode: 'view' });
+    expect(dialog.load).toHaveBeenCalledOnce();
+
+    headerButton('下一条').click();
+    await vi.waitFor(() => expect(dialog.index.value).toBe(1));
+    await flush();
+    await flush();
+
+    expect(dialog.load.mock.calls.map(([i]) => i)).toEqual([0, 1]);
+    expect(dialog.form.value).toEqual({ id: 2, name: 'B' });
+  });
+
+  it('loads a record once when reopened at another index', async () => {
+    const dialog = await mountDialog({ mode: 'view' });
+    dialog.visible.value = false;
+    await flush();
+
+    dialog.index.value = 2;
+    dialog.visible.value = true;
+    await vi.waitFor(() =>
+      expect(dialog.form.value).toEqual({ id: 3, name: 'C' }),
+    );
+    await flush();
+
+    expect(dialog.load.mock.calls.map(([i]) => i)).toEqual([0, 2]);
+  });
+
   it('keeps the newest record when loads resolve out of order', async () => {
     const dialog = await mountDialog({ mode: 'view' });
     let resolveSecond!: (value: Form) => void;

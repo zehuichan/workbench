@@ -84,9 +84,10 @@ const form = defineModel<T>('form', { required: true });
 
 const loading = ref(false);
 const submitting = ref(false);
-let syncingIndex = false;
 let submitLock = false;
 let loadRevision = 0;
+/** Position of the record the form holds or the current load fetches; `undefined` when neither. */
+let heldIndex: number | undefined;
 const contentId = useId();
 
 const SHAPES: readonly PlusDialogShape[] = ['center', 'side', 'fullscreen'];
@@ -314,21 +315,18 @@ async function loadAt(nextIndex: number): Promise<void> {
     );
   }
   const revision = ++loadRevision;
+  heldIndex = nextIndex;
   loading.value = true;
   try {
     const loaded = await props.load(nextIndex);
     if (revision !== loadRevision || !visible.value) return;
     form.value = loaded;
-    syncingIndex = true;
-    try {
-      index.value = nextIndex;
-    } finally {
-      syncingIndex = false;
-    }
+    index.value = nextIndex;
     reset(loaded);
   } catch {
-    if (revision === loadRevision && visible.value) {
-      ElMessage.error('加载失败，请重试');
+    if (revision === loadRevision) {
+      heldIndex = undefined;
+      if (visible.value) ElMessage.error('加载失败，请重试');
     }
   } finally {
     if (revision === loadRevision) loading.value = false;
@@ -483,40 +481,39 @@ function onEscapeKeyDown(event: KeyboardEvent): void {
 
 watch(
   visible,
-  async (open, wasOpen) => {
-    if (!open) {
-      loadRevision += 1;
-      loading.value = false;
-      shapeMotionRevision += 1;
-      window.clearTimeout(shapeMotionTimer);
-      shapeMotion.value = {};
-      shapeSwitched.value = false;
-      cancelConfirm();
-      if (wasOpen) emit('closed');
+  (open, wasOpen) => {
+    if (open) {
+      resetDrag();
+      if (mode.value === 'create') reset();
       return;
     }
-    resetDrag();
-    if (mode.value === 'create') {
-      reset();
-      return;
-    }
-    if (typeof index.value === 'number' && props.load) {
-      await loadAt(index.value);
-    }
+    loadRevision += 1;
+    loading.value = false;
+    shapeMotionRevision += 1;
+    window.clearTimeout(shapeMotionTimer);
+    shapeMotion.value = {};
+    shapeSwitched.value = false;
+    cancelConfirm();
+    if (wasOpen) emit('closed');
   },
   { immediate: true },
 );
 
+/** Record position the host asks to show; `undefined` while closed or creating. */
+const requestedIndex = computed(() =>
+  visible.value && mode.value !== 'create' ? index.value : undefined,
+);
+
 watch(
-  index,
-  async (next, prev) => {
-    if (syncingIndex) return;
-    if (!visible.value) return;
-    if (mode.value === 'create') return;
-    if (typeof next !== 'number' || next === prev) return;
-    if (props.load) await loadAt(next);
+  requestedIndex,
+  (next) => {
+    if (next === undefined) {
+      heldIndex = undefined;
+      return;
+    }
+    if (next !== heldIndex && props.load) void loadAt(next);
   },
-  { flush: 'sync' },
+  { immediate: true },
 );
 
 onScopeDispose(() => {
