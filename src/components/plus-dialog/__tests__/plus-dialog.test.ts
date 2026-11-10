@@ -539,4 +539,17 @@ describe('PlusDialog', () => {
     await flush();
     expect(saved).not.toHaveBeenCalled();
   });
+
+  it('treats a rejected validate as invalid, not as a failed save', async () => {
+    const error = vi
+      .spyOn(ElMessage, 'error')
+      .mockImplementation(() => ({ close: () => undefined }) as never);
+    const { saved } = await mountDialog({
+      validate: () => Promise.reject(new Error('invalid fields')),
+    });
+    footerButton('保存').click();
+    await flush();
+    expect(saved).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+  });
 });

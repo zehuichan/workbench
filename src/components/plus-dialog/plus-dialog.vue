@@ -59,7 +59,11 @@ const props = withDefaults(
     shapeStorageKey?: string;
     /** Row count of the whole list; bounds the pager. */
     total?: number;
-    /** Runs before save and create; resolving `false` blocks the submission. */
+    /**
+     * Runs before save and create. Resolving `false` or rejecting, as Element
+     * Plus `validate()` does for invalid fields, blocks the submission without
+     * a failure toast.
+     */
     validate?: () => boolean | Promise<boolean>;
     /** Width of the center shape; side and fullscreen size themselves. */
     width?: string;
@@ -395,7 +399,11 @@ async function handleRefresh(): Promise<void> {
 
 async function runValidate(): Promise<boolean> {
   if (!props.validate) return true;
-  return await props.validate();
+  try {
+    return await props.validate();
+  } catch {
+    return false;
+  }
 }
 
 async function handleSave(closeAfter: boolean): Promise<void> {
