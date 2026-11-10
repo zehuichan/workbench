@@ -19,7 +19,7 @@ import {
   watch,
 } from 'vue';
 
-import { useLocalStorage } from '@vueuse/core';
+import { useLocalStorage, usePreferredReducedMotion } from '@vueuse/core';
 import { ElButton, ElMessage } from 'element-plus';
 
 import {
@@ -42,13 +42,24 @@ defineOptions({ name: 'PlusDialog' });
 const props = withDefaults(
   defineProps<{
     actions?: PlusDialogAction<T>[];
+    /** Persists a new record. Resolving closes the dialog; a rejection keeps the form open. */
     create?: (form: T) => Promise<void>;
+    /**
+     * Fetches the record at a 0-based whole-list position. Required to show an
+     * existing record; a rejection keeps the current form.
+     */
     load?: (index: number) => Promise<T>;
+    /** A missing key hides that header action. */
     permissions?: PlusDialogPermissions;
+    /** Deletes the open record after confirmation; the dialog then loads the neighbour, or closes when none remains. */
     remove?: (form: T) => Promise<void>;
+    /** Persists an edit and resolves to the stored record, which replaces the form and its clean baseline. */
     save?: (form: T) => Promise<T>;
+    /** `localStorage` key that remembers the shape. Read once at setup. */
     shapeStorageKey?: string;
+    /** Row count of the whole list; bounds the pager. */
     total?: number;
+    /** Runs before save and create; resolving `false` blocks the submission. */
     validate?: () => boolean | Promise<boolean>;
     /** Width of the center shape; side and fullscreen size themselves. */
     width?: string;
@@ -91,21 +102,20 @@ const contentId = useId();
 
 const SHAPES: readonly PlusDialogShape[] = ['center', 'side', 'fullscreen'];
 
-function isShape(value: unknown): value is PlusDialogShape {
-  return (
-    typeof value === 'string' && (SHAPES as readonly string[]).includes(value)
-  );
+function isShape(value: string): value is PlusDialogShape {
+  return (SHAPES as readonly string[]).includes(value);
 }
 
-const storedShape = useLocalStorage<string>(props.shapeStorageKey, 'center');
-const shape = computed({
-  get(): PlusDialogShape {
-    return isShape(storedShape.value) ? storedShape.value : 'center';
+const shape = useLocalStorage<PlusDialogShape>(
+  props.shapeStorageKey,
+  'center',
+  {
+    serializer: {
+      read: (raw) => (isShape(raw) ? raw : 'center'),
+      write: (value) => value,
+    },
   },
-  set(value: PlusDialogShape) {
-    storedShape.value = value;
-  },
-});
+);
 
 const trackingEnabled = computed(
   () => mode.value === 'edit' || mode.value === 'create',
@@ -117,15 +127,13 @@ const { isDirty, reset, restore } = useUnsavedChanges(form, {
 const position = computed(() =>
   typeof index.value === 'number' ? index.value + 1 : 1,
 );
-const readonly = computed(() => mode.value === 'view');
 const isView = computed(() => mode.value === 'view');
 const isCenter = computed(() => shape.value === 'center');
 const busy = computed(() => loading.value || submitting.value);
+const titleText = computed(() => modeTitle(mode.value));
 
 /** Side + view lets the list behind stay clickable, so the host can swap records in place. */
 const passthrough = computed(() => shape.value === 'side' && isView.value);
-
-const titleText = computed(() => modeTitle(mode.value));
 
 const shapeClass = computed(() => {
   switch (shape.value) {
@@ -187,8 +195,12 @@ const restingStyle = computed((): CSSProperties => {
   }
 });
 
-const SHAPE_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const SHAPE_MS = 320;
+const SHAPE_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const SHAPE_TRANSITION = ['top', 'left', 'width', 'height', 'border-radius']
+  .map((property) => `${property} ${SHAPE_MS}ms ${SHAPE_EASE}`)
+  .join(', ');
+const reducedMotion = usePreferredReducedMotion();
 const shapeMotion = ref<CSSProperties>({});
 let shapeMotionTimer = 0;
 let shapeMotionRevision = 0;
@@ -206,12 +218,6 @@ function pinBox(rect: DOMRect): CSSProperties {
   };
 }
 
-function prefersReducedMotion(): boolean {
-  return (
-    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-  );
-}
-
 /** Reka remounts the content when `modal` flips; a shape switch must not replay the open zoom. */
 const shapeSwitched = ref(false);
 
@@ -221,13 +227,18 @@ function queryContent(): HTMLElement | null {
   );
 }
 
-watch(shape, async (next, prev) => {
-  if (prev === undefined || next === prev || !visible.value) return;
-  const revision = ++shapeMotionRevision;
-  shapeSwitched.value = true;
+function stopShapeMotion(): void {
+  shapeMotionRevision += 1;
   window.clearTimeout(shapeMotionTimer);
   shapeMotion.value = {};
-  if (prefersReducedMotion()) return;
+}
+
+watch(shape, async () => {
+  if (!visible.value) return;
+  stopShapeMotion();
+  const revision = shapeMotionRevision;
+  shapeSwitched.value = true;
+  if (reducedMotion.value === 'reduce') return;
   const before = queryContent();
   if (!before) return;
   const first = before.getBoundingClientRect();
@@ -239,21 +250,16 @@ watch(shape, async (next, prev) => {
   shapeMotion.value = { ...pinBox(first), transition: 'none' };
   await nextTick();
   if (revision !== shapeMotionRevision) return;
+  // Forces layout so the pinned box is the transition's starting point.
   el.getBoundingClientRect();
   requestAnimationFrame(() => {
     if (revision !== shapeMotionRevision) return;
-    shapeMotion.value = {
-      ...pinBox(last),
-      transition: `top ${SHAPE_MS}ms ${SHAPE_EASE}, left ${SHAPE_MS}ms ${SHAPE_EASE}, width ${SHAPE_MS}ms ${SHAPE_EASE}, height ${SHAPE_MS}ms ${SHAPE_EASE}, border-radius ${SHAPE_MS}ms ${SHAPE_EASE}`,
-    };
+    shapeMotion.value = { ...pinBox(last), transition: SHAPE_TRANSITION };
   });
-  window.clearTimeout(shapeMotionTimer);
   shapeMotionTimer = window.setTimeout(() => {
     shapeMotion.value = {};
   }, SHAPE_MS + 40);
 });
-
-onScopeDispose(() => window.clearTimeout(shapeMotionTimer));
 
 const overlayClass =
   'bg-(--el-overlay-color-lighter) supports-backdrop-filter:backdrop-blur-none';
@@ -294,10 +300,6 @@ function answerConfirm(ok: boolean): void {
   const settle = settleConfirm;
   settleConfirm = null;
   settle?.(ok);
-}
-
-function cancelConfirm(): void {
-  if (settleConfirm || confirmOpen.value) answerConfirm(false);
 }
 
 async function confirmDiscard(): Promise<boolean> {
@@ -482,11 +484,9 @@ watch(
     }
     loadRevision += 1;
     loading.value = false;
-    shapeMotionRevision += 1;
-    window.clearTimeout(shapeMotionTimer);
-    shapeMotion.value = {};
+    stopShapeMotion();
     shapeSwitched.value = false;
-    cancelConfirm();
+    answerConfirm(false);
     if (wasOpen) emit('closed');
   },
   { immediate: true },
@@ -511,13 +511,16 @@ watch(
 
 onScopeDispose(() => {
   loadRevision += 1;
-  shapeMotionRevision += 1;
-  cancelConfirm();
+  stopShapeMotion();
+  answerConfirm(false);
 });
 
 defineExpose({
+  /** Reloads the open record, dropping unsaved edits without asking. */
   reload: handleRefresh,
+  /** Closes the dialog, asking first when edits are unsaved. */
   close: requestClose,
+  /** True while edit or create mode holds unsaved changes. */
   isDirty,
 });
 </script>
@@ -567,7 +570,7 @@ defineExpose({
       <div class="min-h-0 flex-1 overflow-auto px-6 py-4">
         <slot
           :form="form"
-          :readonly="readonly"
+          :readonly="isView"
           :loading="loading"
           :submitting="submitting"
           :mode="mode"
