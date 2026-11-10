@@ -61,4 +61,4 @@ CI is `.github/workflows/deploy.yml`. It runs on push to `main`, not on pull req
 - Repository conventions, secrets, and the two UI stacks live in [AGENTS.md](../AGENTS.md), outside the vibe-harness block.
 - Visual tokens live in [DESIGN.md](../DESIGN.md).
 - Composable shape lives in the Composable shape entry in [AGENTS.md](../AGENTS.md).
-- Workbench skills `workbench-code-review`, `workbench-ui-ux`, `workbench-find-simplifications`, and `workbench-agent-experience` live under `.agents/skills/`.
+- `shadcn-vue` and `git-commit` under `.agents/skills/` come from `skills-lock.json`, not vibe-harness. Which skill to load for which change in this repository is listed under Agent skills in [AGENTS.md](../AGENTS.md).

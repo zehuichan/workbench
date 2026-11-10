@@ -19,6 +19,8 @@ export default defineConfig({
     '**/components.d.ts',
     '**/src/api/generated/**',
     'public/**',
+    // Git symlink to AGENTS.md; checked out as link text, a final newline breaks the link.
+    'CLAUDE.md',
   ],
   insertFinalNewline: true,
   overrides: [
