@@ -6,8 +6,8 @@ import { cloneDeep, isEqual } from 'es-toolkit';
 
 export interface UseUnsavedChangesOptions {
   /**
-   * When false, `isDirty` is always false and restore / reset stay no-ops for dirty checks.
-   * View mode sets this false so the guard never fires.
+   * When false, `isDirty` is false. `reset` and `restore` still capture and
+   * apply the baseline. Default `true`.
    */
   enabled?: MaybeRefOrGetter<boolean>;
 }

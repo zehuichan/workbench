@@ -123,14 +123,8 @@ export function useDrag(
     });
   };
 
-  const onEnd = (event: Event): void => {
-    if (
-      !session ||
-      !isPointerEvent(event) ||
-      event.pointerId !== session.pointerId
-    ) {
-      return;
-    }
+  const onEnd = (event: PointerEvent): void => {
+    if (!session || event.pointerId !== session.pointerId) return;
     finish();
   };
 
@@ -187,8 +181,4 @@ export function useDrag(
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
-}
-
-function isPointerEvent(event: Event): event is PointerEvent {
-  return 'pointerId' in event;
 }

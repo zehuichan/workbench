@@ -30,6 +30,8 @@ import {
 } from '@/ui/tooltip';
 import { cn } from '@/utils';
 
+import { modeTitle } from './utils';
+
 defineOptions({ name: 'PlusDialogHeader' });
 
 const props = withDefaults(
@@ -63,23 +65,7 @@ const emit = defineEmits<{
   'update:shape': [shape: PlusDialogShape];
 }>();
 
-const titleText = computed(() => {
-  switch (props.mode) {
-    case 'create': {
-      return '新建';
-    }
-    case 'edit': {
-      return '编辑';
-    }
-    case 'view': {
-      return '查看';
-    }
-    default: {
-      const exhaustive: never = props.mode;
-      return exhaustive;
-    }
-  }
-});
+const titleText = computed(() => modeTitle(props.mode));
 
 const showPager = computed(() => props.mode !== 'create' && props.total > 0);
 

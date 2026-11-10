@@ -40,28 +40,18 @@ interface ResolvedAction {
 
 const resolvedActions = computed((): ResolvedAction[] => {
   if (props.mode === 'create') return [];
-  const result: ResolvedAction[] = [];
-  for (const action of props.actions) {
-    const ok = action.when ? action.when(props.form) : true;
-    if (!ok) {
-      if ((action.fallback ?? 'hide') === 'disable') {
-        result.push({
-          key: action.key,
-          label: action.label,
-          disabled: true,
-          handler: () => action.handler(props.form),
-        });
-      }
-      continue;
-    }
-    result.push({
-      key: action.key,
-      label: action.label,
-      disabled: false,
-      handler: () => action.handler(props.form),
-    });
-  }
-  return result;
+  return props.actions.flatMap((action) => {
+    const allowed = action.when?.(props.form) ?? true;
+    if (!allowed && (action.fallback ?? 'hide') === 'hide') return [];
+    return [
+      {
+        disabled: !allowed,
+        handler: () => action.handler(props.form),
+        key: action.key,
+        label: action.label,
+      },
+    ];
+  });
 });
 </script>
 

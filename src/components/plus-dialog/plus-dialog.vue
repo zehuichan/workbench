@@ -35,6 +35,7 @@ import { cn } from '@/utils';
 import { useDrag, useUnsavedChanges } from './composables';
 import PlusDialogFooter from './plus-dialog-footer.vue';
 import PlusDialogHeader from './plus-dialog-header.vue';
+import { modeTitle } from './utils';
 
 defineOptions({ name: 'PlusDialog' });
 
@@ -123,23 +124,7 @@ const isCenter = computed(() => shape.value === 'center');
 /** Side + view lets the list behind stay clickable, so the host can swap records in place. */
 const passthrough = computed(() => shape.value === 'side' && isView.value);
 
-const titleText = computed(() => {
-  switch (mode.value) {
-    case 'create': {
-      return '新建';
-    }
-    case 'edit': {
-      return '编辑';
-    }
-    case 'view': {
-      return '查看';
-    }
-    default: {
-      const exhaustive: never = mode.value;
-      return exhaustive;
-    }
-  }
-});
+const titleText = computed(() => modeTitle(mode.value));
 
 const shapeClass = computed(() => {
   switch (shape.value) {
