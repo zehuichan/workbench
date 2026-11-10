@@ -21,6 +21,12 @@ export default defineConfig({
     'public/**',
     // Git symlink to AGENTS.md; checked out as link text, a final newline breaks the link.
     'CLAUDE.md',
+    // vibe-harness and skills-lock.json compare these with upstream text byte for byte.
+    '.agents/skills/**',
+    '.agents/notes/README.md',
+    '.agents/notes/**/AGENTS.md',
+    'docs/AGENTS.md',
+    'docs/defensive-patterns/**',
   ],
   insertFinalNewline: true,
   overrides: [

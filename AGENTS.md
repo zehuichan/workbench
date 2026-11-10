@@ -104,8 +104,8 @@ Load a skill when its description matches. Do not paste the skill back into this
 
 Keep each rule to a few lines and link the skill or file that holds the procedure. If a section starts repeating a skill or the vibe-harness block, move the detail back. A change that adds, renames, or removes a skill updates its links here and in the project profile.
 
+<!-- prettier-ignore-start -->
 <!-- vibe-harness:begin -->
-
 ## Working agreement (vibe-harness)
 
 These standing orders apply to every agent session. Project facts (commands, enabled surfaces, evidence per surface) live in the [project profile](.agents/project-profile.md); reusable workflows live in [.agents/skills/](.agents/skills/). Put project-specific rules outside this managed block: `vibe-harness` upgrades rewrite only the text between its markers.
@@ -149,3 +149,4 @@ These standing orders apply to every agent session. Project facts (commands, ena
 
 Read the [defensive patterns](docs/defensive-patterns/README.md) page for the artifact you are changing and any active Agent Note that owns the decision. Treat disagreement with an Agent Note as a design discussion, not as permission to ignore it.
 <!-- vibe-harness:end -->
+<!-- prettier-ignore-end -->

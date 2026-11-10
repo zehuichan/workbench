@@ -40,7 +40,7 @@ Lay out and run the lane as follows:
 Before implementation, record a measurement card:
 
 | Field | Required decision |
-| --- | --- |
+|---|---|
 | User operation | Exact action and externally observable completion condition |
 | Workload | Fixed dimensions, distributions, seed or constants, and why they exercise ordinary and tail use |
 | Entry path | Production calls and built artifacts; which external boundaries are mocked |

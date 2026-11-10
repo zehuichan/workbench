@@ -28,15 +28,13 @@ The judged condition: does correctness depend on "that callback already ran" ins
 
 ```ts
 // The order is written into the code: dispose the old store, then build its successor.
-store.dispose();
-store = createStore(scopeKey);
+store.dispose()
+store = createStore(scopeKey)
 ```
 
 ```ts
-queueMicrotask(() => {
-  if (!ready) refresh();
-}); // wrong: assumes the microtask runs before the next frame
-setTimeout(() => setMounted(true), 0); // wrong: waits for a render that was never sequenced
+queueMicrotask(() => { if (!ready) refresh() })   // wrong: assumes the microtask runs before the next frame
+setTimeout(() => setMounted(true), 0)             // wrong: waits for a render that was never sequenced
 ```
 
 The wrong form fails intermittently: a dropped refresh or a state that never syncs, reproducing only under load.
@@ -49,16 +47,14 @@ The judged condition: does `?.` replace a determination that a field exists, rat
 
 ```ts
 // Both behaviors are in the contract: no options means "unknown", not "skip".
-function resolve(input: {
-  options?: readonly string[];
-}): { kind: 'unknown' } | { kind: 'value'; value: string } {
-  if (input.options === undefined) return { kind: 'unknown' };
-  return { kind: 'value', value: input.options.join(',') };
+function resolve(input: { options?: readonly string[] }): { kind: 'unknown' } | { kind: 'value'; value: string } {
+  if (input.options === undefined) return { kind: 'unknown' }
+  return { kind: 'value', value: input.options.join(',') }
 }
 ```
 
 ```ts
-const value = a?.b?.c?.d ?? fallback; // wrong: four layers of fallback hide whether d should exist
+const value = a?.b?.c?.d ?? fallback   // wrong: four layers of fallback hide whether d should exist
 ```
 
 The wrong form keeps the contract vague and swallows the error, so the next caller adds another fallback on top.
@@ -70,14 +66,11 @@ An unknown value, an empty collection or string, and a genuinely absent field ar
 The judged condition: does a single "no value" carry more than one meaning (not yet queried, queried and empty, cannot be determined)? A discriminated union or an explicit enum value is the ordinary implementation, documented where the type is defined.
 
 ```ts
-type ValueState<T> =
-  | { kind: 'unknown' }
-  | { kind: 'empty' }
-  | { kind: 'value'; value: T };
+type ValueState<T> = { kind: 'unknown' } | { kind: 'empty' } | { kind: 'value'; value: T }
 ```
 
 ```ts
-return null; // wrong: means "not queried", "queried, nothing there", and "cannot tell", all at once
+return null   // wrong: means "not queried", "queried, nothing there", and "cannot tell", all at once
 ```
 
 The wrong form leaves the caller unable to distinguish the cases, so UI states, cache policy, and retry decisions all go wrong.
@@ -89,7 +82,7 @@ Do not introduce a global `active` or `current` selection, and migrate existing 
 The judged condition: does the change introduce a globally unique selected-state field?
 
 ```ts
-let activeTabId: TabId | undefined; // wrong: module-level; every component reads the same one
+let activeTabId: TabId | undefined   // wrong: module-level; every component reads the same one
 ```
 
 The wrong form makes independent instances interfere with each other, and no reviewer can audit which view owns the focus.
@@ -101,7 +94,7 @@ Shared state hangs on a service or an instance, so its owner is a named object w
 The judged condition: name the service or instance that owns the value. If no owner can be named, decide the owner before implementing. Any number of consumers may read a field on that service or instance, and passing the value across modules goes through the owner's existing interface rather than a global namespace. There is no default exception; a genuine need for a global lookup key goes to the domain owner together with its reclamation policy.
 
 ```ts
-globalThis.__appCache = new Map(); // wrong: shared across instances, never reclaimed
+globalThis.__appCache = new Map()   // wrong: shared across instances, never reclaimed
 ```
 
 The wrong form lets instances overwrite each other, makes reclamation timing unknowable, and leaks state between tests.
@@ -115,9 +108,7 @@ Establish whether a new distinction, field, or adapter is needed before choosing
 The judged condition: does the capability register itself, with the central layer only forwarding and managing lifetime rather than making business decisions? One exception: pure infrastructure (logging, transport, storage) does not attach through a business registration point. A new branch in a central layer must explain why it cannot live in the owning module.
 
 ```ts
-if (pluginName === 'attachments') {
-  /* wrong: business branch inside the manager */
-}
+if (pluginName === 'attachments') { /* wrong: business branch inside the manager */ }
 ```
 
 The wrong form makes every new capability edit the central layer, which becomes the change bottleneck and the conflict hotspot.
@@ -146,7 +137,7 @@ The judged condition is the item-by-item comparison of observable behavior befor
 
 ```ts
 // wrong: the migration silently changes the error handling it was only supposed to move.
-throw new EndpointError('not found'); // was: return { ok: false, code: 'not_found' }
+throw new EndpointError('not found')   // was: return { ok: false, code: 'not_found' }
 ```
 
 The wrong form buries behavior changes inside a move, so review cannot separate the relocation from the semantics and regressions cannot be localized.
@@ -164,16 +155,9 @@ Catch and report each listener's exception without rejecting the dispatch or sta
 The judged condition: can a throwing listener reject the dispatch or prevent later listeners from running? An error the dispatcher deliberately propagates to the operation that requested it is not a containment failure.
 
 ```ts
-async function dispatch(
-  listeners: ((event: string) => Promise<void>)[],
-  event: string,
-): Promise<void> {
+async function dispatch(listeners: ((event: string) => Promise<void>)[], event: string): Promise<void> {
   for (const listener of listeners) {
-    try {
-      await listener(event);
-    } catch (error) {
-      console.warn('listener failed', error);
-    }
+    try { await listener(event) } catch (error) { console.warn('listener failed', error) }
   }
 }
 ```
