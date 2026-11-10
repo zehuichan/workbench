@@ -84,7 +84,6 @@ const form = defineModel<T>('form', { required: true });
 
 const loading = ref(false);
 const submitting = ref(false);
-let submitLock = false;
 let loadRevision = 0;
 /** Position of the record the form holds or the current load fetches; `undefined` when neither. */
 let heldIndex: number | undefined;
@@ -121,6 +120,7 @@ const position = computed(() =>
 const readonly = computed(() => mode.value === 'view');
 const isView = computed(() => mode.value === 'view');
 const isCenter = computed(() => shape.value === 'center');
+const busy = computed(() => loading.value || submitting.value);
 
 /** Side + view lets the list behind stay clickable, so the host can swap records in place. */
 const passthrough = computed(() => shape.value === 'side' && isView.value);
@@ -361,29 +361,20 @@ async function handleToggleMode(): Promise<void> {
 }
 
 async function handleRemove(): Promise<void> {
-  if (
-    loading.value ||
-    submitLock ||
-    submitting.value ||
-    !props.remove ||
-    typeof index.value !== 'number'
-  ) {
-    return;
-  }
+  if (busy.value || !props.remove || typeof index.value !== 'number') return;
   if (!(await askConfirm('确认删除吗？', '删除'))) return;
-  if (loading.value || submitLock || submitting.value) return;
-
+  const remove = props.remove;
   const removedIndex = index.value;
+  if (busy.value || !remove || typeof removedIndex !== 'number') return;
+
   const remainingTotal = Math.max(0, props.total - 1);
-  submitLock = true;
   submitting.value = true;
   try {
-    await props.remove(form.value);
+    await remove(form.value);
   } catch {
     ElMessage.error('删除失败，请重试');
     return;
   } finally {
-    submitLock = false;
     submitting.value = false;
   }
 
@@ -392,8 +383,7 @@ async function handleRemove(): Promise<void> {
     visible.value = false;
     return;
   }
-  const nextIndex = Math.min(removedIndex, remainingTotal - 1);
-  await loadAt(nextIndex);
+  await loadAt(Math.min(removedIndex, remainingTotal - 1));
 }
 
 async function handleRefresh(): Promise<void> {
@@ -411,23 +401,25 @@ async function handleSave(closeAfter: boolean): Promise<void> {
     ElMessage.warning('正在加载');
     return;
   }
-  if (submitLock || submitting.value || !props.save) return;
-  submitLock = true;
+  const save = props.save;
+  if (submitting.value || !save) return;
   submitting.value = true;
+  let saved: T;
   try {
     if (!(await runValidate())) return;
-    const saved = await props.save(form.value);
-    form.value = saved;
-    reset(saved);
-    ElMessage.success('更新成功');
-    emit('saved', saved);
-    if (closeAfter) visible.value = false;
+    saved = await save(form.value);
   } catch {
     ElMessage.error('保存失败，请重试');
+    return;
   } finally {
-    submitLock = false;
     submitting.value = false;
   }
+
+  form.value = saved;
+  reset(saved);
+  ElMessage.success('更新成功');
+  if (closeAfter) visible.value = false;
+  emit('saved', saved);
 }
 
 async function handleCreate(): Promise<void> {
@@ -435,21 +427,22 @@ async function handleCreate(): Promise<void> {
     ElMessage.warning('正在加载');
     return;
   }
-  if (submitLock || submitting.value || !props.create) return;
-  submitLock = true;
+  const create = props.create;
+  if (submitting.value || !create) return;
   submitting.value = true;
   try {
     if (!(await runValidate())) return;
-    await props.create(form.value);
-    ElMessage.success('新增成功');
-    emit('created');
-    visible.value = false;
+    await create(form.value);
   } catch {
     ElMessage.error('新增失败，请重试');
+    return;
   } finally {
-    submitLock = false;
     submitting.value = false;
   }
+
+  ElMessage.success('新增成功');
+  visible.value = false;
+  emit('created');
 }
 
 async function requestClose(): Promise<void> {
@@ -561,7 +554,7 @@ defineExpose({
           :permissions="permissions"
           :shape="shape"
           :draggable="isCenter"
-          :busy="loading || submitting"
+          :busy="busy"
           @prev="handlePrev"
           @next="handleNext"
           @toggle-mode="handleToggleMode"
